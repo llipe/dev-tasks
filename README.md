@@ -31,9 +31,11 @@ This workflow brings structure and clarity to AI-assisted development by:
 
 ## 🛠️ How to Use
 
-1. Clone or copy these instruction files into your project
-2. Reference them in your AI tool or workflow
-3. Follow the workflow: PRD → Tasks → Process
+1. Create a `.github` folder in your repository.
+2. Add the `instructions` folder (containing the instruction `.md` files) inside `.github`.
+3. (Optional) Add a `copilot-instructions.md` file in `.github` for additional or custom instructions for GitHub Copilot.
+4. Reference these files in your AI tool or workflow as needed.
+5. Follow the workflow: PRD → Tasks → Process.
 
 ## 💡 Tips
 
