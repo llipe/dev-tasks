@@ -1,0 +1,28 @@
+# Ignore node_modules and Python environments
+node_modules/
+.env
+venv/
+__pycache__/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore editor/project files
+.vscode/
+.idea/
+*.swp
+
+# Ignore generated docs and tasks (if not tracked)
+/docs/*.md
+/tasks/*.md
+
+# Ignore log files
+*.log
+
+# Ignore backup files
+*~
+*.bak
+
+# Ignore OS trash
+.Trashes
