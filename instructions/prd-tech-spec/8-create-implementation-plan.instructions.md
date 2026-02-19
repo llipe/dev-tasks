@@ -5,7 +5,7 @@ applyTo: "**"
 
 ## Goal
 
-To guide an AI assistant in selecting specific User Stories from the backlog and converting them into a structured Implementation Plan (Task List) ready for execution. This step bridges the planning phase and the execution phase.
+To guide an AI assistant in selecting specific User Stories from the backlog, converting them into a structured Implementation Plan (Task List), and publishing that task list into the corresponding GitHub Issues. This step bridges planning and execution while keeping GitHub as the source of truth.
 
 ## Context
 
@@ -18,7 +18,8 @@ This step assumes the following documents already exist:
 2. **Review Backlog:** The AI reads the file and lists the available User Stories.
 3. **Select Stories:** The AI asks the user which specific stories they want to implement in this session or sprint.
 4. **Generate Task List:** Based on the selection, the AI generates a `tasks-[name].md` file formatted specifically for the `process-task-list` workflow.
-5. **Save Output:** Save as `tasks-[prd-name]-plan.md` in the `/docs/` directory.
+5. **Publish Tasks to GitHub Issues:** For each selected story, update the corresponding GitHub Issue body to include the task list as a checklist (using MCP). If no issue exists, ask the user whether to create it first.
+6. **Save Output:** Save as `tasks-[prd-name]-plan.md` in the `/docs/` directory.
 
 ## Output Structure
 
@@ -63,7 +64,31 @@ When converting a **User Story** to a **Parent Task**:
 ## Clarifying Questions
 
 - "Which stories would you like to include in this implementation plan? (Recommended: 1-3 stories)"
+- "Should I update the GitHub Issues with the task checklist now (using MCP)?"
+- "Is this a greenfield/new project, or an existing codebase? (This affects whether we need a Task 0 for setup)"
 - "Are there any specific implementation details or dependencies I should look out for before generating the tasks?"
+
+## Greenfield Project Considerations
+
+If this is a **greenfield project** or implementing a **new base component**, include a **Task 0: Project Setup** as the first parent task:
+**Check if greenfield:** Ask whether this is a new project or existing codebase. If greenfield, include Task 0 before story tasks.
+4. Convert the selected stories into the strict `tasks.md` format.
+5. Ensure all "Files to Create/Modify", "Implementation Steps", and "Acceptance Criteria" are preserved in the translation.
+6. For each selected story, update the corresponding GitHub Issue with the task checklist (using MCP). If no issue exists, ask the user whether to create it first.
+7. Save the file as `tasks-[prd-name]-plan.md` (or a custom name if users prefers).
+8 - [ ] 0.2 Set up version control and repository structure
+  - [ ] 0.3 Configure environment variables (.env, .env.example)
+  - [ ] 0.4 Set up development environment (dependencies, build tools, linting, formatting)
+  - [ ] 0.5 Create initial documentation (README, CONTRIBUTING, setup instructions)
+  - [ ] 0.6 Verify local development environment works (test build, tests pass)
+  - [ ] 0.7 Publish initial project to GitHub (if not already done)
+```
+
+**When to include Task 0:**
+- ✅ First time setting up a new repository
+- ✅ Starting a new microservice or component
+- ✅ Setting up isolated development environment for greenfield features
+- ❌ Extensions to existing projects (skip if dependencies already installed)
 
 ## Final Instructions
 
@@ -71,5 +96,6 @@ When converting a **User Story** to a **Parent Task**:
 2. List available stories and ask the user for their selection.
 3. Convert the selected stories into the strict `tasks.md` format.
 4. Ensure all "Files to Create/Modify", "Implementation Steps", and "Acceptance Criteria" are preserved in the translation.
-5. Save the file as `tasks-[prd-name]-plan.md` (or a custom name if users prefers).
-6. Inform the user they can now use the `process-task-list` instruction on this new file to start coding.
+5. For each selected story, update the corresponding GitHub Issue with the task checklist (using MCP). If no issue exists, ask the user whether to create it first.
+6. Save the file as `tasks-[prd-name]-plan.md` (or a custom name if users prefers).
+7. Inform the user they can now use the execution instruction to start coding, following the GitHub issue task checklist.

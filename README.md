@@ -28,8 +28,9 @@ A comprehensive AI-assisted workflow that establishes foundational context and t
 4. **Generate Specification**: Use `instructions/prd-tech-spec/4-generate-specification.instructions.md` to synthesize PRD + Technical Guidelines into actionable technical design.
 5. **Generate User Stories**: Use `instructions/prd-tech-spec/5-generate-user-stories.instructions.md` to break the specification into implementation-ready user stories (each providing independent value and fitting in a PR).
 6. **Validate Coverage**: Use `instructions/prd-tech-spec/6-validate-coverage.instructions.md` to ensure all PRD requirements are covered by the user stories.
-7. **Create Implementation Plan**: Use `instructions/prd-tech-spec/7-create-implementation-plan.instructions.md` to select specific stories and convert them into a task list ready for execution.
-8. **Execute Task List**: Use `instructions/prd-tech-spec/8-execute-task-list.instructions.md` to instruct the AI to work through tasks step-by-step, marking completion and waiting for user approval.
+7. **Publish User Stories to GitHub**: Use `instructions/prd-tech-spec/7-publish-user-stories-github.instructions.md` to create GitHub Issues via MCP so GitHub becomes the execution source of truth.
+8. **Create Implementation Plan**: Use `instructions/prd-tech-spec/8-create-implementation-plan.instructions.md` to select specific stories and convert them into a task list ready for execution.
+9. **Execute Task List**: Use `instructions/prd-tech-spec/9-execute-task-list.instructions.md` to instruct the AI to work through tasks step-by-step, marking completion and waiting for user approval.
 
 ## 🗂️ Files
 
@@ -44,8 +45,10 @@ A comprehensive AI-assisted workflow that establishes foundational context and t
 - `instructions/prd-tech-spec/3-base-prd.instructions.md`: Create base product requirements document
 - `instructions/prd-tech-spec/4-generate-specification.instructions.md`: Generate technical specification from PRD + guidelines
 - `instructions/prd-tech-spec/5-generate-user-stories.instructions.md`: Break specification into user stories
-- `instructions/prd-tech-spec/7-create-implementation-plan.instructions.md`: Convert selected stories into an actionable task list
 - `instructions/prd-tech-spec/6-validate-coverage.instructions.md`: Validate requirement coverage across stories
+- `instructions/prd-tech-spec/7-publish-user-stories-github.instructions.md`: Publish user stories as GitHub Issues via MCP
+- `instructions/prd-tech-spec/8-create-implementation-plan.instructions.md`: Convert selected stories into an actionable task list
+- `instructions/prd-tech-spec/9-execute-task-list.instructions.md`: Task execution and completion protocol
 
 ## 🌟 Benefits
 
@@ -95,15 +98,17 @@ Run this cycle for every new feature set or release.
 4. **Generate Specification:** Use `instructions/prd-tech-spec/4-generate-specification.instructions.md` to design the technical solution.
 5. **Generate User Stories:** Use `instructions/prd-tech-spec/5-generate-user-stories.instructions.md` to create granular implementation stories.
 6. **Validate Coverage:** Use `instructions/prd-tech-spec/6-validate-coverage.instructions.md` to verify all requirements are covered.
-7. **Create Implementation Plan:** Use `instructions/prd-tech-spec/7-create-implementation-plan.instructions.md` to pick stories for the current sprint and generate a task list.
-8. **Execute Tasks:** Use `instructions/prd-tech-spec/8-execute-task-list.instructions.md` to iteratively build and verify the code.
+7. **Publish User Stories to GitHub:** Use `instructions/prd-tech-spec/7-publish-user-stories-github.instructions.md` to create GitHub Issues via MCP.
+8. **Create Implementation Plan:** Use `instructions/prd-tech-spec/8-create-implementation-plan.instructions.md` to pick stories for the current sprint and generate a task list.
+9. **Execute Tasks:** Use `instructions/prd-tech-spec/9-execute-task-list.instructions.md` to iteratively build and verify the code.
 
-9. **Store Artifacts:** All generated documents are stored in the `/docs` directory.
+10. **Store Artifacts:** All generated documents are stored in the `/docs` directory.
 
 ### Workflow Integration
 
-- The output of **Step 7** creates an Implementation Plan file.
-- The instructions in **Step 8** (`8-execute-task-list.instructions.md`) allow you to execute that plan entirely within the Secondary Workflow context, without needing to reference the Primary Workflow instructions.
+- The output of **Step 8** creates an Implementation Plan file.
+- The instructions in **Step 9** (`9-execute-task-list.instructions.md`) allow you to execute that plan entirely within the Secondary Workflow context, without needing to reference the Primary Workflow instructions.
+- The output of **Step 7** makes GitHub the source of truth for story tracking.
 - All artifacts are stored in the `/docs` directory for centralized documentation.
 
 ## 💡 Tips
