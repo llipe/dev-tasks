@@ -29,8 +29,10 @@ When user stories are tracked in GitHub Issues, treat GitHub as the source of tr
 
 3. **Before closing a story:**
    - Ensure all acceptance criteria and tests are completed.
-   - Ensure the PR exists and is ready for review (draft may be converted to ready).
-   - Only close the GitHub Issue after the PR is opened and the story is fully complete.
+   - Ensure the PR exists and is ready for review (convert draft to ready for review if needed).
+   - **The PR must be approved by at least one reviewer.**
+   - **The PR must be merged into the default branch.**
+   - **Only close the GitHub Issue after the PR is approved AND merged.** Do not close the issue while the PR is still in draft or pending review.
 
 4. **If no issue exists:**
    - Ask the user whether to create one (using MCP) before starting the work.
@@ -60,3 +62,5 @@ When working with task lists, the AI must:
 6. After implementing a sub‑task, update the file and then pause for user approval.
 7. If a parent task maps to a GitHub Issue, follow the GitHub Execution Rules.
 8. Keep the local task list and the GitHub Issue checklist aligned when changes occur.
+9. **Never close a GitHub Issue without confirming:** The PR has been reviewed and approved by at least one reviewer, and the PR has been successfully merged into the default branch.
+10. **Notify the user when ready for PR review:** Once all tasks are complete and the PR is ready, explicitly inform the user so they can review and merge.
