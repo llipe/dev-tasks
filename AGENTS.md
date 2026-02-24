@@ -1,490 +1,143 @@
-# Agent Guidelines
 
-General guidelines for GitHub Copilot agents and AI coding assistants working in this repository.
+# dev-tasks
 
-## Branching Strategy
+A set of instructions for GitHub Copilot and other AI coding agents to emulate a PRD and task-based development workflow, inspired by [snarktank/ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks).
 
-### Branch Creation (Mandatory)
+## ✨ The Core Idea
 
-**Always create a new branch before making any code changes.**
+This workflow brings structure and clarity to AI-assisted development by:
 
-- **Never commit directly to the default branch** (e.g., `main`, `master`)
-- Create a descriptive branch name using kebab-case
-- Branch from the latest version of the default branch
+- Defining scope with a Product Requirement Document (PRD)
+- Breaking down the PRD into actionable tasks
+- Guiding the AI to tackle one task at a time, with checkpoints for review and approval
 
-#### Branch Naming Conventions
+## 📋 Workflow Overview
 
-| Type | Pattern | Example |
-|------|---------|---------|
-| **Feature** | `feature/<description>` or `<description>` | `feature/user-authentication`, `add-payment-gateway` |
-| **Bug Fix** | `fix/<description>` or `bugfix/<description>` | `fix/login-error`, `bugfix/null-pointer` |
-| **Chore/Maintenance** | `chore/<description>` | `chore/update-dependencies`, `chore/cleanup-logs` |
-| **Documentation** | `docs/<description>` | `docs/api-documentation`, `docs/readme-update` |
-| **Refactor** | `refactor/<description>` | `refactor/auth-service`, `refactor/database-queries` |
-| **GitHub Issue** | `issue-<issue-number>-<description>` | `issue-123-add-user-profile`, `issue-456-fix-memory-leak` |
+### Workflow: PRD-Spec Driven Development
 
-### Workflow
+A comprehensive AI-assisted workflow that establishes foundational context and technical specifications before breaking down implementation into granular user stories.
 
-```bash
-# 1. Ensure you're on the default branch and it's up to date
-git checkout main
-git pull origin main
+1. **Define Product Context**: Use `instructions/workflow-1-product-context.instructions.md` to document the macro view of the product or project.
+2. **Define Technical Guidelines**: Use `instructions/workflow-2-technical-guidelines.instructions.md` to establish technical foundations, architecture patterns, stack, and standards.
+3. **Create Base PRD**: Use `instructions/workflow-3-create-prd.instructions.md` to define specific features with clear scope (ideally ≤10 features).
+4. **Generate Specification**: Use `instructions/workflow-4-generate-specification.instructions.md` to synthesize PRD + Technical Guidelines into actionable technical design.
+5. **Generate User Stories**: Use `instructions/workflow-5-generate-user-stories.instructions.md` to break the specification into implementation-ready user stories (each providing independent value and fitting in a PR).
+6. **Validate Coverage**: Use `instructions/workflow-6-validate-coverage.instructions.md` to ensure all PRD requirements are covered by the user stories.
+7. **Publish User Stories to GitHub**: Use `instructions/workflow-7-publish-user-stories-github.instructions.md` to create GitHub Issues via MCP so GitHub becomes the execution source of truth.
+8. **Create Implementation Plan**: Use `instructions/workflow-8-create-implementation-plan.instructions.md` to select specific stories and convert them into a task list ready for execution.
+9. **Execute Task List**: Use `instructions/workflow-9-execute-task-list.instructions.md` to instruct the AI to work through tasks step-by-step, marking completion and waiting for user approval.
 
-# 2. Create and switch to a new branch
-git checkout -b feature/my-new-feature
+### Single Story GitHub Issue
 
-# 3. Make your changes and commit (see commit message guidelines below)
-git add .
-git commit -m "feat: add user authentication flow"
+Lightweight flow for implementing a single GitHub Issue end-to-end while keeping GitHub as the source of truth.
 
-# 4. Push the branch to remote
-git push origin feature/my-new-feature
+1. **Refine Issue**: Use `instructions/ssw-1-refine-github-issue.instructions.md` to clarify scope and acceptance criteria.
+2. **Generate Task List**: Use `instructions/ssw-2-generate-task-list.instructions.md` to convert the refined issue into a step-by-step checklist.
+3. **Execute Task List**: Use `instructions/ssw-3-execute-task-list.instructions.md` to implement one sub-task at a time with branch and PR discipline.
 
-# 5. Create a Pull Request (PR) for review
-# Use GitHub UI or CLI to create PR from your branch into the default branch
-```
+## 🗂️ Files
 
----
+### Workflow: PRD-Spec Driven Development
+- `instructions/workflow-1-product-context.instructions.md`: Document product and project context
+- `instructions/workflow-2-technical-guidelines.instructions.md`: Define technical foundations and standards
+- `instructions/workflow-3-create-prd.instructions.md`: Create base product requirements document
+- `instructions/workflow-4-generate-specification.instructions.md`: Generate technical specification from PRD + guidelines
+- `instructions/workflow-5-generate-user-stories.instructions.md`: Break specification into user stories
+- `instructions/workflow-6-validate-coverage.instructions.md`: Validate requirement coverage across stories
+- `instructions/workflow-7-publish-user-stories-github.instructions.md`: Publish user stories as GitHub Issues via MCP
+- `instructions/workflow-8-create-implementation-plan.instructions.md`: Convert selected stories into an actionable task list
+- `instructions/workflow-9-execute-task-list.instructions.md`: Task execution and completion protocol
 
-## Commit Message Guidelines
+### Single Story GitHub Issue
+- `instructions/ssw-1-refine-github-issue.instructions.md`: Refine a single GitHub issue with clear scope and acceptance criteria
+- `instructions/ssw-2-generate-task-list.instructions.md`: Convert refined issue into a task list and update the issue checklist
+- `instructions/ssw-3-execute-task-list.instructions.md`: Execute tasks step-by-step with branch and PR workflow
 
-Use **Conventional Commits** format for clear, structured commit messages.
+## 🤖 GitHub Agents
 
-### Format
+### General Guidelines
 
-```
-<type>(<scope>): <short description>
+All AI coding agents working in this repository should follow the **[Agent Guidelines](github/agents/AGENTS.md)** which cover:
 
-[optional body]
+- **Branching strategy**: Always create feature branches, never commit to default branch
+- **Commit message conventions**: Use conventional commits (feat, fix, chore, docs, etc.)
+- **Pull Request workflow**: Create PRs for review, never self-merge
+- **Code quality standards**: Testing, linting, and documentation requirements
+- **GitHub issue integration**: Branch naming and commit referencing
 
-[optional footer]
-```
+## 🌟 Benefits
 
-### Commit Types
+### Workflow: PRD-Spec Driven Development
+- Establishes strong foundational context and technical decisions upfront
+- Ensures PRD and technical guidelines work together to drive consistent decisions
+- Breaks large features into appropriately-sized, value-delivering user stories
+- Each user story is independently deployable and fits in a single PR
+- Comprehensive coverage validation ensures nothing is missed
+- Reduces rework and technical debt from discovering gaps during development
+- Clear traceability from product requirements through technical design to implementation
 
-| Type | Description | Example |
-|------|-------------|---------|
-| **feat** | New feature or functionality | `feat: add user registration endpoint` |
-| **fix** | Bug fix | `fix: resolve authentication token expiration` |
-| **docs** | Documentation changes only | `docs: update API usage examples` |
-| **style** | Code style/formatting changes (no logic change) | `style: format code with prettier` |
-| **refactor** | Code refactoring (no feature change or bug fix) | `refactor: simplify user validation logic` |
-| **perf** | Performance improvements | `perf: optimize database queries` |
-| **test** | Adding or updating tests | `test: add unit tests for auth service` |
-| **chore** | Maintenance, dependencies, config | `chore: upgrade dependencies to latest versions` |
-| **ci** | CI/CD configuration changes | `ci: add deploy workflow for staging` |
-| **build** | Build system or external dependencies | `build: update webpack configuration` |
-| **revert** | Revert a previous commit | `revert: revert "feat: add user registration"` |
+### Single Story GitHub Issue
+- Fast path for executing one issue at a time
+- Keeps GitHub as the source of truth for scope and progress
+- Enforces branching and PR discipline for every issue
+- Minimizes ambiguity with explicit acceptance criteria and task checklists
 
-### Examples
+## 🛠️ How to Use
 
-**Simple commit:**
-```bash
-git commit -m "feat: add password reset functionality"
-```
+### Setup
 
-**With scope:**
-```bash
-git commit -m "fix(auth): correct token validation logic"
-```
+1. Create a `.github` folder in your repository.
+2. Add the `instructions` folder (containing the instruction `.md` files) inside `.github`.
+3. (Optional) Add a `copilot-instructions.md` file in `.github` for additional or custom instructions for GitHub Copilot.
 
-**With body and footer:**
-```bash
-git commit -m "feat: add user profile page
+### Using the Workflow: PRD-Spec Driven Development
 
-- Create profile component
-- Add avatar upload functionality
-- Implement bio editing
+**Recommended for:** Complex features, new projects, or when establishing strong technical foundations is important.
 
-Closes issue #123"
-```
+#### Phase 1: Foundation (Done Once)
+Establish these documents at the start of the project. They serve as the "constitution" for all future development.
 
-**Referencing GitHub Issues:**
-```bash
-git commit -m "issue 456: resolve memory leak in data processor
+1. **Define Product Context:** Use `instructions/workflow-1-product-context.instructions.md` to document what the product is and its strategic goals. **Stored in `/docs`.**
+2. **Define Technical Guidelines:** Use `instructions/workflow-2-technical-guidelines.instructions.md` to establish the technical stack, patterns, and standards. **Stored in `/docs`.**
 
-Fixes issue #456"
-```
+#### Phase 2: Feature Cycle (Repeated for each Feature/Epic)
+Run this cycle for every new feature set or release.
 
----
+3. **Create Base PRD:** Use `instructions/workflow-3-create-prd.instructions.md` to define specific features (keeping scope ≤50 stories).
+4. **Generate Specification:** Use `instructions/workflow-4-generate-specification.instructions.md` to design the technical solution.
+5. **Generate User Stories:** Use `instructions/workflow-5-generate-user-stories.instructions.md` to create granular implementation stories.
+6. **Validate Coverage:** Use `instructions/workflow-6-validate-coverage.instructions.md` to verify all requirements are covered.
+7. **Publish User Stories to GitHub:** Use `instructions/workflow-7-publish-user-stories-github.instructions.md` to create GitHub Issues via MCP.
+8. **Create Implementation Plan:** Use `instructions/workflow-8-create-implementation-plan.instructions.md` to pick stories for the current sprint and generate a task list.
+9. **Execute Tasks:** Use `instructions/workflow-9-execute-task-list.instructions.md` to iteratively build and verify the code.
 
-## Pull Request (PR) Guidelines
+10. **Store Artifacts:** Feature-specific documents (PRDs, specifications, user stories, task lists) are stored in the `/workstream` directory. Foundation documents (product-context.md, technical-guidelines.md) remain in `/docs`.
 
-### Creating a PR
+### Using the Single Story GitHub Issue
 
-1. **Push your branch** to the remote repository
-2. **Open a PR** from your branch into the default branch
-3. **Never merge your own PR** - always wait for human review and approval
+**Recommended for:** Implementing a single GitHub Issue quickly with strong execution hygiene.
 
-### PR Description Template
+1. **Refine the Issue:** Use `instructions/ssw-1-refine-github-issue.instructions.md` to clarify scope and acceptance criteria.
+2. **Generate Tasks:** Use `instructions/ssw-2-generate-task-list.instructions.md` to create a task checklist and update the issue.
+3. **Execute Tasks:** Use `instructions/ssw-3-execute-task-list.instructions.md` to implement one sub-task at a time and keep GitHub updated.
 
-A good PR description should include:
+4. **Store Artifacts:** Refinement and task list documents are stored in `/workstream` using:
+  - `issue-[issue-number]-[issue-name]-refinement.md`
+  - `tasks-issue-[issue-number]-[issue-name].md`
 
-```markdown
-## Summary
-Brief description of what this PR does.
+### Workflow Integration
 
-## Changes
-- List of specific changes made
-- What files were modified and why
+- The output of **Step 8** creates an Implementation Plan file.
+- The instructions in **Step 9** (`workflow-9-execute-task-list.instructions.md`) allow you to execute that plan entirely within the Workflow context.
+- The output of **Step 7** makes GitHub the source of truth for story tracking.
+- **Document Organization:** `/workstream` contains active feature work (PRDs, specs, stories, tasks), while `/docs` contains foundational documents (product-context.md, technical-guidelines.md).
 
-## Testing
-- How these changes were tested
-- Test cases covered
+## 💡 Tips
 
-## Related Issues
-Closes issue #123
-Fixes issue #456
+- Be specific in your feature descriptions
+- Use capable AI models for best results
+- Iterate and guide the AI as needed
 
-## Screenshots (if applicable)
-[Add screenshots for UI changes]
+## Attribution
 
-## Checklist
-- [ ] Code follows project style guidelines
-- [ ] Tests added/updated
-- [ ] Documentation updated
-- [ ] No breaking changes (or breaking changes documented)
-```
-
-### PR Title
-
-Use the same convention as commit messages:
-
-- `feat: add user authentication`
-- `fix: resolve login redirect issue`
-- `docs: update installation guide`
-
----
-
-## Code Quality Standards
-
-Before creating a PR, ensure:
-
-- [ ] **Code builds successfully** - no compilation errors
-- [ ] **Tests pass** - all existing tests continue to pass
-- [ ] **Linting passes** - code follows style guidelines
-- [ ] **Type checking passes** - no TypeScript/type errors (if applicable)
-- [ ] **No console logs or debug code** - clean up temporary debugging code
-- [ ] **Documentation updated** - if APIs or features changed
-- [ ] **Commits are atomic** - each commit represents a logical unit of change
-
-### Documentation Maintenance Standard
-
-**For every feature implementation, bug fix, or architectural change, documentation must be updated to reflect the current system state.**
-
-#### When to Update Documentation
-
-Update documentation whenever:
-- A new feature is implemented
-- A bug fix changes system behavior
-- An architectural or technical decision is made
-- A data model changes
-- A user flow or capability is modified
-
-#### Documentation Update Process
-
-1. **Identify affected documentation artifacts:**
-   - `/docs/system-overview.md` — if system architecture or components changed
-   - `/docs/data-model.md` — if data structures or entity relationships changed
-   - `/docs/product-context/` — if capabilities, personas, or user journeys changed
-   - `/docs/technical-guidelines/` — if development standards or architectural constraints changed
-
-2. **Update core documentation files** using the **technical-writer agent** standard:
-   - Reference: `.github/agents/technical-writer.agent.md`
-   - Apply canonical documentation principles: current-state only, single source of truth, no parallel versions
-   - Ensure cross-document consistency (terminology, concepts, rules)
-
-3. **Create an ADR** (Architecture Decision Record) **if technical guidelines are modified:**
-   - Location: `/docs/adr/ADR-###-<kebab-case-title>.md`
-   - Use sequential numbering (ADR-001, ADR-002, etc.)
-   - Required sections: Status, Context, Decision, Alternatives Considered, Consequences, Related
-   - Reference requirements sources and updated documentation files
-
-4. **Include documentation updates in your PR:**
-   - List all updated documentation files in the PR description
-   - Explain why each file was updated (what changed and why)
-   - Link to any ADR created as a result
-
-#### Documentation Standards
-
-- **No parallel versions:** Never create `*-v2.md`, `*-draft.md`, or `*-new.md` files
-- **Current-state only:** Documentation describes the system as implemented, not future intentions
-- **Lightweight but complete:** Avoid redundancy while maintaining clarity
-- **Traceability:** Every documentation change must be traceable to implementation or explicit commitment
-- **Consistency:** Terminology and concepts must align across all artifacts
-
-#### Example PR Checklist Item
-
-```markdown
-- [ ] Documentation updated:
-  - [ ] `/docs/system-overview.md` — Added new component X to architecture section
-  - [ ] `/docs/adr/ADR-005-component-x-design.md` — Created ADR documenting design decision
-  - [ ] Cross-document consistency verified
-```
-
-### Workstream Lifecycle Management
-
-**Temporary vs. Permanent Documentation**
-
-- **`/workstream/`** — Temporary artifacts that support current feature implementation
-  - Contains: execution context, implementation decisions, technical specs, progress tracking
-  - **Deletion rule:** Delete after feature is fully implemented, tested, and merged to main
-  
-- **`/docs/`** — Permanent system documentation (single source of truth)
-  - Contains: system architecture, data models, technical guidelines, ADRs, product context
-  - **Retention rule:** Never delete; update to reflect current system state
-
-**Critical migration step before deleting `/workstream/`:**
-
-Before removing workstream artifacts, ensure any **architectural decisions, technical patterns, or guidelines** discovered during implementation are **transferred to permanent documentation**:
-
-1. Extract decision details from workstream → Create ADR in `/docs/adr/ADR-###-<title>.md`
-2. Document pattern/guideline → Update `/docs/technical-guidelines/`
-3. Update related sections → Refresh `/docs/system-overview.md`, `/docs/data-model.md`, or `/docs/product-context/`
-4. Verify consistency → Use technical-writer agent to validate cross-document alignment
-5. **Then delete** `/workstream/` contents
-
-**Example:**
-- Workstream decision: "Implement Observer pattern for event handling"
-- If permanent guideline → Create `ADR-007-observer-pattern-events.md`
-- Update `/docs/technical-guidelines/architecture-patterns.md`
-- Delete `/workstream/` after merging
-
-This ensures knowledge is preserved while keeping temporary working files clean.
-
----
-
-## Code Style
-
-### General Principles
-
-- **Consistency over preference** - Follow existing patterns in the codebase
-- **Readability first** - Write code that is easy to understand and maintain
-- **Self-documenting code** - Use clear variable/function names; minimize need for comments
-- **DRY (Don't Repeat Yourself)** - Extract reusable logic into functions/modules
-
-### Language-Specific Guidelines
-
-_Customize based on your project's stack._
-
-**JavaScript/TypeScript:**
-- Use TypeScript strict mode when applicable
-- Prefer `const` over `let`; avoid `var`
-- Use arrow functions for callbacks and short functions
-- Destructure objects and arrays when it improves readability
-- Use async/await over raw promises for better readability
-- Follow project's ESLint and Prettier configurations
-
-**Python:**
-- Follow PEP 8 style guide
-- Use type hints for function signatures
-- Prefer list/dict comprehensions for simple transformations
-- Use context managers (`with` statements) for resource management
-- Follow project's ruff/black/isort configurations
-
-### Naming Conventions
-
-- **Files/Modules:** kebab-case (JS/TS) or snake_case (Python)
-- **Classes:** PascalCase
-- **Functions/Methods:** camelCase (JS/TS) or snake_case (Python)
-- **Constants:** UPPER_SNAKE_CASE
-- **Private members:** Prefix with `_` (Python) or use TypeScript `private`
-- **Boolean variables:** Start with `is`, `has`, `should`, `can`
-
-### Comments and Documentation
-
-- Write comments for **why**, not **what** (code should explain what)
-- Document complex algorithms or business logic
-- Keep comments up-to-date with code changes
-- Use JSDoc/TSDoc (JS/TS) or docstrings (Python) for public APIs
-- Remove commented-out code (use git history instead)
-
-### Error Handling
-
-- Use specific exception types, not generic ones
-- Handle errors at appropriate levels (don't swallow silently)
-- Provide meaningful error messages
-- Log errors with context for debugging
-- Validate inputs at boundaries (API endpoints, function params)
-
----
-
-## Git Best Practices
-
-### Do's ✅
-
-- Create descriptive branch names
-- Write clear, concise commit messages
-- Commit frequently with logical boundaries
-- Keep commits atomic (one logical change per commit)
-- Pull latest changes from default branch regularly
-- Test your changes before committing
-- Reference issue numbers in commits and PRs when applicable
-
-### Don'ts ❌
-
-- Don't commit directly to the default branch
-- Don't create overly large commits with unrelated changes
-- Don't use vague commit messages like "fix bug" or "update code"
-- Don't commit sensitive information (keys, passwords, tokens)
-- Don't commit commented-out code or TODO comments without context
-- Don't merge your own PRs without review
-- Don't force push (`git push -f`) to shared branches
-
----
-
-## Working with GitHub Issues
-
-When a GitHub issue is provided:
-
-1. **Include issue number in branch name:** `issue-123-add-feature`
-2. **Reference issue in commits:** `issue 123: implement user authentication`
-3. **Reference issue in commit body:** Include `Closes issue #123` or `Fixes issue #123`
-4. **Link PR to issue:** Include `Closes issue #123` or `Fixes issue #123` in PR description
-5. **Update issue with progress:** Comment on the issue with blockers or questions
-
----
-
-## Specialized Agent Guidelines
-
-For specific types of work, refer to specialized agent instructions.
-
----
-
-## Workflow Instructions
-
-For structured AI-assisted development workflows, refer to:
-
-### Single Story Workflow (User Story Implementation)
-- **Location:** `.github/instructions/ssw-*`
-- **Purpose:** Streamlined workflow for implementing individual user stories
-- **Best for:** Single feature implementation, focused development tasks
-- **Key steps:** Story context → Implementation → Testing → Documentation
-
-### PRD-Spec Driven Development Workflow
-- **Location:** `.github/instructions/workflow-*`
-- **Purpose:** Comprehensive workflow with product context, technical specs, and user stories
-- **Best for:** Complex features, new projects, establishing technical foundations
-- **Steps:**
-  1. Define Product Context
-  2. Define Technical Guidelines
-  3. Create Base PRD
-  4. Generate Specification
-  5. Generate User Stories
-  6. Validate Coverage
-  7. Publish User Stories to GitHub
-  8. Create Implementation Plan
-  9. Execute Task List
-
-Refer to the [README.md](README.md) for detailed workflow documentation.
-
----
-
-## Emergency Procedures
-
-### If You Accidentally Commit to Default Branch
-
-```bash
-# 1. Create a new branch from current state
-git branch emergency-fix
-
-# 2. Reset default branch to previous state
-git checkout main
-git reset --hard origin/main
-
-# 3. Switch to your new branch and continue work
-git checkout emergency-fix
-```
-
-### If You Need to Undo Last Commit (Not Pushed)
-
-```bash
-# Keep changes but undo commit
-git reset --soft HEAD~1
-
-# Discard changes and undo commit
-git reset --hard HEAD~1
-```
-
----
-
-## Project-Specific Instructions
-
-> **Note:** The following sections should be customized for your specific project's technology stack, tools, and workflows. Replace the placeholder examples with your project's actual commands and requirements.
-
-### Dev Environment Tips
-
-_Customize this section with project-specific setup and workflow tips._
-
-**Example for a monorepo with pnpm + Turbo:**
-
-- Use `pnpm dlx turbo run where <project_name>` to jump to a package instead of scanning with `ls`
-- Run `pnpm install --filter <project_name>` to add the package to your workspace so Vite, ESLint, and TypeScript can see it
-- Use `pnpm create vite@latest <project_name> -- --template react-ts` to spin up a new React + Vite package with TypeScript checks ready
-- Check the name field inside each package's `package.json` to confirm the right name—skip the top-level one
-
-**Template for your project:**
-
-- [Add project-specific navigation commands]
-- [Add environment setup instructions]
-- [Add tool-specific tips]
-- [Add common gotchas or troubleshooting]
-
----
-
-### Testing Instructions
-
-_Customize this section with project-specific testing workflows and requirements._
-
-**Example for a monorepo with pnpm + Turbo + Vitest:**
-
-- Find the CI plan in the `.github/workflows` folder
-- Run `pnpm turbo run test --filter <project_name>` to run every check defined for that package
-- From the package root you can just call `pnpm test`. The commit should pass all tests before you merge
-- To focus on one step, add the Vitest pattern: `pnpm vitest run -t "<test name>"`
-- Fix any test or type errors until the whole suite is green
-- After moving files or changing imports, run `pnpm lint --filter <project_name>` to be sure ESLint and TypeScript rules still pass
-- Add or update tests for the code you change, even if nobody asked
-
-**Template for your project:**
-
-- [Add commands to run tests locally]
-- [Add commands to run specific test suites]
-- [Add coverage requirements]
-- [Add test file location conventions]
-- [Add when to write/update tests]
-
----
-
-### PR-Specific Instructions
-
-_Customize this section with project-specific PR requirements and formatting._
-
-**Example for a monorepo:**
-
-- **Title format:** `[<project_name>] <Title>`
-- Always run `pnpm lint` and `pnpm test` before committing
-- Ensure CI passes before requesting review
-- Tag relevant reviewers based on changed components
-
-**Template for your project:**
-
-- **Title format:** [Specify your PR title format]
-- [Add required checks before committing]
-- [Add reviewer assignment guidelines]
-- [Add PR size guidelines]
-- [Add labeling requirements]
-
----
-
-## Questions?
-
-When in doubt:
-- Ask for clarification before proceeding
-- Review existing PRs in the repository for examples
-- Check with a human reviewer if you're unsure about the approach
-
----
-
-**Version:** 1.1  
-**Last Updated:** 2026-02-24
+Based on [snarktank/ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks)
