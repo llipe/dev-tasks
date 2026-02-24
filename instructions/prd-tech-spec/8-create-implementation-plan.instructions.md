@@ -58,6 +58,7 @@ When converting a **User Story** to a **Parent Task**:
    - Convert every item in the **Implementation Steps** section of the story into a sub-task.
    - Add specific sub-tasks for **Acceptance Criteria** verification.
    - Add specific sub-tasks for **Testing** (Unit/Integration).
+   - **Data Models & Seed Data:** If the story involves creating or modifying data models/entities, include a specific sub-task to generate seed data for development. Format: `[X].Y Create seed data for [Entity Name]` with details about sample records needed for testing and development.
 3. **Context:** You can add a `> Note:` bock under the parent task to include the User Story text or Business Rules for easy reference, but keep the checkbox structure clean.
 4. **Relevant Files:** Aggregate all "Files to Create/Modify" from the selected stories into the top-level `Relevant Files` section.
 
@@ -67,27 +68,30 @@ When converting a **User Story** to a **Parent Task**:
 - "Should I update the GitHub Issues with the task checklist now (using MCP)?"
 - "Is this a greenfield/new project, or an existing codebase? (This affects whether we need a Task 0 for setup)"
 - "Are there any specific implementation details or dependencies I should look out for before generating the tasks?"
+- "Do any of the selected stories involve data model creation? If so, what sample/seed data should be included for development and testing?"
 
 ## Greenfield Project Considerations
 
 If this is a **greenfield project** or implementing a **new base component**, include a **Task 0: Project Setup** as the first parent task:
 **Check if greenfield:** Ask whether this is a new project or existing codebase. If greenfield, include Task 0 before story tasks.
-4. Convert the selected stories into the strict `tasks.md` format.
-5. Ensure all "Files to Create/Modify", "Implementation Steps", and "Acceptance Criteria" are preserved in the translation.
-6. For each selected story, update the corresponding GitHub Issue with the task checklist (using MCP). If no issue exists, ask the user whether to create it first.
-7. Save the file as `tasks-[prd-name]-plan.md` (or a custom name if users prefers).
-8 - [ ] 0.2 Set up version control and repository structure
+
+```
+- [ ] 0.0 Project Setup
+  - [ ] 0.1 Initialize project structure and package management
+  - [ ] 0.2 Set up version control and repository structure
   - [ ] 0.3 Configure environment variables (.env, .env.example)
   - [ ] 0.4 Set up development environment (dependencies, build tools, linting, formatting)
   - [ ] 0.5 Create initial documentation (README, CONTRIBUTING, setup instructions)
-  - [ ] 0.6 Verify local development environment works (test build, tests pass)
-  - [ ] 0.7 Publish initial project to GitHub (if not already done)
+  - [ ] 0.6 **Create seed data generation script** (if using database): Include sample records for all initial entities
+  - [ ] 0.7 Verify local development environment works (test build, tests pass, seed data loads)
+  - [ ] 0.8 Publish initial project to GitHub (if not already done)
 ```
 
 **When to include Task 0:**
 - ✅ First time setting up a new repository
 - ✅ Starting a new microservice or component
 - ✅ Setting up isolated development environment for greenfield features
+- ✅ Database setup with initial schema (include seed data generation sub-task)
 - ❌ Extensions to existing projects (skip if dependencies already installed)
 
 ## Final Instructions
