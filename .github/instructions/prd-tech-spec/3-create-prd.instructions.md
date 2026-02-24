@@ -21,7 +21,7 @@ The Base PRD should define the specific features to be implemented within a rele
 2. **Ask Clarifying Questions:** Gather sufficient detail about the requirements, prioritization, and acceptance criteria.
 3. **Reference Existing Documents:** Consider the product context and technical guidelines when framing requirements.
 4. **Generate PRD:** Create a detailed PRD using the structure outlined below.
-5. **Save Output:** Save the document as `prd-[feature-name].md` in the `/docs` directory.
+5. **Save Output:** Save the document as `prd-[feature-name].md` in the `/docs/requirements` directory.
 
 ## Clarifying Questions
 
@@ -104,7 +104,7 @@ The primary audience is the **development team** and **product stakeholders**. T
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/workstream/` (in the working repository)
+- **Location:** `/docs/requirements/` (in the working repository)
 - **Filename:** `prd-[feature-name].md` (e.g., `prd-user-profiles.md`)
 
 ## Final Instructions

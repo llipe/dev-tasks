@@ -24,7 +24,7 @@ A comprehensive AI-assisted workflow that establishes foundational context and t
 
 1. **Define Product Context**: Use `instructions/prd-tech-spec/1-product-context.instructions.md` to document the macro view of the product or project.
 2. **Define Technical Guidelines**: Use `instructions/prd-tech-spec/2-technical-guidelines.instructions.md` to establish technical foundations, architecture patterns, stack, and standards.
-3. **Create Base PRD**: Use `instructions/prd-tech-spec/3-base-prd.instructions.md` to define specific features with clear scope (ideally ≤10 features).
+3. **Create Base PRD**: Use `instructions/prd-tech-spec/3-create-prd.instructions.md` to define specific features with clear scope (ideally ≤10 features).
 4. **Generate Specification**: Use `instructions/prd-tech-spec/4-generate-specification.instructions.md` to synthesize PRD + Technical Guidelines into actionable technical design.
 5. **Generate User Stories**: Use `instructions/prd-tech-spec/5-generate-user-stories.instructions.md` to break the specification into implementation-ready user stories (each providing independent value and fitting in a PR).
 6. **Validate Coverage**: Use `instructions/prd-tech-spec/6-validate-coverage.instructions.md` to ensure all PRD requirements are covered by the user stories.
@@ -50,7 +50,7 @@ Lightweight flow for implementing a single GitHub Issue end-to-end while keeping
 ### Secondary Workflow: PRD-Spec Driven Development
 - `instructions/prd-tech-spec/1-product-context.instructions.md`: Document product and project context
 - `instructions/prd-tech-spec/2-technical-guidelines.instructions.md`: Define technical foundations and standards
-- `instructions/prd-tech-spec/3-base-prd.instructions.md`: Create base product requirements document
+- `instructions/prd-tech-spec/3-create-prd.instructions.md`: Create base product requirements document
 - `instructions/prd-tech-spec/4-generate-specification.instructions.md`: Generate technical specification from PRD + guidelines
 - `instructions/prd-tech-spec/5-generate-user-stories.instructions.md`: Break specification into user stories
 - `instructions/prd-tech-spec/6-validate-coverage.instructions.md`: Validate requirement coverage across stories
@@ -125,7 +125,7 @@ Establish these documents at the start of the project. They serve as the "consti
 #### Phase 2: Feature Cycle (Repeated for each Feature/Epic)
 Run this cycle for every new feature set or release.
 
-3. **Create Base PRD:** Use `instructions/prd-tech-spec/3-base-prd.instructions.md` to define specific features (keeping scope ≤50 stories).
+3. **Create Base PRD:** Use `instructions/prd-tech-spec/3-create-prd.instructions.md` to define specific features (keeping scope ≤50 stories).
 4. **Generate Specification:** Use `instructions/prd-tech-spec/4-generate-specification.instructions.md` to design the technical solution.
 5. **Generate User Stories:** Use `instructions/prd-tech-spec/5-generate-user-stories.instructions.md` to create granular implementation stories.
 6. **Validate Coverage:** Use `instructions/prd-tech-spec/6-validate-coverage.instructions.md` to verify all requirements are covered.
