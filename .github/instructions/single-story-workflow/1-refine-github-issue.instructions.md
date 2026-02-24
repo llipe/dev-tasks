@@ -70,7 +70,7 @@ Create a refinement doc with the following structure:
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/docs/`
+- **Location:** `/workstream/`
 - **Filename:** `issue-[issue-number]-[issue-name]-refinement.md`
 
 ## Final Instructions
@@ -78,4 +78,4 @@ Create a refinement doc with the following structure:
 1. Do NOT start implementation.
 2. Ask clarifying questions if acceptance criteria or scope is unclear.
 3. Update the GitHub Issue with a "Refined Scope" section and the agreed acceptance criteria.
-4. Save the refinement doc in `/docs/` and present it for review.
+4. Save the refinement doc in `/workstream/` and present it for review.

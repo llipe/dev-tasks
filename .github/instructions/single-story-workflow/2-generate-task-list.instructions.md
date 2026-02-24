@@ -11,7 +11,7 @@ To guide an AI assistant in translating a refined GitHub Issue into an execution
 
 This step assumes:
 - The GitHub Issue has been refined.
-- The refinement document exists in `/docs/issue-[issue-number]-[issue-name]-refinement.md`.
+- The refinement document exists in `/workstream/issue-[issue-number]-[issue-name]-refinement.md`.
 
 ## Process
 
@@ -20,7 +20,7 @@ This step assumes:
 3. **Ask Targeted Questions:** Only ask if tasks, files, or test scope remain unclear.
 4. **Generate Task List:** Produce a single-issue task list in the required format.
 5. **Update GitHub Issue:** Add the task list checklist to the issue body.
-6. **Save Output:** Save the task list to `/docs`.
+6. **Save Output:** Save the task list to `/workstream`.
 
 ## Output Structure
 
@@ -62,7 +62,7 @@ The task list MUST follow the `process-task-list` format:
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/docs/`
+- **Location:** `/workstream/`
 - **Filename:** `tasks-issue-[issue-number]-[issue-name].md`
 
 ## Final Instructions
@@ -70,4 +70,4 @@ The task list MUST follow the `process-task-list` format:
 1. Do NOT start implementation.
 2. Ensure the task list mirrors the refined issue scope.
 3. Update the GitHub Issue body to include the checklist.
-4. Save the task list in `/docs/` and present it for review.
+4. Save the task list in `/workstream/` and present it for review.

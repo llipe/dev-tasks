@@ -150,7 +150,7 @@ Consider these factors when sequencing stories:
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/docs/` (in the working repository)
+- **Location:** `/workstream/` (in the working repository)
 - **Filename:** `user-stories-[prd-name].md` (e.g., `user-stories-user-profiles.md`)
 
 ## Final Instructions

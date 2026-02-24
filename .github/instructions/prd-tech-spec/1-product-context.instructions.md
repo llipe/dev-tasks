@@ -55,6 +55,7 @@ The primary audience is the **product team and developers**. The document should
 - **Format:** Markdown (`.md`)
 - **Location:** `/docs/` (in the working repository)
 - **Filename:** `product-context.md`
+- **Note:** This is one of the few documents that remains in `/docs` as it's a foundational reference document.
 
 ## Final Instructions
 

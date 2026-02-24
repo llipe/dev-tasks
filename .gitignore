@@ -13,9 +13,13 @@ Thumbs.db
 .idea/
 *.swp
 
-# Ignore generated docs and tasks (if not tracked)
+# Ignore generated workstream docs and tasks (if not tracked)
+# Keep foundational docs and requirements tracked
+/workstream/*.md
 /docs/*.md
-/tasks/*.md
+!/docs/product-context.md
+!/docs/technical-guidelines.md
+!/docs/requirements/
 
 # Ignore log files
 *.log

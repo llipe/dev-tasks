@@ -11,7 +11,7 @@ To guide an AI assistant in implementing a single GitHub Issue using the task li
 
 This step assumes:
 - The GitHub Issue exists and includes a checklist.
-- The task list file exists at `/docs/tasks-issue-[issue-number]-[issue-name].md`.
+- The task list file exists at `/workstream/tasks-issue-[issue-number]-[issue-name].md`.
 - GitHub is the source of truth for execution status.
 
 ## Execution Rules
@@ -24,7 +24,7 @@ This step assumes:
 3. Open a **draft PR** against the default branch.
    - PR title should follow Conventional Commits, e.g., `fix: implement issue 37`.
    - Link the GitHub Issue in the PR description using `Closes #<issue-number>`.
-4. Ensure the task list in the GitHub Issue matches the local `/docs/tasks-issue-[issue-number]-[issue-name].md` file.
+4. Ensure the task list in the GitHub Issue matches the local `/workstream/tasks-issue-[issue-number]-[issue-name].md` file.
 
 ### During Implementation
 
@@ -50,7 +50,7 @@ This step assumes:
 
 ## Output
 
-- Keep changes and status updates in GitHub and `/docs/tasks-issue-[issue-number]-[issue-name].md`.
+- Keep changes and status updates in GitHub and `/workstream/tasks-issue-[issue-number]-[issue-name].md`.
 
 ## Final Instructions
 

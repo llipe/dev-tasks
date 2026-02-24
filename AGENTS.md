@@ -263,9 +263,7 @@ When a GitHub issue is provided:
 
 ## Specialized Agent Guidelines
 
-For specific types of work, refer to specialized agent instructions:
-
-- **Tech Debt & Upgrades:** See [`.github/agents/tech-debt-fixer.md`](.github/agents/tech-debt-fixer.md) for dependency upgrades and technical debt remediation
+For specific types of work, refer to specialized agent instructions.
 
 ---
 
