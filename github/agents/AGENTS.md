@@ -242,6 +242,75 @@ git reset --hard HEAD~1
 
 ---
 
+## Project-Specific Instructions
+
+> **Note:** The following sections should be customized for your specific project's technology stack, tools, and workflows. Replace the placeholder examples with your project's actual commands and requirements.
+
+### Dev Environment Tips
+
+_Customize this section with project-specific setup and workflow tips._
+
+**Example for a monorepo with pnpm + Turbo:**
+
+- Use `pnpm dlx turbo run where <project_name>` to jump to a package instead of scanning with `ls`
+- Run `pnpm install --filter <project_name>` to add the package to your workspace so Vite, ESLint, and TypeScript can see it
+- Use `pnpm create vite@latest <project_name> -- --template react-ts` to spin up a new React + Vite package with TypeScript checks ready
+- Check the name field inside each package's `package.json` to confirm the right name—skip the top-level one
+
+**Template for your project:**
+
+- [Add project-specific navigation commands]
+- [Add environment setup instructions]
+- [Add tool-specific tips]
+- [Add common gotchas or troubleshooting]
+
+---
+
+### Testing Instructions
+
+_Customize this section with project-specific testing workflows and requirements._
+
+**Example for a monorepo with pnpm + Turbo + Vitest:**
+
+- Find the CI plan in the `.github/workflows` folder
+- Run `pnpm turbo run test --filter <project_name>` to run every check defined for that package
+- From the package root you can just call `pnpm test`. The commit should pass all tests before you merge
+- To focus on one step, add the Vitest pattern: `pnpm vitest run -t "<test name>"`
+- Fix any test or type errors until the whole suite is green
+- After moving files or changing imports, run `pnpm lint --filter <project_name>` to be sure ESLint and TypeScript rules still pass
+- Add or update tests for the code you change, even if nobody asked
+
+**Template for your project:**
+
+- [Add commands to run tests locally]
+- [Add commands to run specific test suites]
+- [Add coverage requirements]
+- [Add test file location conventions]
+- [Add when to write/update tests]
+
+---
+
+### PR-Specific Instructions
+
+_Customize this section with project-specific PR requirements and formatting._
+
+**Example for a monorepo:**
+
+- **Title format:** `[<project_name>] <Title>`
+- Always run `pnpm lint` and `pnpm test` before committing
+- Ensure CI passes before requesting review
+- Tag relevant reviewers based on changed components
+
+**Template for your project:**
+
+- **Title format:** [Specify your PR title format]
+- [Add required checks before committing]
+- [Add reviewer assignment guidelines]
+- [Add PR size guidelines]
+- [Add labeling requirements]
+
+---
+
 ## Questions?
 
 When in doubt:
