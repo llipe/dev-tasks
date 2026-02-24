@@ -27,8 +27,8 @@ When a GitHub issue is provided (e.g., #123):
 |---------|-------------------|---------|
 | **Branch name** | `issue-<issue-number>-<tech-debt-issue-name>` | `issue-123-nextjs-14-to-16` |
 | **Doc path** | `/docs/issue-<issue-number>-<tech-debt-issue-name>.md` | `/docs/issue-123-nextjs-14-to-16.md` |
-| **Commit messages** | `issue #<issue-number>: <message>` | `#123: upgrade Next.js dependencies` |
-| **PR description** | Include `Closes issue #<issue-number>` or `Fixes issue #<issue-number>` | `Closes #123` |
+| **Commit messages** | `issue <issue-number>: <message>` | `issue 123: upgrade Next.js dependencies` |
+| **PR description** | Include `Closes issue #<issue-number>` or `Fixes issue #<issue-number>` | `Closes issue #123` |
 
 When **no** GitHub issue is provided:
 
@@ -62,20 +62,20 @@ The document must be actionable and include commands, file touchpoints, risks, a
 ### Branch Creation
 - Before any code changes, I **MUST** create a new branch named:
   - `<tech-debt-issue-name>` if no GitHub issue provided
-  - `issue-<issue-number>-<tech-debt-issue-name>` if GitHub issue provided (e.g., `123-nextjs-14-to-16`)
+  - `issue-<issue-number>-<tech-debt-issue-name>` if GitHub issue provided (e.g., `issue-123-nextjs-14-to-16`)
 - All changes **MUST** be implemented on that branch only
 
 ### Commit Strategy
 - I **MUST** create atomic commits with clear messages
 - Each commit must keep the branch in a runnable state whenever feasible
 - Commit messages should explain intent and scope one concern per commit
-- If a GitHub issue is provided, reference it in commit messages (e.g., `issue #123: upgrade Next.js dependencies`)
+- If a GitHub issue is provided, reference it in commit messages (e.g., `issue 123: upgrade Next.js dependencies`)
 
 ### Pull Request
 At the end, I **MUST** open a Pull Request from `<tech-debt-issue-name>` into the default branch.
 
 **PR description MUST include:**
-- Reference to GitHub issue (if provided): `Closes #<issue-number>` or `Fixes issue #<issue-number>`
+- Reference to GitHub issue (if provided): `Closes issue #<issue-number>` or `Fixes issue #<issue-number>`
 - Summary of upgrades (versions before/after)
 - Why these changes (security/compatibility/deprecations)
 - Risk areas and mitigations
@@ -106,7 +106,7 @@ At the end, I **MUST** open a Pull Request from `<tech-debt-issue-name>` into th
 3. **Apply naming convention:**
    - If GitHub issue provided (e.g., #123):
      - Branch: `issue-123-<tech-debt-issue-name>` (e.g., `issue-123-nextjs-14-to-16`)
-     - Doc: `/docs/123-<tech-debt-issue-name>.md`
+     - Doc: `/docs/issue-123-<tech-debt-issue-name>.md`
    - If no GitHub issue:
      - Branch: `<tech-debt-issue-name>`
      - Doc: `/docs/<tech-debt-issue-name>.md`
@@ -289,25 +289,25 @@ npm run test
 # Identify breaking changes relevant to this repo
 
 # Phase 3: Plan
-# Write /docs/123-nextjs-14-to-16.md
+# Write /docs/issue-123-nextjs-14-to-16.md
 
 # Phase 4: Implement
-git checkout -b 123-nextjs-14-to-16
+git checkout -b issue-123-nextjs-14-to-16
 
 # Commit 1: Update package.json and lock
 npm install next@16 react@latest react-dom@latest
 git add package.json package-lock.json
-git commit -m "issue #123: upgrade Next.js 14→16 and React to latest compatible versions"
+git commit -m "issue 123: upgrade Next.js 14→16 and React to latest compatible versions"
 
 # Commit 2: Apply codemod for app directory changes
 npx @next/codemod@latest app-directory-boilerplate ./app
 git add .
-git commit -m "issue #123: apply Next.js app directory codemod"
+git commit -m "issue 123: apply Next.js app directory codemod"
 
 # Commit 3: Fix TypeScript errors
 # Make necessary type adjustments
 git add .
-git commit -m "issue #123: resolve TypeScript errors from Next.js 16 upgrade"
+git commit -m "issue 123: resolve TypeScript errors from Next.js 16 upgrade"
 
 # Phase 5: Verify
 npm run typecheck
@@ -317,10 +317,10 @@ npm run build
 npm run start # Smoke test critical pages
 
 # Phase 6: Update doc and open PR
-# Update /docs/123-nextjs-14-to-16.md with implementation details
+# Update /docs/issue-123-nextjs-14-to-16.md with implementation details
 git add docs/issue-123-nextjs-14-to-16.md
-git commit -m "issue #123: document Next.js 14→16 upgrade implementation"
-# Open PR via GitHub with "Closes #123" in description
+git commit -m "issue 123: document Next.js 14→16 upgrade implementation"
+# Open PR via GitHub with "Closes issue #123" in description
 ```
 
 ### Example 2: Python Poetry + Dependency Updates (without GitHub issue)

@@ -21,7 +21,7 @@ General guidelines for GitHub Copilot agents and AI coding assistants working in
 | **Chore/Maintenance** | `chore/<description>` | `chore/update-dependencies`, `chore/cleanup-logs` |
 | **Documentation** | `docs/<description>` | `docs/api-documentation`, `docs/readme-update` |
 | **Refactor** | `refactor/<description>` | `refactor/auth-service`, `refactor/database-queries` |
-| **GitHub Issue** | `<issue-number>-<description>` | `123-add-user-profile`, `456-fix-memory-leak` |
+| **GitHub Issue** | `issue-<issue-number>-<description>` | `issue-123-add-user-profile`, `issue-456-fix-memory-leak` |
 
 ### Workflow
 
@@ -96,14 +96,14 @@ git commit -m "feat: add user profile page
 - Add avatar upload functionality
 - Implement bio editing
 
-Closes #123"
+Closes issue #123"
 ```
 
 **Referencing GitHub Issues:**
 ```bash
-git commit -m "fix: resolve memory leak in data processor
+git commit -m "issue 456: resolve memory leak in data processor
 
-Fixes #456"
+Fixes issue #456"
 ```
 
 ---
@@ -133,8 +133,8 @@ Brief description of what this PR does.
 - Test cases covered
 
 ## Related Issues
-Closes #123
-Fixes #456
+Closes issue #123
+Fixes issue #456
 
 ## Screenshots (if applicable)
 [Add screenshots for UI changes]
@@ -198,10 +198,11 @@ Before creating a PR, ensure:
 
 When a GitHub issue is provided:
 
-1. **Include issue number in branch name:** `123-add-feature`
-2. **Reference issue in commits:** `#123: implement user authentication`
-3. **Link PR to issue:** Include `Closes #123` or `Fixes #123` in PR description
-4. **Update issue with progress:** Comment on the issue with blockers or questions
+1. **Include issue number in branch name:** `issue-123-add-feature`
+2. **Reference issue in commits:** `issue 123: implement user authentication`
+3. **Reference issue in commit body:** Include `Closes issue #123` or `Fixes issue #123`
+4. **Link PR to issue:** Include `Closes issue #123` or `Fixes issue #123` in PR description
+5. **Update issue with progress:** Comment on the issue with blockers or questions
 
 ---
 
