@@ -32,6 +32,14 @@ A comprehensive AI-assisted workflow that establishes foundational context and t
 8. **Create Implementation Plan**: Use `instructions/prd-tech-spec/8-create-implementation-plan.instructions.md` to select specific stories and convert them into a task list ready for execution.
 9. **Execute Task List**: Use `instructions/prd-tech-spec/9-execute-task-list.instructions.md` to instruct the AI to work through tasks step-by-step, marking completion and waiting for user approval.
 
+### Third Workflow: Single Story GitHub Issue
+
+Lightweight flow for implementing a single GitHub Issue end-to-end while keeping GitHub as the source of truth.
+
+1. **Refine Issue**: Use `instructions/single-story-workflow/1-refine-github-issue.instructions.md` to clarify scope and acceptance criteria.
+2. **Generate Task List**: Use `instructions/single-story-workflow/2-generate-task-list.instructions.md` to convert the refined issue into a step-by-step checklist.
+3. **Execute Task List**: Use `instructions/single-story-workflow/3-execute-task-list.instructions.md` to implement one sub-task at a time with branch and PR discipline.
+
 ## 🗂️ Files
 
 ### Primary Workflow
@@ -49,6 +57,11 @@ A comprehensive AI-assisted workflow that establishes foundational context and t
 - `instructions/prd-tech-spec/7-publish-user-stories-github.instructions.md`: Publish user stories as GitHub Issues via MCP
 - `instructions/prd-tech-spec/8-create-implementation-plan.instructions.md`: Convert selected stories into an actionable task list
 - `instructions/prd-tech-spec/9-execute-task-list.instructions.md`: Task execution and completion protocol
+
+### Third Workflow: Single Story GitHub Issue
+- `instructions/single-story-workflow/1-refine-github-issue.instructions.md`: Refine a single GitHub issue with clear scope and acceptance criteria
+- `instructions/single-story-workflow/2-generate-task-list.instructions.md`: Convert refined issue into a task list and update the issue checklist
+- `instructions/single-story-workflow/3-execute-task-list.instructions.md`: Execute tasks step-by-step with branch and PR workflow
 
 ## 🤖 GitHub Agents
 
@@ -95,6 +108,12 @@ A specialized GitHub Copilot agent for dependency upgrades, framework migrations
 - Reduces rework and technical debt from discovering gaps during development
 - Clear traceability from product requirements through technical design to implementation
 
+### Third Workflow: Single Story GitHub Issue
+- Fast path for executing one issue at a time
+- Keeps GitHub as the source of truth for scope and progress
+- Enforces branching and PR discipline for every issue
+- Minimizes ambiguity with explicit acceptance criteria and task checklists
+
 ## 🛠️ How to Use
 
 ### Setup
@@ -131,6 +150,16 @@ Run this cycle for every new feature set or release.
 9. **Execute Tasks:** Use `instructions/prd-tech-spec/9-execute-task-list.instructions.md` to iteratively build and verify the code.
 
 10. **Store Artifacts:** All generated documents are stored in the `/docs` directory.
+
+### Using the Third Workflow: Single Story GitHub Issue
+
+**Recommended for:** Implementing a single GitHub Issue quickly with strong execution hygiene.
+
+1. **Refine the Issue:** Use `instructions/single-story-workflow/1-refine-github-issue.instructions.md` to clarify scope and acceptance criteria.
+2. **Generate Tasks:** Use `instructions/single-story-workflow/2-generate-task-list.instructions.md` to create a task checklist and update the issue.
+3. **Execute Tasks:** Use `instructions/single-story-workflow/3-execute-task-list.instructions.md` to implement one sub-task at a time and keep GitHub updated.
+
+4. **Store Artifacts:** Refinement and task list documents are stored in `/docs`.
 
 ### Workflow Integration
 
