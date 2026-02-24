@@ -19,7 +19,7 @@ This step assumes the following documents already exist:
 3. **Select Stories:** The AI asks the user which specific stories they want to implement in this session or sprint.
 4. **Generate Task List:** Based on the selection, the AI generates a `tasks-[name].md` file formatted specifically for the `process-task-list` workflow.
 5. **Publish Tasks to GitHub Issues:** For each selected story, update the corresponding GitHub Issue body to include the task list as a checklist (using MCP). If no issue exists, ask the user whether to create it first.
-6. **Save Output:** Save as `tasks-[prd-name]-plan.md` in the `/docs/` directory.
+5. **Save Output:** Save as `tasks-[prd-name]-plan.md` in the `/workstream/` directory.
 
 ## Output Structure
 

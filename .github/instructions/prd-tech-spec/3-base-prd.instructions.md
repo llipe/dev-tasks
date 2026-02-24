@@ -104,7 +104,7 @@ The primary audience is the **development team** and **product stakeholders**. T
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/docs/` (in the working repository)
+- **Location:** `/workstream/` (in the working repository)
 - **Filename:** `prd-[feature-name].md` (e.g., `prd-user-profiles.md`)
 
 ## Final Instructions

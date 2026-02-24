@@ -141,7 +141,7 @@ The primary audience is the **development team**. Specification should be detail
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/docs/` (in the working repository)
+- **Location:** `/workstream/` (in the working repository)
 - **Filename:** `specification-[prd-name].md` (e.g., `specification-user-profiles.md`)
 
 ## Final Instructions

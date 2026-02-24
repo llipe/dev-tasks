@@ -74,7 +74,7 @@ Create a publication report:
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/docs/`
+- **Location:** `/workstream/`
 - **Filename:** `github-user-stories-[prd-name].md`
 
 ## Final Instructions

@@ -75,22 +75,6 @@ All AI coding agents working in this repository should follow the **[Agent Guide
 - **Code quality standards**: Testing, linting, and documentation requirements
 - **GitHub issue integration**: Branch naming and commit referencing
 
-### TechDebtUpgradeCopilot
-
-A specialized GitHub Copilot agent for dependency upgrades, framework migrations, and technical debt remediation.
-
-- **Purpose**: Modernize projects by updating packages, frameworks, and runtimes without changing scope or features
-- **Location**: `github/agents/tech-debt-fixer.md`
-- **Supported stacks**: JavaScript/TypeScript (Node.js, Next.js, React, etc.) and Python (Django, FastAPI, pytest, etc.)
-- **Key features**:
-  - Structured 6-phase operating procedure (Identify → Assess → Research → Plan → Implement → Verify)
-  - Mandatory documentation in `/docs/<issue-name>.md`
-  - GitHub issue integration (branch naming, commit messages, PR linking)
-  - Atomic commits with rollback strategies
-  - Behavior preservation with comprehensive verification
-
-**Use when**: Upgrading dependencies, migrating frameworks, or addressing technical debt systematically.
-
 ## 🌟 Benefits
 
 ### Primary Workflow
@@ -126,7 +110,7 @@ A specialized GitHub Copilot agent for dependency upgrades, framework migrations
 
 1. Reference the primary workflow instruction files in the `instructions/primary-workflow/` folder.
 2. Follow the workflow: PRD → Tasks → Process.
-3. All generated documents are stored in the `/docs` directory of your working repository.
+3. All generated documents are stored in the `/workstream` directory of your working repository.
 
 ### Using the Secondary Workflow: PRD-Spec Driven Development
 
@@ -135,8 +119,8 @@ A specialized GitHub Copilot agent for dependency upgrades, framework migrations
 #### Phase 1: Foundation (Done Once)
 Establish these documents at the start of the project. They serve as the "constitution" for all future development.
 
-1. **Define Product Context:** Use `instructions/prd-tech-spec/1-product-context.instructions.md` to document what the product is and its strategic goals.
-2. **Define Technical Guidelines:** Use `instructions/prd-tech-spec/2-technical-guidelines.instructions.md` to establish the technical stack, patterns, and standards.
+1. **Define Product Context:** Use `instructions/prd-tech-spec/1-product-context.instructions.md` to document what the product is and its strategic goals. **Stored in `/docs`.**
+2. **Define Technical Guidelines:** Use `instructions/prd-tech-spec/2-technical-guidelines.instructions.md` to establish the technical stack, patterns, and standards. **Stored in `/docs`.**
 
 #### Phase 2: Feature Cycle (Repeated for each Feature/Epic)
 Run this cycle for every new feature set or release.
@@ -149,7 +133,7 @@ Run this cycle for every new feature set or release.
 8. **Create Implementation Plan:** Use `instructions/prd-tech-spec/8-create-implementation-plan.instructions.md` to pick stories for the current sprint and generate a task list.
 9. **Execute Tasks:** Use `instructions/prd-tech-spec/9-execute-task-list.instructions.md` to iteratively build and verify the code.
 
-10. **Store Artifacts:** All generated documents are stored in the `/docs` directory.
+10. **Store Artifacts:** Feature-specific documents (PRDs, specifications, user stories, task lists) are stored in the `/workstream` directory. Foundation documents (product-context.md, technical-guidelines.md) remain in `/docs`.
 
 ### Using the Third Workflow: Single Story GitHub Issue
 
@@ -159,7 +143,7 @@ Run this cycle for every new feature set or release.
 2. **Generate Tasks:** Use `instructions/single-story-workflow/2-generate-task-list.instructions.md` to create a task checklist and update the issue.
 3. **Execute Tasks:** Use `instructions/single-story-workflow/3-execute-task-list.instructions.md` to implement one sub-task at a time and keep GitHub updated.
 
-4. **Store Artifacts:** Refinement and task list documents are stored in `/docs` using:
+4. **Store Artifacts:** Refinement and task list documents are stored in `/workstream` using:
   - `issue-[issue-number]-[issue-name]-refinement.md`
   - `tasks-issue-[issue-number]-[issue-name].md`
 
@@ -168,7 +152,7 @@ Run this cycle for every new feature set or release.
 - The output of **Step 8** creates an Implementation Plan file.
 - The instructions in **Step 9** (`9-execute-task-list.instructions.md`) allow you to execute that plan entirely within the Secondary Workflow context, without needing to reference the Primary Workflow instructions.
 - The output of **Step 7** makes GitHub the source of truth for story tracking.
-- All artifacts are stored in the `/docs` directory for centralized documentation.
+- **Document Organization:** `/workstream` contains active feature work (PRDs, specs, stories, tasks), while `/docs` contains foundational documents (product-context.md, technical-guidelines.md).
 
 ## 💡 Tips
 

@@ -250,7 +250,7 @@ Coverage is considered **Incomplete** when:
 ## Output
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/docs/` (in the working repository)
+- **Location:** `/workstream/` (in the working repository)
 - **Filename:** `coverage-validation-[prd-name].md`
 
 ## Final Instructions

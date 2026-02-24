@@ -128,6 +128,7 @@ The primary audience is the **development team**. These guidelines should be cle
 - **Format:** Markdown (`.md`)
 - **Location:** `/docs/` (in the working repository)
 - **Filename:** `technical-guidelines.md`
+- **Note:** This is one of the few documents that remains in `/docs` as it's a foundational reference document.
 
 ## Final Instructions
 
