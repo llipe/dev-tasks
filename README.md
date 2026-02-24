@@ -50,6 +50,24 @@ A comprehensive AI-assisted workflow that establishes foundational context and t
 - `instructions/prd-tech-spec/8-create-implementation-plan.instructions.md`: Convert selected stories into an actionable task list
 - `instructions/prd-tech-spec/9-execute-task-list.instructions.md`: Task execution and completion protocol
 
+## 🤖 GitHub Agents
+
+### TechDebtUpgradeCopilot
+
+A specialized GitHub Copilot agent for dependency upgrades, framework migrations, and technical debt remediation.
+
+- **Purpose**: Modernize projects by updating packages, frameworks, and runtimes without changing scope or features
+- **Location**: `github/agents/tech-debt-fixer.md`
+- **Supported stacks**: JavaScript/TypeScript (Node.js, Next.js, React, etc.) and Python (Django, FastAPI, pytest, etc.)
+- **Key features**:
+  - Structured 6-phase operating procedure (Identify → Assess → Research → Plan → Implement → Verify)
+  - Mandatory documentation in `/docs/<issue-name>.md`
+  - GitHub issue integration (branch naming, commit messages, PR linking)
+  - Atomic commits with rollback strategies
+  - Behavior preservation with comprehensive verification
+
+**Use when**: Upgrading dependencies, migrating frameworks, or addressing technical debt systematically.
+
 ## 🌟 Benefits
 
 ### Primary Workflow
