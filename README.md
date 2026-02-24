@@ -52,6 +52,16 @@ A comprehensive AI-assisted workflow that establishes foundational context and t
 
 ## 🤖 GitHub Agents
 
+### General Guidelines
+
+All AI coding agents working in this repository should follow the **[Agent Guidelines](github/agents/AGENTS.md)** which cover:
+
+- **Branching strategy**: Always create feature branches, never commit to default branch
+- **Commit message conventions**: Use conventional commits (feat, fix, chore, docs, etc.)
+- **Pull Request workflow**: Create PRs for review, never self-merge
+- **Code quality standards**: Testing, linting, and documentation requirements
+- **GitHub issue integration**: Branch naming and commit referencing
+
 ### TechDebtUpgradeCopilot
 
 A specialized GitHub Copilot agent for dependency upgrades, framework migrations, and technical debt remediation.
