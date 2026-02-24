@@ -168,6 +168,60 @@ Before creating a PR, ensure:
 - [ ] **Documentation updated** - if APIs or features changed
 - [ ] **Commits are atomic** - each commit represents a logical unit of change
 
+### Documentation Maintenance Standard
+
+**For every feature implementation, bug fix, or architectural change, documentation must be updated to reflect the current system state.**
+
+#### When to Update Documentation
+
+Update documentation whenever:
+- A new feature is implemented
+- A bug fix changes system behavior
+- An architectural or technical decision is made
+- A data model changes
+- A user flow or capability is modified
+
+#### Documentation Update Process
+
+1. **Identify affected documentation artifacts:**
+   - `/docs/system-overview.md` — if system architecture or components changed
+   - `/docs/data-model.md` — if data structures or entity relationships changed
+   - `/docs/product-context/` — if capabilities, personas, or user journeys changed
+   - `/docs/technical-guidelines/` — if development standards or architectural constraints changed
+
+2. **Update core documentation files** using the **technical-writer agent** standard:
+   - Reference: `.github/agents/technical-writer.agent.md`
+   - Apply canonical documentation principles: current-state only, single source of truth, no parallel versions
+   - Ensure cross-document consistency (terminology, concepts, rules)
+
+3. **Create an ADR** (Architecture Decision Record) **if technical guidelines are modified:**
+   - Location: `/docs/adr/ADR-###-<kebab-case-title>.md`
+   - Use sequential numbering (ADR-001, ADR-002, etc.)
+   - Required sections: Status, Context, Decision, Alternatives Considered, Consequences, Related
+   - Reference requirements sources and updated documentation files
+
+4. **Include documentation updates in your PR:**
+   - List all updated documentation files in the PR description
+   - Explain why each file was updated (what changed and why)
+   - Link to any ADR created as a result
+
+#### Documentation Standards
+
+- **No parallel versions:** Never create `*-v2.md`, `*-draft.md`, or `*-new.md` files
+- **Current-state only:** Documentation describes the system as implemented, not future intentions
+- **Lightweight but complete:** Avoid redundancy while maintaining clarity
+- **Traceability:** Every documentation change must be traceable to implementation or explicit commitment
+- **Consistency:** Terminology and concepts must align across all artifacts
+
+#### Example PR Checklist Item
+
+```markdown
+- [ ] Documentation updated:
+  - [ ] `/docs/system-overview.md` — Added new component X to architecture section
+  - [ ] `/docs/adr/ADR-005-component-x-design.md` — Created ADR documenting design decision
+  - [ ] Cross-document consistency verified
+```
+
 ---
 
 ## Code Style
@@ -271,10 +325,11 @@ For specific types of work, refer to specialized agent instructions.
 
 For structured AI-assisted development workflows, refer to:
 
-### Primary Workflow (Task-Based Development)
-- **Location:** `.github/instructions/primary-workflow/`
-- **Purpose:** Simple task-based development with PRD → Tasks → Process workflow
-- **Best for:** Straightforward features, quick iterations
+### Single Story Workflow (User Story Implementation)
+- **Location:** `.github/instructions/single-story/`
+- **Purpose:** Streamlined workflow for implementing individual user stories
+- **Best for:** Single feature implementation, focused development tasks
+- **Key steps:** Story context → Implementation → Testing → Documentation
 
 ### Secondary Workflow (PRD-Spec Driven Development)
 - **Location:** `.github/instructions/prd-tech-spec/`
@@ -401,5 +456,5 @@ When in doubt:
 
 ---
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Last Updated:** 2026-02-24
