@@ -356,13 +356,13 @@ For specific types of work, refer to specialized agent instructions.
 For structured AI-assisted development workflows, refer to:
 
 ### Single Story Workflow (User Story Implementation)
-- **Location:** `.github/instructions/single-story/`
+- **Location:** `.github/instructions/ssw-*`
 - **Purpose:** Streamlined workflow for implementing individual user stories
 - **Best for:** Single feature implementation, focused development tasks
 - **Key steps:** Story context → Implementation → Testing → Documentation
 
-### Secondary Workflow (PRD-Spec Driven Development)
-- **Location:** `.github/instructions/prd-tech-spec/`
+### PRD-Spec Driven Development Workflow
+- **Location:** `.github/instructions/workflow-*`
 - **Purpose:** Comprehensive workflow with product context, technical specs, and user stories
 - **Best for:** Complex features, new projects, establishing technical foundations
 - **Steps:**
