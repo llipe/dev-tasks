@@ -222,6 +222,36 @@ Update documentation whenever:
   - [ ] Cross-document consistency verified
 ```
 
+### Workstream Lifecycle Management
+
+**Temporary vs. Permanent Documentation**
+
+- **`/workstream/`** — Temporary artifacts that support current feature implementation
+  - Contains: execution context, implementation decisions, technical specs, progress tracking
+  - **Deletion rule:** Delete after feature is fully implemented, tested, and merged to main
+  
+- **`/docs/`** — Permanent system documentation (single source of truth)
+  - Contains: system architecture, data models, technical guidelines, ADRs, product context
+  - **Retention rule:** Never delete; update to reflect current system state
+
+**Critical migration step before deleting `/workstream/`:**
+
+Before removing workstream artifacts, ensure any **architectural decisions, technical patterns, or guidelines** discovered during implementation are **transferred to permanent documentation**:
+
+1. Extract decision details from workstream → Create ADR in `/docs/adr/ADR-###-<title>.md`
+2. Document pattern/guideline → Update `/docs/technical-guidelines/`
+3. Update related sections → Refresh `/docs/system-overview.md`, `/docs/data-model.md`, or `/docs/product-context/`
+4. Verify consistency → Use technical-writer agent to validate cross-document alignment
+5. **Then delete** `/workstream/` contents
+
+**Example:**
+- Workstream decision: "Implement Observer pattern for event handling"
+- If permanent guideline → Create `ADR-007-observer-pattern-events.md`
+- Update `/docs/technical-guidelines/architecture-patterns.md`
+- Delete `/workstream/` after merging
+
+This ensures knowledge is preserved while keeping temporary working files clean.
+
 ---
 
 ## Code Style
