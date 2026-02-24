@@ -71,7 +71,7 @@ Create a refinement doc with the following structure:
 
 - **Format:** Markdown (`.md`)
 - **Location:** `/docs/`
-- **Filename:** `issue-[issue-number]-[issue-name]refinement.md`
+- **Filename:** `issue-[issue-number]-[issue-name]-refinement.md`
 
 ## Final Instructions
 

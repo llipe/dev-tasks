@@ -159,7 +159,9 @@ Run this cycle for every new feature set or release.
 2. **Generate Tasks:** Use `instructions/single-story-workflow/2-generate-task-list.instructions.md` to create a task checklist and update the issue.
 3. **Execute Tasks:** Use `instructions/single-story-workflow/3-execute-task-list.instructions.md` to implement one sub-task at a time and keep GitHub updated.
 
-4. **Store Artifacts:** Refinement and task list documents are stored in `/docs`.
+4. **Store Artifacts:** Refinement and task list documents are stored in `/docs` using:
+  - `issue-[issue-number]-[issue-name]-refinement.md`
+  - `tasks-issue-[issue-number]-[issue-name].md`
 
 ### Workflow Integration
 

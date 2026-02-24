@@ -50,7 +50,7 @@ This step assumes:
 
 ## Output
 
-- Keep changes and status updates in GitHub and `/docs/tasks-issue-[issue-number].md`.
+- Keep changes and status updates in GitHub and `/docs/tasks-issue-[issue-number]-[issue-name].md`.
 
 ## Final Instructions
 
