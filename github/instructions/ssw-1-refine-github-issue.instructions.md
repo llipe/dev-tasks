@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Refine Single GitHub Issue
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -75,7 +77,7 @@ Create a refinement doc with the following structure:
 
 ## Final Instructions
 
-1. Do NOT start implementation.
-2. Ask clarifying questions if acceptance criteria or scope is unclear.
-3. Update the GitHub Issue with a "Refined Scope" section and the agreed acceptance criteria.
-4. Save the refinement doc in `/workstream/` and present it for review.
+1. You **MUST NOT** start implementation.
+2. You **MUST** ask clarifying questions if acceptance criteria or scope is unclear.
+3. You **MUST** update the GitHub Issue with a "Refined Scope" section and the agreed acceptance criteria.
+4. You **MUST** save the refinement doc in `/workstream/` and present it for review.

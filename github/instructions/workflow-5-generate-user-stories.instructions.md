@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Generate User Stories from Specification
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -14,10 +16,10 @@ This step assumes the following documents already exist:
 
 User Stories are the bridge between specification and implementation. Each story should:
 - Provide measurable business value
-- Be completable in 1-3 days of work for a capable developer
-- Fit into a single Pull Request
-- Include detailed acceptance criteria and implementation guidance
-- Include simple implementation tasks/steps
+- **SHOULD** be completable in 1-3 days of work for a capable developer
+- **MUST** fit into a single Pull Request
+- **MUST** include detailed acceptance criteria and implementation guidance
+- **SHOULD** include simple implementation tasks/steps
 
 ## Process
 
@@ -155,13 +157,13 @@ Consider these factors when sequencing stories:
 
 ## Final Instructions
 
-1. Do NOT start implementing
-2. Read the referenced Technical Specification
-3. Identify logical story boundaries that provide independent value
-4. Ask clarifying questions about prioritization and sequencing
-5. Generate detailed User Stories with all required sections
-6. Ensure stories are appropriately sized (1-3 days of work)
-7. Verify stories are sequenced logically with dependency management
-8. Present stories for user review
-9. Save the finalized version
-10. Provide a summary of the total number of stories and high-level execution plan
+1. You **MUST NOT** start implementing
+2. You **MUST** read the referenced Technical Specification
+3. You **MUST** identify logical story boundaries that provide independent value
+4. You **SHOULD** ask clarifying questions about prioritization and sequencing
+5. You **MUST** generate detailed User Stories with all required sections
+6. You **MUST** ensure stories are appropriately sized (1-3 days of work)
+7. You **MUST** verify stories are sequenced logically with dependency management
+8. You **MUST** present stories for user review
+9. You **MUST** save the finalized version
+10. You **MUST** provide a summary of the total number of stories and high-level execution plan

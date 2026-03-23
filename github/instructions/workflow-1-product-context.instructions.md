@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Document Product Context
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -59,7 +61,7 @@ The primary audience is the **product team and developers**. The document should
 
 ## Final Instructions
 
-1. Do NOT start implementing anything
-2. Ask the user clarifying questions to fill in gaps
-3. Use their answers to refine and improve the Product Context document
-4. Save the finalized document and present it to the user for review
+1. You **MUST NOT** start implementing anything
+2. You **MUST** ask the user clarifying questions to fill in gaps
+3. You **SHOULD** use their answers to refine and improve the Product Context document
+4. You **MUST** save the finalized document and present it to the user for review

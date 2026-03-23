@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Create Implementation Plan
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -53,11 +55,11 @@ The output **MUST** follow the format required by the Primary Workflow's `proces
 
 When converting a **User Story** to a **Parent Task**:
 
-1. **Title:** Use the format `Implement Story [ID]: [Title]`.
+1. **Title:** You **MUST** use the format `Implement Story [ID]: [Title]`.
 2. **Sub-tasks:**
-   - Convert every item in the **Implementation Steps** section of the story into a sub-task.
-   - Add specific sub-tasks for **Acceptance Criteria** verification.
-   - Add specific sub-tasks for **Testing** (Unit/Integration).
+   - You **MUST** convert every item in the **Implementation Steps** section of the story into a sub-task.
+   - You **MUST** add specific sub-tasks for **Acceptance Criteria** verification.
+   - You **MUST** add specific sub-tasks for **Testing** (Unit/Integration).
    - **Data Models & Seed Data:** If the story involves creating or modifying data models/entities, include a specific sub-task to generate seed data for development. Format: `[X].Y Create seed data for [Entity Name]` with details about sample records needed for testing and development.
 3. **Context:** You can add a `> Note:` bock under the parent task to include the User Story text or Business Rules for easy reference, but keep the checkbox structure clean.
 4. **Relevant Files:** Aggregate all "Files to Create/Modify" from the selected stories into the top-level `Relevant Files` section.
@@ -96,10 +98,10 @@ If this is a **greenfield project** or implementing a **new base component**, in
 
 ## Final Instructions
 
-1. Read the `user-stories` file.
-2. List available stories and ask the user for their selection.
-3. Convert the selected stories into the strict `tasks.md` format.
-4. Ensure all "Files to Create/Modify", "Implementation Steps", and "Acceptance Criteria" are preserved in the translation.
-5. For each selected story, update the corresponding GitHub Issue with the task checklist (using MCP). If no issue exists, ask the user whether to create it first.
-6. Save the file as `tasks-[prd-name]-plan.md` (or a custom name if users prefers).
-7. Inform the user they can now use the execution instruction to start coding, following the GitHub issue task checklist.
+1. You **MUST** read the `user-stories` file.
+2. You **MUST** list available stories and ask the user for their selection.
+3. You **MUST** convert the selected stories into the strict `tasks.md` format.
+4. You **MUST** ensure all "Files to Create/Modify", "Implementation Steps", and "Acceptance Criteria" are preserved in the translation.
+5. For each selected story, you **MUST** update the corresponding GitHub Issue with the task checklist (using MCP). If no issue exists, you **MUST** ask the user whether to create it first.
+6. You **MUST** save the file as `tasks-[prd-name]-plan.md` (or a custom name if the user prefers).
+7. You **MUST** inform the user they can now use the execution instruction to start coding, following the GitHub issue task checklist.

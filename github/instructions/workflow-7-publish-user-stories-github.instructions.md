@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Publish User Stories to GitHub (MCP)
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -79,8 +81,8 @@ Create a publication report:
 
 ## Final Instructions
 
-1. Read the `user-stories` file.
-2. Ask clarifying questions and confirm target repo.
-3. Publish each story as a GitHub Issue using MCP.
-4. Save the publication report with issue links.
-5. Inform the user that GitHub is now the source of truth for execution tracking.
+1. You **MUST** read the `user-stories` file.
+2. You **MUST** ask clarifying questions and confirm target repo.
+3. You **MUST** publish each story as a GitHub Issue using MCP.
+4. You **MUST** save the publication report with issue links.
+5. You **MUST** inform the user that GitHub is now the source of truth for execution tracking.

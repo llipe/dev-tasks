@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Generate Technical Specification
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -146,10 +148,10 @@ The primary audience is the **development team**. Specification should be detail
 
 ## Final Instructions
 
-1. Do NOT start implementing
-2. Read the referenced PRD and Technical Guidelines documents
-3. Ask clarifying questions about technical implementation approach
-4. Use answers to create a comprehensive Technical Specification
-5. Ensure the specification clearly maps PRD requirements to technical solutions
-6. Present for user review
-7. Save the finalized version
+1. You **MUST NOT** start implementing
+2. You **MUST** read the referenced PRD and Technical Guidelines documents
+3. You **SHOULD** ask clarifying questions about technical implementation approach
+4. You **SHOULD** use answers to create a comprehensive Technical Specification
+5. You **MUST** ensure the specification clearly maps PRD requirements to technical solutions
+6. You **MUST** present for user review
+7. You **MUST** save the finalized version

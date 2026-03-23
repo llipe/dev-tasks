@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Create Base PRD
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -93,9 +95,9 @@ The generated Base PRD should include:
 
 ## Scope Guidance
 
-- A PRD should define a coherent feature or feature set that can be delivered in a reasonable timeframe (typically 1-3 iterations/sprints).
-- Total user stories should ideally not exceed 50.
-- If the scope is too large, consider breaking it into multiple PRDs that will be sequenced over time.
+- A PRD **SHOULD** define a coherent feature or feature set that can be delivered in a reasonable timeframe (typically 1-3 iterations/sprints).
+- Total user stories **SHOULD NOT** exceed 50.
+- If the scope is too large, you **SHOULD** consider breaking it into multiple PRDs that will be sequenced over time.
 
 ## Target Audience
 
@@ -109,9 +111,9 @@ The primary audience is the **development team** and **product stakeholders**. T
 
 ## Final Instructions
 
-1. Do NOT start implementing anything
-2. Ask the user clarifying questions to fully understand the feature scope
-3. Use their answers to create a comprehensive Base PRD
-4. Present the PRD for user review
-5. Iterate based on user feedback
-6. Save the finalized version
+1. You **MUST NOT** start implementing anything
+2. You **MUST** ask the user clarifying questions to fully understand the feature scope
+3. You **SHOULD** use their answers to create a comprehensive Base PRD
+4. You **MUST** present the PRD for user review
+5. You **SHOULD** iterate based on user feedback
+6. You **MUST** save the finalized version

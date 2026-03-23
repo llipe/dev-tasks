@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Define Technical Guidelines
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -132,8 +134,8 @@ The primary audience is the **development team**. These guidelines should be cle
 
 ## Final Instructions
 
-1. Do NOT start implementing anything
-2. Ask the user clarifying questions to define all major technical decisions
-3. Use their answers to create a comprehensive Technical Guidelines document
-4. Present the document for user review and iteration
-5. Save the finalized version
+1. You **MUST NOT** start implementing anything
+2. You **MUST** ask the user clarifying questions to define all major technical decisions
+3. You **SHOULD** use their answers to create a comprehensive Technical Guidelines document
+4. You **MUST** present the document for user review and iteration
+5. You **MUST** save the finalized version

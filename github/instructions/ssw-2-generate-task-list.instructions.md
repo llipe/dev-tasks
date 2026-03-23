@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Generate Task List for Single Issue
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -47,10 +49,10 @@ The task list MUST follow the `process-task-list` format:
 
 ## Conversion Guidelines
 
-- Convert each acceptance criterion into an explicit verification sub-task.
-- Convert each testing requirement into a sub-task.
-- Include data model or seed data tasks when applicable.
-- Keep the list small and sequential; avoid parallel tasks.
+- You **MUST** convert each acceptance criterion into an explicit verification sub-task.
+- You **MUST** convert each testing requirement into a sub-task.
+- You **SHOULD** include data model or seed data tasks when applicable.
+- You **MUST** keep the list small and sequential; **MUST NOT** introduce parallel tasks.
 
 ## Clarifying Questions
 
@@ -67,7 +69,7 @@ The task list MUST follow the `process-task-list` format:
 
 ## Final Instructions
 
-1. Do NOT start implementation.
-2. Ensure the task list mirrors the refined issue scope.
-3. Update the GitHub Issue body to include the checklist.
-4. Save the task list in `/workstream/` and present it for review.
+1. You **MUST NOT** start implementation.
+2. You **MUST** ensure the task list mirrors the refined issue scope.
+3. You **MUST** update the GitHub Issue body to include the checklist.
+4. You **MUST** save the task list in `/workstream/` and present it for review.

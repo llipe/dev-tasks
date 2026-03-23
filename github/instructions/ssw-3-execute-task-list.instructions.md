@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Execute Single-Issue Task List
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -18,35 +20,35 @@ This step assumes:
 
 ### Before Starting Work
 
-1. Confirm the GitHub Issue is open.
-2. Create a new branch from the latest default branch.
+1. You **MUST** confirm the GitHub Issue is open.
+2. You **MUST** create a new branch from the latest default branch.
    - Branch format: `issue-[issue-number]-<short-description>`
-3. Open a **draft PR** against the default branch.
+3. You **MUST** open a **draft PR** against the default branch.
    - PR title should follow Conventional Commits, e.g., `fix: implement issue 37`.
    - Link the GitHub Issue in the PR description using `Closes #<issue-number>`.
-4. Ensure the task list in the GitHub Issue matches the local `/workstream/tasks-issue-[issue-number]-[issue-name].md` file.
+4. You **MUST** ensure the task list in the GitHub Issue matches the local `/workstream/tasks-issue-[issue-number]-[issue-name].md` file.
 
 ### During Implementation
 
-- Execute **one sub-task at a time**.
-- After each sub-task, mark it `[x]` in both the local task file and the GitHub Issue checklist.
-- Add brief issue comments for major milestones or changes.
-- Update the "Relevant Files" section if files change.
+- You **MUST** execute **one sub-task at a time**.
+- After each sub-task, you **MUST** mark it `[x]` in both the local task file and the GitHub Issue checklist.
+- You **SHOULD** add brief issue comments for major milestones or changes.
+- You **MUST** update the "Relevant Files" section if files change.
 
 ### Before Closing the Issue
 
-1. All acceptance criteria are verified.
-2. All tests listed in the checklist are completed.
-3. The PR is converted from draft to ready for review.
-4. The PR is approved by at least one reviewer.
-5. The PR is merged into the default branch.
-6. **Only then** close the issue.
+1. All acceptance criteria **MUST** be verified.
+2. All tests listed in the checklist **MUST** be completed.
+3. The PR **MUST** be converted from draft to ready for review.
+4. The PR **MUST** be approved by at least one reviewer.
+5. The PR **MUST** be merged into the default branch.
+6. You **MUST NOT** close the issue until all steps above are complete.
 
 ## Task List Discipline
 
-- Do not start the next sub-task until the user says "yes".
-- When all sub-tasks are `[x]`, mark the parent task as `[x]`.
-- Keep GitHub Issue and local task list aligned at all times.
+- You **MUST NOT** start the next sub-task until the user says "yes".
+- When all sub-tasks are `[x]`, you **MUST** mark the parent task as `[x]`.
+- You **MUST** keep GitHub Issue and local task list aligned at all times.
 
 ## Output
 
@@ -54,7 +56,7 @@ This step assumes:
 
 ## Final Instructions
 
-1. Always respect the task list execution order.
-2. Keep GitHub Issue updated with checklist and progress comments.
-3. Ensure branch, PR, and issue naming follow the repository guidelines.
-4. Stop after each sub-task and request user approval.
+1. You **MUST** always respect the task list execution order.
+2. You **MUST** keep GitHub Issue updated with checklist and progress comments.
+3. You **MUST** ensure branch, PR, and issue naming follow the repository guidelines.
+4. You **MUST** stop after each sub-task and request user approval.

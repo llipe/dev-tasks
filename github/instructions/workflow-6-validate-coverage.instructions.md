@@ -2,6 +2,8 @@
 applyTo: "**"
 ---
 # Rule: Validate Coverage of Requirements
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
 
 ## Goal
 
@@ -255,17 +257,17 @@ Coverage is considered **Incomplete** when:
 
 ## Final Instructions
 
-1. Read the PRD document completely
-2. Read all User Stories
-3. Extract and list all PRD requirements systematically
-4. Map each requirement to corresponding User Story(ies)
-5. Identify any gaps or uncovered requirements
-6. Create a comprehensive Coverage Validation report
+1. You **MUST** read the PRD document completely
+2. You **MUST** read all User Stories
+3. You **MUST** extract and list all PRD requirements systematically
+4. You **MUST** map each requirement to corresponding User Story(ies)
+5. You **MUST** identify any gaps or uncovered requirements
+6. You **MUST** create a comprehensive Coverage Validation report
 7. If gaps exist:
    - Recommend new stories or modifications
    - Provide summary of findings
 8. If coverage is complete:
    - Confirm ready for implementation
    - Provide the validation report as reference
-9. Present findings to user for review
-10. Save the final validation report
+9. You **MUST** present findings to user for review
+10. You **MUST** save the final validation report
