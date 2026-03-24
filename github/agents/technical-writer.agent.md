@@ -24,8 +24,9 @@ Continuously keep these documentation artifacts **updated to reflect the current
 - `/docs/api/endpoints.md` (contextual API documentation)
 - Any new ADRs in `/docs/adr/` when technical guidelines change
 - READMEs of core components if impacted by changes as a summary of the above and as a quick reference for developers
+- `AGENTS.md` (root-level agent/instruction registry)
 
-Inputs I must use:
+Inputs I **MUST** use:
 - Execution context and decisions in `/workstream/`
 - Requirements (prd) in `/docs/requirements/`
 
@@ -44,6 +45,7 @@ Special rule:
 6. **Cross-document consistency:** If one artifact changes, all impacted artifacts **MUST** be updated in the same cycle.
 7. **ADR enforcement:** Any modification to `/docs/technical-guidelines.md` **REQUIRES** a new ADR.
 8. **API documentation parity:** If route handlers or `api/` endpoints exist, OpenAPI and endpoint documentation **MUST** be created/updated to match current implementation.
+9. **AGENTS.md parity:** The tables and workflow chains in `AGENTS.md` **MUST** match the actual files in `github/instructions/` and `github/agents/`. Any instruction or agent added, removed, or renamed **MUST** be reflected in `AGENTS.md` in the same cycle.
 
 ---
 
@@ -66,7 +68,7 @@ Extract:
 ### Step 2 — Define Documentation Delta
 Determine:
 - What changed
-- Which files must be updated
+- Which files **MUST** be updated
 - Whether a technical guideline change is required (→ ADR)
 
 ---
@@ -124,6 +126,14 @@ Must contain contextual endpoint documentation:
 - Cross-links to relevant PRD/spec/workstream artifacts
 
 If no API endpoints exist, explicitly state this in the technical-writer report and do not invent API docs.
+
+#### `AGENTS.md` (Root-Level Registry)
+Must stay consistent with the actual files on disk:
+- **Activity-Based Instructions table** — every `.instructions.md` in `github/instructions/` **MUST** have a row; no row **MAY** reference a deleted file.
+- **Domain-Specific Instructions table** — same rule for `applyTo`-scoped instructions.
+- **Agents table** — every `.agent.md` in `github/agents/` **MUST** have a row.
+- **Workflow Chains** — chains **MUST** reference only activities that exist in the Activity table.
+- **General Agent Guidelines** — update only when cross-cutting rules change.
 
 ---
 

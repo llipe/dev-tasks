@@ -69,12 +69,12 @@ This project uses:
    - You **MUST** add `'use client'` only when the component uses state, effects, browser APIs, event handlers, or client hooks such as `useRouter()`.
 
 2. You **MUST** keep pages thin.
-   - A page should primarily define metadata, route-level composition, and high-level layout.
+   - A page **SHOULD** primarily define metadata, route-level composition, and high-level layout.
    - Move repeated UI sections into components.
    - Move validation, formatting, mapping, and business rules into `@/lib`.
 
 3. You **MUST** keep components focused.
-   - One component should have one clear responsibility.
+   - One component **SHOULD** have one clear responsibility.
    - If JSX becomes long or repeats existing patterns, extract smaller subcomponents.
 
 4. You **SHOULD** prefer composition over large monolithic components.
@@ -99,7 +99,7 @@ This project uses:
 ## Next.js-Specific Rules
 
 1. **Export `metadata` for pages when relevant**.
-   - Public and major app pages should provide title and description.
+   - Public and major app pages **SHOULD** provide title and description.
    - Keep titles consistent with the product name: `E-Commerce Management Hub`.
 
 2. **Use the right navigation primitive**.
@@ -113,8 +113,8 @@ This project uses:
    - Do not hide route-specific business logic inside presentational components.
 
 4. **Prefer route-group consistency**.
-   - Public auth screens should match the current auth page pattern.
-   - Protected pages should match the existing protected layout and page shell.
+   - Public auth screens **SHOULD** match the current auth page pattern.
+   - Protected pages **SHOULD** match the existing protected layout and page shell.
 
 5. **Prefer server-first data fetching**.
    - Fetch data in Server Components by default.
@@ -122,8 +122,8 @@ This project uses:
    - Do not move simple read-only page data fetching into client components unless there is a clear product need.
 
 6. **Keep async boundaries intentional**.
-   - Server Components should handle initial page data and route-level loading needs.
-   - Client components should focus on interaction, optimistic UI, transient state, and browser-only behavior.
+   - Server Components **SHOULD** handle initial page data and route-level loading needs.
+   - Client components **SHOULD** focus on interaction, optimistic UI, transient state, and browser-only behavior.
 
 ## Styling and Design Rules
 
@@ -140,7 +140,7 @@ This project uses:
      - Amber Flame: `#ffb703`
      - Tiger Orange: `#fb8500`
    - Neutral surfaces:
-     - Primary light surfaces should prefer white or near-white backgrounds.
+     - Primary light surfaces **SHOULD** prefer white or near-white backgrounds.
      - Dark sections may use dark gray or near-black backgrounds when stronger contrast or emphasis is needed.
    - Semantic usage guidance:
      - Primary brand/background accent: Deep Space Blue
@@ -153,7 +153,7 @@ This project uses:
    - Prefer white, off-white, dark gray, and near-black as the structural backgrounds.
    - Use the palette colors as accents, emphasis colors, and branded surfaces.
    - Avoid rainbow-like mixing of all five colors in the same component.
-   - A single screen should usually have:
+   - A single screen **SHOULD** usually have:
      - one dominant brand color
      - one supporting accent color
      - neutral backgrounds
@@ -188,7 +188,7 @@ This project uses:
 
 8. You **MUST** design mobile-first.
    - Start with small-screen layouts and scale up for tablet and desktop.
-   - Every new page and major component should work across small, medium, and large breakpoints.
+   - Every new page and major component **SHOULD** work across small, medium, and large breakpoints.
    - Prefer progressive enhancement of spacing, grid layout, and density instead of separate disconnected layouts.
 
 9. **Use dark surfaces deliberately**.
