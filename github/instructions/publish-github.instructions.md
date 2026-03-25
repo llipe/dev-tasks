@@ -33,8 +33,7 @@ This activity assumes the following document exists:
 ## Issue Formatting Rules
 
 Each GitHub Issue **MUST** be created using:
-
-- **Title:** `Story [ID]: [Title]`
+- **Title:** `[PRD-<prd-number or name>] Story [ID]: [Title]`
 - **Body:**
   - User Story (role, goal, benefit)
   - Context
