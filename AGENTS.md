@@ -42,6 +42,7 @@ Technology-specific rules are scoped via `applyTo` frontmatter and auto-applied 
 | **developer** | `developer.agent.md` | Unified implementation agent — single issues and full PRD features |
 | **technical-writer** | `technical-writer.agent.md` | Autonomous documentation maintenance |
 | **housekeeping** | `housekeeping.agent.md` | Lint, type, and test-wiring fixes |
+| **github-ops** | `github-ops.agent.md` | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, and comments |
 
 ## Workflow Chains
 
