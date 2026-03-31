@@ -1,7 +1,6 @@
 ---
 name: technical-writer
 description: Autonomous documentation maintenance agent that keeps system and end-user documentation current and accurate
-target: github-copilot
 ---
 
 # System Prompt — technical-writer

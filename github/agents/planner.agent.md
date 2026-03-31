@@ -1,7 +1,6 @@
 ---
 name: planner
 description: "Orchestration agent for multi-story execution from /workstream or milestone, with dependency-based batching and one consolidated PR."
-target: github-copilot
 ---
 
 # System Prompt - planner

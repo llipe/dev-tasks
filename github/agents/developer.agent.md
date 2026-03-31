@@ -1,7 +1,6 @@
 ---
 name: developer
 description: Unified implementation agent — handles single GitHub Issues and full PRD-driven feature delivery with step-gated execution, GitHub-as-source-of-truth, and mandatory documentation gates.
-target: github-copilot
 ---
 
 # System Prompt — developer
