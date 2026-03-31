@@ -227,9 +227,22 @@ Enforces: branch/PR discipline, checklist synchronization (local ↔ GitHub), an
 
 ### `planner`
 
-Multi-story orchestration agent. Reads a PRD implementation plan from `/workstream/` (or milestone issues), infers dependencies, groups stories into ordered batches, delegates implementation to `developer`, and opens one consolidated integration PR after batch completion.
+Multi-story orchestration agent. Reads a PRD implementation plan from `/workstream/` (or a GitHub milestone), infers inter-story dependencies, groups stories into topologically-ordered parallel batches, delegates each story to `developer` in Execute Mode, and opens one consolidated integration PR when all batches complete.
 
-Execution model: **parallel within a batch, sequential across batches**. If true parallel execution is unavailable, it falls back to sequential execution while preserving batch order. It always pauses for explicit approval after presenting the batch plan.
+**Execution model:** parallel within a batch, sequential across batches. Falls back to sequential execution while preserving batch order when true parallelism is unavailable.
+
+**Six-phase workflow:**
+
+| Phase | Name | What Happens |
+| ----- | ---- | ------------ |
+| 0 | Discover Task Source | Locates a `/workstream` task file or fetches milestone issues via `github-ops` |
+| 1 | Parse Stories | Extracts story IDs, files, acceptance criteria, and infers dependencies using structural cues |
+| 2 | Dependency Graph and Batch Plan | Builds a DAG, topologically sorts, and presents a batch plan — **mandatory user approval required** |
+| 3 | Pre-flight | Verifies clean working tree, pulls `main`, creates `integration/<plan-id>-<short-description>` branch |
+| 4 | Delegate to `developer` | Hands each story to `developer` in `pre-approved autonomous batch` mode with integration branch override |
+| 5 | Consolidated PR | Merges story branches into the integration branch, runs tests, and opens one PR to `main` |
+
+`planner` never writes application code. All GitHub artifacts are routed through `github-ops`.
 
 **When to use:** Coordinating multiple stories/issues from the same PRD while keeping implementation parallelizable and delivery consolidated.
 
@@ -247,6 +260,22 @@ Code-quality specialist for TypeScript, JavaScript, and Node.js projects. Fixes 
 
 ---
 
+## Sample Prompts
+
+Ready-to-use prompt templates for each agent live in `github/prompts/`. Copy them alongside the agents and instructions into `.github/prompts/` in your project to invoke agents directly from GitHub Copilot Chat.
+
+| Prompt File | Agent | Mode |
+| ----------- | ----- | ---- |
+| `developer-issue.prompt.md` | `developer` | Issue Mode — implement a GitHub Issue |
+| `developer-feature.prompt.md` | `developer` | Feature Mode — build a feature from a description |
+| `developer-execute.prompt.md` | `developer` | Execute Mode — run an existing task list |
+| `planner.prompt.md` | `planner` | Orchestrate a multi-story workstream or milestone |
+| `technical-writer.prompt.md` | `technical-writer` | Audit and update documentation |
+| `housekeeping.prompt.md` | `housekeeping` | Fix lint, types, and test-wiring issues |
+| `github-ops.prompt.md` | `github-ops` | Audit GitHub artifacts for consistency |
+
+---
+
 ## File Organization
 
 | Directory | Contents |
@@ -258,6 +287,7 @@ Code-quality specialist for TypeScript, JavaScript, and Node.js projects. Fixes 
 | `.github/instructions/` | Activity instruction files |
 | `.github/instructions/domain/` | Project-specific coding standards (auto-applied via `applyTo`) |
 | `.github/agents/` | Agent definition files |
+| `.github/prompts/` | Sample agent invocation prompts |
 
 ---
 
