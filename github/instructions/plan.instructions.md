@@ -24,13 +24,13 @@ This activity adapts to the input — it works with a user stories file (from th
 2. **Review Available Work:** You **MUST** read the source and list available stories or the issue scope.
 3. **Select Scope:** In Stories Mode, you **MUST** ask which stories to include. In Issue Mode, the scope is the single issue.
 4. **Generate Task List:** You **MUST** produce a `tasks-*.md` file in the required format.
-5. **Publish to GitHub:** You **MUST** update the corresponding GitHub Issue(s) with the task checklist.
+5. **Publish to GitHub:** You **MUST** update the corresponding GitHub Issue(s) with the task checklist by delegating to `github-ops` whenever possible.
 6. **Save Output.**
 
 ## Clarifying Questions
 
 - In Stories Mode: "Which stories would you like to include? (Recommended: 1-3 stories)"
-- "Should I update the GitHub Issues with the task checklist now (using MCP)?"
+- "Should I update the GitHub Issues with the task checklist now (delegating to github-ops)?"
 - "Is this a greenfield/new project, or an existing codebase?"
 - "Are there specific implementation details or dependencies I should consider?"
 - "Do any selected stories involve data model creation? What sample/seed data should be included?"
@@ -49,14 +49,14 @@ The task list **MUST** follow this structure:
 
 ## Tasks
 
-- [ ] 1.0 Implement Story [ID]: [Story Title]  (or: Implement Issue [#]: [Title])
+- [ ] 1.0 Implement Story [ID]: [Story Title]  (or: Implement Issue [#] - [Github_Issue_URL]: [Title])
   - [ ] 1.1 [First implementation step]
   - [ ] 1.2 [Second implementation step]
   - [ ] 1.x Verify Acceptance Criterion: [Criterion 1]
   - [ ] 1.y Verify Acceptance Criterion: [Criterion 2]
   - [ ] 1.z Run Tests: [Test Requirements]
 
-- [ ] 2.0 Implement Story [ID]: [Story Title]
+- [ ] 2.0 Implement Story [ID]: [Story Title]  (or: Implement Issue [#] - [Github_Issue_URL]: [Title])
   - [ ] 2.1 [First implementation step]
   - ...
 ```
@@ -112,6 +112,6 @@ If this is a **greenfield project** or a **new component**, you **MUST** include
 3. In Stories Mode, you **MUST** list available stories and ask the user for their selection.
 4. You **MUST** convert the selection into the strict task list format.
 5. You **MUST** ensure all Implementation Steps, Acceptance Criteria, and Testing requirements are preserved as sub-tasks.
-6. You **MUST** update the corresponding GitHub Issue(s) with the task checklist (using MCP). If no issue exists, you **MUST** ask the user whether to create one first.
+6. You **MUST** update the corresponding GitHub Issue(s) with the task checklist by delegating to `github-ops` whenever possible. If no issue exists, you **MUST** ask the user whether to create one first.
 7. You **MUST** save the task list file.
 8. You **MUST** inform the user they can now use the **implement** activity to start coding.

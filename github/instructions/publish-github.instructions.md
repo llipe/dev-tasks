@@ -17,10 +17,12 @@ This activity assumes the following document exists:
 ## Process
 
 1. **Receive Input:** User provides the reference to the user stories file and the GitHub repository target.
-2. **Clarify Publishing Rules:** You **MUST** ask for labeling, milestones, assignees, and any issue template constraints.
+2. **Clarify Publishing Rules:** You **MUST** ask for labeling, milestones, assignees, and any issue template constraints, and you **MUST** align them with `github-ops` conventions.
 3. **Map Stories to Issues:** You **MUST** create one GitHub Issue per user story.
-4. **Publish via MCP:** You **MUST** use MCP GitHub tooling to create the issues in the specified repo.
+4. **Publish via MCP:** You **MUST** delegate issue creation and metadata application to `github-ops` whenever possible.
 5. **Save Output.**
+
+If `github-ops` delegation is unavailable in the current runtime, you **MUST** apply `github-ops` issue, label, milestone, and comment conventions directly and explicitly note that fallback in your status output.
 
 ## Clarifying Questions
 
@@ -45,6 +47,8 @@ Each GitHub Issue **MUST** be created using:
   - Files to Create/Modify
   - Definition of Done Checklist
   - Open Questions
+
+All issue formatting and metadata **MUST** conform to `github-ops` conventions.
 
 ## Output Structure
 
@@ -80,6 +84,6 @@ You **MUST** create a publication report:
 
 1. You **MUST** read the user stories file.
 2. You **MUST** ask clarifying questions and confirm the target repo.
-3. You **MUST** publish each story as a GitHub Issue using MCP.
+3. You **MUST** publish each story as a GitHub Issue by delegating to `github-ops` whenever possible.
 4. You **MUST** save the publication report with issue links.
 5. You **MUST** inform the user that GitHub is now the source of truth for execution tracking.

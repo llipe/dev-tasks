@@ -23,12 +23,15 @@ This activity assumes:
 ## Before Starting Work
 
 1. You **MUST** confirm the GitHub Issue is open.
-2. You **MUST** create a new branch from the latest default branch.
-   - Branch format: `issue-[issue-number]-<short-description>` or `story-[id]-<short-description>`
-3. You **MUST** open a **draft Pull Request** against the default branch.
+2. You **MUST** create a new branch from the latest default branch by delegating branch naming and creation to `github-ops` whenever possible.
+   - Branch format: `issue/<issue-number>-<short-description>` or `story/<id>-<short-description>`
+3. You **MUST** open a **draft Pull Request** by delegating to `github-ops` whenever possible.
+   - Base branch is the default branch unless an orchestrating caller explicitly provides a base-branch override.
    - PR title **MUST** follow Conventional Commits (e.g., `feat: implement issue 37`).
    - PR description **MUST** include `Closes #<issue-number>`.
 4. You **MUST** ensure the task list in the GitHub Issue matches the local `/workstream/tasks-*.md` file.
+
+If `github-ops` delegation is unavailable in the current runtime, you **MUST** apply `github-ops` conventions directly and explicitly note that fallback in your status output.
 
 ---
 
@@ -58,6 +61,7 @@ This activity assumes:
 ### Progress Updates
 
 - You **SHOULD** add brief issue or PR comments for major milestones or meaningful changes.
+- You **SHOULD** route issue/PR comment updates through `github-ops` whenever possible.
 
 ---
 
@@ -78,7 +82,7 @@ This activity assumes:
 
 | Phase | Rule |
 |-------|------|
-| **Before coding** | Confirm issue open → Create branch → Open draft PR → Sync checklists |
+| **Before coding** | Confirm issue open → Create branch (`github-ops`) → Open draft PR (`github-ops`) → Sync checklists |
 | **During coding** | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval |
 | **Before closing** | All ACs verified → Tests pass → PR ready → Approved → Merged → Then close issue |
 
@@ -94,6 +98,6 @@ This activity assumes:
 
 1. You **MUST** always respect the task list execution order.
 2. You **MUST** keep the GitHub Issue updated with checklist and progress comments.
-3. You **MUST** ensure branch, PR, and issue naming follow repository guidelines.
+3. You **MUST** ensure branch, PR, and issue naming follow `github-ops` conventions.
 4. You **MUST** stop after each sub-task and request user approval.
 5. You **MUST NOT** close a GitHub Issue without confirming the PR has been reviewed, approved, and merged.

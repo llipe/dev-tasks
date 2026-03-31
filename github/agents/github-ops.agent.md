@@ -143,11 +143,13 @@ Branch names **MUST** follow this pattern:
 | `fix` | Bug fix | `fix/87-session-expiry` |
 | `chore` | Maintenance task | `chore/91-upgrade-node` |
 | `docs` | Documentation only | `docs/45-api-reference` |
+| `integration` | Multi-story consolidation branch | `integration/prd-auth-password-reset` |
 
 Rules:
 - **MUST** use lowercase and hyphens only (no underscores, no camelCase).
 - Short description **MUST** be 2–5 words, hyphen-separated.
-- **MUST** include the issue or story number.
+- Branches of type `issue`, `story`, `fix`, `chore`, and `docs` **MUST** include the issue or story number.
+- Branches of type `integration` **MUST** identify the plan, PRD, or milestone being consolidated.
 
 ---
 
@@ -157,10 +159,19 @@ Rules:
 
 The following label set **MUST** exist in every project. `github-ops` **MUST** create any missing labels when first invoked on a repository.
 
+### Standardized Main Issue Tags
+
+The following tags are the canonical, most-used tags for issues and **MUST** be preferred over ad-hoc alternatives:
+- Type tags: `type: enhancement`, `type: bug`, `type: security`, `type: tech-debt`, `type: other`
+- Scope tags: `scope: frontend`, `scope: backend`, `scope: mobile`
+
 | Category | Label | Color | Description |
 |----------|-------|-------|-------------|
-| **Type** | `type: feature` | `#0E8A16` | New feature or enhancement |
+| **Type** | `type: enhancement` | `#0E8A16` | New feature or enhancement |
 | | `type: bug` | `#D93F0B` | Something is broken |
+| | `type: security` | `#B60205` | Security vulnerability, hardening, or compliance work |
+| | `type: tech-debt` | `#5319E7` | Refactoring, cleanup, or deferred engineering improvements |
+| | `type: other` | `#EDEDED` | Work that does not fit other type categories |
 | | `type: chore` | `#FEF2C0` | Maintenance or dependency work |
 | | `type: docs` | `#0075CA` | Documentation changes |
 | | `type: refactor` | `#D4C5F9` | Code restructure, no behavior change |
@@ -174,6 +185,7 @@ The following label set **MUST** exist in every project. `github-ops` **MUST** c
 | | `status: in-progress` | `#1D76DB` | Actively being worked on |
 | **Scope** | `scope: frontend` | `#BFD4F2` | Frontend changes |
 | | `scope: backend` | `#D4C5F9` | Backend changes |
+| | `scope: mobile` | `#FAD8C7` | Mobile app or mobile-specific changes |
 | | `scope: infra` | `#E6E6E6` | Infrastructure or CI/CD |
 | | `scope: api` | `#C2E0C6` | API surface changes |
 

@@ -34,11 +34,13 @@ If the user provides a **feature description**, you **MUST** produce a full PRD.
 ### Process
 
 1. **Receive Issue Reference:** User provides GitHub Issue number and repo.
-2. **Read Issue:** Use MCP to fetch issue body, comments, labels, and status.
+2. **Read Issue:** Delegate to `github-ops` to fetch issue body, comments, labels, and status whenever possible.
 3. **Ask Clarifying Questions:** Focus on missing scope, acceptance criteria, and constraints.
 4. **Refine Scope:** Summarize scope, non-goals, risks, and dependencies.
-5. **Update GitHub Issue:** Add or update a "Refined Scope" section in the issue body.
+5. **Update GitHub Issue:** Delegate to `github-ops` to add or update a "Refined Scope" section in the issue body.
 6. **Save Output.**
+
+If `github-ops` delegation is unavailable in the current runtime, you **MUST** apply `github-ops` conventions directly and explicitly note that fallback in your status output.
 
 ### Clarifying Questions (ask only what is missing)
 
@@ -153,4 +155,4 @@ If the user provides a **feature description**, you **MUST** produce a full PRD.
 4. You **MUST** present the document for user review.
 5. You **SHOULD** iterate based on feedback.
 6. You **MUST** save the finalized document.
-7. In Issue Refinement mode, you **MUST** update the GitHub Issue with a "Refined Scope" section.
+7. In Issue Refinement mode, you **MUST** update the GitHub Issue with a "Refined Scope" section by delegating to `github-ops` whenever possible.

@@ -20,7 +20,7 @@ This system brings structure and clarity to AI-assisted development by:
 
 Copy the `github/` folder into your repo's `.github/` directory:
 
-```
+```text
 your-repo/
 ├── .github/
 │   ├── instructions/          # Activity instructions
@@ -64,10 +64,11 @@ This produces `docs/product-context.md` and `docs/technical-guidelines.md`. Run 
 Choose the right workflow for your situation:
 
 | Situation | Workflow | Agent command |
-|-----------|----------|---------------|
+| --------- | -------- | ------------- |
 | **New feature / epic** | Full PRD-driven flow | Invoke `developer` with a feature description |
 | **Single GitHub Issue** | Issue flow | Invoke `developer` with an issue number |
 | **Already have a task list** | Direct execution | Invoke `developer` with a task list path |
+| **Multi-story PRD batch** | Orchestrated multi-story flow | Invoke `planner` with a `/workstream` task file or milestone |
 | **Docs out of date** | Documentation audit | Invoke `technical-writer` |
 | **Lint/type/test cleanup** | Quality pass | Invoke `housekeeping` |
 
@@ -91,7 +92,7 @@ See `domain/nextjs-pages-components.instructions.md` as an example.
 Activities are composable instructions — each one does a single, well-defined job. Chain them for a full workflow or invoke them individually.
 
 | Activity | Instruction File | What It Does |
-|----------|-----------------|--------------|
+| -------- | ---------------- | ------------ |
 | **init** | `init.instructions.md` | Creates `product-context.md` and `technical-guidelines.md` in `/docs` |
 | **refine** | `refine.instructions.md` | Clarifies scope — auto-detects mode: lightweight issue refinement or full PRD |
 | **generate-spec** | `generate-spec.instructions.md` | Transforms a PRD into a technical specification |
@@ -104,20 +105,104 @@ Activities are composable instructions — each one does a single, well-defined 
 
 **Full Feature (PRD-Driven):**
 
-```
+```text
 init → refine → generate-spec → generate-stories → publish-github → plan → implement
 ```
 
 **Single GitHub Issue:**
 
-```
+```text
 refine → plan → implement
 ```
 
 **Quick Fix (scope is already clear):**
 
-```
+```text
 plan → implement
+```
+
+## Agent and Artifact Relations
+
+```mermaid
+graph LR
+  subgraph Agents
+    DEV[developer.agent.md]
+    GOPS[github-ops.agent.md]
+    PLAN[planner.agent.md]
+    TW[technical-writer.agent.md]
+    HK[housekeeping.agent.md]
+  end
+
+  subgraph Activity_Instructions
+    INIT[init.instructions.md]
+    REF[refine.instructions.md]
+    SPEC[generate-spec.instructions.md]
+    STORIES[generate-stories.instructions.md]
+    PUB[publish-github.instructions.md]
+    PLN[plan.instructions.md]
+    IMP[implement.instructions.md]
+    DOMAIN[domain/nextjs-pages-components.instructions.md]
+  end
+
+  subgraph Runtime_Artifacts
+    WS["workstream/*.md<br/>refinements, specs, stories, tasks, reports"]
+    REQ["docs/requirements/prd-*.md"]
+    DOCS["docs/*<br/>system, API, user-guide, ADR"]
+    GHISS[(GitHub Issues)]
+    GHPR[(GitHub Pull Requests)]
+    BR[(Branches)]
+    MILE[(Milestones)]
+  end
+
+  PLAN --> DEV
+  PLAN --> GOPS
+  DEV --> GOPS
+  DEV --> TW
+
+  DEV --> REF
+  DEV --> PLN
+  DEV --> IMP
+  DEV --> SPEC
+  DEV --> STORIES
+  DEV --> PUB
+  DEV -.optional.-> INIT
+  IMP --> DOMAIN
+
+  PLAN --> PLN
+  PLAN --> WS
+  PLAN --> GHISS
+  PLAN --> GHPR
+  PLAN --> BR
+
+  GOPS --> GHISS
+  GOPS --> GHPR
+  GOPS --> BR
+  GOPS --> MILE
+
+  TW --> DOCS
+  TW --> REQ
+  TW --> WS
+
+  HK --> IMP
+
+  REF --> WS
+  REF --> GHISS
+  SPEC --> WS
+  STORIES --> WS
+  PUB --> GHISS
+  PLN --> WS
+  PLN --> GHISS
+  IMP --> GHPR
+  IMP --> BR
+  IMP --> WS
+
+  classDef agent fill:#e3f2fd,stroke:#1e88e5,stroke-width:1px,color:#0d47a1;
+  classDef instr fill:#e8f5e9,stroke:#43a047,stroke-width:1px,color:#1b5e20;
+  classDef art fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#e65100;
+
+  class DEV,GOPS,PLAN,TW,HK agent;
+  class INIT,REF,SPEC,STORIES,PUB,PLN,IMP,DOMAIN instr;
+  class WS,REQ,DOCS,GHISS,GHPR,BR,MILE art;
 ```
 
 ---
@@ -140,6 +225,14 @@ Enforces: branch/PR discipline, checklist synchronization (local ↔ GitHub), an
 
 **When to use:** Any implementation work — from a single bug fix to a multi-story feature epic.
 
+### `planner`
+
+Multi-story orchestration agent. Reads a PRD implementation plan from `/workstream/` (or milestone issues), infers dependencies, groups stories into ordered batches, delegates implementation to `developer`, and opens one consolidated integration PR after batch completion.
+
+Execution model: **parallel within a batch, sequential across batches**. If true parallel execution is unavailable, it falls back to sequential execution while preserving batch order. It always pauses for explicit approval after presenting the batch plan.
+
+**When to use:** Coordinating multiple stories/issues from the same PRD while keeping implementation parallelizable and delivery consolidated.
+
 ### `technical-writer`
 
 Autonomous documentation maintenance agent. Keeps `/docs` artifacts aligned with the current state of the codebase. Creates ADRs in `/docs/adr/` when technical guidelines change. Maintains **end-user functional documentation** in `/docs/user-guide/` using [MkDocs Material](https://squidfetch.github.io/mkdocs-material/) — plain Markdown browsable directly in GitHub, with optional deployment to GitHub Pages via `mkdocs gh-deploy`. Never modifies application code.
@@ -157,7 +250,7 @@ Code-quality specialist for TypeScript, JavaScript, and Node.js projects. Fixes 
 ## File Organization
 
 | Directory | Contents |
-|-----------|----------|
+| --------- | -------- |
 | `/docs/` | Foundation documents — `product-context.md`, `technical-guidelines.md`, ADRs, API docs |
 | `/docs/user-guide/` | End-user functional documentation (MkDocs Material source) |
 | `/docs/requirements/` | PRDs produced by the **refine** activity |

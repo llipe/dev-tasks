@@ -17,42 +17,50 @@ This system brings structure and clarity to AI-assisted development by:
 
 Instructions are organized as **composable activities** rather than rigid pipeline steps. Each activity can be invoked independently or chained by an agent.
 
-| Activity | File | Purpose |
-|----------|------|---------|
-| **init** | `init.instructions.md` | Establish product context and technical guidelines (run once per project) |
-| **refine** | `refine.instructions.md` | Clarify scope — lightweight issue refinement or full PRD creation |
-| **generate-spec** | `generate-spec.instructions.md` | Transform PRD into a technical specification |
-| **generate-stories** | `generate-stories.instructions.md` | Break specification into user stories with built-in coverage validation |
-| **publish-github** | `publish-github.instructions.md` | Publish user stories as GitHub Issues via MCP |
-| **plan** | `plan.instructions.md` | Convert stories or refined issues into execution-ready task lists |
-| **implement** | `implement.instructions.md` | Execute task list with step-gated approval, branching, and PR discipline |
+|Activity|File|Purpose|
+|---|---|---|
+|**init**|`init.instructions.md`|Establish product context and technical guidelines (run once per project)|
+|**refine**|`refine.instructions.md`|Clarify scope — lightweight issue refinement or full PRD creation|
+|**generate-spec**|`generate-spec.instructions.md`|Transform PRD into a technical specification|
+|**generate-stories**|`generate-stories.instructions.md`|Break specification into user stories with built-in coverage validation|
+|**publish-github**|`publish-github.instructions.md`|Publish user stories as GitHub Issues via MCP|
+|**plan**|`plan.instructions.md`|Convert stories or refined issues into execution-ready task lists|
+|**implement**|`implement.instructions.md`|Execute task list with step-gated approval, branching, and PR discipline|
 
 ### Domain-Specific Instructions
 
 Technology-specific rules are scoped via `applyTo` frontmatter and auto-applied when editing matching files:
 
-| File | Scope | Purpose |
-|------|-------|---------|
-| `domain/nextjs-pages-components.instructions.md` | `apps/management-hub/src/**/*.tsx` | Next.js + React conventions |
+|File|Scope|Purpose|
+|---|---|---|
+|`domain/nextjs-pages-components.instructions.md`|`apps/management-hub/src/**/*.tsx`|Next.js + React conventions|
 
 ## Agents
 
-| Agent | File | Purpose |
-|-------|------|---------|
-| **developer** | `developer.agent.md` | Unified implementation agent — single issues and full PRD features |
-| **technical-writer** | `technical-writer.agent.md` | Autonomous documentation maintenance |
-| **housekeeping** | `housekeeping.agent.md` | Lint, type, and test-wiring fixes |
-| **github-ops** | `github-ops.agent.md` | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, and comments |
+|Agent|File|Purpose|
+|---|---|---|
+|**developer**|`developer.agent.md`|Unified implementation agent — single issues and full PRD features|
+|**planner**|`planner.agent.md`|Multi-story orchestration agent — batches independent stories and consolidates one integration PR|
+|**technical-writer**|`technical-writer.agent.md`|Autonomous documentation maintenance|
+|**housekeeping**|`housekeeping.agent.md`|Lint, type, and test-wiring fixes|
+|**github-ops**|`github-ops.agent.md`|GitHub consistency — standardizes issues, PRs, branches, labels, milestones, and comments|
 
 ## Workflow Chains
 
 ### Full Feature (PRD-Driven)
+
 `init` → `refine` → `generate-spec` → `generate-stories` → `publish-github` → `plan` → `implement`
 
 ### Single GitHub Issue
+
 `refine` → `plan` → `implement`
 
+### Parallel Multi-Story Execution
+
+`refine` → `generate-spec` → `generate-stories` → `publish-github` → `plan` → `planner` → `implement`
+
 ### Quick Fix (Clear Issue)
+
 `plan` → `implement`
 
 ## General Agent Guidelines
