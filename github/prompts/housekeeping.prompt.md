@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: housekeeping
 description: "Fix auto-fixable lint, type, and test-wiring issues without changing logic."
 ---
 

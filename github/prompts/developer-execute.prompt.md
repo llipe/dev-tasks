@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: developer
 description: "Execute an existing task list using the developer agent — Execute Mode."
 ---
 

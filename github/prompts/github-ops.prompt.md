@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: github-ops
 description: "Audit and standardize GitHub artifacts — issues, PRs, branches, labels, and milestones."
 ---
 

@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: technical-writer
 description: "Audit and update /docs to reflect the current state of the codebase."
 ---
 

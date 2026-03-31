@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: developer
 description: "Build a new feature end-to-end using the developer agent — Feature Mode."
 ---
 

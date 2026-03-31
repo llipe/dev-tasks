@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: planner
 description: "Orchestrate multi-story execution from a /workstream task file or GitHub milestone."
 ---
 

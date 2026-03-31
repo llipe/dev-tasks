@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: developer
 description: "Implement a GitHub Issue end-to-end using the developer agent — Issue Mode."
 ---
 
