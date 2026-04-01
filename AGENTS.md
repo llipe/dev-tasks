@@ -40,10 +40,10 @@ Technology-specific rules are scoped via `applyTo` frontmatter and auto-applied 
 |Agent|File|Purpose|
 |---|---|---|
 |**developer**|`developer.agent.md`|Unified implementation agent — single issues and full PRD features|
-|**planner**|`planner.agent.md`|Multi-story orchestration agent — batches independent stories and consolidates one integration PR|
+|**planner**|`planner.agent.md`|Multi-story orchestration agent — sequential dependency-ordered execution with one consolidated integration PR. Planner reviews and merges story PRs into integration; user approves the final PR to `main`|
 |**technical-writer**|`technical-writer.agent.md`|Autonomous documentation maintenance|
 |**housekeeping**|`housekeeping.agent.md`|Lint, type, and test-wiring fixes|
-|**github-ops**|`github-ops.agent.md`|GitHub consistency — standardizes issues, PRs, branches, labels, milestones, and comments|
+|**github-ops**|`github-ops.agent.md`|GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy|
 
 ## Workflow Chains
 
@@ -69,9 +69,11 @@ All AI coding agents working in this repository **MUST**:
 
 - Always create feature branches — never commit to the default branch
 - Use Conventional Commits (`feat`, `fix`, `chore`, `docs`, etc.)
-- Create PRs for review — never self-merge
+- Create PRs for review — never self-merge into `main`
+- **PRs targeting `main` require user approval** — no agent may merge into the default branch
 - Follow testing, linting, and documentation standards from `technical-guidelines.md`
 - Reference GitHub Issues in branch names and commits
+- Maintain document changelogs when updating generated artifacts (PRDs, specs, user stories, etc.)
 
 ## Attribution
 
