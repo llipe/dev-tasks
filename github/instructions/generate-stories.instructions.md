@@ -17,6 +17,23 @@ This activity assumes the following documents already exist:
 - `prd-[feature-name].md` — Feature requirements
 - `specification-[prd-name].md` — Technical specification
 
+## Document Changelog Convention
+
+The user stories document **MUST** include a **Changelog** table as the **first section** after the document title. The changelog tracks the version history of the document.
+
+- The initial version **MUST** be `1.0`.
+- Every subsequent update **MUST** increment the minor version (e.g., `1.1`, `1.2`, …).
+- Major structural rewrites **SHOULD** increment the major version (e.g., `2.0`).
+- The **Author** column **MUST** include the name of the person or agent responsible for the change (e.g., `@username`, `developer-agent`, `planner-agent`).
+
+```markdown
+## Changelog
+
+| Version | Date       | Summary                  | Author              |
+|---------|------------|--------------------------|----------------------|
+| 1.0     | YYYY-MM-DD | Initial version          | @user / agent-name   |
+```
+
 ## Process
 
 1. **Receive Specification:** User provides reference to the Technical Specification document.
@@ -189,3 +206,4 @@ If gaps are found, you **MUST** propose additional stories or modifications to c
 8. You **MUST** close any gaps before presenting stories for review.
 9. You **MUST** present stories for user review and save the finalized version.
 10. You **MUST** provide a summary of total stories and a high-level execution plan.
+11. When updating an existing user stories document, you **MUST** add a new row to the Changelog table with an incremented version, the current date, a summary of changes, and the responsible author/agent.

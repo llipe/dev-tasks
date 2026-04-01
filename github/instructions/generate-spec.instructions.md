@@ -16,6 +16,23 @@ This activity assumes the following documents already exist:
 - `technical-guidelines.md` — Technical standards and patterns
 - `prd-[feature-name].md` — Feature requirements (produced by the **refine** activity)
 
+## Document Changelog Convention
+
+Every specification produced by this activity **MUST** include a **Changelog** table as the **first section** after the document title. The changelog tracks the version history of the document.
+
+- The initial version **MUST** be `1.0`.
+- Every subsequent update **MUST** increment the minor version (e.g., `1.1`, `1.2`, …).
+- Major structural rewrites **SHOULD** increment the major version (e.g., `2.0`).
+- The **Author** column **MUST** include the name of the person or agent responsible for the change (e.g., `@username`, `developer-agent`, `planner-agent`).
+
+```markdown
+## Changelog
+
+| Version | Date       | Summary                  | Author              |
+|---------|------------|--------------------------|----------------------|
+| 1.0     | YYYY-MM-DD | Initial version          | @user / agent-name   |
+```
+
 ## Process
 
 1. **Receive References:** User points to the existing PRD and confirms Technical Guidelines are available.
@@ -28,6 +45,7 @@ This activity assumes the following documents already exist:
 
 Focus on technical decisions and implementation approach:
 
+- **Affected Repositories:** "Which repositories are affected? What role does each play (backend, frontend, shared lib, infra)?"  
 - **System Design:** "Based on the feature requirements and our technical guidelines, what is the proposed system architecture for this feature?"
 - **Data Model:** "What data entities and relationships are needed? How do they map to our database design?"
 - **API Endpoints:** "What API endpoints will be needed? How do they fit our API design standards?"
@@ -44,22 +62,57 @@ Focus on technical decisions and implementation approach:
 
 The generated Specification document **MUST** include:
 
+0. **Changelog** — Version history table (see Document Changelog Convention above)
 1. **Executive Summary** — How the PRD will be technically implemented (2-3 sentences)
 2. **Reference Documents** — Links to the PRD and relevant Technical Guidelines sections
-3. **System Architecture** — Data flow, component interactions, external integrations, how this fits the broader system
-4. **Data Model & Database Design** — Entity relationships, schema overview, naming conventions, migration strategy
-5. **API Design** — Endpoint specifications, request/response schemas, auth per endpoint, rate limiting, versioning
-6. **Authentication & Authorization Design** — Auth implementation, permission matrix, session/token management
-7. **Business Logic Implementation** — Key algorithms, business rule enforcement locations, validation rules, state machines
-8. **Integration Details** — Third-party integrations, methods, retry/failure handling, credentials
-9. **User Interface & Client Behavior** — Page/screen flow, UI components, client-side validation, responsive design
-10. **Performance & Scalability Approach** — Caching, query optimization, pagination, expected metrics
-11. **Security Implementation** — Encryption, input sanitization, OWASP considerations, PII handling, audit logging
-12. **Error Handling & Logging** — Error formats, logging strategy, recovery behavior, monitoring
-13. **Testing Strategy** — Unit/integration/E2E scope, mock strategy, coverage targets
-14. **Deployment & Rollout** — Feature flags, migration steps, backward compatibility, rollback plan
-15. **Dependencies & Risks** — Technology dependencies, known risks, mitigation strategies
-16. **Open Questions** — Remaining technical decisions
+3. **Affected Repositories** — Table of repositories impacted by this specification. For each repo, describe the role it plays (e.g., API backend, web frontend, shared library) and the scope of changes expected. Format: `| Repository | Role | Scope of Changes |`
+4. **System Architecture** — Data flow, component interactions, external integrations, how this fits the broader system
+5. **Data Model & Database Design** — Entity relationships, schema overview, naming conventions, migration strategy
+6. **API Design** — Endpoint specifications, request/response schemas, auth per endpoint, rate limiting, versioning
+7. **Authentication & Authorization Design** — Auth implementation, permission matrix, session/token management
+8. **Business Logic Implementation** — Key algorithms, business rule enforcement locations, validation rules, state machines
+9. **Integration Details** — Third-party integrations, methods, retry/failure handling, credentials
+10. **User Interface & Client Behavior** — Page/screen flow, UI components, client-side validation, responsive design
+11. **Performance & Scalability Approach** — Caching, query optimization, pagination, expected metrics
+12. **Security Implementation** — Encryption, input sanitization, OWASP considerations, PII handling, audit logging
+13. **Error Handling & Logging** — Error formats, logging strategy, recovery behavior, monitoring
+14. **Testing Strategy** — Unit/integration/E2E scope, mock strategy, coverage targets
+15. **Deployment & Rollout** — Feature flags, migration steps, backward compatibility, rollback plan
+16. **Dependencies & Risks** — Technology dependencies, known risks, mitigation strategies
+17. **Open Questions** — Remaining technical decisions
+
+## Diagram Guidelines
+
+The specification **MUST** include embedded Mermaid diagrams to visually communicate architecture, data models, and key flows. Use fenced code blocks with the `mermaid` language tag.
+
+Required and recommended diagrams:
+
+| Diagram Type | Requirement | Target Section |
+|---|---|---|
+| **Component / C4-style diagram** | **MUST** include — shows services, repos, and their interactions | System Architecture |
+| **Entity-Relationship diagram** | **MUST** include when new or modified data entities exist | Data Model & Database Design |
+| **Sequence diagram** | **SHOULD** include for key API flows or multi-service interactions | API Design or Business Logic Implementation |
+| **State diagram** | **SHOULD** include when entities have meaningful state transitions | Business Logic Implementation |
+| **Deployment diagram** | **MAY** include for complex multi-environment rollouts | Deployment & Rollout |
+
+Example embedding:
+
+````markdown
+```mermaid
+erDiagram
+  USER ||--o{ ORDER : places
+  ORDER ||--|{ LINE_ITEM : contains
+  PRODUCT ||--o{ LINE_ITEM : "included in"
+```
+````
+
+Rules:
+- Diagrams **MUST** be embedded inline in the relevant section, not collected at the end.
+- Each diagram **MUST** have a brief introductory sentence explaining what it shows.
+- Keep diagrams focused — one concern per diagram. Split large diagrams rather than cramming everything into one.
+- Use consistent naming across diagrams and prose (same component/entity/endpoint names).
+- ER diagrams **SHOULD** include cardinality and key attributes.
+- Sequence diagrams **SHOULD** include error/alternate paths when relevant.
 
 ## Key Synthesis Points
 
@@ -83,3 +136,4 @@ The specification **MUST** clearly show how:
 4. You **MUST** ensure the specification clearly maps PRD requirements to technical solutions.
 5. You **MUST** present the specification for user review.
 6. You **MUST** save the finalized version.
+7. When updating an existing specification, you **MUST** add a new row to the Changelog table with an incremented version, the current date, a summary of changes, and the responsible author/agent.

@@ -256,6 +256,23 @@ Date: YYYY-MM-DD
 
 ---
 
+## PR Merge Authority Policy
+
+This policy applies to **all agents** and **MUST** be enforced by `github-ops` whenever a merge is requested.
+
+| Target Branch | Reviewer & Approver | Who Merges |
+|---|---|---|
+| Integration branch (story PRs within a planner run) | **planner** agent reviews and approves | **planner** merges |
+| Default branch (`main`) | **User** reviews and approves | **User** merges |
+
+Rules:
+- No agent **MUST** merge a PR into `main` without explicit user approval.
+- `planner` is authorized to review, approve, and merge story PRs into integration branches.
+- When a PR targeting `main` is ready, the responsible agent **MUST** notify the user and wait for their approval before the PR can be merged.
+- If any agent requests a merge into `main`, `github-ops` **MUST** refuse and remind the caller that user approval is required.
+
+---
+
 ## Non-Negotiable Rules
 
 1. **Consistency over preference:** You **MUST** apply these conventions uniformly. You **MUST NOT** deviate based on personal style.
@@ -264,6 +281,7 @@ Date: YYYY-MM-DD
 4. **English-only:** All GitHub titles, descriptions, comments, labels, and milestones **MUST** be in English.
 5. **Idempotent operations:** Running `github-ops` on an already-compliant artifact **MUST** produce no changes.
 6. **No destructive actions without confirmation:** Renaming issues, deleting labels, or closing milestones **MUST** require explicit user approval.
+7. **No merging into `main` without user approval:** PRs targeting `main` **MUST NOT** be merged by any agent. Only the user may approve and merge.
 
 ---
 

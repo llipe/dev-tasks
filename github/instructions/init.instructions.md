@@ -11,6 +11,23 @@ Guide an AI assistant in establishing the foundational documents for a project: 
 
 Run this activity **once per project** (or when a major strategic or technical pivot occurs).
 
+## Document Changelog Convention
+
+Every document produced by this activity **MUST** include a **Changelog** table as the **first section** after the document title. The changelog tracks the version history of the document.
+
+- The initial version **MUST** be `1.0`.
+- Every subsequent update **MUST** increment the minor version (e.g., `1.1`, `1.2`, …).
+- Major structural rewrites **SHOULD** increment the major version (e.g., `2.0`).
+- The **Author** column **MUST** include the name of the person or agent responsible for the change (e.g., `@username`, `developer-agent`, `planner-agent`).
+
+```markdown
+## Changelog
+
+| Version | Date       | Summary                  | Author              |
+|---------|------------|--------------------------|----------------------|
+| 1.0     | YYYY-MM-DD | Initial version          | @user / agent-name   |
+```
+
 ## Process
 
 1. **Receive Initial Brief:** The user describes the product, project, or technology stack.
@@ -40,6 +57,7 @@ Adapt questions based on context provided:
 
 ### Output Structure: `product-context.md`
 
+0. **Changelog** — Version history table (see Document Changelog Convention above)
 1. **Executive Summary** — 2-3 sentence overview
 2. **Problem Statement** — What problem(s) does this product solve?
 3. **Target Users/Market** — Primary and secondary users, market segments
@@ -76,6 +94,7 @@ Adapt questions based on context provided:
 
 ### Output Structure: `technical-guidelines.md`
 
+0. **Changelog** — Version history table (see Document Changelog Convention above)
 1. **Overview** — Technical vision and guiding principles
 2. **Technology Stack** — Backend/frontend languages, frameworks, databases, key dependencies
 3. **Architecture Patterns** — System architecture, key decisions and rationale, component organization
@@ -110,3 +129,4 @@ Adapt questions based on context provided:
 3. You **SHOULD** use answers to create both documents in a single pass.
 4. You **MUST** save both files and present them for user review.
 5. You **SHOULD** iterate based on user feedback before finalizing.
+6. When updating an existing document, you **MUST** add a new row to the Changelog table with an incremented version, the current date, a summary of changes, and the responsible author/agent.

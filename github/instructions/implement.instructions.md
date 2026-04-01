@@ -70,8 +70,10 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
 1. All acceptance criteria **MUST** be verified.
 2. All tests listed in the checklist **MUST** be completed and passing.
 3. The PR **MUST** be converted from draft to ready for review.
-4. The PR **MUST** be approved by at least one reviewer.
-5. The PR **MUST** be merged into the default branch.
+4. The PR **MUST** be approved by the appropriate reviewer per the merge authority policy in `github-ops`:
+   - PRs targeting an **integration branch**: `planner` reviews and approves.
+   - PRs targeting **`main`**: the **user** reviews and approves.
+5. The PR **MUST** be merged by the authorized party (planner for integration branches, user for `main`).
 6. You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.
 7. You **MUST NOT** close the issue while the PR is still in draft or pending review.
 8. You **MUST** notify the user when the PR is ready for review — explicitly inform them so they can review and merge.

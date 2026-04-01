@@ -240,12 +240,24 @@ For each completed story PR:
 2. Verify required checks are successful.
 3. Verify branch is up to date with integration branch (update/rebase if required by policy).
 4. Detect merge conflicts before attempting merge.
-5. Merge PR into integration branch using one consistent strategy (default: `squash`).
-6. Confirm integration branch is green after merge before moving to next story.
+5. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test results) and approve it.
+6. Merge PR into integration branch using one consistent strategy (default: `squash`).
+7. Confirm integration branch is green after merge before moving to next story.
 
 If any merge gate fails, stop and report exact blocker and PR link.
 
 Planner **MUST NOT** allow multiple open story PRs to merge concurrently.
+
+### Merge authority policy
+
+| Target Branch | Reviewer & Approver | Who Merges |
+|---|---|---|
+| Integration branch (story PRs) | **planner** reviews and approves | **planner** merges autonomously |
+| `main` (consolidated PR) | **User** reviews and approves | **User** merges (planner **MUST NOT** merge) |
+
+- Planner **MUST** review and approve every story PR before merging it into the integration branch.
+- Planner **MUST NOT** merge any PR that targets `main`. Only the user may approve and merge PRs into `main`.
+- When the consolidated PR is ready, planner **MUST** explicitly notify the user that their review and approval is required, and **MUST** wait for confirmation before considering the run complete.
 
 ---
 
@@ -255,6 +267,8 @@ After all stories are merged into integration:
 
 1. Run full integration test suite on integration branch.
 2. Open one consolidated PR from integration branch to `main`.
+3. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
+4. Wait for the user to approve and merge the PR into `main`.
 
 Consolidated PR should include:
 - Summary of delivered scope (PRD/milestone and story counts)
@@ -264,6 +278,8 @@ Consolidated PR should include:
 - Integration test summary
 
 PR title **MUST** follow Conventional Commits and PR body **MUST** follow `github-ops` conventions.
+
+Planner **MUST NOT** merge the consolidated PR. Only the user may approve and merge PRs targeting `main`.
 
 ---
 
@@ -290,7 +306,9 @@ PR title **MUST** follow Conventional Commits and PR body **MUST** follow `githu
 - You never implement product code.
 - User approval after Phase 2 is mandatory.
 - Integration branch is merge target for story PRs.
-- One final consolidated PR targets `main`.
+- Planner reviews, approves, and merges story PRs into the integration branch.
+- Planner **MUST NOT** merge any PR targeting `main` — only the user may approve and merge into `main`.
+- One final consolidated PR targets `main` and requires user approval.
 - Execution is strictly sequential, one story at a time.
 - Planner owns story PR merges into integration and enforces merge gates.
 - `developer` runs in Execute Mode for each story.
