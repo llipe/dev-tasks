@@ -269,6 +269,9 @@ After all stories are merged into integration:
 2. Open one consolidated PR from integration branch to `main`.
 3. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
 4. Wait for the user to approve and merge the PR into `main`.
+5. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
+   - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
+   - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
 
 Consolidated PR should include:
 - Summary of delivered scope (PRD/milestone and story counts)
@@ -313,6 +316,7 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 - Planner owns story PR merges into integration and enforces merge gates.
 - `developer` runs in Execute Mode for each story.
 - All GitHub outputs are in English.
+- Final user-facing local branch state **MUST** be the integration branch for the current run, or planner **MUST** explicitly report verification failure and provide the exact checkout command.
 
 ---
 
@@ -324,6 +328,7 @@ For each run, return:
 - Story and dependency summary
 - Approved execution sequence
 - Integration branch
+- Final local branch state (checked out branch name or explicit verification result)
 - Story PR links/status
 - Consolidated PR link or blocker
 - Current test status
