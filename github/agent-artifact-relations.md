@@ -11,6 +11,7 @@ graph LR
     PLAN[planner.agent.md]
     TW[technical-writer.agent.md]
     HK[housekeeping.agent.md]
+    UX[ux-engineer.agent.md]
   end
 
   %% -----------------------------
@@ -34,6 +35,7 @@ graph LR
     WS["workstream/*.md<br/>refinements, specs, stories, tasks, reports"]
     REQ["docs/requirements/prd-*.md"]
     DOCS["docs/*<br/>system, API, user-guide, ADR"]
+    MOCK["mockups/mockup-<feature>-<num>"]
     GHISS[(GitHub Issues)]
     GHPR[(GitHub Pull Requests)]
     BR[(Branches)]
@@ -45,6 +47,7 @@ graph LR
   PLAN --> GOPS
   DEV --> GOPS
   DEV --> TW
+  UX --> DEV
 
   %% Agent-to-instruction usage
   DEV --> REF
@@ -76,6 +79,10 @@ graph LR
 
   %% Housekeeping scope
   HK --> IMP
+  UX --> REQ
+  UX --> SPEC
+  UX --> MOCK
+  UX --> WS
 
   %% Workflow artifacts created across activities
   REF --> WS
@@ -94,7 +101,7 @@ graph LR
   classDef instr fill:#e8f5e9,stroke:#43a047,stroke-width:1px,color:#1b5e20;
   classDef art fill:#fff8e1,stroke:#f9a825,stroke-width:1px,color:#e65100;
 
-  class DEV,GOPS,PLAN,TW,HK agent;
+  class DEV,GOPS,PLAN,TW,HK,UX agent;
   class INIT,REF,SPEC,STORIES,PUB,PLN,IMP,DOMAIN instr;
-  class WS,REQ,DOCS,GHISS,GHPR,BR,MILE art;
+  class WS,REQ,DOCS,MOCK,GHISS,GHPR,BR,MILE art;
 ```

@@ -44,6 +44,7 @@ Technology-specific rules are scoped via `applyTo` frontmatter and auto-applied 
 |**technical-writer**|`technical-writer.agent.md`|Autonomous documentation maintenance|
 |**housekeeping**|`housekeeping.agent.md`|Lint, type, and test-wiring fixes|
 |**github-ops**|`github-ops.agent.md`|GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy|
+|**ux-engineer**|`ux-engineer.agent.md`|UX prototyping and gap-analysis agent — turns PRD/SPEC into one or multiple user-testable mockups and feeds refinement input back to `developer`|
 
 ## Workflow Chains
 
@@ -62,6 +63,10 @@ Technology-specific rules are scoped via `applyTo` frontmatter and auto-applied 
 ### Quick Fix (Clear Issue)
 
 `plan` → `implement`
+
+### UX Validation Loop
+
+`refine` → `generate-spec` → `ux-engineer` → `developer` (refine/spec/story updates)
 
 ## General Agent Guidelines
 
