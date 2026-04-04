@@ -37,7 +37,7 @@ Required behavior
 
 5. Consistency via scaffold script
 - Use:
-  - ./scripts/scaffold-mockup.sh <feature> <num> [palette_url]
+  - ./.github/skills/webapp-mockup/scripts/scaffold-mockup.sh <feature> <num> [palette_url]
 - This script must be the default path for creating new mockups to keep structure and baseline behavior consistent.
 
 Operational workflow

@@ -141,6 +141,12 @@ plan → implement
 Use the reusable skill at `github/skills/webapp-mockup/SKILL.md` when you want
 to generate browsable UI mockups for feature exploration and gap analysis.
 
+Install shared skills (including Vercel-provided skills) with:
+
+```bash
+npx skills add vercel-labs/agent-skills
+```
+
 The skill standardizes:
 
 - Mockup location: `/mockups/mockup-<feature>-<num>`
@@ -153,7 +159,7 @@ The skill standardizes:
 Use the scaffold command for consistency:
 
 ```bash
-./scripts/scaffold-mockup.sh <feature> <num> [palette_url]
+./.github/skills/webapp-mockup/scripts/scaffold-mockup.sh <feature> <num> [palette_url]
 ```
 
 ## Agent and Artifact Relations

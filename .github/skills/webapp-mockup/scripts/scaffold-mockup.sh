@@ -7,11 +7,11 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  ./scripts/scaffold-mockup.sh <feature> <num> [palette_url]
+  ./.github/skills/webapp-mockup/scripts/scaffold-mockup.sh <feature> <num> [palette_url]
 
 Examples:
-  ./scripts/scaffold-mockup.sh onboarding 1
-  ./scripts/scaffold-mockup.sh billing 2 https://colorhunt.co/palette/281c594e8d9c85c79aedf7bd
+  ./.github/skills/webapp-mockup/scripts/scaffold-mockup.sh onboarding 1
+  ./.github/skills/webapp-mockup/scripts/scaffold-mockup.sh billing 2 https://colorhunt.co/palette/281c594e8d9c85c79aedf7bd
 USAGE
 }
 
@@ -36,7 +36,7 @@ if [[ -z "$FEATURE" ]]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 MOCKUPS_ROOT="$REPO_ROOT/mockups"
 APP_DIR="$MOCKUPS_ROOT/mockup-${FEATURE}-${NUM_RAW}"
 
