@@ -1,7 +1,9 @@
----
-applyTo: "**"
----
 # Activity: Refine Scope
+
+Clarify the scope, acceptance criteria, and constraints of a feature or issue before implementation begins. Produces a lightweight refinement for a GitHub Issue, or a full PRD for a new feature description. Invoked by the `product-engineer` agent in Issue Mode or Feature Mode.
+
+---
+
 > **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 
@@ -176,21 +178,11 @@ Recommended diagrams (include whichever add clarity — skip those that don't ap
 | **Sequence / Flow diagram** | Key user or system interactions need clarification | Feature Overview or Functional Requirements |
 | **User journey / Flowchart** | Complex multi-step user workflows | User Stories or Design Considerations |
 
-Example embedding:
-
-````markdown
-```mermaid
-graph LR
-  Frontend -->|REST API| Backend
-  Backend -->|SQL| Database
-```
-````
-
 Rules:
 - Diagrams **MUST** be embedded inline in the relevant section, not collected at the end.
 - Each diagram **SHOULD** have a brief introductory sentence explaining what it shows.
-- Keep diagrams focused — one concern per diagram. Split large diagrams rather than cramming everything into one.
-- Use consistent naming across diagrams and prose (same component/entity names).
+- Keep diagrams focused — one concern per diagram.
+- Use consistent naming across diagrams and prose.
 
 ### Scope Guidance
 

@@ -13,6 +13,8 @@ You are **github-ops**, the GitHub consistency and organization agent for this r
 
 You **MUST** respect all constraints in `AGENTS.md`.
 
+GitHub operations **MUST** run through GitHub MCP when available. If MCP is unavailable, `gh` CLI **MAY** be used as a fallback and that fallback **MUST** be noted in the operation summary.
+
 ---
 
 ## When to Invoke This Agent
@@ -59,7 +61,7 @@ Every issue **MUST** include at minimum:
 - [ ] <Testable criterion 2>
 ```
 
-For PRD-driven stories, the full template from `publish-github.instructions.md` **MUST** be used.
+For PRD-driven stories, the full template from the `activity-publish-github` skill **MUST** be used.
 
 ### Issue Comments
 
@@ -68,6 +70,16 @@ Comments on issues **MUST** follow these rules:
 - **Decision records** **MUST** use: `📌 Decision: <what was decided> — Reason: <why>`
 - Comments **MUST NOT** be empty or single-word acknowledgments (e.g., "ok", "done").
 - Long-form progress comments **SHOULD** use checklists.
+
+### Issue Closure Attribution
+
+When closing an issue, `github-ops` **MUST** add a final closing comment that includes:
+- A short closure summary (what was delivered and where)
+- A machine-assistance attribution line in this format: `Assisted-by: <assistant name and version>`
+
+Examples:
+- `Assisted-by: GitHub Copilot v1`
+- `Assisted-by: Claude Code v3`
 
 ---
 
@@ -118,7 +130,14 @@ Closes #<issue-number>
 - [ ] Tests pass
 - [ ] Docs updated (if applicable)
 - [ ] No unrelated changes
+
+## Attribution
+Assisted-by: <assistant name and version>
 ```
+
+Rules:
+- The attribution line **MUST** be present when creating a PR.
+- The attribution value **MUST** identify the assisting system and version when available (for example, `GitHub Copilot v1`, `Claude Code v3`).
 
 ### PR Comments
 
@@ -297,6 +316,8 @@ Target: <issue #X | PR #X | repo-wide audit>
 Changes applied:
 - <change 1>
 - <change 2>
+Execution method: <github-mcp | gh-cli>
+Assisted-by used: <assistant name and version>
 Skipped (needs confirmation):
 - <item>
 ```

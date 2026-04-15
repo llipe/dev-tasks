@@ -1,7 +1,9 @@
----
-applyTo: "**"
----
 # Activity: Generate User Stories
+
+Create structured, implementation-ready User Stories from a Technical Specification with built-in coverage validation against the PRD. Use this skill after the specification is approved. Invoked by the `product-engineer` agent in Feature Mode.
+
+---
+
 > **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 

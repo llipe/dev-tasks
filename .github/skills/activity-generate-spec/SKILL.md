@@ -1,7 +1,9 @@
----
-applyTo: "**"
----
 # Activity: Generate Technical Specification
+
+Transform refined requirements (PRD) into an actionable technical design by synthesizing them with the project's Technical Guidelines. Use this skill when a PRD is approved and ready for technical breakdown. Invoked by the `product-engineer` agent in Feature Mode.
+
+---
+
 > **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 
@@ -45,7 +47,7 @@ Every specification produced by this activity **MUST** include a **Changelog** t
 
 Focus on technical decisions and implementation approach:
 
-- **Affected Repositories:** "Which repositories are affected? What role does each play (backend, frontend, shared lib, infra)?"  
+- **Affected Repositories:** "Which repositories are affected? What role does each play (backend, frontend, shared lib, infra)?"
 - **System Design:** "Based on the feature requirements and our technical guidelines, what is the proposed system architecture for this feature?"
 - **Data Model:** "What data entities and relationships are needed? How do they map to our database design?"
 - **API Endpoints:** "What API endpoints will be needed? How do they fit our API design standards?"
@@ -95,22 +97,11 @@ Required and recommended diagrams:
 | **State diagram** | **SHOULD** include when entities have meaningful state transitions | Business Logic Implementation |
 | **Deployment diagram** | **MAY** include for complex multi-environment rollouts | Deployment & Rollout |
 
-Example embedding:
-
-````markdown
-```mermaid
-erDiagram
-  USER ||--o{ ORDER : places
-  ORDER ||--|{ LINE_ITEM : contains
-  PRODUCT ||--o{ LINE_ITEM : "included in"
-```
-````
-
 Rules:
 - Diagrams **MUST** be embedded inline in the relevant section, not collected at the end.
 - Each diagram **MUST** have a brief introductory sentence explaining what it shows.
-- Keep diagrams focused — one concern per diagram. Split large diagrams rather than cramming everything into one.
-- Use consistent naming across diagrams and prose (same component/entity/endpoint names).
+- Keep diagrams focused — one concern per diagram.
+- Use consistent naming across diagrams and prose.
 - ER diagrams **SHOULD** include cardinality and key attributes.
 - Sequence diagrams **SHOULD** include error/alternate paths when relevant.
 
