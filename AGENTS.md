@@ -41,6 +41,7 @@ This system brings structure and clarity to AI-assisted development by:
 | **housekeeping** | `housekeeping.agent.md` | Lint, type, and test-wiring fixes |
 | **github-ops** | `github-ops.agent.md` | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy |
 | **ux-engineer** | `ux-engineer.agent.md` | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer` |
+| **black-box-tester** | `black-box-tester.agent.md` | Deep black-box testing — derives compliance test plans and edge cases from specs/stories, validates "requested vs delivered" behavior |
 
 ## Skills
 
@@ -57,6 +58,10 @@ These are the composable activities from the development workflow, converted to 
 | **activity-generate-spec** | `skills/activity-generate-spec/` | Transform PRD into technical specification | `product-engineer` |
 | **activity-generate-stories** | `skills/activity-generate-stories/` | Break spec into user stories with coverage validation | `product-engineer` |
 | **activity-publish-github** | `skills/activity-publish-github/` | Publish stories as GitHub Issues via MCP | `product-engineer` |
+| **activity-e2e-test-design** | `skills/activity-e2e-test-design/` | End-to-end black-box test scenario generation from spec/stories | `black-box-tester` |
+| **activity-contract-test-design** | `skills/activity-contract-test-design/` | Consumer/provider contract and schema compatibility test strategy | `black-box-tester` |
+| **activity-edge-case-refinement** | `skills/activity-edge-case-refinement/` | Systematic edge-case discovery by category with concrete examples | `black-box-tester` |
+| **activity-random-test-tactics** | `skills/activity-random-test-tactics/` | Randomized, fuzz, and property-inspired test generation with reproducibility | `black-box-tester` |
 
 ### Operational Skills
 
@@ -98,6 +103,8 @@ Prompts are entry points that configure an agent for a specific use case.
 | `github-ops` | github-ops | GitHub consistency operations |
 | `technical-writer` | technical-writer | Documentation maintenance |
 | `housekeeping` | housekeeping | Lint, type, and test fixes |
+| `black-box-tester-design` | black-box-tester | Generate compliance test plan from spec or stories |
+| `black-box-tester-validate` | black-box-tester | Validate delivered behavior against spec or stories |
 
 ---
 
@@ -141,6 +148,18 @@ product-engineer: refine → generate-spec
 ux-engineer: mockups → gap analysis → refinement handoff
                                           ↓
 product-engineer: update spec/stories
+```
+
+### Test-First Design (Black-Box)
+
+```
+product-engineer: refine → spec → stories → plan
+                                                 ↓
+black-box-tester: generate test plan (from spec or stories)
+                                                 ↓
+developer: implement (feature + tests from test plan)
+                                                 ↓
+black-box-tester: validate compliance → validation report
 ```
 
 ### Project Initialization
