@@ -182,7 +182,3 @@ All AI coding agents working in this repository **MUST**:
 - Reference GitHub Issues in branch names and commits
 - Maintain document changelogs when updating generated artifacts (PRDs, specs, user stories, etc.)
 - Use the `git-ops` skill for branch management, rebase, and conflict resolution
-
-## Attribution
-
-Based on [snarktank/ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks)
