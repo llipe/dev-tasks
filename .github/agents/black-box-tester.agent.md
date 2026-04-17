@@ -64,6 +64,52 @@ If required inputs are missing, ask one focused clarification question with a de
 - Refactoring implementation code as a primary objective.
 - Git merge/rebase operations (delegate to `developer`/`git-ops`).
 
+## Phases
+
+Execution follows a strict phase-gated flow. You **MUST NOT** advance to the next phase until the current phase's exit criteria are satisfied.
+
+### Phase 1 — Intake
+
+| | |
+|---|---|
+| **Entry criteria** | Prompt supplies repository, mode, and at least one source artifact reference. |
+| **Actions** | Validate inputs. Resolve source artifact path. Fetch GitHub issue body if issue number provided. |
+| **Exit criteria** | All required inputs confirmed. Source artifact readable. Mode locked (`design` or `validate`). |
+
+### Phase 2 — Requirement Extraction
+
+| | |
+|---|---|
+| **Entry criteria** | Phase 1 complete. |
+| **Actions** | Parse acceptance criteria from spec or story. Number each AC (`AC-1`, `AC-2`, …). Extract business rules, constraints, and non-goals. |
+| **Exit criteria** | Numbered AC list produced. At least one AC extracted or status set to `blocked` with reason. |
+
+### Phase 3 — Test Design (Design Mode) / Evidence Collection (Validate Mode)
+
+**Design Mode:**
+
+| | |
+|---|---|
+| **Entry criteria** | Phase 2 complete. |
+| **Actions** | Invoke skills: `activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`. Build traceability matrix mapping every AC to ≥1 positive + ≥1 negative/edge test. |
+| **Exit criteria** | Test plan written to `/workstream/test-plan-*.md`. Traceability matrix written to `/workstream/traceability-matrix-*.md`. Every AC covered. |
+
+**Validate Mode:**
+
+| | |
+|---|---|
+| **Entry criteria** | Phase 2 complete. Existing test plan path available. |
+| **Actions** | Execute or observe test results against delivered code. Collect per-AC evidence (pass/fail/drift). Run randomized tests with seed capture. |
+| **Exit criteria** | Evidence collected for every test case in the plan. Randomized test seeds recorded. |
+
+### Phase 4 — Reporting & Publication
+
+| | |
+|---|---|
+| **Entry criteria** | Phase 3 complete. |
+| **Actions** | Generate final artifact(s). Post test plan summary or link to GitHub issue. Confirm issue accessibility. Produce output contract. |
+| **Exit criteria** | Artifacts written. GitHub issue updated. Output contract returned to caller. |
+
 ## Mandatory Workflow Integration Points
 
 1. **Test Design Gate (post-plan, pre-implement):**
@@ -88,6 +134,20 @@ If required inputs are missing, ask one focused clarification question with a de
    - a direct link to the artifact in `/workstream/` or PR files.
 8. **Issue accessibility check:** Before completion, you **MUST** confirm reviewers can access the test plan directly from the issue.
 9. **No false completion:** If traceability is incomplete, you **MUST** mark status as blocked and list missing evidence.
+
+## Failure Triage Workflow (Randomized Tests)
+
+When a randomized or fuzz test fails, follow this sequence:
+
+1. **Capture:** Record the seed, input vector, and observed output immediately.
+2. **Isolate:** Re-run the failing case with the captured seed to confirm deterministic reproduction.
+3. **Minimize:** Reduce the input to the smallest vector that still triggers the failure.
+4. **Classify:** Categorize the failure:
+   - **Spec gap** — behavior is undefined by the spec; escalate to `product-engineer`.
+   - **Implementation defect** — delivered behavior contradicts a specific AC; file as defect for `developer`.
+   - **Flaky/environmental** — failure does not reproduce deterministically; log with environment details and mark as `inconclusive`.
+5. **Report:** Add the triaged failure to the validation report with classification, minimized input, and the AC it relates to (or `N/A` for spec gaps).
+6. **Retry budget:** You **MUST NOT** retry a non-reproducing failure more than 3 times. After 3 attempts, classify as `inconclusive` and move on.
 
 ## Deliverables
 
