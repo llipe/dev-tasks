@@ -50,13 +50,18 @@ your-repo/
 │   │   ├── github-ops.agent.md
 │   │   ├── technical-writer.agent.md
 │   │   ├── housekeeping.agent.md
-│   │   └── ux-engineer.agent.md
+│   │   ├── ux-engineer.agent.md
+│   │   └── black-box-tester.agent.md
 │   ├── skills/                # On-demand capabilities
 │   │   ├── activity-init/
 │   │   ├── activity-refine/
 │   │   ├── activity-generate-spec/
 │   │   ├── activity-generate-stories/
 │   │   ├── activity-publish-github/
+│   │   ├── activity-e2e-test-design/
+│   │   ├── activity-contract-test-design/
+│   │   ├── activity-edge-case-refinement/
+│   │   ├── activity-random-test-tactics/
 │   │   ├── git-ops/
 │   │   └── webapp-mockup/
 │   └── prompts/               # Ready-to-use prompt templates
@@ -84,6 +89,7 @@ This produces `docs/product-context.md` and `docs/technical-guidelines.md`. Run 
 | **UX prototype** | Invoke `ux-engineer` with a PRD or SPEC path |
 | **Docs out of date** | Invoke `technical-writer` |
 | **Lint/type/test cleanup** | Invoke `housekeeping` |
+| **Black-box compliance testing** | Invoke `black-box-tester` with a spec or story to generate test plans and validate behavior |
 
 ### 4. (Optional) Add domain-specific instructions
 
@@ -138,6 +144,7 @@ Multi-story orchestration with checkpoint/resume:
 | `technical-writer` | Documentation maintenance |
 | `housekeeping` | Lint, type, and test-wiring fixes |
 | `github-ops` | GitHub consistency — issues, PRs, branches, labels, milestones |
+| `black-box-tester` | Deep black-box testing — derives compliance test plans and edge cases from specs/stories, validates "requested vs delivered" behavior |
 
 ---
 
@@ -154,6 +161,10 @@ On-demand capabilities loaded only when invoked. Each lives in `.github/skills/<
 | `activity-publish-github` | Stories → GitHub Issues | `product-engineer` |
 | `git-ops` | Branch, rebase, merge, conflict resolution | `developer`, `planner` |
 | `webapp-mockup` | React mockup scaffold for UX testing | `ux-engineer` |
+| `activity-e2e-test-design` | E2E black-box test scenario generation from spec/stories | `black-box-tester` |
+| `activity-contract-test-design` | Consumer/provider contract and schema compatibility testing | `black-box-tester` |
+| `activity-edge-case-refinement` | Systematic edge-case discovery by category with examples | `black-box-tester` |
+| `activity-random-test-tactics` | Randomized, fuzz, and property-inspired test generation | `black-box-tester` |
 
 ---
 
@@ -181,6 +192,8 @@ On-demand capabilities loaded only when invoked. Each lives in `.github/skills/<
 | `github-ops` | github-ops | GitHub consistency |
 | `technical-writer` | technical-writer | Documentation maintenance |
 | `housekeeping` | housekeeping | Lint, type, test fixes |
+| `black-box-tester-design` | black-box-tester | Generate compliance test plan from spec or stories |
+| `black-box-tester-validate` | black-box-tester | Validate delivered behavior against spec or stories |
 
 ---
 
@@ -220,6 +233,18 @@ developer: implement
 
 ```
 product-engineer: refine → generate-spec → ux-engineer: mockups → product-engineer: update
+```
+
+### Test-First Design (Black-Box)
+
+```
+product-engineer: refine → spec → stories → plan
+                                                 ↓
+black-box-tester: generate test plan (from spec or stories)
+                                                 ↓
+developer: implement (feature + tests from test plan)
+                                                 ↓
+black-box-tester: validate compliance → validation report
 ```
 
 ---
