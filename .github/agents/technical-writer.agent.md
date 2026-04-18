@@ -252,6 +252,61 @@ Ensure:
 
 ---
 
+## memo-cli Integration (When Available)
+
+### Availability Check
+
+At the start of every run, check if memo-cli is configured:
+
+```bash
+which memo && memo setup validate
+```
+
+- If `memo` is not found, skip all memo operations silently.
+- If `memo` is found but validation fails (missing `memo.config.json` or env vars), **STOP** and ask: "memo-cli is installed but not configured for this repository. Run `memo setup init --repo <repo> --org <org> --domain <domain>` to configure it, then re-run."
+
+### When to Write
+
+After completing **Step 3 (Update Canonical Files)**, write to memo. Do **not** batch all changes into a single entry — write one entry per distinct topic. If changes span three areas, write three shorter entries.
+
+| Condition | `--entry-type` | Required tags |
+|-----------|---------------|---------------|
+| New ADR created | `decision` | `adr`, ADR number (e.g. `adr-042`), domain/feature area |
+| Technical guideline changed | `decision` | `technical-guidelines`, domain area, `config-change` |
+| Data model changed | `decision` | `data-model`, entity name, `structure` |
+| Structural/layout convention documented | `structure` | `structure`, module area |
+| Integration contract documented | `integration_point` | `integration`, service names, `cross-repo` |
+
+### Write Template
+
+```bash
+memo write \
+	--rationale "<context sentence. decision sentence. why sentence.>" \
+	--tags "<domain-tag>,<entry-nature-tag>,<story-ref-if-known>" \
+	--entry-type <decision|structure|integration_point> \
+	--source agent \
+	--commit "$(git rev-parse HEAD)" \
+	--story "<issue-or-story-id-if-known>" \
+	--files "<path/to/doc.md>,<path/to/adr.md>" \
+	--on-duplicate consolidate \
+	--json
+```
+
+**Rationale quality rule:** Answer three questions in one coherent paragraph: (1) what changed and why it was needed, (2) what was decided or documented, (3) what it affects downstream. Never use bullet points inside `--rationale`.
+
+**Tag layers to apply (at least 2–3):**
+- **Domain/feature:** the area affected (e.g. `auth`, `api`, `data-model`, `payments`)
+- **Entry nature:** `adr`, `config-change`, `structure`, `outcome`
+- **Story/task ref:** `issue-42`, `story-s003` — include when a linked issue/story is known
+
+Before picking tags, check existing vocabulary:
+
+```bash
+memo tags list --sort frequency --json
+```
+
+---
+
 ## Behavioral Constraints
 
 - You **MUST NOT** modify application code.

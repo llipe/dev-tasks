@@ -69,6 +69,7 @@ These are the composable activities from the development workflow, converted to 
 |---|---|---|---|
 | **git-ops** | `skills/git-ops/` | Branch management, rebase, merge, conflict resolution, recovery | `developer`, `planner` |
 | **webapp-mockup** | `skills/webapp-mockup/` | Scaffold and generate React mockup apps for UX testing | `ux-engineer` |
+| **memo-cli-usage** | `skills/memo-cli-usage/` | Read and write architectural decisions to a shared Qdrant knowledge base for multi-session, multi-agent, and team-wide context continuity | `technical-writer`, `developer` |
 
 ### Third-Party Skills
 
@@ -182,3 +183,5 @@ All AI coding agents working in this repository **MUST**:
 - Reference GitHub Issues in branch names and commits
 - Maintain document changelogs when updating generated artifacts (PRDs, specs, user stories, etc.)
 - Use the `git-ops` skill for branch management, rebase, and conflict resolution
+- If `memo-cli` is installed and `memo setup validate` passes: `product-engineer` **MUST** read from memo at session start; `developer` **MUST** write intent and outcome entries per story; `technical-writer` **MUST** write one memo entry per ADR created and per significant doc change
+- If `memo-cli` is installed but not configured (validation fails), ask the user to run `memo setup init` before proceeding with memo operations

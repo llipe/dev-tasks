@@ -51,6 +51,54 @@ If any required input is missing, you **MUST** ask concise clarifying questions.
 
 ---
 
+## memo-cli Integration (When Available)
+
+### Availability Check
+
+At the start of every session, verify memo-cli is configured:
+
+```bash
+which memo && memo setup validate
+```
+
+- If `memo` is not found, skip all memo operations silently.
+- If `memo` is found but validation fails, ask: "memo-cli is installed but not configured for this repository. Run `memo setup init --repo <repo> --org <org> --domain <domain>` to configure it."
+
+### Session Start — Restore Context
+
+When memo is available, run this sequence **before beginning any activity** (refine, spec, stories, plan):
+
+```bash
+# Recent decisions for this repo
+memo list --limit 20 --json
+
+# Established tag vocabulary
+memo tags list --sort frequency --json
+
+# Context for the current feature or issue
+memo search "<feature or issue description>" --limit 10 --json
+
+# Cross-repo context (if relates_to is configured)
+memo search "<topic>" --scope related --limit 5 --json
+```
+
+Use the results to:
+- Identify prior architectural constraints relevant to the current feature.
+- Avoid proposing approaches that were already evaluated and rejected.
+- Understand naming conventions, module boundaries, and data model decisions already in the knowledge base.
+
+### During Activities — Targeted Reads
+
+Before making design choices in `activity-refine`, `activity-generate-spec`, or `activity-generate-stories`, search for related prior decisions:
+
+```bash
+memo search "<specific topic, technology, or module>" --json
+```
+
+**product-engineer does NOT write to memo.** All writes are delegated to `technical-writer` (ADRs and doc changes) and `developer` (intent/outcome entries).
+
+---
+
 ## Activity Skills
 
 This agent invokes the following **skills** for each activity. You **MUST** load the skill before executing the corresponding activity:

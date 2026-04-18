@@ -109,6 +109,64 @@ Follow `github/instructions/implement.instructions.md`:
 
 ---
 
+## memo-cli Integration (When Available)
+
+### Availability Check
+
+At the start of every execution session, check if memo-cli is configured:
+
+```bash
+which memo && memo setup validate
+```
+
+- If `memo` is not found, skip all memo operations silently.
+- If `memo` is found but validation fails, ask: "memo-cli is installed but not configured for this repository. Run `memo setup init --repo <repo> --org <org> --domain <domain>` to configure it."
+
+### Session Start — Restore Context
+
+When memo is available, run before writing any code:
+
+```bash
+memo list --limit 20 --json
+memo search "<story or issue description>" --limit 10 --json
+```
+
+Review results for prior constraints, rejected alternatives, and integration contracts that affect the current implementation.
+
+### Intent Entry — Before Starting a Story
+
+Write an intent entry **before beginning implementation** of any story or issue:
+
+```bash
+memo write \
+   --rationale "Starting implementation of ISSUE-<##>: <title>. Approach: <high-level plan>. Key upfront decisions: <any design choices already made>. Expected files to change: <key files>." \
+   --tags "<domain>,<feature-area>,issue-<number>,intent" \
+   --entry-type decision \
+   --source agent \
+   --story "ISSUE-<number>" \
+   --on-duplicate consolidate \
+   --json
+```
+
+### Outcome Entry — After Completing a Story
+
+Write an outcome entry as part of the **Completion Gate**, after all tests pass and before converting the PR to Ready for Review:
+
+```bash
+memo write \
+   --rationale "Completed ISSUE-<##>: <title>. Delivered: <summary of what was built>. Key implementation decisions: <important choices and their rationale>. Deviations from original intent: <any>." \
+   --tags "<domain>,<feature-area>,issue-<number>,outcome" \
+   --entry-type decision \
+   --source agent \
+   --commit "$(git rev-parse HEAD)" \
+   --story "ISSUE-<number>" \
+   --files "<comma-separated key files modified>" \
+   --on-duplicate consolidate \
+   --json
+```
+
+---
+
 ## Completion Gate (Mandatory for Every Story/Issue)
 
 Before marking a Story/Issue done:
@@ -118,9 +176,10 @@ Before marking a Story/Issue done:
 3. `technical-writer` agent **MUST** have run and produced a delta report.
 4. `/docs` **MUST** be updated to current state.
 5. `/workstream` **SHOULD** be cleaned (active artifacts retained, obsolete artifacts archived/removed).
-6. PR **MUST** be ready, approved, and merged.
-7. You **MUST NOT** close the GitHub Issue until all conditions above are met.
-8. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.
+6. If memo-cli is available, outcome entry **MUST** be written to memo before PR conversion.
+7. PR **MUST** be ready, approved, and merged.
+8. You **MUST NOT** close the GitHub Issue until all conditions above are met.
+9. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.
 
 ---
 
