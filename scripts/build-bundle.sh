@@ -75,7 +75,10 @@ main() {
   local checksum_path="${bundle_path}.sha256"
   local stage_dir
   stage_dir=$(mktemp -d)
-  trap 'rm -rf "$stage_dir"' EXIT
+  # Use double quotes so stage_dir is expanded now (not when trap fires after
+  # main() returns and the local variable is out of scope under set -u).
+  # shellcheck disable=SC2064
+  trap "rm -rf '${stage_dir}'" EXIT
 
   local inner_dir="${stage_dir}/dev-tasks-v${version}"
   mkdir -p "$inner_dir"
