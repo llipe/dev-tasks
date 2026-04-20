@@ -1,0 +1,61 @@
+{
+  "$schema": "https://github.com/llipe/dev-tasks/raw/main/bundle-manifest.schema.json",
+  "name": "dev-tasks",
+  "description": "AI agent toolkit for structured, PRD-driven development workflows",
+  "source": "https://github.com/llipe/dev-tasks",
+  "compatibility": {
+    "min_git_version": "2.20.0",
+    "requires": ["curl", "tar", "shasum"],
+    "optional": ["jq"]
+  },
+  "managed_paths": [
+    {
+      "path": ".github/agents",
+      "description": "AI agent definition files",
+      "pattern": "*.agent.md",
+      "recursive": false
+    },
+    {
+      "path": ".github/skills",
+      "description": "Activity and operational skill files",
+      "pattern": "*/SKILL.md",
+      "recursive": true
+    },
+    {
+      "path": ".github/instructions",
+      "description": "Always-loaded instruction files",
+      "pattern": "*.instructions.md",
+      "recursive": false
+    },
+    {
+      "path": ".github/instructions/domain",
+      "description": "Domain-specific instruction files",
+      "pattern": "*.instructions.md",
+      "recursive": false
+    },
+    {
+      "path": ".github/prompts",
+      "description": "Prompt entry-point files",
+      "pattern": "*.prompt.md",
+      "recursive": false
+    },
+    {
+      "path": ".agents/skills",
+      "description": "Third-party imported skill files",
+      "pattern": "*/SKILL.md",
+      "recursive": true
+    },
+    {
+      "path": ".",
+      "description": "Top-level metadata files",
+      "pattern": "skills-lock.json",
+      "recursive": false
+    }
+  ],
+  "consumer_owned_paths": [
+    "AGENTS.md"
+  ],
+  "version_file": ".dev-tasks-version",
+  "backup_dir": ".dev-tasks-backup",
+  "agents_update_file": ".dev-tasks-agents-update.md"
+}
