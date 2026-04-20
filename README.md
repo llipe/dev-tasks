@@ -29,6 +29,49 @@ This system brings structure and clarity to AI-assisted development by:
 
 ---
 
+## Installation
+
+### Prerequisites
+
+- macOS / Linux (or WSL on Windows)
+- `git`
+- `curl`
+- `tar`
+- `shasum` (or `sha256sum`)
+
+### Option A: Install `dev-tasks` into any repository (recommended)
+
+Run this in the repository where you want to use the workflow:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \
+  -o dev-tasks.sh && chmod +x dev-tasks.sh
+./dev-tasks.sh install
+```
+
+### Option B: Set up this repository locally (contributors)
+
+```bash
+git clone https://github.com/llipe/dev-tasks.git
+cd dev-tasks
+chmod +x dev-tasks.sh
+./dev-tasks.sh version
+./dev-tasks.sh check
+```
+
+### Verify the installation
+
+After install, confirm these paths exist in your target repo:
+
+- `.github/agents/`
+- `.github/skills/`
+- `.github/instructions/`
+- `.github/prompts/`
+- `.agents/skills/`
+- `.dev-tasks-version`
+
+---
+
 ## Getting Started
 
 ### 1. Install with the single-script installer
