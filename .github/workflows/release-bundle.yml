@@ -1,0 +1,107 @@
+name: Release Bundle
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]*'
+
+permissions:
+  contents: write   # required to create releases and upload assets
+
+jobs:
+  build-and-release:
+    name: Build and publish release bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # needed for git describe
+
+      - name: Resolve version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}"    >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Make scripts executable
+        run: chmod +x scripts/build-bundle.sh dev-tasks.sh
+
+      - name: Build distribution bundle
+        run: ./scripts/build-bundle.sh "${{ steps.version.outputs.version }}"
+
+      - name: Verify bundle and checksum files exist
+        run: |
+          BUNDLE="dist/dev-tasks-bundle-v${{ steps.version.outputs.version }}.tar.gz"
+          CHECKSUM="${BUNDLE}.sha256"
+          if [ ! -f "$BUNDLE" ]; then
+            echo "ERROR: Bundle file not found: $BUNDLE" >&2
+            exit 1
+          fi
+          if [ ! -f "$CHECKSUM" ]; then
+            echo "ERROR: Checksum file not found: $CHECKSUM" >&2
+            exit 1
+          fi
+          echo "Bundle:   $BUNDLE"
+          echo "Checksum: $CHECKSUM"
+          cat "$CHECKSUM"
+
+      - name: Smoke test — install into a clean temp directory
+        run: |
+          set -euo pipefail
+          TMPDIR=$(mktemp -d)
+          BUNDLE="dist/dev-tasks-bundle-v${{ steps.version.outputs.version }}.tar.gz"
+
+          # Extract the bundle manually and verify key managed files
+          tar -xzf "$BUNDLE" -C "$TMPDIR"
+          INNER=$(ls -A "$TMPDIR" | head -1)
+          SRC="${TMPDIR}/${INNER}"
+
+          echo "Verifying bundle contents ..."
+          [ -d "${SRC}/.github/agents" ]       || { echo "Missing .github/agents"; exit 1; }
+          [ -d "${SRC}/.github/skills" ]        || { echo "Missing .github/skills"; exit 1; }
+          [ -d "${SRC}/.github/instructions" ]  || { echo "Missing .github/instructions"; exit 1; }
+          [ -d "${SRC}/.github/prompts" ]       || { echo "Missing .github/prompts"; exit 1; }
+          [ -f "${SRC}/bundle-manifest.json" ]  || { echo "Missing bundle-manifest.json"; exit 1; }
+          echo "Bundle structure OK."
+          rm -rf "$TMPDIR"
+
+      - name: Create GitHub Release and upload assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          BUNDLE="dist/dev-tasks-bundle-v${VERSION}.tar.gz"
+          CHECKSUM="${BUNDLE}.sha256"
+
+          # Build release notes
+          NOTES=$(cat <<EOF
+          ## dev-tasks v${VERSION}
+
+          Install or update the agent toolkit using the single-script installer:
+
+          \`\`\`bash
+          # Bootstrap (first time)
+          curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \\
+            -o dev-tasks.sh && chmod +x dev-tasks.sh
+
+          # Install this release
+          ./dev-tasks.sh install ${TAG}
+
+          # Or update from a previous version
+          ./dev-tasks.sh update ${TAG}
+          \`\`\`
+
+          See the [README](https://github.com/llipe/dev-tasks#readme) for full documentation.
+          EOF
+          )
+
+          gh release create "$TAG" \
+            --title "dev-tasks ${TAG}" \
+            --notes "$NOTES" \
+            "$BUNDLE" \
+            "$CHECKSUM"
