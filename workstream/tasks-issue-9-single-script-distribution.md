@@ -10,7 +10,7 @@
 
 ## Tasks
 
-- [ ] 1.0 Implement Issue #9 - https://github.com/llipe/dev-tasks/issues/9: Single-script toolkit distribution with install, update, version check, and AGENTS.md integration prompt
+- [x] 1.0 Implement Issue #9 - https://github.com/llipe/dev-tasks/issues/9: Single-script toolkit distribution with install, update, version check, and AGENTS.md integration prompt
 
   - [x] 1.1 Create `bundle-manifest.json` defining managed file surface and compatibility metadata
   - [x] 1.2 Create `dev-tasks.sh` with CLI skeleton: argument parsing, help text, and `version` subcommand
@@ -22,8 +22,8 @@
   - [x] 1.8 Create `scripts/build-bundle.sh`: package managed files into tarball, generate SHA256 checksum
   - [x] 1.9 Create `.github/workflows/release-bundle.yml`: trigger on tag push, build bundle, create GitHub Release, upload assets
   - [x] 1.10 Update `README.md` with install, update, version check, pinning, rollback, and AGENTS.md integration instructions
-  - [ ] 1.11 Verify Acceptance Criterion: `dev-tasks.sh install` places all managed files in correct paths
-  - [ ] 1.12 Verify Acceptance Criterion: AGENTS.md integration prompt is printed after every install/update (never overwritten)
-  - [ ] 1.13 Verify Acceptance Criterion: `--dry-run` shows planned changes without modifying files
-  - [ ] 1.14 Verify Acceptance Criterion: `.dev-tasks-version` is written with version and timestamp
-  - [ ] 1.15 Verify Acceptance Criterion: network/tool/permission failures produce clear errors and non-zero exit codes
+  - [x] 1.11 Verify Acceptance Criterion: `dev-tasks.sh install` places all managed files in correct paths
+  - [x] 1.12 Verify Acceptance Criterion: AGENTS.md integration prompt is printed after every install/update (never overwritten)
+  - [x] 1.13 Verify Acceptance Criterion: `--dry-run` shows planned changes without modifying files
+  - [x] 1.14 Verify Acceptance Criterion: `.dev-tasks-version` is written with version and timestamp
+  - [x] 1.15 Verify Acceptance Criterion: network/tool/permission failures produce clear errors and non-zero exit codes
