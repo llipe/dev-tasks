@@ -434,6 +434,34 @@ Every git tag matching `v*.*.*` triggers `.github/workflows/release-bundle.yml`,
 3. Runs a smoke test against the bundle
 4. Creates the GitHub Release and attaches the bundle + checksum as assets
 
+#### How to create a new release
+
+1. Ensure the release changes are merged into `main`.
+2. Sync your local branch:
+
+```bash
+git checkout main
+git pull origin main
+```
+
+3. Create and push a semantic version tag (`vMAJOR.MINOR.PATCH`):
+
+```bash
+git tag -a v1.3.0 -m "Release v1.3.0"
+git push origin v1.3.0
+```
+
+4. Wait for `.github/workflows/release-bundle.yml` to complete.
+5. Verify the GitHub Release contains both assets:
+  - `dev-tasks-bundle-v1.3.0.tar.gz`
+  - `dev-tasks-bundle-v1.3.0.tar.gz.sha256`
+
+Optional post-release validation:
+
+```bash
+./dev-tasks.sh install v1.3.0
+```
+
 ---
 
 ## Attribution
