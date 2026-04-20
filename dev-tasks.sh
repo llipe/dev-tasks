@@ -34,11 +34,8 @@ MANAGED_DIRS=(
   ".github/instructions"
   ".github/instructions/domain"
   ".github/prompts"
-  ".agents/skills"
 )
-MANAGED_FILES=(
-  "skills-lock.json"
-)
+MANAGED_FILES=()
 
 # Colors (disabled when stderr is not a tty — all diagnostics go to stderr)
 if [ -t 2 ]; then
