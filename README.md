@@ -403,7 +403,7 @@ After every install or update, the script prints a `=== AGENTS.md Integration ==
 
 ```bash
 # Pin to a specific version
-./dev-tasks.sh install v1.2.0
+./dev-tasks.sh install v0.1.3
 
 # Update with backup so you can roll back manually
 ./dev-tasks.sh update --backup
