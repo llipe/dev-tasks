@@ -40,8 +40,8 @@ MANAGED_FILES=(
   "skills-lock.json"
 )
 
-# Colors (disabled when not a tty)
-if [ -t 1 ]; then
+# Colors (disabled when stderr is not a tty — all diagnostics go to stderr)
+if [ -t 2 ]; then
   RED='\033[0;31m'; YELLOW='\033[1;33m'; GREEN='\033[0;32m'
   CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
 else
@@ -49,13 +49,15 @@ else
 fi
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
+# All diagnostic output goes to stderr so command substitutions (e.g.
+# bundle_file=$(download_bundle ...)) capture only the actual return value.
 
-info()    { printf "%b\\n" "${CYAN}[dev-tasks]${RESET} $*"; }
-success() { printf "%b\\n" "${GREEN}[dev-tasks]${RESET} $*"; }
-warn()    { printf "%b\\n" "${YELLOW}[dev-tasks] WARN:${RESET} $*"; }
+info()    { printf "%b\\n" "${CYAN}[dev-tasks]${RESET} $*" >&2; }
+success() { printf "%b\\n" "${GREEN}[dev-tasks]${RESET} $*" >&2; }
+warn()    { printf "%b\\n" "${YELLOW}[dev-tasks] WARN:${RESET} $*" >&2; }
 error()   { printf "%b\\n" "${RED}[dev-tasks] ERROR:${RESET} $*" >&2; }
 die()     { error "$*"; exit 1; }
-bold()    { printf "%b\\n" "${BOLD}$*${RESET}"; }
+bold()    { printf "%b\\n" "${BOLD}$*${RESET}" >&2; }
 
 check_deps() {
   local missing=()
