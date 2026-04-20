@@ -456,7 +456,8 @@ cmd_install() {
 
   local tmpdir
   tmpdir=$(mktemp -d)
-  trap 'rm -rf "$tmpdir"' EXIT
+  # shellcheck disable=SC2064
+  trap "rm -rf '${tmpdir}'" EXIT
 
   info "Fetching release info (${target_version}) ..."
   local release_json version
@@ -531,7 +532,8 @@ cmd_update() {
 
   local tmpdir
   tmpdir=$(mktemp -d)
-  trap 'rm -rf "$tmpdir"' EXIT
+  # shellcheck disable=SC2064
+  trap "rm -rf '${tmpdir}'" EXIT
 
   local bundle_file extract_dir
   bundle_file=$(download_bundle "$release_json" "$tmpdir")
