@@ -462,6 +462,30 @@ Optional post-release validation:
 ./dev-tasks.sh install v1.3.0
 ```
 
+#### Option: download assets directly from the Releases page
+
+If you prefer manual installation, download the bundle and checksum from:
+
+- https://github.com/llipe/dev-tasks/releases
+
+Example for a specific version:
+
+```bash
+VERSION=v1.3.0
+BASE_URL="https://github.com/llipe/dev-tasks/releases/download/${VERSION}"
+
+curl -fL -o "dev-tasks-bundle-${VERSION}.tar.gz" \
+  "${BASE_URL}/dev-tasks-bundle-${VERSION}.tar.gz"
+curl -fL -o "dev-tasks-bundle-${VERSION}.tar.gz.sha256" \
+  "${BASE_URL}/dev-tasks-bundle-${VERSION}.tar.gz.sha256"
+
+# Verify checksum
+shasum -a 256 -c "dev-tasks-bundle-${VERSION}.tar.gz.sha256"
+
+# Extract
+tar -xzf "dev-tasks-bundle-${VERSION}.tar.gz"
+```
+
 ---
 
 ## Attribution
