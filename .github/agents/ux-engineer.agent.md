@@ -76,7 +76,8 @@ Before generating any mockup, you **MUST** resolve the UI standards source:
 2. **Mockup location:** Mockups **MUST** be created only under:
    - `/mockups/mockup-<feature>-<num>`
 3. **Consistency scaffold:** You **MUST** create each mockup via:
-   - `./scripts/scaffold-mockup.sh <feature> <num> [palette_url]`
+   - `./.github/skills/webapp-mockup/scripts/scaffold-mockup.sh <feature> <num> [palette_url]`
+   - This scaffold is expected to run non-interactively from the agent terminal.
 4. **Coverage requirements:** Each mockup **MUST** include components, copy, transitions, popups, warnings, inputs, and validations.
 5. **Partial flow banner:** If only one section is implemented, a visible instruction banner **MUST** be present.
 6. **No full flow by default:** You **SHOULD** prioritize representative sections over full end-to-end implementation.

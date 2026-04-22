@@ -48,14 +48,14 @@ fi
 mkdir -p "$MOCKUPS_ROOT"
 
 echo "Creating app at: $APP_DIR"
-npm create vite@latest "$APP_DIR" -- --template react-ts
+CI=1 npm_config_yes=true npm create vite@latest "$APP_DIR" -- --template react-ts
 
 pushd "$APP_DIR" >/dev/null
 
 npm install
 npm install class-variance-authority clsx tailwind-merge lucide-react @radix-ui/react-dialog
 npm install -D tailwindcss postcss autoprefixer tailwindcss-animate
-npx tailwindcss init -p
+npx --yes tailwindcss init -p
 
 cat > tailwind.config.js <<'EOF'
 /** @type {import('tailwindcss').Config} */

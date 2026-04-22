@@ -39,11 +39,13 @@ Required behavior
 - Use:
   - ./.github/skills/webapp-mockup/scripts/scaffold-mockup.sh <feature> <num> [palette_url]
 - This script must be the default path for creating new mockups to keep structure and baseline behavior consistent.
+- The scaffold path must remain non-interactive so agents can run it without manual terminal confirmation.
 
 Operational workflow
 1. Confirm feature slug and mockup number.
 2. Confirm palette or apply fallback URL.
 3. Run scaffold script.
+  - The script is designed to run non-interactively in agent terminal sessions.
 4. Implement or adjust the specific mockup section requested.
 5. Verify app runs with npm run dev.
 6. Summarize what is mocked vs intentionally not implemented.
