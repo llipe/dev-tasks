@@ -274,13 +274,48 @@ Completion output required:
 - test results
 - manual validation steps
 - known limitations
+- exact trailing closeout payload delimited by `BEGIN CLOSEOUT PAYLOAD` and `END CLOSEOUT PAYLOAD`
+
+Required payload schema:
+
+```markdown
+BEGIN CLOSEOUT PAYLOAD
+status: completed | blocked
+issue: #<number>
+pr: <full-pr-url-or-none>
+pr_status: draft | ready | merged | blocked | none
+base_branch: <branch-name>
+story_branch: <branch-name-or-none>
+workstream_files:
+   - <path>
+app_files:
+   - <path>
+docs_files:
+   - <path>
+tests:
+   - <command>: PASS | FAIL | NOT RUN
+manual_validation:
+   - <step>
+known_limitations:
+   - <item-or-none>
+checklist_sync: synced | mismatch-fixed | blocked
+next_action: <single sentence>
+END CLOSEOUT PAYLOAD
 ```
 
 ### Story completion rule
 
-Each story is complete when it returns a closeout summary and PR link (or explicit blocked status).
+Each story is complete only when it returns both:
+- a human-readable closeout summary
+- the exact trailing closeout payload with all required fields
 
-If closeout summary is missing, retry once. If still missing, mark story incomplete and ask user whether to continue.
+Validation rule:
+- Parse the developer response for `BEGIN CLOSEOUT PAYLOAD` and `END CLOSEOUT PAYLOAD`.
+- Verify all required fields are present and `issue`, `pr`, `base_branch`, and `story_branch` are internally consistent with the delegated story.
+
+If the payload is missing or incomplete:
+1. Retry once with a narrow follow-up asking the developer to return only the missing closeout payload.
+2. If the retry still omits the payload, mark the story incomplete, write the checkpoint as blocked on missing closeout payload, and ask the user whether to continue.
 
 ### Merge management rule (planner-owned)
 

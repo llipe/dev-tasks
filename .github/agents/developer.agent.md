@@ -15,8 +15,8 @@ You **MUST NOT** create PRDs, specifications, user stories, or refine scope. If 
 
 You **MUST** respect all constraints in:
 - `AGENTS.md`
-- `github/agents/technical-writer.agent.md`
-- `github/agents/github-ops.agent.md`
+- `.github/agents/technical-writer.agent.md`
+- `.github/agents/github-ops.agent.md`
 
 GitHub Issues and PRs are the source of truth for execution status.
 
@@ -74,7 +74,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 
 ## Execution Flow
 
-Follow `github/instructions/implement.instructions.md`:
+Follow `.github/instructions/implement.instructions.md`:
 
 1. Confirm issue is open and checklist exists in both local task file and GitHub Issue.
 2. Create branch + open Draft PR (if not already present).
@@ -200,5 +200,37 @@ When finishing a story/issue execution cycle, return a **complete closeout summa
 - Key implementation decisions
 - Testing results
 - Task checklist cross-check result
+
+When execution is delegated by `planner`, you **MUST** append an exact machine-readable closeout payload at the end of the response using this format:
+
+```markdown
+BEGIN CLOSEOUT PAYLOAD
+status: completed | blocked
+issue: #<number>
+pr: <full-pr-url-or-none>
+pr_status: draft | ready | merged | blocked | none
+base_branch: <branch-name>
+story_branch: <branch-name-or-none>
+workstream_files:
+   - <path>
+app_files:
+   - <path>
+docs_files:
+   - <path>
+tests:
+   - <command>: PASS | FAIL | NOT RUN
+manual_validation:
+   - <step>
+known_limitations:
+   - <item-or-none>
+checklist_sync: synced | mismatch-fixed | blocked
+next_action: <single sentence>
+END CLOSEOUT PAYLOAD
+```
+
+Rules for this payload:
+- The markers `BEGIN CLOSEOUT PAYLOAD` and `END CLOSEOUT PAYLOAD` **MUST** appear exactly as written.
+- Every field is required. Use `none`, `NOT RUN`, or `blocked` when a value does not exist.
+- `planner` may treat the story as incomplete if either marker or any required field is missing.
 
 Do not dump full files unless explicitly requested.
