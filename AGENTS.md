@@ -12,6 +12,18 @@ This system brings structure and clarity to AI-assisted development by:
 - Guiding the AI to tackle one task at a time with checkpoints for review
 - Providing specialized **agents** that orchestrate the workflow end-to-end
 - Enforcing documentation, branch discipline, and GitHub-as-source-of-truth
+- Standardizing visual design decisions through `/DESIGN.md` as the canonical UI contract
+
+## Design Standard Contract (DESIGN.md)
+
+`/DESIGN.md` is the canonical design-system artifact for this repository.
+
+- `ux-engineer` **MUST** use `/DESIGN.md` as the primary style source for mockups.
+- `product-engineer` **MUST** reference `/DESIGN.md` for UI-impacting specs and stories.
+- `developer` **MUST** validate UI changes against `/DESIGN.md` and update it when the visual contract changes.
+- `planner` **MUST** require DESIGN.md compliance in UI-impacting delegated runs.
+
+If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MUST** create a baseline DESIGN.md before finalizing design-dependent outputs.
 
 ---
 
@@ -182,6 +194,7 @@ All AI coding agents working in this repository **MUST**:
 - Follow testing, linting, and documentation standards from `technical-guidelines.md`
 - Reference GitHub Issues in branch names and commits
 - Maintain document changelogs when updating generated artifacts (PRDs, specs, user stories, etc.)
+- Treat `/DESIGN.md` as the source of truth for visual tokens, components, and design guidance; update it whenever UI contracts change
 - Use the `git-ops` skill for branch management, rebase, and conflict resolution
 - If `memo-cli` is installed and `memo setup validate` passes: `product-engineer` **MUST** read from memo at session start; `developer` **MUST** write intent and outcome entries per story; `technical-writer` **MUST** write one memo entry per ADR created and per significant doc change
 - If `memo-cli` is installed but not configured (validation fails), ask the user to run `memo setup init` before proceeding with memo operations

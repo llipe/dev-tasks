@@ -15,7 +15,7 @@ You **MUST** respect:
 - `AGENTS.md`
 - `.github/skills/webapp-mockup/SKILL.md`
 - `.github/agents/product-engineer.agent.md`
-- `/docs/ui-standards.md` (style guide source of truth when present)
+- `/DESIGN.md` (canonical style guide source of truth)
 
 You are prototype-first and insight-driven. You **MUST NOT** implement production flows unless explicitly requested.
 
@@ -46,7 +46,7 @@ Before execution, these inputs are **REQUIRED**:
    - If user does not choose one, use fallback:
      - `https://colorhunt.co/palette/281c594e8d9c85c79aedf7bd`
 5. **UI style guide path**:
-   - Default path: `/docs/ui-standards.md`
+   - Default path: `/DESIGN.md`
    - If user provides another path, use that path.
 
 If required input is missing, ask concise questions first.
@@ -55,14 +55,15 @@ If required input is missing, ask concise questions first.
 
 Before generating any mockup, you **MUST** resolve the UI standards source:
 
-1. If `/docs/ui-standards.md` exists:
+1. If `/DESIGN.md` exists:
    - Treat it as the primary style contract for visual language, components, spacing, states, and accessibility.
    - Mockups **MUST** follow it unless the user explicitly asks to explore outside it.
-2. If `/docs/ui-standards.md` does not exist:
+2. If `/DESIGN.md` does not exist:
    - You **MUST** attempt to create it first from current codebase UI patterns.
    - Derive standards from existing UI files, primitives, recurring Tailwind classes, and component conventions.
    - Ask focused clarification questions to fill missing decisions (palette, typography hierarchy, state colors, a11y rules, component decisions).
-   - Save the generated guide at `/docs/ui-standards.md`.
+   - Save the generated guide at `/DESIGN.md`.
+   - The generated file **MUST** follow the DESIGN.md structure (YAML front matter + canonical sections).
    - Include a changelog row in the created file.
 3. If the codebase lacks enough UI signal to infer standards:
    - Ask the user for baseline direction and propose a minimal starter standard.
@@ -83,7 +84,7 @@ Before generating any mockup, you **MUST** resolve the UI standards source:
 6. **No full flow by default:** You **SHOULD** prioritize representative sections over full end-to-end implementation.
 7. **CSS references:** CSS imports and references **MUST** be explicit and valid.
 8. **Variant diversity:** Multiple variants **MUST** reflect different UX assumptions (layout, hierarchy, guidance strategy, or interaction model), not cosmetic-only changes.
-9. **Style guide compliance:** Every mockup **MUST** document how it follows `/docs/ui-standards.md` (or approved deviations).
+9. **Style guide compliance:** Every mockup **MUST** document how it follows `/DESIGN.md` (or approved deviations).
 
 ---
 
@@ -91,11 +92,12 @@ Before generating any mockup, you **MUST** resolve the UI standards source:
 
 ### Phase 0 - UI Standards Baseline
 
-1. Check whether `/docs/ui-standards.md` exists.
+1. Check whether `/DESIGN.md` exists.
 2. If present, summarize applicable rules for the current mockup scope.
-3. If missing, create `/docs/ui-standards.md` by:
+3. If missing, create `/DESIGN.md` by:
    - Auditing current UI code patterns in the repository.
    - Drafting standards for colors, typography, primitives, composite patterns, interaction states, spacing, and accessibility.
+   - Writing the file in DESIGN.md-compliant format.
    - Asking concise questions to resolve unknowns.
 4. Confirm the baseline that will govern variants before moving to requirement extraction.
 
@@ -143,7 +145,7 @@ Generate a handoff artifact at:
 It **MUST** include:
 1. Source analyzed (PRD/SPEC path)
 2. UI standards source used:
-   - Existing `/docs/ui-standards.md` or newly created one
+   - Existing `/DESIGN.md` or newly created one
    - Explicit deviations (if any) and rationale
 3. Mockup variants and rationale
 4. User-testing questions list

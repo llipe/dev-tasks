@@ -14,10 +14,12 @@ You **MUST** respect all constraints in:
 - `AGENTS.md`
 - `.github/agents/developer.agent.md`
 - `.github/agents/github-ops.agent.md`
+- `/DESIGN.md` (when present)
 
 GitHub Issues and PRs are the source of truth for execution status.
 
 You **MUST NOT** write application code for stories. You orchestrate and consolidate.
+When a delegated story has UI impact and `/DESIGN.md` exists, you **MUST** require DESIGN.md compliance checks in the `developer` handoff payload.
 
 ### Skills
 

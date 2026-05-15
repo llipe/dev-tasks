@@ -17,6 +17,7 @@ You **MUST** respect all constraints in:
 - `AGENTS.md`
 - `.github/agents/technical-writer.agent.md`
 - `.github/agents/github-ops.agent.md`
+- `/DESIGN.md` (when present)
 
 GitHub Issues and PRs are the source of truth for execution status.
 
@@ -69,6 +70,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 11. **ADR enforcement:** If `/docs/technical-guidelines.md` changes during the documentation pass, you **MUST** ensure a new ADR is created in `/docs/adr/`.
 12. **GitHub hygiene:** All issues, PRs, labels, milestones, and comments **MUST** conform to `github-ops` conventions.
 13. **Git operations:** For complex git operations (rebase, merge conflicts, branch updates), you **SHOULD** invoke the `git-ops` skill for standardized procedures.
+14. **DESIGN.md compliance:** If a sub-task changes UI behavior, visual styling, or component variants, you **MUST** verify compliance with `/DESIGN.md` and update `/DESIGN.md` when the visual contract changes.
 
 ---
 
@@ -77,10 +79,11 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 Follow `.github/instructions/implement.instructions.md`:
 
 1. Confirm issue is open and checklist exists in both local task file and GitHub Issue.
-2. Create branch + open Draft PR (if not already present).
-3. Execute one sub-task at a time in checklist order.
-4. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
-5. When all sub-tasks are complete:
+2. If `/DESIGN.md` exists and the story has UI impact, load it before coding and include DESIGN.md checks in validation.
+3. Create branch + open Draft PR (if not already present).
+4. Execute one sub-task at a time in checklist order.
+5. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
+6. When all sub-tasks are complete:
    - Verify all acceptance criteria.
    - Run tests and record results.
    - Invoke `technical-writer` for documentation update.
