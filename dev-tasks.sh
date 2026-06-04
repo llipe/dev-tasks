@@ -206,7 +206,7 @@ detect_modifications() {
     fi
   done
 
-  for file in "${MANAGED_FILES[@]}"; do
+  for file in "${MANAGED_FILES[@]+${MANAGED_FILES[@]}}"; do
     local ref_file="${ref_dir}/${file}"
     if [ -f "$ref_file" ] && [ -f "./${file}" ]; then
       local ref_sum local_sum
@@ -244,7 +244,7 @@ backup_managed_files() {
     fi
   done
 
-  for file in "${MANAGED_FILES[@]}"; do
+  for file in "${MANAGED_FILES[@]+${MANAGED_FILES[@]}}"; do
     if [ -f "./${file}" ]; then
       cp "./${file}" "${dest}/${file}"
     fi
@@ -335,7 +335,7 @@ install_files() {
     fi
   done
 
-  for file in "${MANAGED_FILES[@]}"; do
+  for file in "${MANAGED_FILES[@]+${MANAGED_FILES[@]}}"; do
     local src="${src_dir}/${file}"
     if [ ! -f "$src" ]; then continue; fi
     if [ "$dry_run" = "true" ]; then
