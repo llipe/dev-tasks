@@ -512,6 +512,37 @@ cmd_check() {
   fi
 }
 
+cmd_list() {
+  local installed
+  installed=$(read_installed_version)
+
+  if [ -z "$installed" ]; then
+    printf "dev-tasks: not installed in this directory (no %s found)\n" "$VERSION_FILE"
+    exit 0
+  fi
+
+  success "Installed toolkit v${installed}"
+  printf "\n"
+  bold "Managed Directories:"
+  for dir in "${MANAGED_DIRS[@]}"; do
+    if [ -d "./${dir}" ]; then
+      local file_count
+      file_count=$(find "./${dir}" -type f 2>/dev/null | wc -l | tr -d ' ')
+      printf "  %s (%d files)\n" "$dir" "$file_count"
+    else
+      printf "  %s (not installed)\n" "$dir"
+    fi
+  done
+
+  printf "\n"
+  bold "Metadata Files:"
+  [ -f "$VERSION_FILE" ] && printf "  %s\n" "$VERSION_FILE" || printf "  %s (missing)\n" "$VERSION_FILE"
+  [ -f "$AGENTS_UPDATE_FILE" ] && printf "  %s\n" "$AGENTS_UPDATE_FILE" || true
+  [ -f "$CLAUDE_UPDATE_FILE" ] && printf "  %s\n" "$CLAUDE_UPDATE_FILE" || true
+  [ -f "$CLAUDE_SETTINGS_UPDATE_FILE" ] && printf "  %s\n" "$CLAUDE_SETTINGS_UPDATE_FILE" || true
+  [ -d "$BACKUP_DIR" ] && printf "  %s (backup directory)\n" "$BACKUP_DIR" || true
+}
+
 cmd_install() {
   local target_version="${1:-latest}"
   local dry_run="${2:-false}"
@@ -661,6 +692,7 @@ ${BOLD}COMMANDS${RESET}
   install [version]   Install the toolkit (default: latest)
   update  [version]   Update to latest or a pinned version
   check               Compare installed version vs latest
+  list                List installed directories and files
   version             Print installed version information
 
 ${BOLD}OPTIONS${RESET} (install / update)
@@ -681,6 +713,9 @@ ${BOLD}EXAMPLES${RESET}
 
   # Check for updates
   ./dev-tasks.sh check
+
+  # List installed files
+  ./dev-tasks.sh list
 
   # Update with backup
   ./dev-tasks.sh update --backup
@@ -732,6 +767,7 @@ main() {
     install) cmd_install "$target_version" "$dry_run" "$do_backup" "$auto_yes" ;;
     update)  cmd_update  "$target_version" "$dry_run" "$do_backup" "$auto_yes" ;;
     check)   cmd_check ;;
+    list)    cmd_list ;;
     version) cmd_version ;;
     help | --help | -h) usage; exit 0 ;;
     "")
