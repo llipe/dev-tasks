@@ -236,7 +236,7 @@ On-demand capabilities loaded only when invoked. Each lives in `.github/skills/<
 |---|---|---|
 | `plan.instructions.md` | `**` | Convert stories/issues into task lists |
 | `implement.instructions.md` | `**` | Execute task list with approval gates |
-| `domain/nextjs-pages-components.instructions.md` | `apps/management-hub/src/**/*.tsx` | Next.js + React conventions |
+| `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions |
 
 ---
 

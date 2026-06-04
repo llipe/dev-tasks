@@ -1,5 +1,5 @@
 ---
-applyTo: "apps/management-hub/src/**/*.tsx"
+applyTo: "**/*.tsx"
 ---
 # Rule: Keep Next.js Pages and React Components Consistent
 > **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
@@ -7,7 +7,7 @@ applyTo: "apps/management-hub/src/**/*.tsx"
 
 ## Goal
 
-Guide GitHub Copilot when creating or editing Next.js pages and React components for the Management Hub so the UI stays consistent in:
+Guide GitHub Copilot when creating or editing Next.js pages and React components so the UI stays consistent in:
 
 - libraries and dependencies
 - component patterns
@@ -19,7 +19,7 @@ Guide GitHub Copilot when creating or editing Next.js pages and React components
 
 ## Scope
 
-Apply these rules to UI work inside `apps/management-hub/src/app` and `apps/management-hub/src/components`.
+Apply these rules to UI work inside `src/app` and `src/components`.
 
 This project uses:
 
@@ -41,7 +41,7 @@ This project uses:
 2. You **MUST** use Tailwind CSS as the default styling system.
    - Treat Tailwind as the standard foundation for layout, spacing, color, typography, and state styles.
    - Prefer utility classes over ad hoc CSS approaches for page and component implementation.
-   - If reusable patterns emerge, extract local primitives in `apps/management-hub/src/components/ui`.
+   - If reusable patterns emerge, extract local primitives in `src/components/ui`.
 
 3. You **MUST NOT** introduce an opinionated component library by default.
    - You **MUST NOT** add MUI, Chakra UI, Ant Design, Radix wrappers, styled-components, Emotion, Framer Motion, or similar libraries unless the user explicitly asks for them.
@@ -50,14 +50,14 @@ This project uses:
 
 4. You **MUST NOT** solve simple UI problems with extra dependencies.
    - Prefer plain React components and existing utility-class styling.
-   - If a reusable primitive is needed, create it locally in `apps/management-hub/src/components/ui`.
+   - If a reusable primitive is needed, create it locally in `src/components/ui`.
 
 5. You **SHOULD** prefer local UI primitives before external component kits.
    - Build and reuse a small internal set of primitives such as `Button`, `Input`, `Card`, `Badge`, `Alert`, and `PageHeader`.
    - Keep those primitives aligned with the approved palette and accessibility rules.
 
 6. You **MUST** keep app boundaries strict.
-   - You **MUST NOT** import UI or business logic from `apps/shopify-app`.
+   - You **MUST NOT** import UI or business logic from sibling apps.
    - Only use shared packages when they are already intended for cross-app use.
 
 ## Component and Page Architecture
