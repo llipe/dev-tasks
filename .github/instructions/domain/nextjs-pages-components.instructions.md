@@ -100,7 +100,7 @@ This project uses:
 
 1. **Export `metadata` for pages when relevant**.
    - Public and major app pages **SHOULD** provide title and description.
-   - Keep titles consistent with the product name: `E-Commerce Management Hub`.
+   - Keep titles consistent with the product name of your app.
 
 2. **Use the right navigation primitive**.
    - Use `Link` from `next/link` for internal navigation in rendered UI.
@@ -128,11 +128,11 @@ This project uses:
 ## Styling and Design Rules
 
 1. **Follow the existing utility-class styling approach**.
-   - Match the current class patterns already used across the Management Hub.
+   - Match the current class patterns already used across the app.
    - Do not introduce inline style objects unless there is no reasonable alternative.
    - You **MUST NOT** introduce CSS-in-JS.
 
-2. **Use the approved Management Hub color palette**.
+2. **Use the approved app color palette**.
    - Base palette:
      - Sky Blue (Light): `#8ecae6`
      - Blue Green: `#219ebc`
@@ -307,7 +307,7 @@ Before finishing a page or component, verify:
 
 - It uses existing Next.js and React patterns.
 - It does not add unnecessary dependencies.
-- It matches current Management Hub styling.
+- It matches the current app styling.
 - It uses semantic, accessible markup.
 - It keeps business logic outside presentational code when possible.
 - It reuses or extracts shared UI patterns instead of duplicating them.
@@ -325,7 +325,7 @@ Before finishing a page or component, verify:
 
 ## Preferred Outcome
 
-Every new Management Hub page or component should feel like it belongs to the same product:
+Every new page or component should feel like it belongs to the same product:
 
 - same stack
 - same structure
