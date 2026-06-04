@@ -26,6 +26,7 @@ VERSION_FILE=".dev-tasks-version"
 BACKUP_DIR=".dev-tasks-backup"
 AGENTS_UPDATE_FILE=".dev-tasks-agents-update.md"
 CLAUDE_UPDATE_FILE=".dev-tasks-claude-update.md"
+CLAUDE_SETTINGS_UPDATE_FILE=".dev-tasks-claude-settings-update.json"
 GH_API="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases"
 
 # All paths the script manages (relative to consumer repo root)
@@ -368,8 +369,14 @@ print_agents_md_prompt() {
   fi
 
   if [ ! -f "$consumer_agents" ]; then
+    if [ "$dry_run" = "true" ]; then
+      info "[dry-run] Would save bundle AGENTS.md reference to: ${AGENTS_UPDATE_FILE}"
+    else
+      cp "$bundled_agents" "$AGENTS_UPDATE_FILE"
+      info "Saved bundle AGENTS.md reference to: ${AGENTS_UPDATE_FILE}"
+    fi
     printf "%b\n" "${YELLOW}No AGENTS.md found in this repo. To create one, copy from the bundle:${RESET}"
-    printf "\n  cp ${bundled_agents} ./AGENTS.md\n\n"
+    printf "\n  cp ${AGENTS_UPDATE_FILE} ./AGENTS.md\n\n"
   else
     if command -v diff >/dev/null 2>&1; then
       local diff_output
@@ -398,6 +405,7 @@ print_agents_md_prompt() {
 print_claude_md_prompt() {
   local src_dir="$1" version="$2" dry_run="${3:-false}"
   local bundled_claude="${src_dir}/CLAUDE.md"
+  local bundled_settings="${src_dir}/.claude/settings.json"
   local consumer_claude="./CLAUDE.md"
 
   # Only relevant if the bundle ships Claude Code support.
@@ -412,10 +420,28 @@ print_claude_md_prompt() {
   printf "\n"
 
   if [ ! -f "$consumer_claude" ]; then
+    if [ "$dry_run" = "true" ]; then
+      info "[dry-run] Would save bundle CLAUDE.md reference to: ${CLAUDE_UPDATE_FILE}"
+    else
+      cp "$bundled_claude" "$CLAUDE_UPDATE_FILE"
+      info "Saved bundle CLAUDE.md reference to: ${CLAUDE_UPDATE_FILE}"
+    fi
+
+    if [ -f "$bundled_settings" ]; then
+      if [ "$dry_run" = "true" ]; then
+        info "[dry-run] Would save bundle Claude settings reference to: ${CLAUDE_SETTINGS_UPDATE_FILE}"
+      else
+        cp "$bundled_settings" "$CLAUDE_SETTINGS_UPDATE_FILE"
+        info "Saved bundle Claude settings reference to: ${CLAUDE_SETTINGS_UPDATE_FILE}"
+      fi
+    fi
+
     printf "%b\n" "${YELLOW}No CLAUDE.md found in this repo. To create one, copy from the bundle:${RESET}"
-    printf "\n  cp ${bundled_claude} ./CLAUDE.md\n\n"
-    info "To enable the git-guard hook, also copy the reference settings:"
-    printf "\n  mkdir -p .claude && cp ${src_dir}/.claude/settings.json ./.claude/settings.json\n\n"
+    printf "\n  cp ${CLAUDE_UPDATE_FILE} ./CLAUDE.md\n\n"
+    if [ -f "$bundled_settings" ] || { [ "$dry_run" = "false" ] && [ -f "${CLAUDE_SETTINGS_UPDATE_FILE}" ]; }; then
+      info "To enable the git-guard hook, also copy the reference settings:"
+      printf "\n  mkdir -p .claude && cp ${CLAUDE_SETTINGS_UPDATE_FILE} ./.claude/settings.json\n\n"
+    fi
   else
     if command -v diff >/dev/null 2>&1; then
       local diff_output
@@ -665,6 +691,8 @@ ${BOLD}EXAMPLES${RESET}
 ${BOLD}FILES${RESET}
   ${VERSION_FILE}         Installed version metadata (JSON)
   ${AGENTS_UPDATE_FILE}   Reference AGENTS.md from last install/update
+  ${CLAUDE_UPDATE_FILE}   Reference CLAUDE.md from last install/update
+  ${CLAUDE_SETTINGS_UPDATE_FILE}  Reference .claude/settings.json from last install/update
   ${BACKUP_DIR}/          Backups of managed files (when --backup is used)
 
 ${BOLD}SOURCE${RESET}
