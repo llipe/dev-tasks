@@ -21,6 +21,10 @@ MANAGED_DIRS=(
   ".github/instructions/domain"
   ".github/prompts"
   ".agents/skills"
+  ".claude/agents"
+  ".claude/skills"
+  ".claude/commands"
+  ".claude/hooks"
 )
 
 MANAGED_FILES=(
@@ -28,6 +32,8 @@ MANAGED_FILES=(
   "bundle-manifest.json"
   "dev-tasks.sh"
   "AGENTS.md"
+  "CLAUDE.md"
+  ".claude/settings.json"
 )
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────

@@ -25,6 +25,7 @@ SCRIPT_VERSION="1.0.0"
 VERSION_FILE=".dev-tasks-version"
 BACKUP_DIR=".dev-tasks-backup"
 AGENTS_UPDATE_FILE=".dev-tasks-agents-update.md"
+CLAUDE_UPDATE_FILE=".dev-tasks-claude-update.md"
 GH_API="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases"
 
 # All paths the script manages (relative to consumer repo root)
@@ -34,6 +35,10 @@ MANAGED_DIRS=(
   ".github/instructions"
   ".github/instructions/domain"
   ".github/prompts"
+  ".claude/agents"
+  ".claude/skills"
+  ".claude/commands"
+  ".claude/hooks"
 )
 MANAGED_FILES=()
 
@@ -388,6 +393,51 @@ print_agents_md_prompt() {
   printf "\n"
 }
 
+# ─── CLAUDE.md Integration Prompt ─────────────────────────────────────────────
+
+print_claude_md_prompt() {
+  local src_dir="$1" version="$2" dry_run="${3:-false}"
+  local bundled_claude="${src_dir}/CLAUDE.md"
+  local consumer_claude="./CLAUDE.md"
+
+  # Only relevant if the bundle ships Claude Code support.
+  if [ ! -f "$bundled_claude" ]; then
+    return
+  fi
+
+  bold "\n=== CLAUDE.md Integration (Claude Code) ==="
+  printf "\n"
+  info "Claude Code config installed: .claude/agents, .claude/skills, .claude/commands, .claude/hooks."
+  info "Your CLAUDE.md and .claude/settings.json were NOT modified — you own those files."
+  printf "\n"
+
+  if [ ! -f "$consumer_claude" ]; then
+    printf "%b\n" "${YELLOW}No CLAUDE.md found in this repo. To create one, copy from the bundle:${RESET}"
+    printf "\n  cp ${bundled_claude} ./CLAUDE.md\n\n"
+    info "To enable the git-guard hook, also copy the reference settings:"
+    printf "\n  mkdir -p .claude && cp ${src_dir}/.claude/settings.json ./.claude/settings.json\n\n"
+  else
+    if command -v diff >/dev/null 2>&1; then
+      local diff_output
+      diff_output=$(diff --unified=3 "$consumer_claude" "$bundled_claude" 2>/dev/null || true)
+      if [ -z "$diff_output" ]; then
+        success "Your CLAUDE.md is already up to date with the bundle."
+      else
+        printf "%b\n" "${YELLOW}Changes in this release that may affect CLAUDE.md:${RESET}"
+        printf "\n%s\n\n" "$diff_output"
+        info "Reference CLAUDE.md from the bundle has been saved to: ${CLAUDE_UPDATE_FILE}"
+        if [ "$dry_run" = "false" ]; then
+          cp "$bundled_claude" "$CLAUDE_UPDATE_FILE"
+        fi
+        printf "Review the diff above and merge changes into your CLAUDE.md manually.\n"
+        printf "The reference file is at: %s\n\n" "$CLAUDE_UPDATE_FILE"
+      fi
+    fi
+  fi
+  bold "============================================="
+  printf "\n"
+}
+
 # ─── Commands ─────────────────────────────────────────────────────────────────
 
 cmd_version() {
@@ -491,6 +541,7 @@ cmd_install() {
   write_version_file "$version" "$dry_run"
 
   print_agents_md_prompt "$src_dir" "$version" "$dry_run"
+  print_claude_md_prompt "$src_dir" "$version" "$dry_run"
   [ "$dry_run" = "true" ] && success "[dry-run] Install simulation complete — no files were modified." \
                            || success "Installed dev-tasks v${version}."
 }
@@ -566,6 +617,7 @@ cmd_update() {
   write_version_file "$latest_version" "$dry_run"
 
   print_agents_md_prompt "$src_dir" "$latest_version" "$dry_run"
+  print_claude_md_prompt "$src_dir" "$latest_version" "$dry_run"
   [ "$dry_run" = "true" ] && success "[dry-run] Update simulation complete — no files were modified." \
                            || success "Updated dev-tasks to v${latest_version}."
 }

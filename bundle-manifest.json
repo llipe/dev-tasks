@@ -46,6 +46,30 @@
       "recursive": true
     },
     {
+      "path": ".claude/agents",
+      "description": "Claude Code subagent definitions",
+      "pattern": "*.md",
+      "recursive": false
+    },
+    {
+      "path": ".claude/skills",
+      "description": "Claude Code skill definitions",
+      "pattern": "*/SKILL.md",
+      "recursive": true
+    },
+    {
+      "path": ".claude/commands",
+      "description": "Claude Code command entry points",
+      "pattern": "*.md",
+      "recursive": false
+    },
+    {
+      "path": ".claude/hooks",
+      "description": "Claude Code hook scripts (git-guard, etc.)",
+      "pattern": "*.sh",
+      "recursive": false
+    },
+    {
       "path": ".",
       "description": "Top-level metadata files",
       "pattern": "skills-lock.json",
@@ -53,7 +77,9 @@
     }
   ],
   "consumer_owned_paths": [
-    "AGENTS.md"
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".claude/settings.json"
   ],
   "version_file": ".dev-tasks-version",
   "backup_dir": ".dev-tasks-backup",
