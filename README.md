@@ -97,6 +97,12 @@ This downloads the latest versioned bundle from GitHub Releases, places all mana
 ./dev-tasks.sh check
 ```
 
+**List installed files and directories:**
+
+```bash
+./dev-tasks.sh list
+```
+
 **Update (with automatic backup):**
 
 ```bash
@@ -370,6 +376,7 @@ The toolkit is distributed as a versioned tarball via **GitHub Releases**. `dev-
 | `./dev-tasks.sh install [version]` | Install latest or a pinned version |
 | `./dev-tasks.sh update [version]` | Update managed files to the latest or a specific version |
 | `./dev-tasks.sh check` | Compare installed version vs latest release |
+| `./dev-tasks.sh list` | List installed directories, files, and metadata |
 | `./dev-tasks.sh version` | Print installed version and script version |
 
 ### Options (install / update)
