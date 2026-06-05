@@ -11,6 +11,7 @@ Run the `product-engineer` agent to refine and plan a GitHub Issue:
 The agent will chain: `refine` → `plan`.
 
 Artifacts produced:
+
 - Lightweight refinement doc under `/workstream/`
 - GitHub Issue updated with "Refined Scope" section
 - Execution-ready task list under `/workstream/`

@@ -13,6 +13,7 @@ Discover and catalog edge cases across all relevant categories for the feature u
 ## Context
 
 This activity assumes:
+
 - A numbered list of acceptance criteria is available (produced by Phase 2 of `black-box-tester`).
 - E2E scenarios and contract scenarios have already been drafted (or will be composed alongside).
 - The output feeds into the edge-case section of the test plan assembled by `black-box-tester`.
@@ -80,13 +81,13 @@ Backward compatibility, deprecated field handling, schema migration, version hea
 ```markdown
 ### EC-{id}: {Edge-Case Title}
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-{n} |
-| **Category** | {category name from list above} |
-| **Input / Setup** | {Concrete input or precondition} |
-| **Expected Result** | {Observable behavior} |
-| **Risk if Missed** | {Consequence of not testing this — data loss, security breach, silent corruption, etc.} |
+| Field               | Value                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| **AC(s)**           | AC-{n}                                                                                  |
+| **Category**        | {category name from list above}                                                         |
+| **Input / Setup**   | {Concrete input or precondition}                                                        |
+| **Expected Result** | {Observable behavior}                                                                   |
+| **Risk if Missed**  | {Consequence of not testing this — data loss, security breach, silent corruption, etc.} |
 ```
 
 ## Example Walkthrough: "Requested vs Delivered" Validation
@@ -101,15 +102,16 @@ Given a user story with AC-5: "Discount code can only be used once per user."
 
 ### EC-7: Same discount code submitted twice simultaneously
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-5 |
-| **Category** | Idempotency, Timing & Concurrency |
-| **Input / Setup** | User sends two `POST /api/cart/discount` requests with the same code in parallel (within 50ms). |
+| Field               | Value                                                                                               |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| **AC(s)**           | AC-5                                                                                                |
+| **Category**        | Idempotency, Timing & Concurrency                                                                   |
+| **Input / Setup**   | User sends two `POST /api/cart/discount` requests with the same code in parallel (within 50ms).     |
 | **Expected Result** | Exactly one application succeeds. The second returns an error indicating the code was already used. |
-| **Risk if Missed** | User gets double discount — revenue loss, potential abuse vector. |
+| **Risk if Missed**  | User gets double discount — revenue loss, potential abuse vector.                                   |
 
 **Validating "requested vs delivered":**
+
 - **Requested (AC-5):** Code used once per user.
 - **Delivered:** Run the edge case; if both requests succeed → **DRIFT** detected. If exactly one succeeds → **PASS**.
 

@@ -12,6 +12,7 @@ Run the `product-engineer` agent to design a new feature:
 The agent will chain: `refine` → `generate-spec` → `generate-stories` → `publish-github` → `plan`.
 
 Artifacts produced:
+
 - PRD under `/docs/requirements/`
 - Specification under `/workstream/`
 - User stories published as GitHub Issues

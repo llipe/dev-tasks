@@ -6,7 +6,6 @@ Publish user stories as GitHub Issues so GitHub becomes the source of truth for 
 
 > **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
-
 ## Goal
 
 Take a list of user stories and publish them as GitHub Issues using GitHub MCP or `gh` CLI, so GitHub becomes the source of truth for execution tracking.
@@ -14,6 +13,7 @@ Take a list of user stories and publish them as GitHub Issues using GitHub MCP o
 ## Context
 
 This activity assumes the following document exists:
+
 - `user-stories-[prd-name].md` — The comprehensive list of user stories (produced by the **generate-stories** activity)
 
 ## Process
@@ -25,6 +25,7 @@ This activity assumes the following document exists:
 5. **Save Output.**
 
 Execution method rules:
+
 - GitHub MCP **SHOULD** be used when available.
 - If MCP is unavailable, `gh` CLI **MAY** be used.
 - The selected method (`github-mcp` or `gh-cli`) **MUST** be recorded in the publication report.
@@ -32,6 +33,7 @@ Execution method rules:
 If `github-ops` delegation is unavailable in the current runtime, you **MUST** apply `github-ops` issue, label, milestone, and comment conventions directly and explicitly note that fallback in your status output.
 
 Attribution rules:
+
 - Any PR creation or issue closure performed during this workflow **MUST** include `Assisted-by: <assistant name and version>` in the corresponding PR body or closing comment.
 
 ## Clarifying Questions
@@ -45,6 +47,7 @@ Attribution rules:
 ## Issue Formatting Rules
 
 Each GitHub Issue **MUST** be created using:
+
 - **Title:** `[PRD-<prd-number or name>] Story [ID]: [Title]`
 - **Body:**
   - User Story (role, goal, benefit)
@@ -68,17 +71,19 @@ You **MUST** create a publication report:
 # GitHub Publication Report: [PRD Name]
 
 ## Target Repository
+
 - Repo: owner/repo
 - Date: YYYY-MM-DD
 
 ## Created Issues
 
-| Story ID | Story Title | Issue URL | Labels | Milestone | Assignee |
-|----------|-------------|----------|--------|-----------|----------|
-| S-001 | [Title] | https://github.com/owner/repo/issues/123 | backend, auth | v1 | @user |
-| ... | ... | ... | ... | ... | ... |
+| Story ID | Story Title | Issue URL                                | Labels        | Milestone | Assignee |
+| -------- | ----------- | ---------------------------------------- | ------------- | --------- | -------- |
+| S-001    | [Title]     | https://github.com/owner/repo/issues/123 | backend, auth | v1        | @user    |
+| ...      | ...         | ...                                      | ...           | ...       | ...      |
 
 ## Notes
+
 - Any skipped stories and why
 - Any template or permission limitations
 - Any manual follow-up needed

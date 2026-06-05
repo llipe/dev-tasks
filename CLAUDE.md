@@ -39,17 +39,17 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 
 ### Commands (entry points)
 
-| Command | Purpose |
-|---|---|
-| `/product-engineer` | **Orchestrator (main thread).** Init / Feature / Issue mode: refine → spec → stories → publish → plan. Hands off to `/developer` or `/planner`. |
-| `/planner` | **Orchestrator (main thread).** Multi-story execution with dependency ordering, per-story delegation to the `developer` subagent, checkpoint/resume (auto-detected), and one consolidated PR. |
-| `/developer` | **Interactive (main thread).** Step-gated implementation of a task list, pausing for approval after each sub-task. |
-| `/github-ops` | Audit/standardize GitHub artifacts. |
-| `/technical-writer` | Sync `/docs` with the codebase. |
-| `/housekeeping` | Fix lint/type/test-wiring issues. |
-| `/ux-engineer` | PRD/SPEC → React mockups + refinement handoff. |
-| `/black-box-tester-design` | Generate a compliance test plan + traceability matrix from a spec/story. |
-| `/black-box-tester-validate` | Validate delivered behavior against requirements + test plan. |
+| Command                      | Purpose                                                                                                                                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/product-engineer`          | **Orchestrator (main thread).** Init / Feature / Issue mode: refine → spec → stories → publish → plan. Hands off to `/developer` or `/planner`.                                               |
+| `/planner`                   | **Orchestrator (main thread).** Multi-story execution with dependency ordering, per-story delegation to the `developer` subagent, checkpoint/resume (auto-detected), and one consolidated PR. |
+| `/developer`                 | **Interactive (main thread).** Step-gated implementation of a task list, pausing for approval after each sub-task.                                                                            |
+| `/github-ops`                | Audit/standardize GitHub artifacts.                                                                                                                                                           |
+| `/technical-writer`          | Sync `/docs` with the codebase.                                                                                                                                                               |
+| `/housekeeping`              | Fix lint/type/test-wiring issues.                                                                                                                                                             |
+| `/ux-engineer`               | PRD/SPEC → React mockups + refinement handoff.                                                                                                                                                |
+| `/black-box-tester-design`   | Generate a compliance test plan + traceability matrix from a spec/story.                                                                                                                      |
+| `/black-box-tester-validate` | Validate delivered behavior against requirements + test plan.                                                                                                                                 |
 
 ### Subagents (`.claude/agents/`)
 
@@ -59,8 +59,8 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 
 Claude Code subagents **cannot spawn other subagents** — the hierarchy is flat (main session → workers). dev-tasks is delegation-heavy, so:
 
-- **Orchestrators run in the main thread as commands** (`/product-engineer`, `/planner`), not as subagents, so they can delegate to leaf subagents *and* pause for the required user-approval gates.
-- **Step-gated approval requires the main thread.** A subagent runs to completion and only returns a summary; it cannot pause mid-run for a "yes". Use `/developer` (main thread) for interactive step-gated work; the `developer` *subagent* is for `/planner`'s autonomous per-story delegation, which gates at the **story** boundary, not per sub-task.
+- **Orchestrators run in the main thread as commands** (`/product-engineer`, `/planner`), not as subagents, so they can delegate to leaf subagents _and_ pause for the required user-approval gates.
+- **Step-gated approval requires the main thread.** A subagent runs to completion and only returns a summary; it cannot pause mid-run for a "yes". Use `/developer` (main thread) for interactive step-gated work; the `developer` _subagent_ is for `/planner`'s autonomous per-story delegation, which gates at the **story** boundary, not per sub-task.
 
 ### Skills (`.claude/skills/`)
 
@@ -78,12 +78,12 @@ Copilot's `applyTo`-scoped instructions have no direct Claude Code equivalent (t
 
 ## File Organization
 
-| Directory | Contents |
-|---|---|
-| `/docs/` | Foundation docs — product-context, technical-guidelines, ADRs |
-| `/docs/requirements/` | PRDs |
-| `/workstream/` | Active feature work — specs, stories, task lists, planner state files |
-| `.claude/agents/` | Subagent definitions |
-| `.claude/skills/` | On-demand skills |
-| `.claude/commands/` | Command entry points |
-| `/mockups/` | UX mockups |
+| Directory             | Contents                                                              |
+| --------------------- | --------------------------------------------------------------------- |
+| `/docs/`              | Foundation docs — product-context, technical-guidelines, ADRs         |
+| `/docs/requirements/` | PRDs                                                                  |
+| `/workstream/`        | Active feature work — specs, stories, task lists, planner state files |
+| `.claude/agents/`     | Subagent definitions                                                  |
+| `.claude/skills/`     | On-demand skills                                                      |
+| `.claude/commands/`   | Command entry points                                                  |
+| `/mockups/`           | UX mockups                                                            |

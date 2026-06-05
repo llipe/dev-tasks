@@ -6,10 +6,10 @@ description: "Orchestrate multi-story execution from a /workstream task file or 
 Run the `planner` agent to orchestrate a multi-story implementation:
 
 - **Repository:** `<owner/repo>`
-- **Task source** *(choose one)*:
+- **Task source** _(choose one)_:
   - Task file: `workstream/<tasks-prd-XXX-description.md>`
   - GitHub milestone: `<milestone-name-or-id>`
-- **Developer execution mode:** pre-approved autonomous sequential *(change to `step-gated` for manual approval per sub-task)*
+- **Developer execution mode:** pre-approved autonomous sequential _(change to `step-gated` for manual approval per sub-task)_
 
 The planner will present a dependency-based batch plan and pause for your approval before any work begins.
 

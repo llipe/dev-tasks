@@ -5,11 +5,11 @@ description: "Audit and update /docs to reflect the current state of the codebas
 
 Run the `technical-writer` agent to synchronize documentation with the codebase.
 
-Context for this pass *(provide one or more)*:
+Context for this pass _(provide one or more)_:
 
 - **Feature / milestone completed:** `<feature name or milestone>`
 - **Relevant workstream files:** `workstream/<file.md>`
-- **PRD reference:** `docs/requirements/<prd-file.md>` *(optional)*
+- **PRD reference:** `docs/requirements/<prd-file.md>` _(optional)_
 
 The agent will:
 

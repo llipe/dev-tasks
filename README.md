@@ -16,15 +16,16 @@ This system brings structure and clarity to AI-assisted development by:
 
 ## Taxonomy: Agent vs Skill vs Instruction
 
-| Concept | Purpose | Loaded When | Decision Rule |
-|---------|---------|-------------|---------------|
-| **Agent** | Autonomous role with decision-making, phases, and handoff discipline. Owns a workflow end-to-end. | Invoked by name (`@agent`) | "Does it make decisions, own a multi-phase workflow, and hand off to other agents?" → Agent |
-| **Skill** | Reusable on-demand capability. Describes *procedures* or *activities* that any agent can invoke when needed. Not loaded unless referenced. | On demand (invoked by agent or prompt) | "Is this capability needed only sometimes, by one or more agents?" → Skill |
-| **Instruction** | Always-loaded rule scoped via `applyTo` frontmatter. Enforced automatically for every matching context. | Always (auto-applied by runtime) | "Must this rule be enforced every time, for every matching file or context?" → Instruction |
+| Concept         | Purpose                                                                                                                                    | Loaded When                            | Decision Rule                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Agent**       | Autonomous role with decision-making, phases, and handoff discipline. Owns a workflow end-to-end.                                          | Invoked by name (`@agent`)             | "Does it make decisions, own a multi-phase workflow, and hand off to other agents?" → Agent |
+| **Skill**       | Reusable on-demand capability. Describes _procedures_ or _activities_ that any agent can invoke when needed. Not loaded unless referenced. | On demand (invoked by agent or prompt) | "Is this capability needed only sometimes, by one or more agents?" → Skill                  |
+| **Instruction** | Always-loaded rule scoped via `applyTo` frontmatter. Enforced automatically for every matching context.                                    | Always (auto-applied by runtime)       | "Must this rule be enforced every time, for every matching file or context?" → Instruction  |
 
 **Key distinctions:**
+
 - Skills save context window space — they are loaded only when invoked, unlike instructions which are always present.
-- Agent files define *who* (identity, phases, handoff rules). Skill files define *how* (procedures, templates, steps).
+- Agent files define _who_ (identity, phases, handoff rules). Skill files define _how_ (procedures, templates, steps).
 - Instructions are for cross-cutting rules that must never be forgotten (e.g., implementation discipline, planning format).
 
 ---
@@ -147,15 +148,15 @@ This produces `docs/product-context.md` and `docs/technical-guidelines.md`. Run 
 
 ### 3. Start building
 
-| Situation | How to start |
-| --------- | ------------ |
-| **New feature / epic** | Invoke `product-engineer` with a feature description, then `developer` to implement |
-| **Single GitHub Issue** | Invoke `product-engineer` with an issue number, then `developer` to implement |
-| **Already have a task list** | Invoke `developer` with a task list path |
-| **Multi-story PRD batch** | Invoke `planner` with a `/workstream` task file or milestone |
-| **UX prototype** | Invoke `ux-engineer` with a PRD or SPEC path |
-| **Docs out of date** | Invoke `technical-writer` |
-| **Lint/type/test cleanup** | Invoke `housekeeping` |
+| Situation                        | How to start                                                                                |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| **New feature / epic**           | Invoke `product-engineer` with a feature description, then `developer` to implement         |
+| **Single GitHub Issue**          | Invoke `product-engineer` with an issue number, then `developer` to implement               |
+| **Already have a task list**     | Invoke `developer` with a task list path                                                    |
+| **Multi-story PRD batch**        | Invoke `planner` with a `/workstream` task file or milestone                                |
+| **UX prototype**                 | Invoke `ux-engineer` with a PRD or SPEC path                                                |
+| **Docs out of date**             | Invoke `technical-writer`                                                                   |
+| **Lint/type/test cleanup**       | Invoke `housekeeping`                                                                       |
 | **Black-box compliance testing** | Invoke `black-box-tester` with a spec or story to generate test plans and validate behavior |
 
 ### 4. (Optional) Add domain-specific instructions
@@ -193,24 +194,24 @@ Execution agent — implements code from an existing task list. Runs `implement`
 
 Multi-story orchestration with checkpoint/resume:
 
-| Phase | What Happens |
-| ----- | ------------ |
-| 0 | Discover task source |
-| 0.5 | Resume detection — checks for existing checkpoint state file |
-| 1 | Parse stories and infer dependencies |
-| 2 | Dependency graph — **user approval required** |
-| 3 | Pre-flight — creates integration branch |
-| 4 | Delegate to `developer` per story; merge and write checkpoint |
-| 5 | Consolidated PR to `main` — **user must approve** |
+| Phase | What Happens                                                  |
+| ----- | ------------------------------------------------------------- |
+| 0     | Discover task source                                          |
+| 0.5   | Resume detection — checks for existing checkpoint state file  |
+| 1     | Parse stories and infer dependencies                          |
+| 2     | Dependency graph — **user approval required**                 |
+| 3     | Pre-flight — creates integration branch                       |
+| 4     | Delegate to `developer` per story; merge and write checkpoint |
+| 5     | Consolidated PR to `main` — **user must approve**             |
 
 ### Other Agents
 
-| Agent | Purpose |
-|---|---|
-| `ux-engineer` | PRD/SPEC-to-mockup — feeds refinements back to `product-engineer` |
-| `technical-writer` | Documentation maintenance |
-| `housekeeping` | Lint, type, and test-wiring fixes |
-| `github-ops` | GitHub consistency — issues, PRs, branches, labels, milestones |
+| Agent              | Purpose                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `ux-engineer`      | PRD/SPEC-to-mockup — feeds refinements back to `product-engineer`                                                                     |
+| `technical-writer` | Documentation maintenance                                                                                                             |
+| `housekeeping`     | Lint, type, and test-wiring fixes                                                                                                     |
+| `github-ops`       | GitHub consistency — issues, PRs, branches, labels, milestones                                                                        |
 | `black-box-tester` | Deep black-box testing — derives compliance test plans and edge cases from specs/stories, validates "requested vs delivered" behavior |
 
 ---
@@ -219,48 +220,48 @@ Multi-story orchestration with checkpoint/resume:
 
 On-demand capabilities loaded only when invoked. Each lives in `.github/skills/<name>/SKILL.md`.
 
-| Skill | Purpose | Consumer |
-|---|---|---|
-| `activity-init` | Product context and technical guidelines | `product-engineer` |
-| `activity-refine` | Issue refinement or PRD creation | `product-engineer` |
-| `activity-generate-spec` | PRD → technical specification | `product-engineer` |
-| `activity-generate-stories` | Spec → user stories with coverage validation | `product-engineer` |
-| `activity-publish-github` | Stories → GitHub Issues | `product-engineer` |
-| `git-ops` | Branch, rebase, merge, conflict resolution | `developer`, `planner` |
-| `webapp-mockup` | React mockup scaffold for UX testing | `ux-engineer` |
-| `activity-e2e-test-design` | E2E black-box test scenario generation from spec/stories | `black-box-tester` |
-| `activity-contract-test-design` | Consumer/provider contract and schema compatibility testing | `black-box-tester` |
-| `activity-edge-case-refinement` | Systematic edge-case discovery by category with examples | `black-box-tester` |
-| `activity-random-test-tactics` | Randomized, fuzz, and property-inspired test generation | `black-box-tester` |
-| `memo-cli-usage` | Shared architectural memory with `memo-cli` (read session context, write intent/outcome and ADR/decision rationale) | `product-engineer`, `developer`, `technical-writer` |
+| Skill                           | Purpose                                                                                                             | Consumer                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `activity-init`                 | Product context and technical guidelines                                                                            | `product-engineer`                                  |
+| `activity-refine`               | Issue refinement or PRD creation                                                                                    | `product-engineer`                                  |
+| `activity-generate-spec`        | PRD → technical specification                                                                                       | `product-engineer`                                  |
+| `activity-generate-stories`     | Spec → user stories with coverage validation                                                                        | `product-engineer`                                  |
+| `activity-publish-github`       | Stories → GitHub Issues                                                                                             | `product-engineer`                                  |
+| `git-ops`                       | Branch, rebase, merge, conflict resolution                                                                          | `developer`, `planner`                              |
+| `webapp-mockup`                 | React mockup scaffold for UX testing                                                                                | `ux-engineer`                                       |
+| `activity-e2e-test-design`      | E2E black-box test scenario generation from spec/stories                                                            | `black-box-tester`                                  |
+| `activity-contract-test-design` | Consumer/provider contract and schema compatibility testing                                                         | `black-box-tester`                                  |
+| `activity-edge-case-refinement` | Systematic edge-case discovery by category with examples                                                            | `black-box-tester`                                  |
+| `activity-random-test-tactics`  | Randomized, fuzz, and property-inspired test generation                                                             | `black-box-tester`                                  |
+| `memo-cli-usage`                | Shared architectural memory with `memo-cli` (read session context, write intent/outcome and ADR/decision rationale) | `product-engineer`, `developer`, `technical-writer` |
 
 ---
 
 ## Instructions (Always-Loaded)
 
-| Instruction | Scope | Purpose |
-|---|---|---|
-| `plan.instructions.md` | `**` | Convert stories/issues into task lists |
-| `implement.instructions.md` | `**` | Execute task list with approval gates |
-| `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions |
+| Instruction                                      | Scope      | Purpose                                |
+| ------------------------------------------------ | ---------- | -------------------------------------- |
+| `plan.instructions.md`                           | `**`       | Convert stories/issues into task lists |
+| `implement.instructions.md`                      | `**`       | Execute task list with approval gates  |
+| `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions            |
 
 ---
 
 ## Prompts
 
-| Prompt | Agent | Purpose |
-|---|---|---|
-| `product-engineer-init` | product-engineer | Initialize foundation documents |
-| `product-engineer-feature` | product-engineer | Design and plan a feature |
-| `product-engineer-issue` | product-engineer | Refine and plan a GitHub Issue |
-| `developer-execute` | developer | Execute an existing task list |
-| `planner` | planner | Orchestrate multi-story execution |
-| `planner-resume` | planner | Resume from checkpoint |
-| `ux-engineer` | ux-engineer | Generate UX mockups |
-| `github-ops` | github-ops | GitHub consistency |
-| `technical-writer` | technical-writer | Documentation maintenance |
-| `housekeeping` | housekeeping | Lint, type, test fixes |
-| `black-box-tester-design` | black-box-tester | Generate compliance test plan from spec or stories |
+| Prompt                      | Agent            | Purpose                                             |
+| --------------------------- | ---------------- | --------------------------------------------------- |
+| `product-engineer-init`     | product-engineer | Initialize foundation documents                     |
+| `product-engineer-feature`  | product-engineer | Design and plan a feature                           |
+| `product-engineer-issue`    | product-engineer | Refine and plan a GitHub Issue                      |
+| `developer-execute`         | developer        | Execute an existing task list                       |
+| `planner`                   | planner          | Orchestrate multi-story execution                   |
+| `planner-resume`            | planner          | Resume from checkpoint                              |
+| `ux-engineer`               | ux-engineer      | Generate UX mockups                                 |
+| `github-ops`                | github-ops       | GitHub consistency                                  |
+| `technical-writer`          | technical-writer | Documentation maintenance                           |
+| `housekeeping`              | housekeeping     | Lint, type, test fixes                              |
+| `black-box-tester-design`   | black-box-tester | Generate compliance test plan from spec or stories  |
 | `black-box-tester-validate` | black-box-tester | Validate delivered behavior against spec or stories |
 
 ---
@@ -319,16 +320,16 @@ black-box-tester: validate compliance → validation report
 
 ## File Organization
 
-| Directory | Contents |
-| --------- | -------- |
-| `/docs/` | Foundation documents — product-context, technical-guidelines, ADRs |
-| `/docs/requirements/` | PRDs produced by the refine skill |
-| `/workstream/` | Active feature work — specs, stories, task lists, planner state files |
-| `.github/instructions/` | Always-loaded instruction files |
-| `.github/instructions/domain/` | Project-specific coding standards (auto-applied) |
-| `.github/agents/` | Agent definition files |
-| `.github/skills/` | On-demand skill definitions |
-| `.github/prompts/` | Agent invocation prompts |
+| Directory                      | Contents                                                              |
+| ------------------------------ | --------------------------------------------------------------------- |
+| `/docs/`                       | Foundation documents — product-context, technical-guidelines, ADRs    |
+| `/docs/requirements/`          | PRDs produced by the refine skill                                     |
+| `/workstream/`                 | Active feature work — specs, stories, task lists, planner state files |
+| `.github/instructions/`        | Always-loaded instruction files                                       |
+| `.github/instructions/domain/` | Project-specific coding standards (auto-applied)                      |
+| `.github/agents/`              | Agent definition files                                                |
+| `.github/skills/`              | On-demand skill definitions                                           |
+| `.github/prompts/`             | Agent invocation prompts                                              |
 
 ---
 
@@ -362,6 +363,16 @@ memo setup init --repo <repo-name> --org <org-name> --domain <domain>
 
 Use `--scope related` for cross-repo context when `relates_to` is configured in `memo.config.json`.
 
+### Formatting
+
+Use the repo-local formatter wrapper for tracked Markdown, JSON, and YAML files:
+
+```bash
+./scripts/format.sh --check
+./scripts/format.sh --write
+```
+
+The script uses `prettier` from your `PATH` when available and falls back to `npx --yes prettier` otherwise.
 
 ---
 
@@ -371,34 +382,34 @@ The toolkit is distributed as a versioned tarball via **GitHub Releases**. `dev-
 
 ### Commands
 
-| Command | Description |
-|---------|-------------|
-| `./dev-tasks.sh install [version]` | Install latest or a pinned version |
-| `./dev-tasks.sh update [version]` | Update managed files to the latest or a specific version |
-| `./dev-tasks.sh check` | Compare installed version vs latest release |
-| `./dev-tasks.sh list` | List installed directories, files, and metadata |
-| `./dev-tasks.sh version` | Print installed version and script version |
+| Command                            | Description                                              |
+| ---------------------------------- | -------------------------------------------------------- |
+| `./dev-tasks.sh install [version]` | Install latest or a pinned version                       |
+| `./dev-tasks.sh update [version]`  | Update managed files to the latest or a specific version |
+| `./dev-tasks.sh check`             | Compare installed version vs latest release              |
+| `./dev-tasks.sh list`              | List installed directories, files, and metadata          |
+| `./dev-tasks.sh version`           | Print installed version and script version               |
 
 ### Options (install / update)
 
-| Option | Description |
-|--------|-------------|
-| `--dry-run` | Print planned changes without writing any files |
-| `--backup` | Copy managed files to `.dev-tasks-backup/<timestamp>/` before replacing |
-| `--yes` | Skip confirmation prompts (useful in CI) |
+| Option      | Description                                                             |
+| ----------- | ----------------------------------------------------------------------- |
+| `--dry-run` | Print planned changes without writing any files                         |
+| `--backup`  | Copy managed files to `.dev-tasks-backup/<timestamp>/` before replacing |
+| `--yes`     | Skip confirmation prompts (useful in CI)                                |
 
 ### Managed file surface
 
 The script owns these paths and may overwrite them on update:
 
-| Path | Contents |
-|------|----------|
-| `.github/agents/*.agent.md` | Agent definitions |
-| `.github/skills/*/SKILL.md` | Activity and operational skills |
-| `.github/instructions/*.instructions.md` | Always-loaded instructions |
-| `.github/instructions/domain/` | Domain-specific instructions |
-| `.github/prompts/*.prompt.md` | Prompt entry points |
-| `.dev-tasks-version` | Installed version metadata |
+| Path                                     | Contents                        |
+| ---------------------------------------- | ------------------------------- |
+| `.github/agents/*.agent.md`              | Agent definitions               |
+| `.github/skills/*/SKILL.md`              | Activity and operational skills |
+| `.github/instructions/*.instructions.md` | Always-loaded instructions      |
+| `.github/instructions/domain/`           | Domain-specific instructions    |
+| `.github/prompts/*.prompt.md`            | Prompt entry points             |
+| `.dev-tasks-version`                     | Installed version metadata      |
 
 **Never touched by the script:** `AGENTS.md` — the script prints an integration prompt instead (see below).
 
@@ -460,8 +471,9 @@ git push origin v1.3.0
 
 4. Wait for `.github/workflows/release-bundle.yml` to complete.
 5. Verify the GitHub Release contains both assets:
-  - `dev-tasks-bundle-v1.3.0.tar.gz`
-  - `dev-tasks-bundle-v1.3.0.tar.gz.sha256`
+
+- `dev-tasks-bundle-v1.3.0.tar.gz`
+- `dev-tasks-bundle-v1.3.0.tar.gz.sha256`
 
 Optional post-release validation:
 

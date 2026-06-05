@@ -6,7 +6,6 @@ Create structured, implementation-ready User Stories from a Technical Specificat
 
 > **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
-
 ## Goal
 
 Create structured, implementation-ready User Stories from a Technical Specification, then validate that all PRD requirements are covered. Each user story **MUST** provide value independently, fit into a single Pull Request, and contain the detail needed for implementation.
@@ -16,6 +15,7 @@ This activity combines story generation and coverage validation into a single pa
 ## Context
 
 This activity assumes the following documents already exist:
+
 - `prd-[feature-name].md` — Feature requirements
 - `specification-[prd-name].md` — Technical specification
 
@@ -31,9 +31,9 @@ The user stories document **MUST** include a **Changelog** table as the **first 
 ```markdown
 ## Changelog
 
-| Version | Date       | Summary                  | Author              |
-|---------|------------|--------------------------|----------------------|
-| 1.0     | YYYY-MM-DD | Initial version          | @user / agent-name   |
+| Version | Date       | Summary         | Author             |
+| ------- | ---------- | --------------- | ------------------ |
+| 1.0     | YYYY-MM-DD | Initial version | @user / agent-name |
 ```
 
 ## Process
@@ -121,6 +121,7 @@ So that [business value/benefit].
 ## Story Quality Criteria
 
 **Good User Stories:**
+
 - Provide clear business value that can be demonstrated
 - Are independent and avoid blocking other stories
 - **SHOULD** be completable in 1-3 days by a capable developer
@@ -129,6 +130,7 @@ So that [business value/benefit].
 - **MUST** include sufficient technical guidance for implementation
 
 **Poor User Stories:**
+
 - Too large or vague (epic-sized)
 - Have circular dependencies
 - Mix multiple concerns or features
@@ -165,6 +167,7 @@ You **MUST** include a summary coverage report at the end of the stories documen
 ## Coverage Validation
 
 ### Summary
+
 - **Total PRD Requirements:** [#]
 - **Total User Stories:** [#]
 - **Coverage:** [X%]
@@ -172,11 +175,11 @@ You **MUST** include a summary coverage report at the end of the stories documen
 
 ### Requirement Mapping
 
-| PRD Requirement | Story ID(s) | Status |
-|----------------|-------------|--------|
-| [Req 1] | S-001 | ✅ Covered |
-| [Req 2] | S-002, S-003 | ✅ Covered |
-| [Uncovered Req] | — | ❌ GAP |
+| PRD Requirement | Story ID(s)  | Status     |
+| --------------- | ------------ | ---------- |
+| [Req 1]         | S-001        | ✅ Covered |
+| [Req 2]         | S-002, S-003 | ✅ Covered |
+| [Uncovered Req] | —            | ❌ GAP     |
 
 ### Gaps (if any)
 

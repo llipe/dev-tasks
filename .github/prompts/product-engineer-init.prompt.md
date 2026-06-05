@@ -9,6 +9,7 @@ Run the `product-engineer` agent to establish foundation documents for this proj
   > <Describe the product, project, or technology stack>
 
 The agent will invoke the `activity-init` skill to create:
+
 - `docs/product-context.md` — Product context and strategic goals
 - `docs/technical-guidelines.md` — Technical standards and patterns
 

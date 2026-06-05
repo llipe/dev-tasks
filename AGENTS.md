@@ -1,4 +1,3 @@
-
 # dev-tasks
 
 A set of agents, skills, and instructions for GitHub Copilot and other AI coding agents to run structured, PRD-driven development workflows.
@@ -29,30 +28,31 @@ If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MU
 
 ## Taxonomy: Agent vs Skill vs Instruction
 
-| Concept | Purpose | Loaded When | Decision Rule |
-|---------|---------|-------------|---------------|
-| **Agent** | Autonomous role with decision-making, phases, and handoff discipline. Owns a workflow end-to-end. | Invoked by name (`@agent`) | "Does it make decisions, own a multi-phase workflow, and hand off to other agents?" → Agent |
-| **Skill** | Reusable on-demand capability. Describes *procedures* or *activities* that any agent can invoke when needed. Not loaded unless referenced. | On demand (invoked by agent or prompt) | "Is this capability needed only sometimes, by one or more agents?" → Skill |
-| **Instruction** | Always-loaded rule scoped via `applyTo` frontmatter. Enforced automatically for every matching context. | Always (auto-applied by runtime) | "Must this rule be enforced every time, for every matching file or context?" → Instruction |
+| Concept         | Purpose                                                                                                                                    | Loaded When                            | Decision Rule                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Agent**       | Autonomous role with decision-making, phases, and handoff discipline. Owns a workflow end-to-end.                                          | Invoked by name (`@agent`)             | "Does it make decisions, own a multi-phase workflow, and hand off to other agents?" → Agent |
+| **Skill**       | Reusable on-demand capability. Describes _procedures_ or _activities_ that any agent can invoke when needed. Not loaded unless referenced. | On demand (invoked by agent or prompt) | "Is this capability needed only sometimes, by one or more agents?" → Skill                  |
+| **Instruction** | Always-loaded rule scoped via `applyTo` frontmatter. Enforced automatically for every matching context.                                    | Always (auto-applied by runtime)       | "Must this rule be enforced every time, for every matching file or context?" → Instruction  |
 
 **Key distinctions:**
+
 - Skills save context window space — they are loaded only when invoked, unlike instructions which are always present.
-- Agent files define *who* (identity, phases, handoff rules). Skill files define *how* (procedures, templates, steps).
+- Agent files define _who_ (identity, phases, handoff rules). Skill files define _how_ (procedures, templates, steps).
 - Instructions are for cross-cutting rules that must never be forgotten (e.g., implementation discipline, planning format).
 
 ---
 
 ## Agents
 
-| Agent | File | Purpose |
-|---|---|---|
-| **product-engineer** | `product-engineer.agent.md` | Preparation agent — owns the full pre-coding chain: PRD, spec, stories, plan. Hands off to `developer` or `planner` for execution. |
-| **developer** | `developer.agent.md` | Execution agent — implements code from an existing task list. Runs `implement` only. |
-| **planner** | `planner.agent.md` | Multi-story orchestration — dependency-ordered sequential execution with checkpoint/resume and one consolidated integration PR. |
-| **technical-writer** | `technical-writer.agent.md` | Autonomous documentation maintenance |
-| **housekeeping** | `housekeeping.agent.md` | Lint, type, and test-wiring fixes |
-| **github-ops** | `github-ops.agent.md` | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy |
-| **ux-engineer** | `ux-engineer.agent.md` | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer` |
+| Agent                | File                        | Purpose                                                                                                                               |
+| -------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **product-engineer** | `product-engineer.agent.md` | Preparation agent — owns the full pre-coding chain: PRD, spec, stories, plan. Hands off to `developer` or `planner` for execution.    |
+| **developer**        | `developer.agent.md`        | Execution agent — implements code from an existing task list. Runs `implement` only.                                                  |
+| **planner**          | `planner.agent.md`          | Multi-story orchestration — dependency-ordered sequential execution with checkpoint/resume and one consolidated integration PR.       |
+| **technical-writer** | `technical-writer.agent.md` | Autonomous documentation maintenance                                                                                                  |
+| **housekeeping**     | `housekeeping.agent.md`     | Lint, type, and test-wiring fixes                                                                                                     |
+| **github-ops**       | `github-ops.agent.md`       | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy            |
+| **ux-engineer**      | `ux-engineer.agent.md`      | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer`               |
 | **black-box-tester** | `black-box-tester.agent.md` | Deep black-box testing — derives compliance test plans and edge cases from specs/stories, validates "requested vs delivered" behavior |
 
 ## Skills
@@ -63,60 +63,60 @@ Skills are on-demand capabilities invoked by agents. They are **not** loaded int
 
 These are the composable activities from the development workflow, converted to skills so they only consume context when needed:
 
-| Skill | Directory | Purpose | Primary Consumer |
-|---|---|---|---|
-| **activity-init** | `skills/activity-init/` | Establish product context and technical guidelines | `product-engineer` |
-| **activity-refine** | `skills/activity-refine/` | Clarify scope — issue refinement or full PRD creation | `product-engineer` |
-| **activity-generate-spec** | `skills/activity-generate-spec/` | Transform PRD into technical specification | `product-engineer` |
-| **activity-generate-stories** | `skills/activity-generate-stories/` | Break spec into user stories with coverage validation | `product-engineer` |
-| **activity-publish-github** | `skills/activity-publish-github/` | Publish stories as GitHub Issues via MCP | `product-engineer` |
-| **activity-e2e-test-design** | `skills/activity-e2e-test-design/` | End-to-end black-box test scenario generation from spec/stories | `black-box-tester` |
-| **activity-contract-test-design** | `skills/activity-contract-test-design/` | Consumer/provider contract and schema compatibility test strategy | `black-box-tester` |
-| **activity-edge-case-refinement** | `skills/activity-edge-case-refinement/` | Systematic edge-case discovery by category with concrete examples | `black-box-tester` |
-| **activity-random-test-tactics** | `skills/activity-random-test-tactics/` | Randomized, fuzz, and property-inspired test generation with reproducibility | `black-box-tester` |
+| Skill                             | Directory                               | Purpose                                                                      | Primary Consumer   |
+| --------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------- | ------------------ |
+| **activity-init**                 | `skills/activity-init/`                 | Establish product context and technical guidelines                           | `product-engineer` |
+| **activity-refine**               | `skills/activity-refine/`               | Clarify scope — issue refinement or full PRD creation                        | `product-engineer` |
+| **activity-generate-spec**        | `skills/activity-generate-spec/`        | Transform PRD into technical specification                                   | `product-engineer` |
+| **activity-generate-stories**     | `skills/activity-generate-stories/`     | Break spec into user stories with coverage validation                        | `product-engineer` |
+| **activity-publish-github**       | `skills/activity-publish-github/`       | Publish stories as GitHub Issues via MCP                                     | `product-engineer` |
+| **activity-e2e-test-design**      | `skills/activity-e2e-test-design/`      | End-to-end black-box test scenario generation from spec/stories              | `black-box-tester` |
+| **activity-contract-test-design** | `skills/activity-contract-test-design/` | Consumer/provider contract and schema compatibility test strategy            | `black-box-tester` |
+| **activity-edge-case-refinement** | `skills/activity-edge-case-refinement/` | Systematic edge-case discovery by category with concrete examples            | `black-box-tester` |
+| **activity-random-test-tactics**  | `skills/activity-random-test-tactics/`  | Randomized, fuzz, and property-inspired test generation with reproducibility | `black-box-tester` |
 
 ### Operational Skills
 
-| Skill | Directory | Purpose | Primary Consumer |
-|---|---|---|---|
-| **git-ops** | `skills/git-ops/` | Branch management, rebase, merge, conflict resolution, recovery | `developer`, `planner` |
-| **webapp-mockup** | `skills/webapp-mockup/` | Scaffold and generate React mockup apps for UX testing | `ux-engineer` |
+| Skill              | Directory                | Purpose                                                                                                                                   | Primary Consumer                |
+| ------------------ | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| **git-ops**        | `skills/git-ops/`        | Branch management, rebase, merge, conflict resolution, recovery                                                                           | `developer`, `planner`          |
+| **webapp-mockup**  | `skills/webapp-mockup/`  | Scaffold and generate React mockup apps for UX testing                                                                                    | `ux-engineer`                   |
 | **memo-cli-usage** | `skills/memo-cli-usage/` | Read and write architectural decisions to a shared Qdrant knowledge base for multi-session, multi-agent, and team-wide context continuity | `technical-writer`, `developer` |
 
 ### Third-Party Skills
 
-| Skill | Directory | Purpose | Primary Consumer |
-|---|---|---|---|
+| Skill                           | Directory                             | Purpose                               | Primary Consumer           |
+| ------------------------------- | ------------------------------------- | ------------------------------------- | -------------------------- |
 | **vercel-composition-patterns** | `skills/vercel-composition-patterns/` | Vercel component composition patterns | `developer`, `ux-engineer` |
-| **vercel-react-best-practices** | `skills/vercel-react-best-practices/` | Vercel React best practices | `developer`, `ux-engineer` |
+| **vercel-react-best-practices** | `skills/vercel-react-best-practices/` | Vercel React best practices           | `developer`, `ux-engineer` |
 
 ## Instructions (Always-Loaded)
 
 Instructions are scoped via `applyTo` and auto-applied. Only cross-cutting rules that must always be enforced remain as instructions.
 
-| Instruction | File | Scope | Purpose |
-|---|---|---|---|
-| **plan** | `plan.instructions.md` | `**` | Convert stories or refined issues into execution-ready task lists |
-| **implement** | `implement.instructions.md` | `**` | Execute task list with step-gated approval, branching, and PR discipline |
-| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions |
+| Instruction                 | File                                             | Scope      | Purpose                                                                  |
+| --------------------------- | ------------------------------------------------ | ---------- | ------------------------------------------------------------------------ |
+| **plan**                    | `plan.instructions.md`                           | `**`       | Convert stories or refined issues into execution-ready task lists        |
+| **implement**               | `implement.instructions.md`                      | `**`       | Execute task list with step-gated approval, branching, and PR discipline |
+| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions                                              |
 
 ## Prompts
 
 Prompts are entry points that configure an agent for a specific use case.
 
-| Prompt | Agent | Purpose |
-|---|---|---|
-| `product-engineer-init` | product-engineer | Initialize project foundation documents |
-| `product-engineer-feature` | product-engineer | Design and plan a new feature end-to-end |
-| `product-engineer-issue` | product-engineer | Refine and plan a GitHub Issue |
-| `developer-execute` | developer | Execute an existing task list |
-| `planner` | planner | Orchestrate multi-story execution |
-| `planner-resume` | planner | Resume interrupted multi-story run from checkpoint |
-| `ux-engineer` | ux-engineer | Generate UX mockups from PRD/SPEC |
-| `github-ops` | github-ops | GitHub consistency operations |
-| `technical-writer` | technical-writer | Documentation maintenance |
-| `housekeeping` | housekeeping | Lint, type, and test fixes |
-| `black-box-tester-design` | black-box-tester | Generate compliance test plan from spec or stories |
+| Prompt                      | Agent            | Purpose                                             |
+| --------------------------- | ---------------- | --------------------------------------------------- |
+| `product-engineer-init`     | product-engineer | Initialize project foundation documents             |
+| `product-engineer-feature`  | product-engineer | Design and plan a new feature end-to-end            |
+| `product-engineer-issue`    | product-engineer | Refine and plan a GitHub Issue                      |
+| `developer-execute`         | developer        | Execute an existing task list                       |
+| `planner`                   | planner          | Orchestrate multi-story execution                   |
+| `planner-resume`            | planner          | Resume interrupted multi-story run from checkpoint  |
+| `ux-engineer`               | ux-engineer      | Generate UX mockups from PRD/SPEC                   |
+| `github-ops`                | github-ops       | GitHub consistency operations                       |
+| `technical-writer`          | technical-writer | Documentation maintenance                           |
+| `housekeeping`              | housekeeping     | Lint, type, and test fixes                          |
+| `black-box-tester-design`   | black-box-tester | Generate compliance test plan from spec or stories  |
 | `black-box-tester-validate` | black-box-tester | Validate delivered behavior against spec or stories |
 
 ---

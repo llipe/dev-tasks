@@ -9,15 +9,17 @@ Run the `black-box-tester` agent in **Validate Mode** to check compliance of del
 - **GitHub Issue:** `#<issue-number>`
 - **Source artifact:** `<workstream/specification-*.md | workstream/user-stories-*.md | issue body>`
 - **Test plan:** `<workstream/test-plan-*.md>`
-- **PR or branch:** `<PR-number or branch-name>` *(optional — for implementation context)*
+- **PR or branch:** `<PR-number or branch-name>` _(optional — for implementation context)_
 
 The agent will chain: intake → requirement extraction → evidence collection → reporting & publication.
 
 Artifacts produced:
+
 - `/workstream/validation-report-{issue-or-story-id}.md` — Per-AC pass/fail, edge-case results, drift summary, compliance verdict
 - GitHub issue or PR updated with validation summary
 
 The validation report includes:
+
 - Per-AC result table (pass / fail / drift)
 - Edge-case outcome summary
 - Randomized test runs with seed and result

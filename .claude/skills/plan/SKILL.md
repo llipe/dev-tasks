@@ -4,8 +4,8 @@ description: "Convert selected user stories or a refined GitHub Issue into an ex
 ---
 
 # Activity: Plan Implementation
-> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ## Goal
 
@@ -15,10 +15,10 @@ This activity adapts to the input — it works with a user stories file (from th
 
 ## Mode Detection
 
-| Input | Mode | Source |
-|-------|------|--------|
-| User stories file + story selection | **Stories Mode** | `user-stories-[prd-name].md` |
-| Refined GitHub Issue | **Issue Mode** | `issue-[number]-[name]-refinement.md` or the GitHub Issue itself |
+| Input                               | Mode             | Source                                                           |
+| ----------------------------------- | ---------------- | ---------------------------------------------------------------- |
+| User stories file + story selection | **Stories Mode** | `user-stories-[prd-name].md`                                     |
+| Refined GitHub Issue                | **Issue Mode**   | `issue-[number]-[name]-refinement.md` or the GitHub Issue itself |
 
 ## Process
 
@@ -51,14 +51,14 @@ The task list **MUST** follow this structure:
 
 ## Tasks
 
-- [ ] 1.0 Implement Story [ID]: [Story Title]  (or: Implement Issue [#] - [Github_Issue_URL]: [Title])
+- [ ] 1.0 Implement Story [ID]: [Story Title] (or: Implement Issue [#] - [Github_Issue_URL]: [Title])
   - [ ] 1.1 [First implementation step]
   - [ ] 1.2 [Second implementation step]
   - [ ] 1.x Verify Acceptance Criterion: [Criterion 1]
   - [ ] 1.y Verify Acceptance Criterion: [Criterion 2]
   - [ ] 1.z Run Tests: [Test Requirements]
 
-- [ ] 2.0 Implement Story [ID]: [Story Title]  (or: Implement Issue [#] - [Github_Issue_URL]: [Title])
+- [ ] 2.0 Implement Story [ID]: [Story Title] (or: Implement Issue [#] - [Github_Issue_URL]: [Title])
   - [ ] 2.1 [First implementation step]
   - ...
 ```
@@ -93,6 +93,7 @@ If this is a **greenfield project** or a **new component**, you **MUST** include
 ```
 
 **When to include Task 0:**
+
 - ✅ First time setting up a new repository
 - ✅ Starting a new microservice or component
 - ✅ Setting up isolated development environment for greenfield features

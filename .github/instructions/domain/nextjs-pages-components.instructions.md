@@ -1,9 +1,10 @@
 ---
 applyTo: "**/*.tsx"
 ---
-# Rule: Keep Next.js Pages and React Components Consistent
-> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
+# Rule: Keep Next.js Pages and React Components Consistent
+
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ## Goal
 
@@ -197,8 +198,9 @@ This project uses:
    - Keep contrast high when palette accents are placed on dark backgrounds.
 
 10. **Move toward reusable design tokens and shared patterns**.
-   - When colors, spacing, radius, shadows, or typography styles repeat, prefer centralizing them through shared utility patterns or local primitives.
-   - Avoid scattering slightly different visual values across many components.
+
+- When colors, spacing, radius, shadows, or typography styles repeat, prefer centralizing them through shared utility patterns or local primitives.
+- Avoid scattering slightly different visual values across many components.
 
 ## Forms and Validation
 

@@ -18,6 +18,7 @@ Derive contract-level test scenarios that validate API boundaries, data schemas,
 ## Context
 
 This activity assumes:
+
 - A numbered list of acceptance criteria is available (produced by Phase 2 of `black-box-tester`).
 - API endpoints, data entities, and integration points have been identified from the source artifact.
 - The output feeds into the contract section of the test plan assembled by `black-box-tester`.
@@ -43,69 +44,70 @@ This activity assumes:
 ```markdown
 ### CT-{id}: {Contract Scenario Title}
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-{n} |
-| **Contract type** | consumer-driven / provider-driven / schema-compat |
-| **Boundary** | {e.g., `POST /api/orders` or `OrderCreated event`} |
-| **Direction** | request / response / event-payload |
-| **Input** | {Exact payload or schema excerpt} |
-| **Expected Result** | {Accepted / Rejected with specific error} |
-| **Pass Criteria** | {HTTP status, error code, or schema validation result} |
+| Field               | Value                                                  |
+| ------------------- | ------------------------------------------------------ |
+| **AC(s)**           | AC-{n}                                                 |
+| **Contract type**   | consumer-driven / provider-driven / schema-compat      |
+| **Boundary**        | {e.g., `POST /api/orders` or `OrderCreated event`}     |
+| **Direction**       | request / response / event-payload                     |
+| **Input**           | {Exact payload or schema excerpt}                      |
+| **Expected Result** | {Accepted / Rejected with specific error}              |
+| **Pass Criteria**   | {HTTP status, error code, or schema validation result} |
 ```
 
 ## Example
 
 Given a spec defining:
-> *`POST /api/orders` accepts `{ "items": [...], "customerId": "string" }` and returns `{ "orderId": "string", "status": "pending" }`.*
+
+> _`POST /api/orders` accepts `{ "items": [...], "customerId": "string" }` and returns `{ "orderId": "string", "status": "pending" }`._
 
 ### CT-1: Valid order creation request
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-1 |
-| **Contract type** | consumer-driven |
-| **Boundary** | `POST /api/orders` |
-| **Direction** | request |
-| **Input** | `{ "items": [{"sku": "A1", "qty": 2}], "customerId": "cust-123" }` |
-| **Expected Result** | HTTP 201, response contains `orderId` (string) and `status: "pending"`. |
-| **Pass Criteria** | Status 201. Response JSON matches schema. `orderId` is non-empty string. |
+| Field               | Value                                                                    |
+| ------------------- | ------------------------------------------------------------------------ |
+| **AC(s)**           | AC-1                                                                     |
+| **Contract type**   | consumer-driven                                                          |
+| **Boundary**        | `POST /api/orders`                                                       |
+| **Direction**       | request                                                                  |
+| **Input**           | `{ "items": [{"sku": "A1", "qty": 2}], "customerId": "cust-123" }`       |
+| **Expected Result** | HTTP 201, response contains `orderId` (string) and `status: "pending"`.  |
+| **Pass Criteria**   | Status 201. Response JSON matches schema. `orderId` is non-empty string. |
 
 ### CT-2: Missing required field — customerId
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-1 |
-| **Contract type** | consumer-driven |
-| **Boundary** | `POST /api/orders` |
-| **Direction** | request |
-| **Input** | `{ "items": [{"sku": "A1", "qty": 2}] }` |
+| Field               | Value                                                    |
+| ------------------- | -------------------------------------------------------- |
+| **AC(s)**           | AC-1                                                     |
+| **Contract type**   | consumer-driven                                          |
+| **Boundary**        | `POST /api/orders`                                       |
+| **Direction**       | request                                                  |
+| **Input**           | `{ "items": [{"sku": "A1", "qty": 2}] }`                 |
 | **Expected Result** | HTTP 400, error message references missing `customerId`. |
-| **Pass Criteria** | Status 400. Error body includes field name `customerId`. |
+| **Pass Criteria**   | Status 400. Error body includes field name `customerId`. |
 
 ### CT-3: Extra unknown field tolerance
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-1 |
-| **Contract type** | schema-compat |
-| **Boundary** | `POST /api/orders` |
-| **Direction** | request |
-| **Input** | `{ "items": [...], "customerId": "cust-123", "unknownField": true }` |
+| Field               | Value                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **AC(s)**           | AC-1                                                                                                               |
+| **Contract type**   | schema-compat                                                                                                      |
+| **Boundary**        | `POST /api/orders`                                                                                                 |
+| **Direction**       | request                                                                                                            |
+| **Input**           | `{ "items": [...], "customerId": "cust-123", "unknownField": true }`                                               |
 | **Expected Result** | Either accepted (ignoring extra field) or rejected with a clear error — behavior matches documented schema policy. |
-| **Pass Criteria** | Response is consistent with the spec's stated policy on additional properties. |
+| **Pass Criteria**   | Response is consistent with the spec's stated policy on additional properties.                                     |
 
 ### CT-4: Type mismatch — customerId as number
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-1 |
-| **Contract type** | consumer-driven |
-| **Boundary** | `POST /api/orders` |
-| **Direction** | request |
-| **Input** | `{ "items": [...], "customerId": 12345 }` |
+| Field               | Value                                             |
+| ------------------- | ------------------------------------------------- |
+| **AC(s)**           | AC-1                                              |
+| **Contract type**   | consumer-driven                                   |
+| **Boundary**        | `POST /api/orders`                                |
+| **Direction**       | request                                           |
+| **Input**           | `{ "items": [...], "customerId": 12345 }`         |
 | **Expected Result** | HTTP 400, type validation error for `customerId`. |
-| **Pass Criteria** | Status 400. Error references type mismatch. |
+| **Pass Criteria**   | Status 400. Error references type mismatch.       |
 
 ## Output
 

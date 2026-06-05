@@ -13,12 +13,14 @@ Run the `black-box-tester` agent in **Design Mode** to generate a compliance tes
 The agent will chain: intake → requirement extraction → test design → reporting & publication.
 
 Skills invoked:
+
 - `activity-e2e-test-design` — E2E black-box scenarios
 - `activity-contract-test-design` — Contract validation scenarios
 - `activity-edge-case-refinement` — Categorized edge-case catalog
 - `activity-random-test-tactics` — Randomized and property-based tactics
 
 Artifacts produced:
+
 - `/workstream/test-plan-{issue-or-story-id}.md` — Compliance test plan
 - `/workstream/traceability-matrix-{issue-or-story-id}.md` — AC-to-test mapping
 - GitHub issue updated with test plan summary or artifact link

@@ -18,6 +18,7 @@ Use this skill whenever an agent needs to **read**, **write**, **search**, or **
 `memo-cli` is the **shared memory** that keeps agents coherent across time, sessions, and projects. It is not a log. It is not a changelog. It is a curated, searchable record of the decisions that shaped the codebase — written with enough precision that anyone (human or agent) arriving days, weeks, or months later can understand **what was decided, why, and what it affected**.
 
 An agent that uses `memo-cli` well:
+
 - Narrates its reasoning as it acts, not only at the end.
 - Records the files it modifies and why those files were the right place.
 - Explains configuration and architectural choices so future agents don't re-derive them.
@@ -29,18 +30,18 @@ An agent that uses `memo-cli` well:
 
 Write a memo entry **during** or **immediately after** any of these moments:
 
-| Trigger | Entry Type |
-|---------|-----------|
-| Choosing a library, framework, or service | `decision` |
-| Choosing how to structure a module or data model | `decision` / `structure` |
-| Changing a config file and explaining why | `decision` |
-| Identifying or formalizing a cross-service contract | `integration_point` |
-| Modifying critical files (entry points, core abstractions, schema) | `decision` |
-| Discovering a constraint (API limit, platform quirk, security requirement) | `decision` |
-| Resolving a conflict between two approaches | `decision` |
-| Establishing a naming or layout convention | `structure` |
-| Starting work on a story or task (intent entry) | `decision` |
-| Completing a story or task (outcome entry) | `decision` |
+| Trigger                                                                    | Entry Type               |
+| -------------------------------------------------------------------------- | ------------------------ |
+| Choosing a library, framework, or service                                  | `decision`               |
+| Choosing how to structure a module or data model                           | `decision` / `structure` |
+| Changing a config file and explaining why                                  | `decision`               |
+| Identifying or formalizing a cross-service contract                        | `integration_point`      |
+| Modifying critical files (entry points, core abstractions, schema)         | `decision`               |
+| Discovering a constraint (API limit, platform quirk, security requirement) | `decision`               |
+| Resolving a conflict between two approaches                                | `decision`               |
+| Establishing a naming or layout convention                                 | `structure`              |
+| Starting work on a story or task (intent entry)                            | `decision`               |
+| Completing a story or task (outcome entry)                                 | `decision`               |
 
 ---
 
@@ -48,13 +49,13 @@ Write a memo entry **during** or **immediately after** any of these moments:
 
 Search **before** taking action, not only when stuck:
 
-| Situation | Command |
-|-----------|---------|
-| Starting a session — restore context | `memo list --limit 20 --json` |
-| Before making a design choice | `memo search "<topic>" --json` |
-| Before touching a file you haven't seen before | `memo search "<filename or module name>" --json` |
-| Evaluating whether to add a dependency | `memo search "<library name>" --scope related --json` |
-| Onboarding to an unfamiliar repo | `memo inspect --json` then `memo list --json` |
+| Situation                                      | Command                                               |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| Starting a session — restore context           | `memo list --limit 20 --json`                         |
+| Before making a design choice                  | `memo search "<topic>" --json`                        |
+| Before touching a file you haven't seen before | `memo search "<filename or module name>" --json`      |
+| Evaluating whether to add a dependency         | `memo search "<library name>" --scope related --json` |
+| Onboarding to an unfamiliar repo               | `memo inspect --json` then `memo list --json`         |
 
 ---
 
@@ -64,12 +65,12 @@ Search **before** taking action, not only when stuck:
 
 The following variables **MUST** be set before any `memo` command will work:
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `QDRANT_URL` | Qdrant instance endpoint | `http://localhost:6333` |
-| `QDRANT_API_KEY` | API key (empty for local) | `""` or a cloud key |
-| `EMBEDDINGS_PROVIDER` | Embedding backend | `openai` |
-| `EMBEDDINGS_API_KEY` | Provider secret key | `sk-...` |
+| Variable              | Purpose                   | Example                 |
+| --------------------- | ------------------------- | ----------------------- |
+| `QDRANT_URL`          | Qdrant instance endpoint  | `http://localhost:6333` |
+| `QDRANT_API_KEY`      | API key (empty for local) | `""` or a cloud key     |
+| `EMBEDDINGS_PROVIDER` | Embedding backend         | `openai`                |
+| `EMBEDDINGS_API_KEY`  | Provider secret key       | `sk-...`                |
 
 > **Tip:** Store these in a `.env` file at the repository root. `memo-cli` loads it automatically via `dotenv`.
 
@@ -119,6 +120,7 @@ memo setup show       # print effective config
 **Why it matters:** Domain is a cross-cutting label that lets you query decisions across all repos in a functional area. For example, all `auth`-domain decisions across `auth-service`, `api-gateway`, and `user-service` can be retrieved together.
 
 **How to choose:**
+
 - Use the business or technical capability, not the team name.
 - Keep it stable — domains change less often than repos.
 - Examples: `auth`, `billing`, `data-pipeline`, `mobile`, `platform`, `ai`, `infra`, `developer-tools`.
@@ -138,6 +140,7 @@ memo setup show       # print effective config
 **Why it matters:** Setting `relates_to` enables `--scope related` queries, which search entries across this repo **and** all listed repos simultaneously. This is how agents and developers get cross-service context without switching repositories.
 
 **When to add a repo to `relates_to`:**
+
 - This repo consumes an API or event contract that the other repo owns.
 - Decisions in the other repo often directly constrain decisions in this one.
 - You regularly need to cross-reference both repos during feature work.
@@ -149,18 +152,18 @@ memo setup show       # print effective config
 
 ### Entry Types
 
-| Type | When to use |
-|------|-------------|
-| `decision` | Architectural or design choices ("We chose Postgres over Mongo because…") |
-| `integration_point` | Cross-service contracts, API boundaries, shared schemas |
-| `structure` | Folder layout, module boundaries, naming conventions |
+| Type                | When to use                                                               |
+| ------------------- | ------------------------------------------------------------------------- |
+| `decision`          | Architectural or design choices ("We chose Postgres over Mongo because…") |
+| `integration_point` | Cross-service contracts, API boundaries, shared schemas                   |
+| `structure`         | Folder layout, module boundaries, naming conventions                      |
 
 ### Source
 
-| Value | Meaning |
-|-------|---------|
-| `agent` | Written by an AI agent (default when `defaults.source` is set) |
-| `manual` | Written by a human developer |
+| Value    | Meaning                                                        |
+| -------- | -------------------------------------------------------------- |
+| `agent`  | Written by an AI agent (default when `defaults.source` is set) |
+| `manual` | Written by a human developer                                   |
 
 ### Scoping
 
@@ -185,10 +188,12 @@ memo write \
 ```
 
 **Required flags:**
+
 - `--rationale` — The decision text (1–5 000 chars).
 - `--tags` — 2–5 comma-separated kebab-case tags.
 
 **Optional flags:**
+
 - `--entry-type` — `decision` (default) | `integration_point` | `structure`
 - `--source` — `agent` | `manual` (falls back to config default)
 - `--commit` — Git commit SHA for traceability
@@ -212,6 +217,7 @@ memo search "rate limiting strategy" --limit 5 --json
 Natural-language vector search over decision entries.
 
 **Optional flags:**
+
 - `--scope` — `repo` (default) | `related`
 - `--tags` — Comma-separated filter (AND logic)
 - `--entry-type` — Filter by type
@@ -230,6 +236,7 @@ memo list --limit 20 --json
 Most-recent-first listing with optional date range.
 
 **Optional flags:**
+
 - `--scope`, `--tags`, `--entry-type`, `--source` — Same as search
 - `--from` / `--to` — ISO 8601 date boundaries
 - `--limit` — Max results (default 20)
@@ -246,6 +253,7 @@ memo tags list --sort frequency --json
 Shows all unique tags with entry counts.
 
 **Optional flags:**
+
 - `--scope` — `repo` | `related`
 - `--sort` — `alpha` (default) | `frequency`
 - `--json` — Machine-readable output
@@ -261,6 +269,7 @@ memo inspect --json
 Lists all organizations, repositories, and domains across the entire knowledge base (ignores repo scope). Useful for onboarding and cross-team exploration.
 
 **Optional flags:**
+
 - `--orgs` / `--repos` / `--domains` — Show only one facet
 - `--json` — Machine-readable output
 
@@ -269,11 +278,13 @@ Lists all organizations, repositories, and domains across the entire knowledge b
 ### `memo delete` — Remove Entries
 
 **Single entry:**
+
 ```bash
 memo delete --id <uuid> --json
 ```
 
 **Bulk (interactive only — blocked in `--json` mode for safety):**
+
 ```bash
 memo delete --all-by-repo <repo-name> --yes
 memo delete --all-by-org <org-name> --yes
@@ -315,6 +326,7 @@ Read the results before proceeding. Prior entries may contain constraints, prefe
 Write a memo entry **at the moment you make a decision**, not as a post-hoc summary. This preserves the full reasoning before context is lost.
 
 **Template:**
+
 ```bash
 memo write \
   --rationale "CONTEXT. DECISION. RATIONALE." \
@@ -362,6 +374,7 @@ memo write \
 ```
 
 Configuration decisions to always record:
+
 - Environment variable semantics (what the value controls, valid ranges, defaults)
 - Feature flags and their trigger conditions
 - Schema versions and migration policies
@@ -414,25 +427,31 @@ The `--rationale` field must be **precise enough that a different developer or a
 ### Good vs. Bad Examples
 
 **Too vague — useless to a future reader:**
+
 > "Updated auth to use JWT."
 
 **Precise — useful across sessions and developers:**
+
 > "Switched authentication from server-side sessions to JWT (HS256, 15-min access + 7-day refresh). Sessions required sticky routing which is incompatible with the planned horizontal scaling. JWTs are stateless — any instance can validate without a shared session store. Trade-off: revocation requires a Redis blacklist (added to ISSUE-51 backlog). Files: src/auth/jwt.ts, src/middleware/auth.ts."
 
 ---
 
 **Too vague:**
+
 > "Changed config validation."
 
 **Precise:**
+
 > "Added Zod validation to memo.config.json loader (src/lib/config.ts). Previously the code trusted the file's shape; malformed configs caused cryptic runtime errors deep in Qdrant queries. Now the CLI fails immediately at startup with a structured error message. This is the single place config is read — no other validation needed."
 
 ---
 
 **Too vague:**
+
 > "Used Redis for caching."
 
 **Precise:**
+
 > "Chose Redis (via ioredis) over in-process LRU cache for rate-limit counters. In-process cache doesn't survive pod restarts and is not shared across replicas. Redis TTL natively aligns with the sliding window algorithm. Accepted dependency: Redis must be available in all environments. Config: REDIS_URL env var, no auth in dev, TLS required in prod."
 
 ---
@@ -453,13 +472,13 @@ Tags are the primary way to discover entries. Good tagging makes the difference 
 
 Apply tags across **multiple layers** simultaneously:
 
-| Layer | Purpose | Examples |
-|-------|---------|---------|
+| Layer              | Purpose                 | Examples                                               |
+| ------------------ | ----------------------- | ------------------------------------------------------ |
 | **Domain/feature** | What area of the system | `auth`, `rate-limiting`, `config`, `delete`, `storage` |
-| **Technology** | What tech is involved | `qdrant`, `redis`, `openai`, `zod`, `jwt` |
-| **Entry nature** | What kind of change | `intent`, `outcome`, `constraint`, `trade-off`, `adr` |
-| **Story/task ref** | Traceability | `issue-37`, `story-s003`, `prd-001` |
-| **Scope** | How broad the impact | `cross-repo`, `breaking-change`, `config-change` |
+| **Technology**     | What tech is involved   | `qdrant`, `redis`, `openai`, `zod`, `jwt`              |
+| **Entry nature**   | What kind of change     | `intent`, `outcome`, `constraint`, `trade-off`, `adr`  |
+| **Story/task ref** | Traceability            | `issue-37`, `story-s003`, `prd-001`                    |
+| **Scope**          | How broad the impact    | `cross-repo`, `breaking-change`, `config-change`       |
 
 Every write SHOULD include tags from at least **2–3 layers**.
 
@@ -482,31 +501,37 @@ Re-use existing tags whenever possible. Consistent vocabulary is what allows `me
 ### Tag Examples by Scenario
 
 **Architectural decision on storage:**
+
 ```
 qdrant,collection-design,multi-tenancy,decision,adr
 ```
 
 **Config change:**
+
 ```
 config,env-vars,config-change,issue-42
 ```
 
 **Integration contract between two services:**
+
 ```
 api-contract,auth-service,cross-repo,integration-point,breaking-change
 ```
 
 **Starting a new feature (intent):**
+
 ```
 delete-command,safety,issue-37,intent
 ```
 
 **Completing a feature (outcome):**
+
 ```
 delete-command,safety,issue-37,outcome
 ```
 
 **Performance trade-off:**
+
 ```
 embeddings,openai,performance,trade-off,caching
 ```
@@ -530,11 +555,13 @@ memo search "auth contract" --scope related --json
 ```
 
 This is critical for:
+
 - Microservice architectures where contracts span repos.
 - Agent workflows that touch multiple repositories in sequence.
 - Detecting when a decision in one repo contradicts a constraint in another.
 
 Configure related repos in `memo.config.json`:
+
 ```json
 {
   "relates_to": ["auth-service", "api-gateway", "shared-lib"]
@@ -561,16 +588,16 @@ For work that spans multiple days:
 
 ### What to Record vs. What to Skip
 
-| Record | Skip |
-|--------|------|
-| Architectural choices and their rationale | Trivial implementation details (variable names, formatting) |
-| Technology selections with trade-off analysis | Routine bug fixes with no design impact |
-| Configuration changes that affect behavior | Code style choices (use linters) |
-| API contracts and integration boundaries | Dependency version bumps (use lockfile) |
-| Security-sensitive design choices | Temporary workarounds expected to be removed within hours |
-| Performance trade-offs and their context | Generated code |
-| Rejected alternatives and why | CI/build configuration (use config files) |
-| Constraints discovered during implementation | Debugging steps |
+| Record                                        | Skip                                                        |
+| --------------------------------------------- | ----------------------------------------------------------- |
+| Architectural choices and their rationale     | Trivial implementation details (variable names, formatting) |
+| Technology selections with trade-off analysis | Routine bug fixes with no design impact                     |
+| Configuration changes that affect behavior    | Code style choices (use linters)                            |
+| API contracts and integration boundaries      | Dependency version bumps (use lockfile)                     |
+| Security-sensitive design choices             | Temporary workarounds expected to be removed within hours   |
+| Performance trade-offs and their context      | Generated code                                              |
+| Rejected alternatives and why                 | CI/build configuration (use config files)                   |
+| Constraints discovered during implementation  | Debugging steps                                             |
 
 ---
 
@@ -578,12 +605,12 @@ For work that spans multiple days:
 
 Many agent runtimes (e.g., VS Code Copilot) have a built-in memory system alongside `memo-cli`. Understanding when to use each prevents both redundancy and gaps.
 
-| Scope | Where | Persistence | Use For |
-|-------|-------|-------------|---------|
-| **User memory** | `/memories/` | All workspaces, all sessions | Personal preferences, debugging patterns, general agent insights |
-| **Session memory** | `/memories/session/` | Current conversation only | Scratch notes, in-progress state, temporary checklists |
-| **Repository memory** | `/memories/repo/` | Current workspace | Repo gotchas, build commands, local conventions — fast-access notes for this repo |
-| **memo-cli** | Qdrant (shared remote) | Permanent, shared across all people and agents | Architectural decisions, integration contracts, structural choices, configuration rationale |
+| Scope                 | Where                  | Persistence                                    | Use For                                                                                     |
+| --------------------- | ---------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **User memory**       | `/memories/`           | All workspaces, all sessions                   | Personal preferences, debugging patterns, general agent insights                            |
+| **Session memory**    | `/memories/session/`   | Current conversation only                      | Scratch notes, in-progress state, temporary checklists                                      |
+| **Repository memory** | `/memories/repo/`      | Current workspace                              | Repo gotchas, build commands, local conventions — fast-access notes for this repo           |
+| **memo-cli**          | Qdrant (shared remote) | Permanent, shared across all people and agents | Architectural decisions, integration contracts, structural choices, configuration rationale |
 
 ### Decision Tree: Where Does This Information Belong?
 
@@ -601,7 +628,7 @@ Is it temporary context that only matters for the current session?
   └─ YES → /memories/session/
 ```
 
-**Key principle:** If the information would help a *different* developer or agent working in the same codebase — even a year from now — it belongs in `memo-cli`.
+**Key principle:** If the information would help a _different_ developer or agent working in the same codebase — even a year from now — it belongs in `memo-cli`.
 
 ---
 
@@ -616,6 +643,7 @@ Is it temporary context that only matters for the current session?
 ### Agent Mode (`--json`)
 
 Agents **SHOULD** always pass `--json` for predictable, parseable output. Key behaviors in JSON mode:
+
 - All output is structured JSON on stdout.
 - Errors produce JSON error objects to stderr.
 - Interactive prompts are suppressed — flags must supply all decisions.
@@ -625,6 +653,7 @@ Agents **SHOULD** always pass `--json` for predictable, parseable output. Key be
 ### Validation Before Writing
 
 Before `memo write`, agents SHOULD:
+
 1. Verify `memo setup validate` passes.
 2. Confirm tags are kebab-case (lowercase, hyphens only).
 3. Ensure rationale is meaningful (not placeholder text).
@@ -633,11 +662,13 @@ Before `memo write`, agents SHOULD:
 ### Error Handling
 
 All `memo` commands exit with:
+
 - **0** — Success
 - **1** — Validation or user error (bad flags, invalid config)
 - **2** — Unexpected/infrastructure error (Qdrant down, embedding API failure)
 
 When a command fails:
+
 1. Read the error code and message from stderr.
 2. For exit code 1: fix the input and retry.
 3. For exit code 2: check connectivity (`QDRANT_URL`) and API keys before retrying.

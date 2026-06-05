@@ -1,0 +1,6 @@
+dist/
+.git/
+.dev-tasks-backup/
+node_modules/
+*.tar.gz
+*.tar.gz.sha256

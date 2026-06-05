@@ -4,8 +4,8 @@ description: "Execute a task list step-by-step with strict sequencing, branch/PR
 ---
 
 # Activity: Implement Task List
-> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
+> **RFC 2119 Notice:** The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ## Goal
 
@@ -16,6 +16,7 @@ This is the **single source of truth** for execution rules. All agents and workf
 ## Context
 
 This activity assumes:
+
 - A task list file exists in `/workstream/tasks-*.md`.
 - The corresponding GitHub Issue exists and includes a checklist.
 - GitHub is the source of truth for execution status.
@@ -84,11 +85,11 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
 
 ## GitHub Execution Rules Summary
 
-| Phase | Rule |
-|-------|------|
-| **Before coding** | Confirm issue open → Create branch (`github-ops`) → Open draft PR (`github-ops`) → Sync checklists |
-| **During coding** | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval |
-| **Before closing** | All ACs verified → Tests pass → PR ready → Approved → Merged → Then close issue |
+| Phase              | Rule                                                                                               |
+| ------------------ | -------------------------------------------------------------------------------------------------- |
+| **Before coding**  | Confirm issue open → Create branch (`github-ops`) → Open draft PR (`github-ops`) → Sync checklists |
+| **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval                           |
+| **Before closing** | All ACs verified → Tests pass → PR ready → Approved → Merged → Then close issue                    |
 
 ---
 

@@ -18,6 +18,7 @@ Design randomized and property-based testing tactics that complement structured 
 ## Context
 
 This activity assumes:
+
 - A numbered list of acceptance criteria is available (produced by Phase 2 of `black-box-tester`).
 - E2E scenarios and edge cases have been drafted.
 - The output feeds into the randomized-tactics section of the test plan assembled by `black-box-tester`.
@@ -31,6 +32,7 @@ Generate malformed, unexpected, or random inputs to discover crashes, unhandled 
 **When to apply:** Any endpoint or function that accepts user input — forms, API bodies, file uploads, query parameters.
 
 **Approach:**
+
 1. Identify input surfaces from the spec (fields, parameters, headers).
 2. Define a fuzz corpus: valid base inputs + mutations (truncation, injection payloads, binary data, oversized values).
 3. Define the oracle: what constitutes a failure (5xx status, stack trace in response, timeout, data corruption).
@@ -43,6 +45,7 @@ Define invariants (properties) that must hold for all valid inputs, then generat
 **When to apply:** Business rules that express universal constraints (e.g., "total is always ≥ 0", "output list is always sorted", "idempotent endpoint returns same result on retry").
 
 **Approach:**
+
 1. Extract properties from ACs and business rules.
 2. Define input generators that produce valid inputs within the domain.
 3. Run N iterations with random seeds.
@@ -55,6 +58,7 @@ Execute random sequences of valid API calls to discover state-dependent bugs.
 **When to apply:** Systems with stateful resources (CRUD workflows, multi-step processes, session-based interactions).
 
 **Approach:**
+
 1. Model valid actions and their preconditions as a state machine.
 2. Generate random action sequences that respect preconditions.
 3. After each sequence, verify invariants hold (e.g., resource counts match, no orphaned records).
@@ -64,13 +68,13 @@ Execute random sequences of valid API calls to discover state-dependent bugs.
 
 Every randomized tactic **MUST** satisfy these controls:
 
-| Requirement | Description |
-|-------------|------------|
-| **Seed capture** | Record the PRNG seed used for each run. |
-| **Seed replay** | Provide a command or instruction to re-run the exact same sequence using the captured seed. |
-| **Iteration count** | Document the number of iterations per tactic. |
+| Requirement              | Description                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------- |
+| **Seed capture**         | Record the PRNG seed used for each run.                                                           |
+| **Seed replay**          | Provide a command or instruction to re-run the exact same sequence using the captured seed.       |
+| **Iteration count**      | Document the number of iterations per tactic.                                                     |
 | **Deterministic oracle** | The pass/fail oracle **MUST** be deterministic for a given input — no "sometimes fails" verdicts. |
-| **Environment snapshot** | Record runtime environment details (OS, runtime version, relevant config) alongside results. |
+| **Environment snapshot** | Record runtime environment details (OS, runtime version, relevant config) alongside results.      |
 
 ### Seed Policy
 
@@ -89,16 +93,16 @@ Seeds **MUST** be included in the test plan and in any failure reports.
 ```markdown
 ### RT-{id}: {Tactic Title}
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-{n} |
-| **Tactic type** | fuzz / property-based / stateful-random-walk |
-| **Input surface** | {What is being fuzzed or randomized} |
-| **Property / Oracle** | {Invariant that must hold, or failure condition} |
-| **Iterations** | {Number of random iterations} |
-| **Seed** | {To be captured at execution time} |
-| **Replay instruction** | {Command to reproduce with captured seed} |
-| **Shrink strategy** | {How to minimize failing input — binary search, delta debugging, etc.} |
+| Field                  | Value                                                                  |
+| ---------------------- | ---------------------------------------------------------------------- |
+| **AC(s)**              | AC-{n}                                                                 |
+| **Tactic type**        | fuzz / property-based / stateful-random-walk                           |
+| **Input surface**      | {What is being fuzzed or randomized}                                   |
+| **Property / Oracle**  | {Invariant that must hold, or failure condition}                       |
+| **Iterations**         | {Number of random iterations}                                          |
+| **Seed**               | {To be captured at execution time}                                     |
+| **Replay instruction** | {Command to reproduce with captured seed}                              |
+| **Shrink strategy**    | {How to minimize failing input — binary search, delta debugging, etc.} |
 ```
 
 ## Example
@@ -107,33 +111,34 @@ Given AC-2: "API returns paginated results with at most 50 items per page."
 
 ### RT-1: Fuzz pagination parameters
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-2 |
-| **Tactic type** | fuzz |
-| **Input surface** | Query parameters `page` and `pageSize` on `GET /api/items` |
-| **Property / Oracle** | Response always returns ≤50 items. Status is never 5xx. Response time <2s. |
-| **Iterations** | 500 |
-| **Seed** | `fuzz-AC2-{timestamp}-{hex}` |
-| **Replay instruction** | `test-runner --seed=<seed> --tactic=RT-1 --iterations=1` |
-| **Shrink strategy** | Binary search on `pageSize` value to find minimum trigger. |
+| Field                  | Value                                                                      |
+| ---------------------- | -------------------------------------------------------------------------- |
+| **AC(s)**              | AC-2                                                                       |
+| **Tactic type**        | fuzz                                                                       |
+| **Input surface**      | Query parameters `page` and `pageSize` on `GET /api/items`                 |
+| **Property / Oracle**  | Response always returns ≤50 items. Status is never 5xx. Response time <2s. |
+| **Iterations**         | 500                                                                        |
+| **Seed**               | `fuzz-AC2-{timestamp}-{hex}`                                               |
+| **Replay instruction** | `test-runner --seed=<seed> --tactic=RT-1 --iterations=1`                   |
+| **Shrink strategy**    | Binary search on `pageSize` value to find minimum trigger.                 |
 
 **Mutation corpus for `page`/`pageSize`:**
+
 - Valid range: `page=1..1000`, `pageSize=1..50`
 - Mutations: `page=-1`, `page=0`, `page=999999`, `pageSize=0`, `pageSize=51`, `pageSize=-1`, `pageSize=NaN`, `pageSize=""`, `pageSize=1.5`, omit parameter entirely
 
 ### RT-2: Property — response length never exceeds pageSize
 
-| Field | Value |
-|-------|-------|
-| **AC(s)** | AC-2 |
-| **Tactic type** | property-based |
-| **Input surface** | Random valid `pageSize` values (1–50) with random `page` values |
-| **Property / Oracle** | `len(response.items) <= pageSize` for all inputs. |
-| **Iterations** | 200 |
-| **Seed** | `prop-AC2-{timestamp}-{hex}` |
-| **Replay instruction** | `test-runner --seed=<seed> --tactic=RT-2 --iterations=1` |
-| **Shrink strategy** | Reduce `pageSize` to find smallest value where property fails. |
+| Field                  | Value                                                           |
+| ---------------------- | --------------------------------------------------------------- |
+| **AC(s)**              | AC-2                                                            |
+| **Tactic type**        | property-based                                                  |
+| **Input surface**      | Random valid `pageSize` values (1–50) with random `page` values |
+| **Property / Oracle**  | `len(response.items) <= pageSize` for all inputs.               |
+| **Iterations**         | 200                                                             |
+| **Seed**               | `prop-AC2-{timestamp}-{hex}`                                    |
+| **Replay instruction** | `test-runner --seed=<seed> --tactic=RT-2 --iterations=1`        |
+| **Shrink strategy**    | Reduce `pageSize` to find smallest value where property fails.  |
 
 ## Failure Triage Workflow
 
