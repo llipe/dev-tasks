@@ -4,16 +4,18 @@
 # Usage:  ./dev-tasks.sh <command> [options]
 #
 # Commands:
-#   install [version]  Install the toolkit (latest or pinned version)
-#   update  [version]  Update to the latest or a specific version
-#   check              Compare installed vs latest version
-#   version            Print installed version info
+#   install     [version]  Install the toolkit (latest or pinned version)
+#   update      [version]  Update to the latest or a specific version
+#   self-update [version]  Update only the dev-tasks.sh script itself
+#   check                  Compare installed vs latest version
+#   version                Print installed version info
 #
-# Options (install / update):
+# Options (install / update / self-update):
 #   --dry-run          Show what would change without writing any files
 #   --backup           Back up managed files before replacing them
 #   --yes              Skip confirmation prompts
 #   --profile <name>   Select file set: copilot | claude | both (default)
+#   --self-update      Also update the dev-tasks.sh script (update only)
 
 set -euo pipefail
 
@@ -95,6 +97,11 @@ sha256() {
   else
     sha256sum "$file" | awk '{print $1}'
   fi
+}
+
+get_self_path() {
+  # Return the absolute path of the running script, without relying on realpath/readlink.
+  printf '%s/%s' "$(cd "$(dirname "$0")" && pwd)" "$(basename "$0")"
 }
 
 confirm() {
@@ -382,6 +389,54 @@ install_files() {
   printf '%s\n' "${installed[@]+"${installed[@]}"}"
 }
 
+# ─── Script Self-Update ────────────────────────────────────────────────────────
+
+self_update_script() {
+  local src_dir="$1" version="$2" dry_run="${3:-false}" do_backup="${4:-false}"
+
+  local bundled_script="${src_dir}/dev-tasks.sh"
+  if [ ! -f "$bundled_script" ]; then
+    warn "dev-tasks.sh not found in bundle — skipping script self-update."
+    return
+  fi
+
+  local self_path
+  self_path=$(get_self_path)
+
+  # Check if update is needed
+  if [ -f "$self_path" ]; then
+    local current_sum bundle_sum
+    current_sum=$(sha256 "$self_path")
+    bundle_sum=$(sha256 "$bundled_script")
+    if [ "$current_sum" = "$bundle_sum" ]; then
+      success "dev-tasks.sh is already up to date (v${version})."
+      return
+    fi
+  fi
+
+  info "Updating dev-tasks.sh to v${version} ..."
+
+  if [ "$do_backup" = "true" ] && [ "$dry_run" = "false" ]; then
+    local ts
+    ts=$(date -u +"%Y%m%d_%H%M%S" 2>/dev/null || date +"%Y%m%d_%H%M%S")
+    local script_backup="${BACKUP_DIR}/${ts}/dev-tasks.sh"
+    mkdir -p "$(dirname "$script_backup")"
+    cp "$self_path" "$script_backup"
+    info "Backed up current dev-tasks.sh to ${script_backup}"
+  fi
+
+  if [ "$dry_run" = "true" ]; then
+    info "[dry-run] Would replace ${self_path} with bundle v${version}."
+    return
+  fi
+
+  local tmp_path="${self_path}.new.tmp"
+  cp "$bundled_script" "$tmp_path"
+  chmod +x "$tmp_path"
+  mv "$tmp_path" "$self_path"
+  success "dev-tasks.sh updated to v${version}."
+}
+
 # ─── AGENTS.md Integration Prompt ─────────────────────────────────────────────
 
 print_agents_md_prompt() {
@@ -575,6 +630,46 @@ cmd_list() {
   [ -d "$BACKUP_DIR" ] && printf "  %s (backup directory)\n" "$BACKUP_DIR" || true
 }
 
+cmd_self_update() {
+  local target_version="${1:-latest}"
+  local dry_run="${2:-false}"
+  local do_backup="${3:-false}"
+  local auto_yes="${4:-false}"
+
+  check_deps
+
+  info "Fetching release info (${target_version}) ..."
+  local release_json version
+  release_json=$(fetch_release_info "$target_version")
+  version=$(extract_field "$release_json" "tag_name")
+  version="${version#v}"
+
+  if [ -z "$version" ]; then
+    die "Could not determine the target release version."
+  fi
+
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '${tmpdir}'" EXIT
+
+  local bundle_file extract_dir
+  bundle_file=$(download_bundle "$release_json" "$tmpdir")
+  extract_dir="${tmpdir}/extracted"
+  extract_bundle "$bundle_file" "$extract_dir"
+
+  local src_dir="$extract_dir"
+  if [ "$(ls -A "$extract_dir" | wc -l | tr -d ' ')" = "1" ]; then
+    local inner
+    inner=$(ls -A "$extract_dir")
+    if [ -d "${extract_dir}/${inner}" ]; then
+      src_dir="${extract_dir}/${inner}"
+    fi
+  fi
+
+  self_update_script "$src_dir" "$version" "$dry_run" "$do_backup"
+}
+
 cmd_install() {
   local target_version="${1:-latest}"
   local dry_run="${2:-false}"
@@ -648,6 +743,7 @@ cmd_update() {
   local do_backup="${3:-false}"
   local auto_yes="${4:-false}"
   local profile="${5:-$PROFILE_BOTH}"
+  local self_update="${6:-false}"
 
   set_managed_scope "$profile"
 
@@ -721,6 +817,9 @@ cmd_update() {
   if [ "$profile" = "$PROFILE_CLAUDE" ] || [ "$profile" = "$PROFILE_BOTH" ]; then
     print_claude_md_prompt "$src_dir" "$latest_version" "$dry_run"
   fi
+  if [ "$self_update" = "true" ]; then
+    self_update_script "$src_dir" "$latest_version" "$dry_run" "$do_backup"
+  fi
   [ "$dry_run" = "true" ] && success "[dry-run] Update simulation complete — no files were modified." \
                            || success "Updated dev-tasks to v${latest_version}."
 }
@@ -735,17 +834,19 @@ ${BOLD}USAGE${RESET}
   ./dev-tasks.sh <command> [version] [options]
 
 ${BOLD}COMMANDS${RESET}
-  install [version]   Install the toolkit (default: latest)
-  update  [version]   Update to latest or a pinned version
-  check               Compare installed version vs latest
-  list                List installed directories and files
-  version             Print installed version information
+  install     [version]  Install the toolkit (default: latest)
+  update      [version]  Update to latest or a pinned version
+  self-update [version]  Update only the dev-tasks.sh script itself
+  check                  Compare installed version vs latest
+  list                   List installed directories and files
+  version                Print installed version information
 
-${BOLD}OPTIONS${RESET} (install / update)
+${BOLD}OPTIONS${RESET} (install / update / self-update)
   --dry-run           Show planned changes without writing any files
   --backup            Back up managed files to ${BACKUP_DIR}/ before replacing
   --yes               Skip confirmation prompts
   --profile <name>    Install/update file sets: copilot | claude | both (default: both)
+  --self-update       Also update the dev-tasks.sh script when running 'update'
 
 ${BOLD}EXAMPLES${RESET}
   # Bootstrap (first time)
@@ -770,14 +871,23 @@ ${BOLD}EXAMPLES${RESET}
   # List installed files
   ./dev-tasks.sh list
 
-  # Update with backup
+  # Update toolkit files with backup
   ./dev-tasks.sh update --backup
+
+  # Update toolkit files AND the script itself
+  ./dev-tasks.sh update --self-update
+
+  # Update only the script itself (no toolkit files changed)
+  ./dev-tasks.sh self-update
 
   # Update only Claude toolkit files
   ./dev-tasks.sh update --profile claude
 
   # Preview update (dry run)
   ./dev-tasks.sh update --dry-run
+
+  # Preview script self-update (dry run)
+  ./dev-tasks.sh self-update --dry-run
 
 ${BOLD}FILES${RESET}
   ${VERSION_FILE}         Installed version metadata (JSON)
@@ -798,13 +908,14 @@ main() {
   shift || true
 
   # Parse shared flags
-  local dry_run=false do_backup=false auto_yes=false target_version="latest" profile="$PROFILE_BOTH"
+  local dry_run=false do_backup=false auto_yes=false target_version="latest" profile="$PROFILE_BOTH" self_update=false
 
   while [ $# -gt 0 ]; do
     case "$1" in
-      --dry-run)  dry_run=true;  shift ;;
-      --backup)   do_backup=true; shift ;;
-      --yes|-y)   auto_yes=true; shift ;;
+      --dry-run)     dry_run=true;    shift ;;
+      --backup)      do_backup=true;  shift ;;
+      --yes|-y)      auto_yes=true;   shift ;;
+      --self-update) self_update=true; shift ;;
       --profile)
         [ $# -ge 2 ] || die "Missing value for --profile. Use: copilot | claude | both"
         profile="$2"
@@ -828,14 +939,15 @@ main() {
     esac
   done
 
-    set_managed_scope "$profile"
+  set_managed_scope "$profile"
 
   case "$command" in
-    install) cmd_install "$target_version" "$dry_run" "$do_backup" "$auto_yes" "$profile" ;;
-    update)  cmd_update  "$target_version" "$dry_run" "$do_backup" "$auto_yes" "$profile" ;;
-    check)   cmd_check ;;
-    list)    cmd_list ;;
-    version) cmd_version ;;
+    install)     cmd_install     "$target_version" "$dry_run" "$do_backup" "$auto_yes" "$profile" ;;
+    update)      cmd_update      "$target_version" "$dry_run" "$do_backup" "$auto_yes" "$profile" "$self_update" ;;
+    self-update) cmd_self_update "$target_version" "$dry_run" "$do_backup" "$auto_yes" ;;
+    check)       cmd_check ;;
+    list)        cmd_list ;;
+    version)     cmd_version ;;
     help | --help | -h) usage; exit 0 ;;
     "")
       error "No command specified."
