@@ -15,4 +15,4 @@ The planner will present a dependency-based batch plan and pause for your approv
 
 - Integration branch: `integration/<plan-id>-<short-description>`
 - Story branches and PRs are created by `developer` per `github-ops` conventions
-- Final output: one consolidated PR to `main` after all batches complete
+- Final output: one consolidated PR from integration branch to `main` plus a mandatory `PR Directives (User Action Required)` block (review, approve, merge steps)
