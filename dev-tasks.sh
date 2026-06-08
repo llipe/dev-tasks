@@ -13,6 +13,7 @@
 #   --dry-run          Show what would change without writing any files
 #   --backup           Back up managed files before replacing them
 #   --yes              Skip confirmation prompts
+#   --profile <name>   Select file set: copilot | claude | both (default)
 
 set -euo pipefail
 
@@ -29,18 +30,29 @@ CLAUDE_UPDATE_FILE=".dev-tasks-claude-update.md"
 CLAUDE_SETTINGS_UPDATE_FILE=".dev-tasks-claude-settings-update.json"
 GH_API="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases"
 
-# All paths the script manages (relative to consumer repo root)
-MANAGED_DIRS=(
+PROFILE_BOTH="both"
+PROFILE_COPILOT="copilot"
+PROFILE_CLAUDE="claude"
+
+# Copilot paths the script manages (relative to consumer repo root)
+COPILOT_MANAGED_DIRS=(
   ".github/agents"
   ".github/skills"
   ".github/instructions"
   ".github/instructions/domain"
   ".github/prompts"
+)
+
+# Claude paths the script manages (relative to consumer repo root)
+CLAUDE_MANAGED_DIRS=(
   ".claude/agents"
   ".claude/skills"
   ".claude/commands"
   ".claude/hooks"
 )
+
+# Active managed paths (computed from selected profile)
+MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}" "${CLAUDE_MANAGED_DIRS[@]}")
 MANAGED_FILES=()
 
 # Colors (disabled when stderr is not a tty — all diagnostics go to stderr)
@@ -92,6 +104,26 @@ confirm() {
   printf "%b" "${YELLOW}[dev-tasks]${RESET} ${prompt} [y/N] "
   read -r answer
   [[ "$answer" =~ ^[Yy]$ ]]
+}
+
+set_managed_scope() {
+  local profile="${1:-$PROFILE_BOTH}"
+  MANAGED_DIRS=()
+
+  case "$profile" in
+    "$PROFILE_COPILOT")
+      MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}")
+      ;;
+    "$PROFILE_CLAUDE")
+      MANAGED_DIRS=("${CLAUDE_MANAGED_DIRS[@]}")
+      ;;
+    "$PROFILE_BOTH")
+      MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}" "${CLAUDE_MANAGED_DIRS[@]}")
+      ;;
+    *)
+      die "Invalid profile '${profile}'. Valid values: ${PROFILE_COPILOT}, ${PROFILE_CLAUDE}, ${PROFILE_BOTH}."
+      ;;
+  esac
 }
 
 # ─── GitHub API ───────────────────────────────────────────────────────────────
@@ -548,6 +580,9 @@ cmd_install() {
   local dry_run="${2:-false}"
   local do_backup="${3:-false}"
   local auto_yes="${4:-false}"
+  local profile="${5:-$PROFILE_BOTH}"
+
+  set_managed_scope "$profile"
 
   check_deps
 
@@ -592,13 +627,17 @@ cmd_install() {
 
   [ "$do_backup" = "true" ] && backup_managed_files "$dry_run"
 
-  info "Installing managed files ..."
+  info "Installing managed files (profile: ${profile}) ..."
   install_files "$src_dir" "$dry_run"
 
   write_version_file "$version" "$dry_run"
 
-  print_agents_md_prompt "$src_dir" "$version" "$dry_run"
-  print_claude_md_prompt "$src_dir" "$version" "$dry_run"
+  if [ "$profile" = "$PROFILE_COPILOT" ] || [ "$profile" = "$PROFILE_BOTH" ]; then
+    print_agents_md_prompt "$src_dir" "$version" "$dry_run"
+  fi
+  if [ "$profile" = "$PROFILE_CLAUDE" ] || [ "$profile" = "$PROFILE_BOTH" ]; then
+    print_claude_md_prompt "$src_dir" "$version" "$dry_run"
+  fi
   [ "$dry_run" = "true" ] && success "[dry-run] Install simulation complete — no files were modified." \
                            || success "Installed dev-tasks v${version}."
 }
@@ -608,6 +647,9 @@ cmd_update() {
   local dry_run="${2:-false}"
   local do_backup="${3:-false}"
   local auto_yes="${4:-false}"
+  local profile="${5:-$PROFILE_BOTH}"
+
+  set_managed_scope "$profile"
 
   check_deps
 
@@ -655,7 +697,7 @@ cmd_update() {
   fi
 
   # Detect local modifications against the incoming bundle
-  info "Checking for local modifications ..."
+  info "Checking for local modifications (profile: ${profile}) ..."
   local modified_list
   modified_list=$(detect_modifications "$src_dir")
 
@@ -668,13 +710,17 @@ cmd_update() {
 
   [ "$do_backup" = "true" ] && backup_managed_files "$dry_run"
 
-  info "Installing updated files ..."
+  info "Installing updated files (profile: ${profile}) ..."
   install_files "$src_dir" "$dry_run"
 
   write_version_file "$latest_version" "$dry_run"
 
-  print_agents_md_prompt "$src_dir" "$latest_version" "$dry_run"
-  print_claude_md_prompt "$src_dir" "$latest_version" "$dry_run"
+  if [ "$profile" = "$PROFILE_COPILOT" ] || [ "$profile" = "$PROFILE_BOTH" ]; then
+    print_agents_md_prompt "$src_dir" "$latest_version" "$dry_run"
+  fi
+  if [ "$profile" = "$PROFILE_CLAUDE" ] || [ "$profile" = "$PROFILE_BOTH" ]; then
+    print_claude_md_prompt "$src_dir" "$latest_version" "$dry_run"
+  fi
   [ "$dry_run" = "true" ] && success "[dry-run] Update simulation complete — no files were modified." \
                            || success "Updated dev-tasks to v${latest_version}."
 }
@@ -699,6 +745,7 @@ ${BOLD}OPTIONS${RESET} (install / update)
   --dry-run           Show planned changes without writing any files
   --backup            Back up managed files to ${BACKUP_DIR}/ before replacing
   --yes               Skip confirmation prompts
+  --profile <name>    Install/update file sets: copilot | claude | both (default: both)
 
 ${BOLD}EXAMPLES${RESET}
   # Bootstrap (first time)
@@ -707,6 +754,12 @@ ${BOLD}EXAMPLES${RESET}
 
   # Install latest
   ./dev-tasks.sh install
+
+  # Install only Copilot toolkit files (.github/*)
+  ./dev-tasks.sh install --profile copilot
+
+  # Install only Claude toolkit files (.claude/*)
+  ./dev-tasks.sh install --profile claude
 
   # Install specific version
   ./dev-tasks.sh install v1.2.0
@@ -719,6 +772,9 @@ ${BOLD}EXAMPLES${RESET}
 
   # Update with backup
   ./dev-tasks.sh update --backup
+
+  # Update only Claude toolkit files
+  ./dev-tasks.sh update --profile claude
 
   # Preview update (dry run)
   ./dev-tasks.sh update --dry-run
@@ -742,13 +798,22 @@ main() {
   shift || true
 
   # Parse shared flags
-  local dry_run=false do_backup=false auto_yes=false target_version="latest"
+  local dry_run=false do_backup=false auto_yes=false target_version="latest" profile="$PROFILE_BOTH"
 
   while [ $# -gt 0 ]; do
     case "$1" in
       --dry-run)  dry_run=true;  shift ;;
       --backup)   do_backup=true; shift ;;
       --yes|-y)   auto_yes=true; shift ;;
+      --profile)
+        [ $# -ge 2 ] || die "Missing value for --profile. Use: copilot | claude | both"
+        profile="$2"
+        shift 2
+        ;;
+      --profile=*)
+        profile="${1#*=}"
+        shift
+        ;;
       v[0-9]* | [0-9]*)  target_version="$1"; shift ;;
       -*)
         error "Unknown option: $1"
@@ -763,9 +828,11 @@ main() {
     esac
   done
 
+    set_managed_scope "$profile"
+
   case "$command" in
-    install) cmd_install "$target_version" "$dry_run" "$do_backup" "$auto_yes" ;;
-    update)  cmd_update  "$target_version" "$dry_run" "$do_backup" "$auto_yes" ;;
+    install) cmd_install "$target_version" "$dry_run" "$do_backup" "$auto_yes" "$profile" ;;
+    update)  cmd_update  "$target_version" "$dry_run" "$do_backup" "$auto_yes" "$profile" ;;
     check)   cmd_check ;;
     list)    cmd_list ;;
     version) cmd_version ;;
