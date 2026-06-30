@@ -73,6 +73,7 @@ Comments on issues **MUST** follow these rules:
 
 - **Status updates** **MUST** use a prefix: `🔄 Update:`, `✅ Done:`, `⚠️ Blocked:`, `❌ Dropped:`
 - **Decision records** **MUST** use: `📌 Decision: <what was decided> — Reason: <why>`
+- Every comment **MUST** include a relevant tracker reference: issue (`#<number>`) or commit (`<sha>`).
 - Comments **MUST NOT** be empty or single-word acknowledgments (e.g., "ok", "done").
 - Long-form progress comments **SHOULD** use checklists.
 
@@ -153,9 +154,11 @@ Rules:
 
 - The attribution line **MUST** be present when creating a PR.
 - The attribution value **MUST** identify the assisting system and version when available (for example, `GitHub Copilot v1`, `Claude Code v3`).
+- The `## Why` section **MUST** reference the appropriate issue (`Closes #<number>` or `Refs #<number>`). If no issue exists, it **MUST** reference the motivating commit (`Refs <sha>`).
 
 ### PR Comments
 
+- Every PR comment **MUST** include a relevant tracker reference: issue (`#<number>`) or commit (`<sha>`).
 - Review response comments **MUST** quote the original feedback or reference the thread.
 - Status comments **MUST** use the same prefixes as issue comments.
 
