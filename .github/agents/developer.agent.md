@@ -72,6 +72,9 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 12. **GitHub hygiene:** All issues, PRs, labels, milestones, and comments **MUST** conform to `github-ops` conventions.
 13. **Git operations:** For complex git operations (rebase, merge conflicts, branch updates), you **SHOULD** invoke the `git-ops` skill for standardized procedures.
 14. **DESIGN.md compliance:** If a sub-task changes UI behavior, visual styling, or component variants, you **MUST** verify compliance with `/DESIGN.md` and update `/DESIGN.md` when the visual contract changes.
+15. **Package manager preference:** For JS/TS projects, you **MUST** prefer `pnpm` over `npm` for dependency and script commands, except when `pnpm` is unavailable or project constraints explicitly require `npm`.
+16. **Canonical quality scripts:** For JS/TS projects, you **MUST** use canonical scripts when available: `lint`, `format:check`, `typecheck`, `test`, `audit`, and `validate`.
+17. **Migration safety gate:** For schema/data-model changes, you **MUST** obtain explicit user confirmation before running any migration apply command.
 
 ---
 
@@ -86,8 +89,9 @@ Follow `.github/instructions/implement.instructions.md`:
 5. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
 6. When all sub-tasks are complete:
    - Verify all acceptance criteria.
-   - Run tests and record results.
-   - Invoke `technical-writer` for documentation update.
+  - Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
+  - For migration-bearing changes, confirm migration artifact/rollback notes and execute apply only after explicit user confirmation.
+  - Invoke `technical-writer` for documentation update and drift/stale-doc validation.
    - Convert PR from Draft to Ready for Review.
 
 ---
@@ -177,13 +181,15 @@ Before marking a Story/Issue done:
 
 1. All implementation sub-tasks and acceptance criteria **MUST** be complete.
 2. Required tests **MUST** pass and be recorded.
-3. `technical-writer` agent **MUST** have run and produced a delta report.
-4. `/docs` **MUST** be updated to current state.
-5. `/workstream` **SHOULD** be cleaned (active artifacts retained, obsolete artifacts archived/removed).
-6. If memo-cli is available, outcome entry **MUST** be written to memo before PR conversion.
-7. PR **MUST** be ready, approved, and merged.
-8. You **MUST NOT** close the GitHub Issue until all conditions above are met.
-9. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.
+3. Mandatory quality gates **MUST** pass and be recorded: `test`, `lint`, `format:check`, `typecheck`, `audit`.
+4. For migration-bearing changes, migration lifecycle evidence **MUST** be recorded (artifact, rollback notes, explicit user-confirmed apply, verification).
+5. `technical-writer` agent **MUST** have run and produced both a delta report and a drift/stale-doc validation result.
+6. `/docs` **MUST** be updated to current state.
+7. `/workstream` **SHOULD** be cleaned (active artifacts retained, obsolete artifacts archived/removed).
+8. If memo-cli is available, outcome entry **MUST** be written to memo before PR conversion.
+9. PR **MUST** be ready, approved, and merged.
+10. You **MUST NOT** close the GitHub Issue until all conditions above are met.
+11. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.
 
 ---
 
@@ -197,6 +203,7 @@ For each run, return a compact status report with:
 - Files updated in `/workstream/` and codebase
 - Files updated in `/docs/` and ADR path (if created)
 - Test results for the current step
+- Quality gate results (`test`, `lint`, `format:check`, `typecheck`, `audit`)
 - Next exact sub-task awaiting approval or currently executing
 
 When finishing a story/issue execution cycle, return a **complete closeout summary** that includes:
@@ -230,6 +237,13 @@ workstream_files:
 - <step>
   known_limitations:
 - <item-or-none>
+  docs_drift_status: clean | drift-fixed | drift-pending | blocked
+  quality_gates:
+- test: PASS | FAIL | NOT RUN
+- lint: PASS | FAIL | NOT RUN
+- format:check: PASS | FAIL | NOT RUN
+- typecheck: PASS | FAIL | NOT RUN
+- audit: PASS | FAIL | NOT RUN
   checklist_sync: synced | mismatch-fixed | blocked
   next_action: <single sentence>
   END CLOSEOUT PAYLOAD

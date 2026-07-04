@@ -16,6 +16,9 @@ All work in this repository **MUST**:
 - Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`).
 - Open PRs for review — **never self-merge into `main`**. PRs targeting `main` require **user** approval and the **user** merges them. No agent may merge into `main`.
 - Follow testing, linting, and documentation standards from `docs/technical-guidelines.md`.
+- Prefer `pnpm` over `npm` for JavaScript/TypeScript workflows (fallback to `npm` only when `pnpm` is unavailable or explicitly disallowed).
+- Use canonical `package.json` script names for JS/TS projects: `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `audit`, `validate`.
+- Before developer/planner completion, enforce and record quality gates: `test`, `lint`, `format:check`, `typecheck`, `audit`.
 - Reference GitHub Issues in branch names and commits; follow the `github-ops` conventions for all GitHub artifacts (issues, PRs, branches, labels, milestones, comments).
 - Treat `/DESIGN.md` as the source of truth for visual tokens, components, and design guidance; update it whenever UI contracts change.
 - Maintain document changelogs when updating generated artifacts (PRDs, specs, stories, refinements).

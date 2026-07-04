@@ -363,6 +363,8 @@ Include:
 - Summary of changes:
 - API docs status (`openapi.yaml` and `endpoints.md`):
 - User guide status (new/updated pages, docs-site config changes):
+- Drift/Stale docs status: `clean` | `drift-fixed` | `drift-pending` | `blocked`
+- Drift details (required when not `clean`):
 - Sources used:
 - ADR created (if any):
 - Uncertainties / follow-ups:

@@ -58,13 +58,18 @@ Each GitHub Issue **MUST** be created using:
   - User Story (role, goal, benefit)
   - Context
   - Acceptance Criteria (checklist)
+  - Acceptance-Criteria-to-Test Mapping
   - Business Rules
   - Technical Notes
   - Testing Requirements
+  - Quality Gate Commands (`lint`, `format:check`, `typecheck`, `test`, `audit`, optionally `validate`)
   - Implementation Steps
+  - Migration Plan (when schema/data-model changes apply): artifact, rollback notes, confirmation gate before apply, verification step
   - Files to Create/Modify
   - Definition of Done Checklist
   - Open Questions
+
+For JS/TS projects, command examples in issues **MUST** prefer `pnpm` and canonical scripts (`pnpm run <script>`).
 
 All issue formatting and metadata **MUST** conform to `github-ops` conventions.
 

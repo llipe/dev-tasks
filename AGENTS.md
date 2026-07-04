@@ -125,7 +125,7 @@ Prompts are entry points that configure an agent for a specific use case.
 
 ### Full Feature (PRD-Driven)
 
-```
+```text
 product-engineer: refine → generate-spec → generate-stories → publish-github → plan
                                                                                   ↓
 developer: implement
@@ -133,7 +133,7 @@ developer: implement
 
 ### Single GitHub Issue
 
-```
+```text
 product-engineer: refine → plan
                             ↓
 developer: implement
@@ -141,7 +141,7 @@ developer: implement
 
 ### Multi-Story Orchestration
 
-```
+```text
 product-engineer: refine → generate-spec → generate-stories → publish-github → plan
                                                                                   ↓
 planner: orchestrate → developer: implement (per story, sequential)
@@ -149,13 +149,13 @@ planner: orchestrate → developer: implement (per story, sequential)
 
 ### Quick Fix (Clear Issue, Task List Exists)
 
-```
+```text
 developer: implement
 ```
 
 ### UX Validation Loop
 
-```
+```text
 product-engineer: refine → generate-spec
                                ↓
 ux-engineer: mockups → gap analysis → refinement handoff
@@ -165,7 +165,7 @@ product-engineer: update spec/stories
 
 ### Test-First Design (Black-Box)
 
-```
+```text
 product-engineer: refine → spec → stories → plan
                                                  ↓
 black-box-tester: generate test plan (from spec or stories)
@@ -177,7 +177,7 @@ black-box-tester: validate compliance → validation report
 
 ### Project Initialization
 
-```
+```text
 product-engineer (init mode): activity-init → product-context.md + technical-guidelines.md
 ```
 
@@ -195,6 +195,9 @@ All AI coding agents working in this repository **MUST**:
 - Reference GitHub Issues in branch names and commits
 - Maintain document changelogs when updating generated artifacts (PRDs, specs, user stories, etc.)
 - Treat `/DESIGN.md` as the source of truth for visual tokens, components, and design guidance; update it whenever UI contracts change
+- Prefer `pnpm` over `npm` for JavaScript/TypeScript workflows (fallback to `npm` only when `pnpm` is unavailable or explicitly disallowed)
+- Use canonical `package.json` script names for JS/TS projects: `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `audit`, `validate`
+- Before developer/planner completion, enforce quality gates with recorded evidence: `test`, `lint`, `format:check`, `typecheck`, `audit`
 - Use the `git-ops` skill for branch management, rebase, and conflict resolution
 - If `memo-cli` is installed and `memo setup validate` passes: `product-engineer` **MUST** read from memo at session start; `developer` **MUST** write intent and outcome entries per story; `technical-writer` **MUST** write one memo entry per ADR created and per significant doc change
 - If `memo-cli` is installed but not configured (validation fails), ask the user to run `memo setup init` before proceeding with memo operations

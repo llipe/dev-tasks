@@ -77,6 +77,17 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
 - "What is the definition of done?"
 - "Are there related issues or dependencies?"
 
+### Acceptance Criteria Quality Standard
+
+Acceptance criteria in refinement outputs **MUST** be:
+
+- specific and observable (user-visible behavior or measurable system behavior)
+- testable with clear pass/fail outcomes
+- mapped to at least one validation method (automated test or manual/UI check)
+- inclusive of relevant edge-case behavior (error, boundary, and empty-state handling)
+
+For each criterion, you **SHOULD** use a concise "Given / When / Then" style when it improves clarity.
+
 ### Output Structure
 
 ```markdown
@@ -118,6 +129,8 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
 - Unit tests:
 - Integration tests:
 - Manual checks:
+- Edge-case checks:
+- Acceptance-criteria-to-test mapping:
 
 ## Open Questions
 

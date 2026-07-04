@@ -92,6 +92,8 @@ Adapt questions based on context provided:
 - **Monitoring & Logging:** "Observability tools and standards?"
 - **Design Patterns:** "Preferred patterns (MVC, Repository, etc.)?"
 - **Code Quality Standards:** "Linting, formatting, review standards?"
+- **Package Manager Standard:** "Can we standardize on `pnpm` for JS/TS projects?"
+- **Script Naming Standard:** "Should canonical `package.json` scripts (`lint`, `format:check`, `typecheck`, `test`, `audit`, `validate`) be enforced?"
 
 ### Output Structure: `technical-guidelines.md`
 
@@ -114,6 +116,20 @@ Adapt questions based on context provided:
 16. **Dependency Management** — Management approach, version pinning, vulnerability scanning
 17. **Development Workflow** — Branching strategy, commit conventions, PR process
 18. **Known Constraints & Trade-offs** — Limitations and rationale
+
+### JS/TS Package Manager and Script Defaults
+
+When the project includes JavaScript/TypeScript:
+
+- `pnpm` **MUST** be the default package manager.
+- `npm` **MAY** be used only when `pnpm` is unavailable or explicitly disallowed by project constraints.
+- `package.json` scripts **SHOULD** include canonical names:
+	- `lint`, `lint:fix`
+	- `format`, `format:check`
+	- `typecheck`
+	- `test`, `test:unit`, `test:integration`, `test:e2e`
+	- `audit`
+	- `validate` (aggregate quality gate script)
 
 ---
 

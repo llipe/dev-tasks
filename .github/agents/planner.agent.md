@@ -291,6 +291,8 @@ Completion output required:
 - story branch name
 - files changed grouped by app/docs/workstream
 - test results
+- quality gate results (`test`, `lint`, `format:check`, `typecheck`, `audit`)
+- docs drift/stale validation status from `technical-writer`
 - manual validation steps
 - known limitations
 - exact trailing closeout payload delimited by `BEGIN CLOSEOUT PAYLOAD` and `END CLOSEOUT PAYLOAD`
@@ -318,6 +320,13 @@ workstream_files:
 - <step>
   known_limitations:
 - <item-or-none>
+  docs_drift_status: clean | drift-fixed | drift-pending | blocked
+  quality_gates:
+- test: PASS | FAIL | NOT RUN
+- lint: PASS | FAIL | NOT RUN
+- format:check: PASS | FAIL | NOT RUN
+- typecheck: PASS | FAIL | NOT RUN
+- audit: PASS | FAIL | NOT RUN
   checklist_sync: synced | mismatch-fixed | blocked
   next_action: <single sentence>
   END CLOSEOUT PAYLOAD
@@ -350,12 +359,15 @@ For each completed story PR:
 
 1. Verify PR base branch is the integration branch.
 2. Verify required checks are successful.
-3. Verify branch is up to date with integration branch (update/rebase if required by policy). Use the `git-ops` skill for rebase and conflict resolution.
-4. Detect merge conflicts before attempting merge. If conflicts are found, invoke the `git-ops` skill to resolve them.
-5. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test results) and approve it.
-6. Merge PR into integration branch using one consistent strategy (default: `squash`).
-7. Confirm integration branch is green after merge before moving to next story.
-8. **Write checkpoint** — update the planner state file (see Phase 0.5 State File Format):
+3. Verify delegated closeout payload reports `docs_drift_status` as `clean` or `drift-fixed`.
+4. Verify delegated quality gates are all `PASS` (`test`, `lint`, `format:check`, `typecheck`, `audit`).
+5. For migration-bearing stories, verify explicit user confirmation was recorded before migration apply.
+6. Verify branch is up to date with integration branch (update/rebase if required by policy). Use the `git-ops` skill for rebase and conflict resolution.
+7. Detect merge conflicts before attempting merge. If conflicts are found, invoke the `git-ops` skill to resolve them.
+8. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test and quality-gate results) and approve it.
+9. Merge PR into integration branch using one consistent strategy (default: `squash`).
+10. Confirm integration branch is green after merge before moving to next story.
+11. **Write checkpoint** — update the planner state file (see Phase 0.5 State File Format):
    - Mark the completed story as `✅ Merged` with its PR link and branch name.
    - Update `Current Position` to the next pending story.
    - Update the `Last updated` timestamp.
@@ -383,13 +395,14 @@ Planner **MUST NOT** allow multiple open story PRs to merge concurrently.
 After all stories are merged into integration:
 
 1. Run full integration test suite on integration branch.
-2. Open one consolidated PR from integration branch to `main`.
-3. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
-4. Wait for the user to approve and merge the PR into `main`.
-5. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
+2. Invoke `technical-writer` for a planner-level drift/stale-doc validation pass against integrated changes; unresolved drift **MUST** block handoff.
+3. Open one consolidated PR from integration branch to `main`.
+4. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
+5. Wait for the user to approve and merge the PR into `main`.
+6. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
    - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
    - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
-6. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
+7. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
   - consolidated PR URL
   - current CI/check status
   - exact required user actions: review, approve, and merge

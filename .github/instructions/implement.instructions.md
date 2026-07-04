@@ -20,6 +20,12 @@ This activity assumes:
 - The corresponding GitHub Issue exists and includes a checklist.
 - GitHub is the source of truth for execution status.
 
+## Package Manager and Command Standards
+
+- For JavaScript/TypeScript repositories, you **MUST** prefer `pnpm` over `npm` for dependency and script commands.
+- You **MAY** use `npm` only when `pnpm` is unavailable or the project is explicitly npm-locked.
+- For JS/TS repositories, quality and test execution **MUST** use canonical `package.json` script names where available: `lint`, `format:check`, `typecheck`, `test`, `audit`, and `validate`.
+
 ---
 
 ## Before Starting Work
@@ -59,6 +65,7 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
 - You **MUST** keep the "Relevant Files" section accurate and up to date with every file created or modified.
 - You **MUST** keep the local task list and the GitHub Issue checklist aligned at all times.
 - If drift is detected between local and GitHub, you **MUST** reconcile immediately and report the reconciliation.
+- If schema/data-model changes are in scope, migration artifacts **MUST** be tracked in the task list unless an explicit opt-out rationale is documented.
 
 ### Progress Updates
 
@@ -71,14 +78,27 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
 
 1. All acceptance criteria **MUST** be verified.
 2. All tests listed in the checklist **MUST** be completed and passing.
-3. The PR **MUST** be converted from draft to ready for review.
-4. The PR **MUST** be approved by the appropriate reviewer per the merge authority policy in `github-ops`:
+3. The following quality gates **MUST** be completed and passing before completion:
+   - `test`
+   - `lint`
+   - `format:check`
+   - `typecheck`
+   - `audit`
+4. For schema/data-model changes, migration handling **MUST** satisfy all of the following:
+   - migration artifact created (unless documented opt-out)
+   - rollback/impact notes captured
+   - explicit user confirmation obtained before any migration apply command
+   - apply step executed only after user confirmation
+   - post-apply verification recorded
+5. `technical-writer` validation **MUST** include a drift/stale-doc check report, and completion **MUST NOT** proceed while unresolved drift remains.
+6. The PR **MUST** be converted from draft to ready for review.
+7. The PR **MUST** be approved by the appropriate reviewer per the merge authority policy in `github-ops`:
    - PRs targeting an **integration branch**: `planner` reviews and approves.
    - PRs targeting **`main`**: the **user** reviews and approves.
-5. The PR **MUST** be merged by the authorized party (planner for integration branches, user for `main`).
-6. You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.
-7. You **MUST NOT** close the issue while the PR is still in draft or pending review.
-8. You **MUST** notify the user when the PR is ready for review — explicitly inform them so they can review and merge.
+8. The PR **MUST** be merged by the authorized party (planner for integration branches, user for `main`).
+9. You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.
+10. You **MUST NOT** close the issue while the PR is still in draft or pending review.
+11. You **MUST** notify the user when the PR is ready for review — explicitly inform them so they can review and merge.
 
 ---
 
@@ -88,7 +108,7 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
 | ------------------ | -------------------------------------------------------------------------------------------------- |
 | **Before coding**  | Confirm issue open → Create branch (`github-ops`) → Open draft PR (`github-ops`) → Sync checklists |
 | **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval                           |
-| **Before closing** | All ACs verified → Tests pass → PR ready → Approved → Merged → Then close issue                    |
+| **Before closing** | All ACs verified → Quality gates pass (test/lint/format/typecheck/audit) → migration confirmation/apply/verify (when applicable) → docs drift check clear → PR ready → Approved → Merged → Then close issue |
 
 ---
 

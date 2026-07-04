@@ -94,9 +94,18 @@ So that [business value/benefit].
 #### Testing Requirements
 
 - **Unit Tests:** [Specific scenarios]
-- **Integration Tests:** [Scenarios, if applicable]
-- **Manual Testing:** [Manual test cases]
-- **Edge Cases:** [Edge cases to test]
+- **Integration Tests:** [Cross-component scenarios]
+- **Manual/UI Testing:** [User-visible checks and access path]
+- **Edge-Case Matrix:** [Boundary, error, empty-state, concurrency/idempotency cases]
+- **Acceptance-Criteria Mapping:** [AC -> test case IDs or commands]
+- **Execution Commands:** [Canonical scripts, prefer `pnpm run <script>`]
+
+#### Migration Requirements (When Data Model Changes)
+
+- Migration artifact: [required by default; add explicit opt-out rationale if omitted]
+- Rollback/impact notes: [required]
+- Apply step: [requires explicit user confirmation before running]
+- Verification after apply: [required]
 
 #### Implementation Steps
 
@@ -112,11 +121,26 @@ So that [business value/benefit].
 #### Definition of Done Checklist
 
 - [ ] Code implemented per technical guidelines
-- [ ] Unit tests written and passing
+- [ ] Unit/integration/manual/edge-case tests written and passing
+- [ ] Quality gates passing (`lint`, `format:check`, `typecheck`, `test`, `audit`)
 - [ ] Code reviewed and approved
 - [ ] Acceptance criteria verified
+- [ ] Acceptance criteria explicitly mapped to test evidence
+- [ ] Migration lifecycle complete (or documented opt-out) when schema/data-model changes exist
 - [ ] Pull Request created and merged
 ```
+
+## Package Manager and Script Conventions
+
+- For JS/TS projects, you **MUST** prefer `pnpm` over `npm`.
+- You **MAY** use `npm` only when `pnpm` is unavailable or the project is explicitly npm-locked.
+- When stories reference commands, you **MUST** prefer canonical script names:
+	- `lint`, `lint:fix`
+	- `format`, `format:check`
+	- `typecheck`
+	- `test`, `test:unit`, `test:integration`, `test:e2e`
+	- `audit`
+	- `validate` (aggregate quality gate)
 
 ## Story Quality Criteria
 
