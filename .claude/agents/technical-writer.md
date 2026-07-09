@@ -298,6 +298,22 @@ which memo && memo setup validate
 - If `memo` is not found, skip all memo operations silently.
 - If `memo` is found but validation fails (missing `memo.config.json` or env vars), **STOP** and ask: "memo-cli is installed but not configured for this repository. Run `memo setup init --repo <repo> --org <org> --domain <domain>` to configure it, then re-run."
 
+### Read Before Write
+
+Before writing documentation memo entries, run:
+
+```bash
+memo list --limit 20 --json
+memo tags list --sort frequency --json
+memo search "<doc topic or changed guideline/adr title>" --limit 10 --json
+```
+
+Synthesize findings first:
+
+- Existing guideline/ADR constraints to preserve
+- Prior terminology to keep consistent
+- Existing contract notes to avoid contradiction
+
 ### When to Write
 
 After completing **Step 3 (Update Canonical Files)**, write to memo. Do **not** batch all changes into a single entry — write one entry per distinct topic. If changes span three areas, write three shorter entries.
@@ -327,11 +343,12 @@ memo write \
 
 **Rationale quality rule:** Answer three questions in one coherent paragraph: (1) what changed and why it was needed, (2) what was decided or documented, (3) what it affects downstream. Never use bullet points inside `--rationale`.
 
-**Tag layers to apply (at least 2–3):**
+**Tag layers to apply (prefer 4 layers):**
 
 - **Domain/feature:** the area affected (e.g. `auth`, `api`, `data-model`, `payments`)
-- **Entry nature:** `adr`, `config-change`, `structure`, `outcome`
-- **Story/task ref:** `issue-42`, `story-s003` — include when a linked issue/story is known
+- **Work-item reference:** `issue-42`, `story-s003` — include when linked issue/story is known
+- **Lifecycle/nature:** `decision`, `contract`, `structure`, `outcome`, `adr`
+- **Impact/quality:** `docs-drift-fixed`, `config-change`, `cross-repo`, `security`
 
 Before picking tags, check existing vocabulary:
 

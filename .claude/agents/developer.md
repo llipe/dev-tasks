@@ -137,10 +137,28 @@ When memo is available, run before writing any code:
 
 ```bash
 memo list --limit 20 --json
+memo tags list --sort frequency --json
 memo search "<story or issue description>" --limit 10 --json
+# When boundary impact is likely (contracts, headers, APIs, shared schema):
+memo search "<key contract or dependency>" --scope related --limit 5 --json
 ```
 
-Review results for prior constraints, rejected alternatives, and integration contracts that affect the current implementation.
+Review results and produce a short synthesis before implementation:
+
+- Constraints to preserve
+- Rejected alternatives to avoid
+- Contracts/boundaries that must remain stable
+- Sensitive files/modules to treat carefully
+
+If no relevant prior entry exists, explicitly note: `No relevant prior memo decision found.`
+
+### Entry-Type Selection
+
+Choose the most specific entry type:
+
+- `decision` for intent, outcome, and durable architecture decisions.
+- `integration_point` for cross-service or cross-boundary contract details.
+- `structure` for module boundaries and naming/layout conventions.
 
 ### Intent Entry — Before Starting a Story
 
@@ -148,8 +166,8 @@ Write an intent entry **before beginning implementation** of any story or issue:
 
 ```bash
 memo write \
-   --rationale "Starting implementation of ISSUE-<##>: <title>. Approach: <high-level plan>. Key upfront decisions: <any design choices already made>. Expected files to change: <key files>." \
-   --tags "<domain>,<feature-area>,issue-<number>,intent" \
+  --rationale "Context: Starting ISSUE-<##> because <trigger/need>. Decision: implement via <approach>, preserving <constraints/non-goals>, with expected files <key files>. Impact: affects <user/module/contract impact> and introduces risks <if any>." \
+  --tags "<domain>,issue-<number>,intent,<impact-tag>[,<boundary-tag>]" \
    --entry-type decision \
    --source agent \
    --story "ISSUE-<number>" \
@@ -163,8 +181,8 @@ Write an outcome entry as part of the **Completion Gate**, after all tests pass 
 
 ```bash
 memo write \
-   --rationale "Completed ISSUE-<##>: <title>. Delivered: <summary of what was built>. Key implementation decisions: <important choices and their rationale>. Deviations from original intent: <any>." \
-   --tags "<domain>,<feature-area>,issue-<number>,outcome" \
+  --rationale "Context: Completed ISSUE-<##> after implementing <scope>. Delivery: shipped <behavior>, deviations <none|details>, AC <x/y> verified. Impact: quality gates test=<pass|fail>; lint=<pass|fail>; format:check=<pass|fail>; typecheck=<pass|fail>; audit=<pass|fail>; docs=<clean|drift-fixed>; migration=<none|details>." \
+  --tags "<domain>,issue-<number>,outcome,gates-pass[,<impact-tag>][,<boundary-tag>]" \
    --entry-type decision \
    --source agent \
    --commit "$(git rev-parse HEAD)" \

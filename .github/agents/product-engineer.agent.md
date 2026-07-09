@@ -90,6 +90,15 @@ Use the results to:
 - Avoid proposing approaches that were already evaluated and rejected.
 - Understand naming conventions, module boundaries, and data model decisions already in the knowledge base.
 
+Before generating refine/spec/stories outputs, include a short memo synthesis in working notes:
+
+- Constraints to preserve
+- Rejected alternatives to avoid
+- Contracts/boundaries to keep stable
+- Sensitive modules/files to treat carefully
+
+For medium/high-impact features, you MUST cite at least one relevant prior memo entry in your rationale, or explicitly state: `No relevant prior memo decision found.`
+
 ### During Activities — Targeted Reads
 
 Before making design choices in `activity-refine`, `activity-generate-spec`, or `activity-generate-stories`, search for related prior decisions:

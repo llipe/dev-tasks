@@ -19,6 +19,31 @@ An agent that uses `memo-cli` well:
 - Explains configuration and architectural choices so future agents don't re-derive them.
 - Tags entries consistently so discovery remains reliable across projects.
 
+### Success Outcomes
+
+Using memo-cli correctly SHOULD produce these outcomes:
+
+- Faster planning and implementation by reusing prior constraints and decisions.
+- Consistent execution across agents and sessions.
+- Auditable traceability from decision to issue/story, files, and commit evidence.
+- Better cross-repo contract safety when `--scope related` is used intentionally.
+
+---
+
+## Entry Purposes and Scope
+
+Every write MUST have one clear purpose. Do not combine multiple purposes into one long entry.
+
+| Purpose                    | What it captures                                     | Entry Type          | Required lifecycle tag |
+| -------------------------- | ---------------------------------------------------- | ------------------- | ---------------------- |
+| Intent                     | Planned approach, constraints, expected impact       | `decision`          | `intent`               |
+| Outcome                    | Delivered behavior and validation evidence           | `decision`          | `outcome`              |
+| Durable architecture       | Long-lived technical decisions and trade-offs        | `decision`          | `decision`             |
+| Integration contract       | Cross-boundary assumptions and compatibility details | `integration_point` | `contract`             |
+| Structural convention      | Module boundaries and naming/layout rules            | `structure`         | `structure`            |
+
+Write only reusable knowledge. Do not write routine activity noise that is already obvious from a diff.
+
 ---
 
 ## When to Write to memo-cli
@@ -47,10 +72,60 @@ Search **before** taking action, not only when stuck:
 | Situation                                      | Command                                               |
 | ---------------------------------------------- | ----------------------------------------------------- |
 | Starting a session — restore context           | `memo list --limit 20 --json`                         |
+| Normalize vocabulary before writing            | `memo tags list --sort frequency --json`              |
 | Before making a design choice                  | `memo search "<topic>" --json`                        |
 | Before touching a file you haven't seen before | `memo search "<filename or module name>" --json`      |
 | Evaluating whether to add a dependency         | `memo search "<library name>" --scope related --json` |
 | Onboarding to an unfamiliar repo               | `memo inspect --json` then `memo list --json`         |
+
+### Required Read Sequence
+
+At session start, run reads in this exact order:
+
+1. `memo setup validate`
+2. `memo list --limit 20 --json`
+3. `memo tags list --sort frequency --json`
+4. `memo search "<current issue/story/title>" --limit 10 --json`
+5. `memo search "<key contract or dependency>" --scope related --limit 5 --json` (when boundary impact is expected)
+
+Before coding or planning, synthesize findings in 4 bullets:
+
+- Constraints to preserve
+- Rejected alternatives to avoid
+- Contracts/boundaries that must remain stable
+- Sensitive files/modules to treat carefully
+
+---
+
+## Minimum Entry Schema
+
+All entries SHOULD include these fields when applicable:
+
+- Scope: issue/story identifier (`issue-<n>` or `story-<id>`)
+- Context: what changed and why now
+- Decision/Delivery: what was chosen or implemented
+- Impact: downstream behavior or contracts affected
+- Evidence: commit SHA and key files (`outcome` required)
+
+Additional requirements by purpose:
+
+- Intent entries MUST include constraints/non-goals and expected files.
+- Outcome entries MUST include AC coverage and quality gate status (`test`, `lint`, `format:check`, `typecheck`, `audit`).
+- Contract entries MUST include producer, consumer, validation rules, and failure behavior.
+
+---
+
+## Tag Taxonomy Standard
+
+Tags MUST be kebab-case and ordered in these layers:
+
+1. Domain tag (for example: `auth`, `tenant`, `ingestion`, `docs`)
+2. Work-item tag (`issue-113`, `story-s003`)
+3. Lifecycle tag (`intent`, `outcome`, `decision`, `contract`, `structure`)
+4. Impact/quality tag (`security`, `migration`, `gates-pass`, `docs-drift-fixed`)
+5. Optional boundary tag (`api`, `middleware`, `cross-repo`)
+
+Use 4-5 tags whenever possible. Reuse existing tags from `memo tags list`.
 
 ---
 
