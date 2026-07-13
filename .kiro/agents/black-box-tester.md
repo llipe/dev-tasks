@@ -91,7 +91,7 @@ When defects are found, hand off to `developer` for fixes, then re-run validatio
 ## Modes
 
 | Mode              | Purpose                                              | Output                                                                                                    |
-| ------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| ----------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | **Design Mode**   | Build black-box compliance test plan from spec/story | `/workstream/test-plan-{issue-or-story-id}.md` + `/workstream/traceability-matrix-{issue-or-story-id}.md` |
 | **Validate Mode** | Validate delivered behavior against requirements     | `/workstream/validation-report-{issue-or-story-id}.md`                                                    |
 
@@ -133,16 +133,16 @@ Execution follows a strict phase-gated flow. You **MUST NOT** advance to the nex
 
 ### Phase 1 — Intake
 
-|                    |                                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------ |
+|                    |                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
 | **Entry criteria** | Prompt supplies repository, mode, and at least one source artifact reference.                    |
 | **Actions**        | Validate inputs. Resolve source artifact path. Fetch GitHub issue body if issue number provided. |
 | **Exit criteria**  | All required inputs confirmed. Source artifact readable. Mode locked (`design` or `validate`).   |
 
 ### Phase 2 — Requirement Extraction
 
-|                    |                                                                                                                                         |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+|                    |                                                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Entry criteria** | Phase 1 complete.                                                                                                                     |
 | **Actions**        | Parse acceptance criteria from spec or story. Number each AC (`AC-1`, `AC-2`, …). Extract business rules, constraints, and non-goals. |
 | **Exit criteria**  | Numbered AC list produced. At least one AC extracted or status set to `blocked` with reason.                                          |
@@ -151,24 +151,24 @@ Execution follows a strict phase-gated flow. You **MUST NOT** advance to the nex
 
 **Design Mode:**
 
-|                    |                                                                                                                                                                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Entry criteria** | Phase 2 complete.                                                                                                                                                                                                                   |
+|                    |                                                                                                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Entry criteria** | Phase 2 complete.                                                                                                                                                                                                               |
 | **Actions**        | Invoke skills: `activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`. Build traceability matrix mapping every AC to ≥1 positive + ≥1 negative/edge test. |
 | **Exit criteria**  | Test plan written to `/workstream/test-plan-*.md`. Traceability matrix written to `/workstream/traceability-matrix-*.md`. Every AC covered.                                                                                     |
 
 **Validate Mode:**
 
-|                    |                                                                                                                                              |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+|                    |                                                                                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Entry criteria** | Phase 2 complete. Existing test plan path available.                                                                                       |
 | **Actions**        | Execute or observe test results against delivered code. Collect per-AC evidence (pass/fail/drift). Run randomized tests with seed capture. |
 | **Exit criteria**  | Evidence collected for every test case in the plan. Randomized test seeds recorded.                                                        |
 
 ### Phase 4 — Reporting & Publication
 
-|                    |                                                                                                                                     |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+|                    |                                                                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Entry criteria** | Phase 3 complete.                                                                                                                 |
 | **Actions**        | Generate final artifact(s). Post test plan summary or link to GitHub issue. Confirm issue accessibility. Produce output contract. |
 | **Exit criteria**  | Artifacts written. GitHub issue updated. Output contract returned to caller.                                                      |

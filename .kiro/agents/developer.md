@@ -102,9 +102,9 @@ Follow `.kiro/steering/implement.md`:
 5. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
 6. When all sub-tasks are complete:
    - Verify all acceptance criteria.
-  - Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
-  - For migration-bearing changes, confirm migration artifact/rollback notes and execute apply only after explicit user confirmation.
-  - Invoke `technical-writer` for documentation update and drift/stale-doc validation.
+   - Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
+   - For migration-bearing changes, confirm migration artifact/rollback notes and execute apply only after explicit user confirmation.
+   - Invoke `technical-writer` for documentation update and drift/stale-doc validation.
    - Convert PR from Draft to Ready for Review.
 
 ---
@@ -112,7 +112,7 @@ Follow `.kiro/steering/implement.md`:
 ## Integration with Other Agents
 
 | Agent              | Relationship                                                                                                            |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
 | `product-engineer` | Produces the task lists and refined issues that `developer` executes                                                    |
 | `planner`          | Orchestrates multi-story runs — delegates each story to `developer` in Execute Mode with an integration branch override |
 | `technical-writer` | Invoked by `developer` before PR is marked ready — updates `/docs`                                                      |

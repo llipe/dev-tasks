@@ -26,7 +26,7 @@ When a delegated story has UI impact and `/DESIGN.md` exists, you **MUST** requi
 ### Skills
 
 | Skill     | When to Invoke                                                                    |
-| --------- | ----------------------------------------------------------------------------------- |
+| --------- | --------------------------------------------------------------------------------- |
 | `git-ops` | Branch creation, rebase, merge conflict resolution, integration branch management |
 
 ---
@@ -134,7 +134,7 @@ Path: `/workstream/planner-state-<plan-id>.md`
 ## Story Status
 
 | Sequence | Story ID | Issue # | Status         | PR  | Branch          |
-| -------- | -------- | ------- | -------------- | --- | ---------------- |
+| -------- | -------- | ------- | -------------- | --- | --------------- |
 | 1        | S-001    | #90     | ✅ Merged      | #95 | story/S-001-... |
 | 2        | S-002    | #91     | 🔄 In Progress | #96 | story/S-002-... |
 | 3        | S-003    | #92     | ⏳ Pending     | —   | —               |
@@ -217,7 +217,7 @@ If source is milestone and no task file exists for a story, create a minimal per
 Apply in order when dependencies are not explicit:
 
 | Pattern                                       | Rule                                           |
-| ---------------------------------------------- | ------------------------------------------------ |
+| --------------------------------------------- | ---------------------------------------------- |
 | Story creates migration, schema, or DB table  | Stories that query/insert into it depend on it |
 | Story creates a shared lib/module             | Stories importing it depend on it              |
 | Story labeled foundation/setup/infra/scaffold | All other stories depend on it                 |
@@ -285,7 +285,7 @@ Per-story branches and PRs are created by `developer` following `github-ops` con
 ### Execution model
 
 | Scope       | Behavior                                    |
-| ------------ | --------------------------------------------- |
+| ----------- | ------------------------------------------- |
 | All stories | Strictly sequential (no parallel execution) |
 
 ### Per-story handoff
@@ -399,10 +399,10 @@ For each completed story PR:
 9. Merge PR into integration branch using one consistent strategy (default: `squash`).
 10. Confirm integration branch is green after merge before moving to next story.
 11. **Write checkpoint** — update the planner state file (see Phase 0.5 State File Format):
-   - Mark the completed story as `✅ Merged` with its PR link and branch name.
-   - Update `Current Position` to the next pending story.
-   - Update the `Last updated` timestamp.
-   - Post a GitHub Issue comment on the plan/milestone issue with the current story status table.
+    - Mark the completed story as `✅ Merged` with its PR link and branch name.
+    - Update `Current Position` to the next pending story.
+    - Update the `Last updated` timestamp.
+    - Post a GitHub Issue comment on the plan/milestone issue with the current story status table.
 
 If any merge gate fails, stop and report exact blocker and PR link.
 
@@ -410,8 +410,8 @@ Planner **MUST NOT** allow multiple open story PRs to merge concurrently.
 
 ### Merge authority policy
 
-| Target Branch                  | Reviewer & Approver              | Who Merges                                     |
-| -------------------------------- | ----------------------------------- | ------------------------------------------------- |
+| Target Branch                  | Reviewer & Approver              | Who Merges                                   |
+| ------------------------------ | -------------------------------- | -------------------------------------------- |
 | Integration branch (story PRs) | **planner** reviews and approves | **planner** merges autonomously              |
 | `main` (consolidated PR)       | **User** reviews and approves    | **User** merges (planner **MUST NOT** merge) |
 
@@ -434,10 +434,10 @@ After all stories are merged into integration:
    - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
    - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
 7. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
-  - consolidated PR URL
-  - current CI/check status
-  - exact required user actions: review, approve, and merge
-  - a post-merge follow-up action (for example, delete integration branch or run a verification command)
+   - consolidated PR URL
+   - current CI/check status
+   - exact required user actions: review, approve, and merge
+   - a post-merge follow-up action (for example, delete integration branch or run a verification command)
 
 Consolidated PR should include:
 
@@ -456,7 +456,7 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 ## Error Handling
 
 | Situation                          | Action                                                                                     |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| ---------------------------------- | ------------------------------------------------------------------------------------------ |
 | No `/workstream` task file         | Ask for file path or milestone                                                             |
 | Multiple task files                | Ask user to choose                                                                         |
 | Milestone has no issues            | Report and stop                                                                            |
@@ -468,7 +468,7 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 | Merge conflict                     | Invoke `git-ops` skill to resolve; if resolution fails, report conflicting files and pause |
 | Integration tests fail             | Report failures and ask whether to proceed or fix first                                    |
 | Consolidated PR creation fails     | Return generated title/body and ask to retry                                               |
-| Story payload base mismatch          | Mark story blocked; require retargeting PR base to integration branch before merge       |
+| Story payload base mismatch        | Mark story blocked; require retargeting PR base to integration branch before merge         |
 
 ---
 

@@ -52,7 +52,7 @@ Other agents (especially `developer`) **SHOULD** delegate to `github-ops` whenev
 Issue titles **MUST** follow one of these patterns:
 
 | Context             | Format                             | Example                                       |
-| --------------------- | ------------------------------------- | ------------------------------------------------- |
+| ------------------- | ---------------------------------- | --------------------------------------------- |
 | PRD story           | `[PRD-<name>] Story <ID>: <Title>` | `[PRD-auth] Story S-003: Password reset flow` |
 | Standalone issue    | `[<scope>] <Concise description>`  | `[api] Rate limiting on public endpoints`     |
 | Bug                 | `[bug] <What is broken>`           | `[bug] Login fails on expired session token`  |
@@ -116,7 +116,7 @@ PR titles **MUST** follow [Conventional Commits](https://www.conventionalcommits
 ```
 
 | Type       | When                                     |
-| ------------ | ------------------------------------------- |
+| ---------- | ---------------------------------------- |
 | `feat`     | New feature or user-visible behavior     |
 | `fix`      | Bug fix                                  |
 | `chore`    | Maintenance, dependencies, config        |
@@ -187,7 +187,7 @@ Branch names **MUST** follow this pattern:
 ```
 
 | Type          | When                             | Example                               |
-| --------------- | ----------------------------------- | ------------------------------------------ |
+| ------------- | -------------------------------- | ------------------------------------- |
 | `issue`       | Single GitHub Issue              | `issue/42-rate-limiting`              |
 | `story`       | PRD-driven user story            | `story/S-003-password-reset`          |
 | `fix`         | Bug fix                          | `fix/87-session-expiry`               |
@@ -218,7 +218,7 @@ The following tags are the canonical, most-used tags for issues and **MUST** be 
 - Scope tags: `scope: frontend`, `scope: backend`, `scope: mobile`
 
 | Category     | Label                      | Color     | Description                                                |
-| -------------- | ----------------------------- | ----------- | -------------------------------------------------------------- |
+| ------------ | -------------------------- | --------- | ---------------------------------------------------------- |
 | **Type**     | `type: enhancement`        | `#0E8A16` | New feature or enhancement                                 |
 |              | `type: bug`                | `#D93F0B` | Something is broken                                        |
 |              | `type: security`           | `#B60205` | Security vulnerability, hardening, or compliance work      |
@@ -285,13 +285,13 @@ Date: YYYY-MM-DD
 ## Issues
 
 | #   | Title | Missing Labels | Title Format | Body Structure | Milestone |
-| ----- | ------- | ----------------- | --------------- | ----------------- | ----------- |
+| --- | ----- | -------------- | ------------ | -------------- | --------- |
 | 42  | ...   | type, priority | ✅           | ❌ missing AC  | ❌ none   |
 
 ## Pull Requests
 
 | #   | Title | Conv. Commit | Description    | Branch Format    |
-| ----- | ------- | --------------- | ----------------- | -------------------- |
+| --- | ----- | ------------ | -------------- | ---------------- |
 | 58  | ...   | ✅           | ❌ missing Why | ❌ wrong pattern |
 
 ## Labels
@@ -322,7 +322,7 @@ Date: YYYY-MM-DD
 This policy applies to **all agents** and **MUST** be enforced by `github-ops` whenever a merge is requested.
 
 | Target Branch                                       | Reviewer & Approver                    | Who Merges         |
-| ------------------------------------------------------ | ------------------------------------------ | --------------------- |
+| --------------------------------------------------- | -------------------------------------- | ------------------ |
 | Integration branch (story PRs within a planner run) | **planner** agent reviews and approves | **planner** merges |
 | Default branch (`main`)                             | **User** reviews and approves          | **User** merges    |
 

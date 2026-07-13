@@ -62,7 +62,7 @@ Chains: `refine` → `plan`. Produces a lightweight refinement doc under `/works
 Detect mode from user input:
 
 | Input                             | Mode             | Activity Chain                                                                                                  |
-| ---------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| --------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------- |
 | "init" or foundation request      | **Init Mode**    | `activity-init`                                                                                                 |
 | Feature description / PRD request | **Feature Mode** | `activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan` |
 | GitHub Issue number + repo        | **Issue Mode**   | `activity-refine` → `plan`                                                                                      |
@@ -147,13 +147,13 @@ memo search "<specific topic, technology, or module>" --json
 
 This agent invokes the following **skills** for each activity. You **MUST** load the skill before executing the corresponding activity:
 
-| Activity                         | Skill                                |
-| --------------------------------- | ------------------------------------- |
-| Initialize foundation            | `activity-init`                      |
-| Refine scope / create PRD        | `activity-refine`                    |
-| Generate technical specification | `activity-generate-spec`             |
-| Generate user stories            | `activity-generate-stories`          |
-| Publish stories to GitHub        | `activity-publish-github`            |
+| Activity                         | Skill                                      |
+| -------------------------------- | ------------------------------------------ |
+| Initialize foundation            | `activity-init`                            |
+| Refine scope / create PRD        | `activity-refine`                          |
+| Generate technical specification | `activity-generate-spec`                   |
+| Generate user stories            | `activity-generate-stories`                |
+| Publish stories to GitHub        | `activity-publish-github`                  |
 | Create task list                 | `plan` (steering document — always loaded) |
 
 ---

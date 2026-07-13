@@ -336,8 +336,8 @@ Synthesize findings first:
 
 After completing **Step 3 (Update Canonical Files)**, write to memo. Do **not** batch all changes into a single entry — write one entry per distinct topic. If changes span three areas, write three shorter entries.
 
-| Condition                               | `--entry-type`      | Required tags                                            |
-| ----------------------------------------- | ---------------------- | ------------------------------------------------------------ |
+| Condition                               | `--entry-type`      | Required tags                                           |
+| --------------------------------------- | ------------------- | ------------------------------------------------------- |
 | New ADR created                         | `decision`          | `adr`, ADR number (e.g. `adr-042`), domain/feature area |
 | Technical guideline changed             | `decision`          | `technical-guidelines`, domain area, `config-change`    |
 | Data model changed                      | `decision`          | `data-model`, entity name, `structure`                  |
