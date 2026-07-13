@@ -1,0 +1,144 @@
+# PRD: Kiro.dev Support
+
+## Changelog
+
+| Version | Date       | Summary          | Author              |
+| ------- | ---------- | ----------------- | -------------------- |
+| 1.0     | 2026-07-13 | Initial version   | product-engineer     |
+
+## Executive Summary
+
+`dev-tasks` currently distributes its agent/skill/instruction workflow to two AI coding surfaces — GitHub Copilot (`.github/`) and Claude Code (`.claude/`) — from a single versioned bundle. This PRD adds **Kiro.dev** (IDE) as a third first-class target, at full parity with the existing two, so that teams using Kiro get the same structured PRD → spec → stories → plan → implement workflow, agents, and skills as Copilot/Claude Code users, installed and updated through the same `dev-tasks.sh` distribution mechanism.
+
+## Feature Overview
+
+Kiro's IDE exposes a workspace-local `.kiro/` directory with conventions that map closely — but not identically — onto `dev-tasks`' existing concepts:
+
+| dev-tasks concept | Kiro IDE equivalent |
+| --- | --- |
+| Always-loaded instructions (`applyTo`-scoped) | `.kiro/steering/*.md` (frontmatter `inclusion: always\|fileMatch\|manual`) |
+| PRD → spec → stories → tasks pipeline | `.kiro/specs/<feature>/{requirements.md,design.md,tasks.md}` |
+| Subagents (`.claude/agents/*.md`) | `.kiro/agents/*.md` (YAML frontmatter: `description`, `model`, `tools`, `mcpServers`, `permissions`, + prompt body) |
+| Skills (`*/SKILL.md`) | `.kiro/skills/*/SKILL.md` (same `agentskills.io` SKILL.md format) |
+| Deterministic tool guard (`.claude/hooks/git-guard.sh`) | `.kiro/hooks/*.json` (declarative event triggers, e.g. `PostFileSave`) |
+| Command entry points (`.claude/commands/`, `.github/prompts/`) | No direct equivalent — closest are skills exposed as slash commands, or switching the active agent via Kiro's agent selector |
+
+This feature adds a third managed file tree (`.kiro/…`), extends `bundle-manifest.json`, `dev-tasks.sh`, and `scripts/build-bundle.sh` to install/update/list it, and produces Kiro-native versions of all 6 subagents and all 14 skills, plus a steering-doc equivalent of the 2 always-loaded instructions and 1 domain instruction.
+
+## Goals & Objectives
+
+1. A repository can run `dev-tasks.sh install` and receive working `.kiro/agents/`, `.kiro/skills/`, `.kiro/steering/`, and `.kiro/hooks/` content, in addition to the existing `.github/` and `.claude/` trees.
+2. Every subagent and skill available to Copilot/Claude Code has a functioning Kiro equivalent — no silent capability gaps beyond what Kiro itself cannot support (see Non-Goals).
+3. The full activity chain (`activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan` → `implement`) is usable end-to-end from Kiro.
+4. The "no self-merge to `main`" and Conventional Commits rules are represented in the Kiro bundle in the most faithful form Kiro's hook model actually supports, with the enforcement gap versus `.claude/hooks/git-guard.sh` explicitly documented rather than silently weaker.
+5. `dev-tasks.sh check`, `list`, and `version` correctly report Kiro-managed paths alongside the existing two.
+
+## Affected Repositories
+
+| Repo | Role / Impact |
+| --- | --- |
+| `llipe/dev-tasks` | Source of truth. Adds `.kiro/` managed content, updates `bundle-manifest.json`, `dev-tasks.sh`, `scripts/build-bundle.sh`, `.github/workflows/release-bundle.yml`, `README.md`, `AGENTS.md`/`AGENTS.md.template`, `CLAUDE.md.template`. |
+| Consumer repositories (any repo running `dev-tasks.sh install`) | Gain an additional managed path set (`.kiro/agents`, `.kiro/skills`, `.kiro/steering`, `.kiro/hooks`) on install/update; unaffected if they don't use Kiro. |
+
+## Target Users
+
+- **Primary:** Developers using the Kiro IDE who want the same PRD-driven, agent/skill-based workflow already available to Copilot and Claude Code users.
+- **Secondary:** Maintainers of `dev-tasks` who author and keep the three platform trees in sync.
+
+## User Stories
+
+1. As a **Kiro IDE user**, I want to run `dev-tasks.sh install` and get working `.kiro/agents/*.md` files so I can invoke `product-engineer`, `developer`, `planner`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, and `black-box-tester` the same way Claude Code users do.
+2. As a **Kiro IDE user**, I want the activity skills (`activity-refine`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`, `activity-init`, `git-ops`, `webapp-mockup`, `memo-cli-usage`) available as Kiro skills/slash commands.
+3. As a **Kiro IDE user**, I want the always-loaded rules from `plan.instructions.md`, `implement.instructions.md`, and the Next.js domain instruction represented as `.kiro/steering/*.md` files with correct `inclusion` modes, so agents follow the same task-list and implementation discipline.
+4. As a **Kiro IDE user**, I want some form of automated guard against pushing/merging to `main` and against non-Conventional-Commit messages, even if Kiro's hook model can only warn rather than hard-block.
+5. As a **maintainer**, I want `bundle-manifest.json` to declare the `.kiro/` managed paths so `dev-tasks.sh install/update/check/list` handle them identically to the existing two trees.
+6. As a **maintainer**, I want `scripts/build-bundle.sh` and the release workflow to package `.kiro/` content into the same versioned release tarball, so there is still a single install/update flow and a single version number across all three platforms.
+7. As a **maintainer**, I want the README's Agents/Skills/Instructions/Distribution tables and the AGENTS.md/CLAUDE.md templates updated to document the third platform, so the registry stays the single source of truth.
+8. As a **Kiro IDE user with an existing `.kiro/` workspace**, I want install/update to respect files I already own (analogous to `consumer_owned_paths` for `AGENTS.md`/`CLAUDE.md`) so my own steering docs or MCP config aren't silently overwritten.
+
+## Functional Requirements
+
+1. The system **MUST** add a `.kiro/agents/*.md` file for each of the 6 existing subagents (`black-box-tester`, `developer`, `github-ops`, `housekeeping`, `technical-writer`, `ux-engineer`), translated into Kiro's agent frontmatter schema (`description`, `model`, `tools`, `mcpServers`, `permissions`) with the existing system-prompt body preserved in substance.
+2. The system **MUST** add `.kiro/agents/*.md` equivalents for the two orchestrator entry points that run in the main thread in Claude Code (`product-engineer`, `planner`) plus `developer`'s interactive step-gated entry point, mapped onto Kiro's agent-selector model (switchable persona), since Kiro has no separate "command" concept distinct from agents/skills.
+3. The system **MUST** add a `.kiro/skills/<name>/SKILL.md` for each of the 14 existing skills, reusing the existing SKILL.md content with only the adaptations required by Kiro's skill-loading conventions (e.g., `skill://` path expectations).
+4. The system **MUST** add `.kiro/steering/*.md` file(s) representing `plan.instructions.md`, `implement.instructions.md`, and `domain/nextjs-pages-components.instructions.md`, using Kiro's `inclusion: always|fileMatch|manual` frontmatter to preserve the current always-loaded vs. `applyTo`-scoped behavior.
+5. The system **MUST** add a `.kiro/hooks/*.json` best-effort guard implementing whatever subset of the `git-guard.sh` behavior (block/deny push or merge to `main`, enforce Conventional Commits) Kiro's declarative hook trigger model actually supports. Where Kiro cannot express a hard block, the hook **MUST** implement the closest available warning/lint behavior instead of being silently omitted.
+6. The system **MUST** document, in both the Kiro-facing steering docs and the top-level README, that Kiro's guard enforcement is weaker than Claude Code's `git-guard.sh` (event-triggered/advisory vs. PreToolUse deny), and that human PR review is the backstop for the `main`-merge and commit-convention rules on Kiro.
+7. The system **MUST** extend `bundle-manifest.json`'s `managed_paths` with entries for `.kiro/agents`, `.kiro/skills`, `.kiro/steering`, and `.kiro/hooks`, following the same `pattern`/`recursive` structure as the existing Claude Code entries.
+8. The system **MUST** extend `bundle-manifest.json`'s `consumer_owned_paths` (or an equivalent Kiro-specific list) to exclude any Kiro files a consumer repo is expected to own directly (e.g. `.kiro/settings/mcp.json`, `.kiro/specs/` feature content), mirroring how `AGENTS.md`/`CLAUDE.md`/`.claude/settings.json` are excluded today.
+9. The system **MUST** update `dev-tasks.sh` so `install`, `update`, `check`, `list`, and `version` correctly place, report, and diff the new `.kiro/` managed paths, with no behavior change required from the consumer beyond running the existing commands.
+10. The system **MUST** update `scripts/build-bundle.sh` to include `.kiro/` managed content in the release tarball, and `.github/workflows/release-bundle.yml`'s smoke test to verify `.kiro/` files are present in a built bundle.
+11. The system **MUST** update `README.md` (agent/skill/instruction/prompt tables, "After install, your repo contains" tree, managed file surface table) and `AGENTS.md`/`AGENTS.md.template`/`CLAUDE.md.template` to describe Kiro as a first-class third platform alongside Copilot and Claude Code.
+12. The system **SHOULD** provide a translation note or mapping table (in the spec, not necessarily user-facing) documenting, per agent, which Kiro frontmatter fields (`tools`, `permissions`, `mcpServers`) were chosen and why, so future maintainers can keep the Kiro agents in sync when Claude/Copilot agents change.
+13. Content for `.kiro/agents`, `.kiro/skills`, `.kiro/steering`, and `.kiro/hooks` **MUST** be maintained as independent files (not generated/deduped from a shared source), consistent with how `.github/` and `.claude/` are maintained today.
+14. The system **MUST** extend `dev-tasks.sh`'s existing `--profile <copilot|claude|both>` flag with a `kiro` value (installing only the Kiro tree) and an `all` value (installing all three), without changing what the current `both` value or the default (no flag) installs — see Open Question 3.
+
+## Business Rules
+
+- `.kiro/` managed files follow the same ownership split as the existing two platforms: `dev-tasks.sh` may overwrite anything under the declared `managed_paths`, and must never touch files a consumer repo is expected to own (analogous to `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`).
+- Kiro's weaker hook enforcement **MUST NOT** be presented as equivalent to `git-guard.sh` — documentation must state the gap explicitly rather than imply parity that doesn't exist.
+- The Kiro platform targets the **Kiro IDE** conventions only in this iteration; Kiro CLI-specific conventions are out of scope (see Non-Goals).
+
+## Data Requirements
+
+Not applicable — this feature adds/modifies configuration and documentation files (Markdown, YAML frontmatter, JSON) only; no runtime data model or storage is introduced.
+
+## Non-Goals (Out of Scope)
+
+- Kiro **CLI** conventions (as distinct from the Kiro IDE conventions used throughout this PRD) — CLI-specific steering/agent/hook formats are not covered.
+- A shared/deduped single-source content pipeline across `.github/`, `.claude/`, and `.kiro/` skills — each platform keeps independent copies, per the locked-in decision.
+- `.kiro/specs/` content generation (i.e., teaching `dev-tasks` agents to write into Kiro's own spec format for a *user's* feature work) — this PRD only ships the Kiro-native agents/skills/steering/hooks; whether those agents themselves choose to write `.kiro/specs/*` artifacts when running under Kiro is an implementation-time detail, not a new deliverable here.
+- Any change to how MCP servers are configured for Kiro users (`.kiro/settings/mcp.json` is a consumer-owned file, untouched by `dev-tasks.sh`).
+- Automated behavioral testing inside the actual Kiro IDE (no CI access to Kiro) — verification is limited to structural/format checks and manual maintainer review.
+
+## Design Considerations
+
+Not applicable — no end-user UI is introduced. `/DESIGN.md` is not impacted.
+
+## Technical Considerations
+
+- **Format translation risk is uneven across surfaces.** Skills (`SKILL.md`) are nearly a direct copy given the shared `agentskills.io` format; agents require real schema translation (Claude's agent frontmatter vs. Kiro's `tools`/`permissions`/`mcpServers`); steering docs require choosing correct `inclusion` modes per file; hooks require the largest behavioral compromise.
+- **Bundle build must stay single-version.** All three platforms **MUST** continue to ship from one version number / one release tarball — no separate Kiro release cadence.
+- **`dev-tasks.sh` diffing logic** (used by `update --dry-run` and `check`) must be extended path-by-path for the new managed paths; reuse the existing per-path diff mechanism rather than introducing a parallel one.
+- Dependency: relies on the documented Kiro IDE conventions holding as researched (steering, specs, agents, skills, hooks, mcp.json) — Kiro's official docs blocked automated fetching during research; findings were corroborated via web search across multiple `kiro.dev/docs/*` pages plus third-party write-ups, and **SHOULD** be spot-checked against a live Kiro IDE install during spec/implementation.
+
+## Acceptance Criteria
+
+1. Running `./dev-tasks.sh install` in a clean repo places files under `.kiro/agents/`, `.kiro/skills/*/SKILL.md`, `.kiro/steering/`, and `.kiro/hooks/`, matching the paths declared in `bundle-manifest.json`.
+2. `.kiro/agents/` contains one file per subagent/orchestrator entry point (6 subagents + product-engineer + planner, at minimum), each with valid Kiro frontmatter (`description` required at minimum) and a non-empty prompt body derived from the corresponding `.claude/agents` or `.claude/commands` source.
+3. `.kiro/skills/` contains one directory per existing skill (14 total) each with a `SKILL.md`.
+4. `.kiro/steering/` contains files covering `plan`, `implement`, and the Next.js domain instruction, each with an explicit `inclusion` frontmatter value that preserves current always-loaded vs. scoped semantics.
+5. `.kiro/hooks/` contains at least one hook file implementing the best-effort main-branch/commit-message guard, and README/steering documentation explicitly states the enforcement gap versus `git-guard.sh`.
+6. `./dev-tasks.sh list` reports the new `.kiro/` paths and file counts.
+7. `./dev-tasks.sh check` and `update --dry-run` correctly detect and report changes to `.kiro/` managed files without affecting the existing `.github/`/`.claude/` diff behavior.
+8. `scripts/build-bundle.sh` output tarball contains the `.kiro/` files, and the release workflow's smoke test passes with them included.
+9. `README.md`, `AGENTS.md`, `AGENTS.md.template`, and `CLAUDE.md.template` list Kiro as a supported platform with an accurate file tree and managed-path table.
+10. No existing `.github/` or `.claude/` managed path, install behavior, or hook behavior regresses.
+
+## Success Metrics
+
+- `dev-tasks.sh install`/`update` succeed against a repo with no prior `.kiro/` directory and against a repo with a pre-existing (consumer-owned) `.kiro/settings/mcp.json`, without data loss in either case.
+- All 6 subagents + 2 orchestrators + 14 skills have a corresponding, non-empty Kiro artifact (zero silent omissions).
+- Release smoke test remains green after adding the third platform to the bundle.
+
+## Assumptions
+
+- The researched Kiro IDE conventions (steering, specs, agents, skills, hooks, mcp.json paths and formats) are accurate as of this PRD's writing; kiro.dev blocked direct automated fetches, so findings were triangulated via web search rather than a direct docs read. This **MUST** be validated against a live Kiro install (or the most current Kiro docs snapshot obtainable) at spec time before implementation begins.
+- Kiro's custom-agent and skill hot-reload behavior means no additional "registration" step beyond placing files under `.kiro/agents/` and `.kiro/skills/` is required for a workspace to pick them up, once the workspace is trusted.
+- Consumer repos installing the Kiro bundle are expected to separately have Kiro IDE installed; `dev-tasks.sh` does not install or configure Kiro itself.
+
+## Constraints & Dependencies
+
+- No CI access to a real Kiro IDE instance for end-to-end verification; validation is structural (file presence, frontmatter well-formedness, content fidelity to source) plus manual review, not live agent-invocation testing.
+- Must not break the existing single-version-number release model or the existing `.github/`/`.claude/` install/update paths.
+
+## Security & Compliance
+
+- No new secrets, credentials, or auth flows are introduced. `.kiro/settings/mcp.json` (which can carry environment-variable-based secrets) is explicitly out of scope and consumer-owned, never written by `dev-tasks.sh`.
+- No change to existing repository access or GitHub permissions model.
+
+## Open Questions
+
+1. Should `.kiro/agents/*.md` for `product-engineer` and `planner` be a single "orchestrator" agent users switch into, or split further to mirror the exact `.claude/commands/*.md` boundary? (Deferred to spec — needs a concrete look at Kiro's agent-selector UX.)
+2. Does Kiro's hook trigger set include anything closer to a pre-command gate (vs. purely post-event triggers like `PostFileSave`) that research didn't surface? Worth a direct check against Kiro's hook-types reference before finalizing the hook design in the spec.
+3. `dev-tasks.sh` already has `--profile <copilot|claude|both>` (default `both`). Confirmed in code (`dev-tasks.sh`): adding `kiro` as a third value is straightforward, but the **default** behavior needs a decision — should `--profile` (no flag) install all three platforms once Kiro ships (silently changing what a bare `install`/`update` does for existing users), or should Kiro require an explicit `--profile kiro` / `--profile all` opt-in while `both`/default stays Copilot+Claude only for backward compatibility? Recommend keeping `both` meaning exactly Copilot+Claude (unchanged), and adding `--profile kiro` plus a new `--profile all` value for all three — but this needs explicit sign-off since it's a behavior-affecting default choice.
