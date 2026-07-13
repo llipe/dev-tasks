@@ -18,6 +18,50 @@ GitHub operations **MUST** run through the `gh` CLI (over Bash). If a GitHub MCP
 
 ---
 
+## `gh` CLI Reference
+
+The `gh` CLI is the primary execution path for this agent. Full manual: <https://cli.github.com/manual/>.
+
+Before any operation, verify authentication:
+
+```bash
+gh auth status
+```
+
+If this fails, **STOP** and ask the user to run `gh auth login` — do not attempt operations against an unauthenticated session.
+
+### Command Map
+
+Use this table to translate each convention in this file into a `gh` invocation. When MCP is used instead, the equivalent MCP tool is listed for reference.
+
+| Operation                    | `gh` CLI                                                                                                 | MCP equivalent                              |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Create issue                  | `gh issue create --title "<title>" --body "<body>" --label "<label>" --milestone "<milestone>"`             | `create_issue`                               |
+| Update issue                   | `gh issue edit <number> --title "<title>" --body "<body>" --add-label "<label>" --milestone "<milestone>"`   | `update_issue`                               |
+| Comment on issue               | `gh issue comment <number> --body "<comment>"`                                                              | `add_issue_comment`                          |
+| Close issue with attribution   | `gh issue close <number> --comment "<closing summary + Assisted-by line>"`                                  | `update_issue` (state=closed) + comment      |
+| List/audit issues              | `gh issue list --state all --json number,title,labels,milestone,body,url --limit 500`                       | `list_issues`                                |
+| Search issues                  | `gh search issues "<query>" --repo <owner/repo>`                                                            | `search_issues`                              |
+| Create PR                      | `gh pr create --title "<title>" --body "<body>" --base <target-branch> --head <source-branch>`               | `create_pull_request`                        |
+| Update PR                      | `gh pr edit <number> --title "<title>" --body "<body>"`                                                     | `update_pull_request`                        |
+| Comment on PR                  | `gh pr comment <number> --body "<comment>"`                                                                 | `add_issue_comment` (PRs share issue comments)|
+| Review a PR                    | `gh pr review <number> --approve\|--request-changes\|--comment --body "<comment>"`                          | `create_pull_request_review`                 |
+| Merge PR (integration branch only, planner-authorized) | `gh pr merge <number> --squash --delete-branch`                                          | `merge_pull_request`                         |
+| List/audit PRs                 | `gh pr list --state all --json number,title,body,baseRefName,headRefName,labels --limit 500`                | `list_pull_requests`                         |
+| Create/list labels              | `gh label create "<name>" --color "<hex>" --description "<desc>"` / `gh label list`                         | `create_label` / `list_labels`                |
+| Create/list milestones          | `gh api repos/<owner>/<repo>/milestones -f title="<title>" -f description="<desc>" -f due_on="<ISO date>"` / `gh api repos/<owner>/<repo>/milestones` | (no dedicated MCP tool; use REST) |
+| Assign milestone to issue       | `gh issue edit <number> --milestone "<milestone>"`                                                          | `update_issue`                               |
+| Create branch                   | `git checkout -b <branch>` (name per [Branch Naming](#branch-naming))                                       | n/a (local git operation)                    |
+
+Notes:
+
+- Prefer `--json` output on `gh issue list` / `gh pr list` and `gh api` for machine-parseable results — do not scrape the default human-readable table output.
+- `gh api <endpoint>` is the fallback for anything without a dedicated subcommand (milestones, some label edge cases, reactions). See <https://cli.github.com/manual/gh_api>.
+- `gh` respects the repository detected from the current working directory; pass `--repo <owner/repo>` explicitly when operating on a different repository than the one checked out locally.
+- Every `gh` invocation that mutates state (create/edit/close/merge) **MUST** be reflected in the Output Contract's `Changes applied` list, exactly as an MCP-driven change would be.
+
+---
+
 ## When to Invoke This Agent
 
 Other agents (especially `developer`) **SHOULD** delegate to `github-ops` whenever they need to:
