@@ -14,7 +14,7 @@
 #   --dry-run          Show what would change without writing any files
 #   --backup           Back up managed files before replacing them
 #   --yes              Skip confirmation prompts
-#   --profile <name>   Select file set: copilot | claude | both (default)
+#   --profile <name>   Select file set: copilot | claude | kiro | both | all (default: both)
 #   --self-update      Also update the dev-tasks.sh script (update only)
 
 set -euo pipefail
@@ -35,6 +35,8 @@ GH_API="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases"
 PROFILE_BOTH="both"
 PROFILE_COPILOT="copilot"
 PROFILE_CLAUDE="claude"
+PROFILE_KIRO="kiro"
+PROFILE_ALL="all"
 
 # Copilot paths the script manages (relative to consumer repo root)
 COPILOT_MANAGED_DIRS=(
@@ -51,6 +53,14 @@ CLAUDE_MANAGED_DIRS=(
   ".claude/skills"
   ".claude/commands"
   ".claude/hooks"
+)
+
+# Kiro paths the script manages (relative to consumer repo root)
+KIRO_MANAGED_DIRS=(
+  ".kiro/agents"
+  ".kiro/skills"
+  ".kiro/steering"
+  ".kiro/hooks"
 )
 
 # Active managed paths (computed from selected profile)
@@ -124,11 +134,17 @@ set_managed_scope() {
     "$PROFILE_CLAUDE")
       MANAGED_DIRS=("${CLAUDE_MANAGED_DIRS[@]}")
       ;;
+    "$PROFILE_KIRO")
+      MANAGED_DIRS=("${KIRO_MANAGED_DIRS[@]}")
+      ;;
     "$PROFILE_BOTH")
       MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}" "${CLAUDE_MANAGED_DIRS[@]}")
       ;;
+    "$PROFILE_ALL")
+      MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}" "${CLAUDE_MANAGED_DIRS[@]}" "${KIRO_MANAGED_DIRS[@]}")
+      ;;
     *)
-      die "Invalid profile '${profile}'. Valid values: ${PROFILE_COPILOT}, ${PROFILE_CLAUDE}, ${PROFILE_BOTH}."
+      die "Invalid profile '${profile}'. Valid values: ${PROFILE_COPILOT}, ${PROFILE_CLAUDE}, ${PROFILE_KIRO}, ${PROFILE_BOTH}, ${PROFILE_ALL}."
       ;;
   esac
 }
@@ -845,7 +861,7 @@ ${BOLD}OPTIONS${RESET} (install / update / self-update)
   --dry-run           Show planned changes without writing any files
   --backup            Back up managed files to ${BACKUP_DIR}/ before replacing
   --yes               Skip confirmation prompts
-  --profile <name>    Install/update file sets: copilot | claude | both (default: both)
+  --profile <name>    Install/update file sets: copilot | claude | kiro | both | all (default: both)
   --self-update       Also update the dev-tasks.sh script when running 'update'
 
 ${BOLD}EXAMPLES${RESET}
@@ -861,6 +877,12 @@ ${BOLD}EXAMPLES${RESET}
 
   # Install only Claude toolkit files (.claude/*)
   ./dev-tasks.sh install --profile claude
+
+  # Install only Kiro toolkit files (.kiro/*)
+  ./dev-tasks.sh install --profile kiro
+
+  # Install all three platforms (Copilot + Claude + Kiro)
+  ./dev-tasks.sh install --profile all
 
   # Install specific version
   ./dev-tasks.sh install v1.2.0
@@ -917,7 +939,7 @@ main() {
       --yes|-y)      auto_yes=true;   shift ;;
       --self-update) self_update=true; shift ;;
       --profile)
-        [ $# -ge 2 ] || die "Missing value for --profile. Use: copilot | claude | both"
+        [ $# -ge 2 ] || die "Missing value for --profile. Use: copilot | claude | kiro | both | all"
         profile="$2"
         shift 2
         ;;
