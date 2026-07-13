@@ -399,6 +399,8 @@ The toolkit is distributed as a versioned tarball via **GitHub Releases**. `dev-
 | `--backup`         | Copy managed files to `.dev-tasks-backup/<timestamp>/` before replacing                  |
 | `--yes`            | Skip confirmation prompts (useful in CI)                                                 |
 
+> **Kiro guard hook — enforcement gap disclosure:** `--profile kiro`/`all` installs `.kiro/hooks/git-guard.json` + `.kiro/hooks/scripts/git-guard.sh`, a best-effort port of `.claude/hooks/git-guard.sh` that blocks pushes/merges to `main` and non-Conventional-Commit messages. **This hook is not guaranteed to be equivalent to `.claude/hooks/git-guard.sh`.** A tracked upstream Kiro defect (kirodotdev/Kiro#7375) may prevent Kiro IDE's `PreToolUse` hook from seeing command text, in which case it cannot reliably block anything; when it can't see command context it fails loud (stderr warning) rather than silently allowing. Until this is verified fixed on a live Kiro install, treat PR review as the actual enforcement backstop for these rules on Kiro. See `.kiro/steering/git-guard-notice.md` for the full disclosure.
+
 ### Managed file surface
 
 The script owns these paths and may overwrite them on update:
