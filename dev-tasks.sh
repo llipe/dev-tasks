@@ -14,7 +14,8 @@
 #   --dry-run          Show what would change without writing any files
 #   --backup           Back up managed files before replacing them
 #   --yes              Skip confirmation prompts
-#   --profile <name>   Select file set: copilot | claude | kiro | both | all (default: both)
+#   --profile <name>   Select file set: copilot | claude | kiro | both | all, or a comma-separated
+#                       combination (e.g. claude,kiro) (default: all — installs every platform)
 #   --self-update      Also update the dev-tasks.sh script (update only)
 
 set -euo pipefail
@@ -64,7 +65,7 @@ KIRO_MANAGED_DIRS=(
 )
 
 # Active managed paths (computed from selected profile)
-MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}" "${CLAUDE_MANAGED_DIRS[@]}")
+MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}" "${CLAUDE_MANAGED_DIRS[@]}" "${KIRO_MANAGED_DIRS[@]}")
 MANAGED_FILES=()
 
 # Colors (disabled when stderr is not a tty — all diagnostics go to stderr)
@@ -123,30 +124,86 @@ confirm() {
   [[ "$answer" =~ ^[Yy]$ ]]
 }
 
-set_managed_scope() {
-  local profile="${1:-$PROFILE_BOTH}"
-  MANAGED_DIRS=()
-
-  case "$profile" in
-    "$PROFILE_COPILOT")
-      MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}")
-      ;;
-    "$PROFILE_CLAUDE")
-      MANAGED_DIRS=("${CLAUDE_MANAGED_DIRS[@]}")
-      ;;
-    "$PROFILE_KIRO")
-      MANAGED_DIRS=("${KIRO_MANAGED_DIRS[@]}")
-      ;;
-    "$PROFILE_BOTH")
-      MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}" "${CLAUDE_MANAGED_DIRS[@]}")
-      ;;
-    "$PROFILE_ALL")
-      MANAGED_DIRS=("${COPILOT_MANAGED_DIRS[@]}" "${CLAUDE_MANAGED_DIRS[@]}" "${KIRO_MANAGED_DIRS[@]}")
-      ;;
+# Die (in the CALLER's shell, not a subshell) if a token isn't a recognized profile.
+# Must be invoked directly in set_managed_scope's loop — never from inside a
+# process substitution / pipeline, where `die`'s `exit` would only kill the subshell.
+validate_profile_token() {
+  local token="$1"
+  case "$token" in
+    "$PROFILE_COPILOT" | github | "$PROFILE_CLAUDE" | "$PROFILE_KIRO" | "$PROFILE_BOTH" | "$PROFILE_ALL") ;;
     *)
-      die "Invalid profile '${profile}'. Valid values: ${PROFILE_COPILOT}, ${PROFILE_CLAUDE}, ${PROFILE_KIRO}, ${PROFILE_BOTH}, ${PROFILE_ALL}."
+      die "Invalid profile '${token}'. Valid values: ${PROFILE_COPILOT} (or github), ${PROFILE_CLAUDE}, ${PROFILE_KIRO}, ${PROFILE_BOTH}, ${PROFILE_ALL}, or a comma-separated combination (e.g. claude,kiro)."
       ;;
   esac
+}
+
+# Expand a single (already-validated) profile token to its managed dirs.
+# "github" is accepted as an alias for "copilot" since Copilot files live under .github/.
+resolve_profile_token() {
+  local token="$1"
+  case "$token" in
+    "$PROFILE_COPILOT" | "github")
+      printf '%s\n' "${COPILOT_MANAGED_DIRS[@]}"
+      ;;
+    "$PROFILE_CLAUDE")
+      printf '%s\n' "${CLAUDE_MANAGED_DIRS[@]}"
+      ;;
+    "$PROFILE_KIRO")
+      printf '%s\n' "${KIRO_MANAGED_DIRS[@]}"
+      ;;
+    "$PROFILE_BOTH" | "$PROFILE_ALL")
+      printf '%s\n' "${COPILOT_MANAGED_DIRS[@]}" "${CLAUDE_MANAGED_DIRS[@]}" "${KIRO_MANAGED_DIRS[@]}"
+      ;;
+  esac
+}
+
+# True if the (possibly comma-separated) profile string includes the given platform.
+# platform is one of: copilot | claude | kiro
+profile_includes() {
+  local profile="$1" platform="$2"
+  local IFS=','
+  local -a tokens=($profile)
+  unset IFS
+
+  local token
+  for token in "${tokens[@]}"; do
+    token="$(printf '%s' "$token" | tr -d '[:space:]')"
+    case "$platform" in
+      copilot)
+        case "$token" in "$PROFILE_COPILOT" | github | "$PROFILE_BOTH" | "$PROFILE_ALL") return 0 ;; esac
+        ;;
+      claude)
+        case "$token" in "$PROFILE_CLAUDE" | "$PROFILE_BOTH" | "$PROFILE_ALL") return 0 ;; esac
+        ;;
+      kiro)
+        case "$token" in "$PROFILE_KIRO" | "$PROFILE_BOTH" | "$PROFILE_ALL") return 0 ;; esac
+        ;;
+    esac
+  done
+  return 1
+}
+
+set_managed_scope() {
+  local profile="${1:-$PROFILE_ALL}"
+  MANAGED_DIRS=()
+
+  local IFS=','
+  local -a tokens=($profile)
+  unset IFS
+
+  local token dir existing already
+  for token in "${tokens[@]}"; do
+    token="$(printf '%s' "$token" | tr -d '[:space:]')"
+    [ -z "$token" ] && continue
+    validate_profile_token "$token"
+    while IFS= read -r dir; do
+      already=false
+      for existing in "${MANAGED_DIRS[@]+${MANAGED_DIRS[@]}}"; do
+        if [ "$existing" = "$dir" ]; then already=true; break; fi
+      done
+      [ "$already" = "false" ] && MANAGED_DIRS+=("$dir")
+    done < <(resolve_profile_token "$token")
+  done
 }
 
 # ─── GitHub API ───────────────────────────────────────────────────────────────
@@ -691,7 +748,7 @@ cmd_install() {
   local dry_run="${2:-false}"
   local do_backup="${3:-false}"
   local auto_yes="${4:-false}"
-  local profile="${5:-$PROFILE_BOTH}"
+  local profile="${5:-$PROFILE_ALL}"
 
   set_managed_scope "$profile"
 
@@ -743,10 +800,10 @@ cmd_install() {
 
   write_version_file "$version" "$dry_run"
 
-  if [ "$profile" = "$PROFILE_COPILOT" ] || [ "$profile" = "$PROFILE_BOTH" ]; then
+  if profile_includes "$profile" copilot; then
     print_agents_md_prompt "$src_dir" "$version" "$dry_run"
   fi
-  if [ "$profile" = "$PROFILE_CLAUDE" ] || [ "$profile" = "$PROFILE_BOTH" ]; then
+  if profile_includes "$profile" claude; then
     print_claude_md_prompt "$src_dir" "$version" "$dry_run"
   fi
   [ "$dry_run" = "true" ] && success "[dry-run] Install simulation complete — no files were modified." \
@@ -758,7 +815,7 @@ cmd_update() {
   local dry_run="${2:-false}"
   local do_backup="${3:-false}"
   local auto_yes="${4:-false}"
-  local profile="${5:-$PROFILE_BOTH}"
+  local profile="${5:-$PROFILE_ALL}"
   local self_update="${6:-false}"
 
   set_managed_scope "$profile"
@@ -827,10 +884,10 @@ cmd_update() {
 
   write_version_file "$latest_version" "$dry_run"
 
-  if [ "$profile" = "$PROFILE_COPILOT" ] || [ "$profile" = "$PROFILE_BOTH" ]; then
+  if profile_includes "$profile" copilot; then
     print_agents_md_prompt "$src_dir" "$latest_version" "$dry_run"
   fi
-  if [ "$profile" = "$PROFILE_CLAUDE" ] || [ "$profile" = "$PROFILE_BOTH" ]; then
+  if profile_includes "$profile" claude; then
     print_claude_md_prompt "$src_dir" "$latest_version" "$dry_run"
   fi
   if [ "$self_update" = "true" ]; then
@@ -861,7 +918,9 @@ ${BOLD}OPTIONS${RESET} (install / update / self-update)
   --dry-run           Show planned changes without writing any files
   --backup            Back up managed files to ${BACKUP_DIR}/ before replacing
   --yes               Skip confirmation prompts
-  --profile <name>    Install/update file sets: copilot | claude | kiro | both | all (default: both)
+  --profile <name>    Install/update file sets: copilot | claude | kiro | both | all,
+                      or a comma-separated combination (e.g. claude,kiro or claude,github)
+                      (default: all — installs every platform; 'both' is a deprecated alias for 'all')
   --self-update       Also update the dev-tasks.sh script when running 'update'
 
 ${BOLD}EXAMPLES${RESET}
@@ -869,7 +928,7 @@ ${BOLD}EXAMPLES${RESET}
   curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \\
     -o dev-tasks.sh && chmod +x dev-tasks.sh
 
-  # Install latest
+  # Install latest (installs Copilot + Claude + Kiro by default)
   ./dev-tasks.sh install
 
   # Install only Copilot toolkit files (.github/*)
@@ -883,6 +942,10 @@ ${BOLD}EXAMPLES${RESET}
 
   # Install all three platforms (Copilot + Claude + Kiro)
   ./dev-tasks.sh install --profile all
+
+  # Install a specific combination of platforms (comma-separated, any order)
+  ./dev-tasks.sh install --profile claude,kiro
+  ./dev-tasks.sh install --profile claude,kiro,github
 
   # Install specific version
   ./dev-tasks.sh install v1.2.0
@@ -930,7 +993,7 @@ main() {
   shift || true
 
   # Parse shared flags
-  local dry_run=false do_backup=false auto_yes=false target_version="latest" profile="$PROFILE_BOTH" self_update=false
+  local dry_run=false do_backup=false auto_yes=false target_version="latest" profile="$PROFILE_ALL" self_update=false
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -939,7 +1002,7 @@ main() {
       --yes|-y)      auto_yes=true;   shift ;;
       --self-update) self_update=true; shift ;;
       --profile)
-        [ $# -ge 2 ] || die "Missing value for --profile. Use: copilot | claude | kiro | both | all"
+        [ $# -ge 2 ] || die "Missing value for --profile. Use: copilot | claude | kiro | both | all, or a comma-separated combination (e.g. claude,kiro)"
         profile="$2"
         shift 2
         ;;
