@@ -89,9 +89,9 @@
     },
     {
       "path": ".kiro/hooks",
-      "description": "Kiro IDE hook definitions (git-guard, etc.)",
-      "pattern": "*.json",
-      "recursive": false
+      "description": "Kiro IDE hook definitions and their scripts (git-guard, etc.)",
+      "pattern": "*.json,scripts/*.sh",
+      "recursive": true
     },
     {
       "path": ".",

@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "git-guard",
+      "trigger": "PreToolUse",
+      "matcher": "shell|runCommand",
+      "action": {
+        "type": "command",
+        "command": ".kiro/hooks/scripts/git-guard.sh"
+      },
+      "timeout": 10,
+      "enabled": true
+    }
+  ]
+}

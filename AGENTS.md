@@ -1,6 +1,6 @@
 # dev-tasks
 
-A set of agents, skills, and instructions for GitHub Copilot and other AI coding agents to run structured, PRD-driven development workflows.
+A set of agents, skills, and instructions for GitHub Copilot, Claude Code, Kiro, and other AI coding agents to run structured, PRD-driven development workflows.
 
 ## Core Idea
 
@@ -44,6 +44,8 @@ If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MU
 
 ## Agents
 
+> **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). All three platforms define the same 8 agents below. On Kiro, each agent file also embeds an "Invocation Modes" section in place of separate prompt files (see [Prompts](#prompts)).
+
 | Agent                | File                        | Purpose                                                                                                                               |
 | -------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **product-engineer** | `product-engineer.agent.md` | Preparation agent — owns the full pre-coding chain: PRD, spec, stories, plan. Hands off to `developer` or `planner` for execution.    |
@@ -58,6 +60,8 @@ If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MU
 ## Skills
 
 Skills are on-demand capabilities invoked by agents. They are **not** loaded into context unless explicitly referenced.
+
+> **Available for:** Copilot (`.github/skills/<name>/SKILL.md`), Claude Code (`.claude/skills/<name>/SKILL.md`), Kiro (`.kiro/skills/<name>/SKILL.md`). Same skill set on all three platforms.
 
 ### Activity Skills
 
@@ -94,6 +98,8 @@ These are the composable activities from the development workflow, converted to 
 
 Instructions are scoped via `applyTo` and auto-applied. Only cross-cutting rules that must always be enforced remain as instructions.
 
+> **Available for:** Copilot (`.github/instructions/*.instructions.md`, scoped via `applyTo`), Claude Code (`plan` and `implement` are on-demand skills instead of always-loaded instructions), Kiro (`.kiro/steering/*.md`, called "steering" and scoped via `inclusion: always|fileMatch` + `fileMatchPattern`, the Kiro analogue of `applyTo`). Kiro's steering set has a 4th file, `git-guard-notice.md` (`inclusion: always`), with no equivalent on Copilot or Claude Code — it discloses a Kiro-specific hook enforcement gap.
+
 | Instruction                 | File                                             | Scope      | Purpose                                                                  |
 | --------------------------- | ------------------------------------------------ | ---------- | ------------------------------------------------------------------------ |
 | **plan**                    | `plan.instructions.md`                           | `**`       | Convert stories or refined issues into execution-ready task lists        |
@@ -103,6 +109,8 @@ Instructions are scoped via `applyTo` and auto-applied. Only cross-cutting rules
 ## Prompts
 
 Prompts are entry points that configure an agent for a specific use case.
+
+> **Available for:** Copilot (`.github/prompts/*.prompt.md`), Claude Code (`.claude/commands/*.md`, invoked with `/command-name`). Kiro has no separate "prompts" concept — the invocation modes below are folded directly into the corresponding `.kiro/agents/*.md` file as an "Invocation Modes" section instead of standalone files.
 
 | Prompt                      | Agent            | Purpose                                             |
 | --------------------------- | ---------------- | --------------------------------------------------- |
