@@ -100,7 +100,13 @@
       "recursive": false
     }
   ],
-  "consumer_owned_paths": ["AGENTS.md", "CLAUDE.md", ".claude/settings.json"],
+  "consumer_owned_paths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".claude/settings.json",
+    ".kiro/settings/mcp.json",
+    ".kiro/specs"
+  ],
   "version_file": ".dev-tasks-version",
   "backup_dir": ".dev-tasks-backup",
   "agents_update_file": ".dev-tasks-agents-update.md"
