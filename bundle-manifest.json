@@ -70,6 +70,30 @@
       "recursive": false
     },
     {
+      "path": ".kiro/agents",
+      "description": "Kiro IDE custom agent definitions",
+      "pattern": "*.md",
+      "recursive": false
+    },
+    {
+      "path": ".kiro/skills",
+      "description": "Kiro IDE skill definitions",
+      "pattern": "*/SKILL.md",
+      "recursive": true
+    },
+    {
+      "path": ".kiro/steering",
+      "description": "Kiro IDE steering documents (always-loaded and scoped rules)",
+      "pattern": "*.md",
+      "recursive": false
+    },
+    {
+      "path": ".kiro/hooks",
+      "description": "Kiro IDE hook definitions (git-guard, etc.)",
+      "pattern": "*.json",
+      "recursive": false
+    },
+    {
       "path": ".",
       "description": "Top-level metadata files",
       "pattern": "skills-lock.json",
