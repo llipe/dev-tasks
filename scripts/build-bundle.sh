@@ -25,6 +25,10 @@ MANAGED_DIRS=(
   ".claude/skills"
   ".claude/commands"
   ".claude/hooks"
+  ".kiro/agents"
+  ".kiro/skills"
+  ".kiro/steering"
+  ".kiro/hooks"
 )
 
 MANAGED_FILES=(

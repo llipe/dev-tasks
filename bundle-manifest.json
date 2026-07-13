@@ -70,13 +70,43 @@
       "recursive": false
     },
     {
+      "path": ".kiro/agents",
+      "description": "Kiro IDE custom agent definitions",
+      "pattern": "*.md",
+      "recursive": false
+    },
+    {
+      "path": ".kiro/skills",
+      "description": "Kiro IDE skill definitions",
+      "pattern": "*/SKILL.md",
+      "recursive": true
+    },
+    {
+      "path": ".kiro/steering",
+      "description": "Kiro IDE steering documents (always-loaded and scoped rules)",
+      "pattern": "*.md",
+      "recursive": false
+    },
+    {
+      "path": ".kiro/hooks",
+      "description": "Kiro IDE hook definitions (git-guard, etc.)",
+      "pattern": "*.json",
+      "recursive": false
+    },
+    {
       "path": ".",
       "description": "Top-level metadata files",
       "pattern": "skills-lock.json",
       "recursive": false
     }
   ],
-  "consumer_owned_paths": ["AGENTS.md", "CLAUDE.md", ".claude/settings.json"],
+  "consumer_owned_paths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".claude/settings.json",
+    ".kiro/settings/mcp.json",
+    ".kiro/specs"
+  ],
   "version_file": ".dev-tasks-version",
   "backup_dir": ".dev-tasks-backup",
   "agents_update_file": ".dev-tasks-agents-update.md"

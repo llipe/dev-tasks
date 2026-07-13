@@ -65,6 +65,10 @@ jobs:
           [ -d "${SRC}/.github/skills" ]        || { echo "Missing .github/skills"; exit 1; }
           [ -d "${SRC}/.github/instructions" ]  || { echo "Missing .github/instructions"; exit 1; }
           [ -d "${SRC}/.github/prompts" ]       || { echo "Missing .github/prompts"; exit 1; }
+          [ -d "${SRC}/.kiro/agents" ]           || { echo "Missing .kiro/agents"; exit 1; }
+          [ -d "${SRC}/.kiro/skills" ]           || { echo "Missing .kiro/skills"; exit 1; }
+          [ -d "${SRC}/.kiro/steering" ]         || { echo "Missing .kiro/steering"; exit 1; }
+          [ -d "${SRC}/.kiro/hooks" ]            || { echo "Missing .kiro/hooks"; exit 1; }
           [ -f "${SRC}/bundle-manifest.json" ]  || { echo "Missing bundle-manifest.json"; exit 1; }
           echo "Bundle structure OK."
           rm -rf "$TMPDIR"
