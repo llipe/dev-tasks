@@ -392,11 +392,12 @@ The toolkit is distributed as a versioned tarball via **GitHub Releases**. `dev-
 
 ### Options (install / update)
 
-| Option      | Description                                                             |
-| ----------- | ----------------------------------------------------------------------- |
-| `--dry-run` | Print planned changes without writing any files                         |
-| `--backup`  | Copy managed files to `.dev-tasks-backup/<timestamp>/` before replacing |
-| `--yes`     | Skip confirmation prompts (useful in CI)                                |
+| Option             | Description                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| `--profile <name>` | Install/update file sets: `copilot` \| `claude` \| `kiro` \| `both` \| `all` (default: `both`, meaning Copilot + Claude only) |
+| `--dry-run`        | Print planned changes without writing any files                                          |
+| `--backup`         | Copy managed files to `.dev-tasks-backup/<timestamp>/` before replacing                  |
+| `--yes`            | Skip confirmation prompts (useful in CI)                                                 |
 
 ### Managed file surface
 
