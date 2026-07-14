@@ -106,10 +106,10 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
 
 ## GitHub Execution Rules Summary
 
-| Phase              | Rule                                                                                               |
-| ------------------ | -------------------------------------------------------------------------------------------------- |
-| **Before coding**  | Confirm issue open → Create branch (`github-ops`) → Open draft PR (`github-ops`) → Sync checklists |
-| **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval                           |
+| Phase              | Rule                                                                                                                                                                                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Before coding**  | Confirm issue open → Create branch (`github-ops`) → Open draft PR (`github-ops`) → Sync checklists                                                                                                                                                                        |
+| **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval                                                                                                                                                                                                  |
 | **Before closing** | All ACs verified → Quality gates pass (test/lint/format/typecheck/audit) → migration confirmation/apply/verify (when applicable) → docs drift check clear → verifier audit run + summary posted (non-blocking on drift) → PR ready → Approved → Merged → Then close issue |
 
 ---

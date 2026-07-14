@@ -56,18 +56,18 @@ For any item classified `Undetermined` by `verifier`, ask the user one focused c
 
 Apply this decision table in order:
 
-| Condition                                                                              | Route                                                                                                   | AC Reference |
-| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| Intended drift                                                                          | Human-confirmation gate → PRD/spec changelog update (Step 4). No new task.                               | AC-5         |
-| Unintended drift, originating task list/issue still open                                | Expand `/workstream/tasks-*.md` with new sub-task(s); sync GitHub Issue checklist (Step 5)               | AC-3         |
-| Unintended drift, warrants tracking beyond current task scope                           | Create new GitHub issue/sub-task via `github-ops`, cross-referenced to originating issue (Step 6)        | AC-4         |
-| Drift found against an already-closed/merged task list or issue (e.g., PRD-level rollup) | Open a new follow-up issue/task list; do not reopen the closed one (Step 7)                              | AC-6         |
+| Condition                                                                                | Route                                                                                             | AC Reference |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------ |
+| Intended drift                                                                           | Human-confirmation gate → PRD/spec changelog update (Step 4). No new task.                        | AC-5         |
+| Unintended drift, originating task list/issue still open                                 | Expand `/workstream/tasks-*.md` with new sub-task(s); sync GitHub Issue checklist (Step 5)        | AC-3         |
+| Unintended drift, warrants tracking beyond current task scope                            | Create new GitHub issue/sub-task via `github-ops`, cross-referenced to originating issue (Step 6) | AC-4         |
+| Drift found against an already-closed/merged task list or issue (e.g., PRD-level rollup) | Open a new follow-up issue/task list; do not reopen the closed one (Step 7)                       | AC-6         |
 
 A single audit run may produce items routed to more than one path — process each item independently through this table.
 
 ### Step 4 — Intended Drift → Human-Confirmed PRD/Spec Update
 
-1. Present the drift item (what changed, why it appears intentional, evidence) to the human and ask for explicit confirmation: *"Confirm this is an intentional deviation from the PRD/spec — update the document? (y/n)"*
+1. Present the drift item (what changed, why it appears intentional, evidence) to the human and ask for explicit confirmation: _"Confirm this is an intentional deviation from the PRD/spec — update the document? (y/n)"_
 2. If declined, re-classify as `Unintended` and re-route via Step 3.
 3. If confirmed:
    - Update the relevant PRD and/or spec section to reflect the confirmed behavior.
@@ -106,12 +106,12 @@ Source fidelity report: /workstream/fidelity-report-{id}.md
 
 ## Routed Items
 
-| Drift ID | Impact | Intent | Route                     | Destination                          |
-| -------- | ------ | ------ | -------------------------- | ------------------------------------- |
-| D-1      | Minor  | Unintended | Active task list expansion | tasks-issue-42.md #3.5, Issue #42 checklist |
-| D-2      | Major  | Intended   | PRD/spec changelog update  | spec-checkout.md v1.3                 |
-| D-3      | Critical | Unintended | New issue                | Issue #58 (Refs #42)                  |
-| D-4      | Minor  | Unintended | Follow-up (closed scope)   | Issue #59 + tasks-issue-59.md         |
+| Drift ID | Impact   | Intent     | Route                      | Destination                                 |
+| -------- | -------- | ---------- | -------------------------- | ------------------------------------------- |
+| D-1      | Minor    | Unintended | Active task list expansion | tasks-issue-42.md #3.5, Issue #42 checklist |
+| D-2      | Major    | Intended   | PRD/spec changelog update  | spec-checkout.md v1.3                       |
+| D-3      | Critical | Unintended | New issue                  | Issue #58 (Refs #42)                        |
+| D-4      | Minor    | Unintended | Follow-up (closed scope)   | Issue #59 + tasks-issue-59.md               |
 
 ## Escalations
 

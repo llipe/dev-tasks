@@ -90,24 +90,25 @@ Follow `.github/instructions/implement.instructions.md`:
 5. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
 6. When all sub-tasks are complete:
    - Verify all acceptance criteria.
-  - Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
-  - For migration-bearing changes, confirm migration artifact/rollback notes and execute apply only after explicit user confirmation.
-  - Invoke `verifier` in `audit` mode against the delivered implementation, and post its human-readable summary to the issue/PR via `github-ops` comment conventions. This step is mandatory and non-skippable; drift findings reported by `verifier` do not block this step or PR/issue completion.
-  - Invoke `technical-writer` for documentation update and drift/stale-doc validation.
-   - Convert PR from Draft to Ready for Review.
+
+- Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
+- For migration-bearing changes, confirm migration artifact/rollback notes and execute apply only after explicit user confirmation.
+- Invoke `verifier` in `audit` mode against the delivered implementation, and post its human-readable summary to the issue/PR via `github-ops` comment conventions. This step is mandatory and non-skippable; drift findings reported by `verifier` do not block this step or PR/issue completion.
+- Invoke `technical-writer` for documentation update and drift/stale-doc validation.
+- Convert PR from Draft to Ready for Review.
 
 ---
 
 ## Integration with Other Agents
 
-| Agent              | Relationship                                                                                                            |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `product-engineer` | Produces the task lists and refined issues that `developer` executes                                                    |
-| `planner`          | Orchestrates multi-story runs — delegates each story to `developer` in Execute Mode with an integration branch override |
+| Agent              | Relationship                                                                                                                                                                                                               |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `product-engineer` | Produces the task lists and refined issues that `developer` executes                                                                                                                                                       |
+| `planner`          | Orchestrates multi-story runs — delegates each story to `developer` in Execute Mode with an integration branch override                                                                                                    |
 | `verifier`         | Invoked by `developer` in `audit` mode, post-implementation and pre-PR-ready, mandatory and non-skippable — reports fidelity/drift; findings route to `product-engineer`'s `activity-drift-reconciliation` for remediation |
-| `technical-writer` | Invoked by `developer` before PR is marked ready — updates `/docs`                                                      |
-| `housekeeping`     | Can be invoked during implementation for lint/type/test-wiring fixes                                                    |
-| `github-ops`       | Defines conventions for all GitHub artifacts — `developer` follows these rules                                          |
+| `technical-writer` | Invoked by `developer` before PR is marked ready — updates `/docs`                                                                                                                                                         |
+| `housekeeping`     | Can be invoked during implementation for lint/type/test-wiring fixes                                                                                                                                                       |
+| `github-ops`       | Defines conventions for all GitHub artifacts — `developer` follows these rules                                                                                                                                             |
 
 ---
 

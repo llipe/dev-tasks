@@ -222,15 +222,15 @@ Execution agent — implements code from an existing task list. Runs `implement`
 
 Multi-story orchestration with checkpoint/resume:
 
-| Phase | What Happens                                                                                |
-| ----- | -------------------------------------------------------------------------------------------- |
-| 0     | Discover task source                                                                          |
-| 0.5   | Resume detection — checks for existing checkpoint state file                                  |
-| 1     | Parse stories and infer dependencies                                                          |
-| 2     | Dependency graph — **user approval required**                                                 |
-| 3     | Pre-flight — creates integration branch                                                       |
+| Phase | What Happens                                                                                               |
+| ----- | ---------------------------------------------------------------------------------------------------------- |
+| 0     | Discover task source                                                                                       |
+| 0.5   | Resume detection — checks for existing checkpoint state file                                               |
+| 1     | Parse stories and infer dependencies                                                                       |
+| 2     | Dependency graph — **user approval required**                                                              |
+| 3     | Pre-flight — creates integration branch                                                                    |
 | 4     | Delegate to `developer` per story (each gated on a mandatory `verifier` audit); merge and write checkpoint |
-| 5     | PRD-level rollup `verifier` audit, then consolidated PR to `main` — **user must approve**      |
+| 5     | PRD-level rollup `verifier` audit, then consolidated PR to `main` — **user must approve**                  |
 
 ### Other Agents
 
@@ -250,21 +250,21 @@ On-demand capabilities loaded only when invoked.
 
 > **Available for:** Copilot (`.github/skills/<name>/SKILL.md`), Claude Code (`.claude/skills/<name>/SKILL.md`), Kiro (`.kiro/skills/<name>/SKILL.md`). Same 13 skills on all three platforms.
 
-| Skill                           | Purpose                                                                                                             | Consumer                                            |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| `activity-init`                 | Product context and technical guidelines                                                                            | `product-engineer`                                  |
-| `activity-refine`               | Issue refinement or PRD creation                                                                                    | `product-engineer`                                  |
-| `activity-generate-spec`        | PRD → technical specification                                                                                       | `product-engineer`                                  |
-| `activity-generate-stories`     | Spec → user stories with coverage validation                                                                        | `product-engineer`                                  |
-| `activity-publish-github`       | Stories → GitHub Issues                                                                                             | `product-engineer`                                  |
-| `activity-drift-reconciliation` | Routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates | `product-engineer`                       |
-| `git-ops`                       | Branch, rebase, merge, conflict resolution                                                                          | `developer`, `planner`                              |
-| `webapp-mockup`                 | React mockup scaffold for UX testing                                                                                | `ux-engineer`                                       |
-| `activity-e2e-test-design`      | E2E black-box test scenario generation from spec/stories                                                            | `verifier`                                          |
-| `activity-contract-test-design` | Consumer/provider contract and schema compatibility testing                                                         | `verifier`                                          |
-| `activity-edge-case-refinement` | Systematic edge-case discovery by category with examples                                                            | `verifier`                                          |
-| `activity-random-test-tactics`  | Randomized, fuzz, and property-inspired test generation                                                             | `verifier`                                          |
-| `memo-cli-usage`                | Shared architectural memory with `memo-cli` (read session context, write intent/outcome and ADR/decision rationale) | `product-engineer`, `developer`, `technical-writer` |
+| Skill                           | Purpose                                                                                                                        | Consumer                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| `activity-init`                 | Product context and technical guidelines                                                                                       | `product-engineer`                                  |
+| `activity-refine`               | Issue refinement or PRD creation                                                                                               | `product-engineer`                                  |
+| `activity-generate-spec`        | PRD → technical specification                                                                                                  | `product-engineer`                                  |
+| `activity-generate-stories`     | Spec → user stories with coverage validation                                                                                   | `product-engineer`                                  |
+| `activity-publish-github`       | Stories → GitHub Issues                                                                                                        | `product-engineer`                                  |
+| `activity-drift-reconciliation` | Routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates | `product-engineer`                                  |
+| `git-ops`                       | Branch, rebase, merge, conflict resolution                                                                                     | `developer`, `planner`                              |
+| `webapp-mockup`                 | React mockup scaffold for UX testing                                                                                           | `ux-engineer`                                       |
+| `activity-e2e-test-design`      | E2E black-box test scenario generation from spec/stories                                                                       | `verifier`                                          |
+| `activity-contract-test-design` | Consumer/provider contract and schema compatibility testing                                                                    | `verifier`                                          |
+| `activity-edge-case-refinement` | Systematic edge-case discovery by category with examples                                                                       | `verifier`                                          |
+| `activity-random-test-tactics`  | Randomized, fuzz, and property-inspired test generation                                                                        | `verifier`                                          |
+| `memo-cli-usage`                | Shared architectural memory with `memo-cli` (read session context, write intent/outcome and ADR/decision rationale)            | `product-engineer`, `developer`, `technical-writer` |
 
 ---
 

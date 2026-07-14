@@ -405,10 +405,11 @@ After all stories are merged into integration:
    - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
    - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
 8. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
-  - consolidated PR URL
-  - current CI/check status
-  - exact required user actions: review, approve, and merge
-  - a post-merge follow-up action (for example, delete integration branch or run a verification command)
+
+- consolidated PR URL
+- current CI/check status
+- exact required user actions: review, approve, and merge
+- a post-merge follow-up action (for example, delete integration branch or run a verification command)
 
 Consolidated PR should include:
 
@@ -439,7 +440,7 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 | Merge conflict                     | Invoke `git-ops` skill to resolve; if resolution fails, report conflicting files and pause |
 | Integration tests fail             | Report failures and ask whether to proceed or fix first                                    |
 | Consolidated PR creation fails     | Return generated title/body and ask to retry                                               |
-| Story payload base mismatch          | Mark story blocked; require retargeting PR base to integration branch before merge       |
+| Story payload base mismatch        | Mark story blocked; require retargeting PR base to integration branch before merge         |
 
 ---
 

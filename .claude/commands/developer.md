@@ -104,14 +104,14 @@ Follow the `implement` skill:
 
 ## Integration with Other Agents
 
-| Agent              | Relationship                                                                                                            |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `product-engineer` | Produces the task lists and refined issues that `developer` executes                                                    |
-| `planner`          | Orchestrates multi-story runs — delegates each story to `developer` in Execute Mode with an integration branch override |
+| Agent              | Relationship                                                                                                                                                                                                               |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `product-engineer` | Produces the task lists and refined issues that `developer` executes                                                                                                                                                       |
+| `planner`          | Orchestrates multi-story runs — delegates each story to `developer` in Execute Mode with an integration branch override                                                                                                    |
 | `verifier`         | Invoked by `developer` in `audit` mode, post-implementation and pre-PR-ready, mandatory and non-skippable — reports fidelity/drift; findings route to `product-engineer`'s `activity-drift-reconciliation` for remediation |
-| `technical-writer` | Invoked by `developer` before PR is marked ready — updates `/docs`                                                      |
-| `housekeeping`     | Can be invoked during implementation for lint/type/test-wiring fixes                                                    |
-| `github-ops`       | Defines conventions for all GitHub artifacts — `developer` follows these rules                                          |
+| `technical-writer` | Invoked by `developer` before PR is marked ready — updates `/docs`                                                                                                                                                         |
+| `housekeeping`     | Can be invoked during implementation for lint/type/test-wiring fixes                                                                                                                                                       |
+| `github-ops`       | Defines conventions for all GitHub artifacts — `developer` follows these rules                                                                                                                                             |
 
 ---
 
