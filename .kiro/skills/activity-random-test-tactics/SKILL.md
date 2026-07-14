@@ -5,7 +5,7 @@ description: "Generate randomized, fuzz, and property-inspired tests with reprod
 
 # Activity: Randomized Test Tactics
 
-Generate randomized, fuzz, and property-inspired test strategies with reproducibility controls. Produces test tactics that detect behavior drift and hidden defects through non-deterministic inputs while maintaining deterministic replay. Invoked by the `black-box-tester` agent in Design Mode.
+Generate randomized, fuzz, and property-inspired test strategies with reproducibility controls. Produces test tactics that detect behavior drift and hidden defects through non-deterministic inputs while maintaining deterministic replay. Invoked by the `verifier` agent in Design Mode.
 
 ---
 
@@ -19,9 +19,9 @@ Design randomized and property-based testing tactics that complement structured 
 
 This activity assumes:
 
-- A numbered list of acceptance criteria is available (produced by Phase 2 of `black-box-tester`).
+- A numbered list of acceptance criteria is available (produced by Phase 2 of `verifier`).
 - E2E scenarios and edge cases have been drafted.
-- The output feeds into the randomized-tactics section of the test plan assembled by `black-box-tester`.
+- The output feeds into the randomized-tactics section of the test plan assembled by `verifier`.
 
 ## Tactic Types
 
@@ -142,7 +142,7 @@ Given AC-2: "API returns paginated results with at most 50 items per page."
 
 ## Failure Triage Workflow
 
-When a randomized test fails, the `black-box-tester` agent follows this workflow:
+When a randomized test fails, the `verifier` agent follows this workflow:
 
 1. **Capture** — Record seed, full input, observed output, and expected oracle result.
 2. **Replay** — Re-run with captured seed to confirm deterministic reproduction.
@@ -168,7 +168,7 @@ Use this checklist to verify completeness before returning results:
 
 ## Output
 
-This skill returns a list of randomized tactics in the template format above. The calling agent (`black-box-tester`) assembles them into the randomized-tactics section of the test plan.
+This skill returns a list of randomized tactics in the template format above. The calling agent (`verifier`) assembles them into the randomized-tactics section of the test plan.
 
 ## Final Instructions
 

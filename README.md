@@ -172,16 +172,16 @@ This produces `docs/product-context.md` and `docs/technical-guidelines.md`. Run 
 
 ### 3. Start building
 
-| Situation                        | How to start                                                                                |
-| -------------------------------- | ------------------------------------------------------------------------------------------- |
-| **New feature / epic**           | Invoke `product-engineer` with a feature description, then `developer` to implement         |
-| **Single GitHub Issue**          | Invoke `product-engineer` with an issue number, then `developer` to implement               |
-| **Already have a task list**     | Invoke `developer` with a task list path                                                    |
-| **Multi-story PRD batch**        | Invoke `planner` with a `/workstream` task file or milestone                                |
-| **UX prototype**                 | Invoke `ux-engineer` with a PRD or SPEC path                                                |
-| **Docs out of date**             | Invoke `technical-writer`                                                                   |
-| **Lint/type/test cleanup**       | Invoke `housekeeping`                                                                       |
-| **Black-box compliance testing** | Invoke `black-box-tester` with a spec or story to generate test plans and validate behavior |
+| Situation                       | How to start                                                                                                          |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **New feature / epic**          | Invoke `product-engineer` with a feature description, then `developer` to implement                                   |
+| **Single GitHub Issue**         | Invoke `product-engineer` with an issue number, then `developer` to implement                                         |
+| **Already have a task list**    | Invoke `developer` with a task list path                                                                              |
+| **Multi-story PRD batch**       | Invoke `planner` with a `/workstream` task file or milestone                                                          |
+| **UX prototype**                | Invoke `ux-engineer` with a PRD or SPEC path                                                                          |
+| **Docs out of date**            | Invoke `technical-writer`                                                                                             |
+| **Lint/type/test cleanup**      | Invoke `housekeeping`                                                                                                 |
+| **Verifier compliance testing** | Invoke `verifier` with a spec or story to generate test plans (Design Mode) and audit delivered fidelity (Audit Mode) |
 
 ### 4. (Optional) Add domain-specific instructions
 
@@ -232,13 +232,13 @@ Multi-story orchestration with checkpoint/resume:
 
 ### Other Agents
 
-| Agent              | Purpose                                                                                                                               |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `ux-engineer`      | PRD/SPEC-to-mockup — feeds refinements back to `product-engineer`                                                                     |
-| `technical-writer` | Documentation maintenance                                                                                                             |
-| `housekeeping`     | Lint, type, and test-wiring fixes                                                                                                     |
-| `github-ops`       | GitHub consistency — issues, PRs, branches, labels, milestones                                                                        |
-| `black-box-tester` | Deep black-box testing — derives compliance test plans and edge cases from specs/stories, validates "requested vs delivered" behavior |
+| Agent              | Purpose                                                                                                                                                                                        |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ux-engineer`      | PRD/SPEC-to-mockup — feeds refinements back to `product-engineer`                                                                                                                              |
+| `technical-writer` | Documentation maintenance                                                                                                                                                                      |
+| `housekeeping`     | Lint, type, and test-wiring fixes                                                                                                                                                              |
+| `github-ops`       | GitHub consistency — issues, PRs, branches, labels, milestones                                                                                                                                 |
+| `verifier`         | Verification agent — compliance test-plan design (`design` mode) and post-implementation grey-box fidelity auditing (`audit` mode) against codebase, `/workstream`, tests, and PRD/spec intent |
 
 ---
 
@@ -257,10 +257,10 @@ On-demand capabilities loaded only when invoked.
 | `activity-publish-github`       | Stories → GitHub Issues                                                                                             | `product-engineer`                                  |
 | `git-ops`                       | Branch, rebase, merge, conflict resolution                                                                          | `developer`, `planner`                              |
 | `webapp-mockup`                 | React mockup scaffold for UX testing                                                                                | `ux-engineer`                                       |
-| `activity-e2e-test-design`      | E2E black-box test scenario generation from spec/stories                                                            | `black-box-tester`                                  |
-| `activity-contract-test-design` | Consumer/provider contract and schema compatibility testing                                                         | `black-box-tester`                                  |
-| `activity-edge-case-refinement` | Systematic edge-case discovery by category with examples                                                            | `black-box-tester`                                  |
-| `activity-random-test-tactics`  | Randomized, fuzz, and property-inspired test generation                                                             | `black-box-tester`                                  |
+| `activity-e2e-test-design`      | E2E black-box test scenario generation from spec/stories                                                            | `verifier`                                          |
+| `activity-contract-test-design` | Consumer/provider contract and schema compatibility testing                                                         | `verifier`                                          |
+| `activity-edge-case-refinement` | Systematic edge-case discovery by category with examples                                                            | `verifier`                                          |
+| `activity-random-test-tactics`  | Randomized, fuzz, and property-inspired test generation                                                             | `verifier`                                          |
 | `memo-cli-usage`                | Shared architectural memory with `memo-cli` (read session context, write intent/outcome and ADR/decision rationale) | `product-engineer`, `developer`, `technical-writer` |
 
 ---
@@ -281,20 +281,20 @@ On-demand capabilities loaded only when invoked.
 
 > **Available for:** Copilot (`.github/prompts/*.prompt.md`), Claude Code (`.claude/commands/*.md`, invoked with `/command-name`). Kiro has no separate "prompts" concept — the 12 invocation modes below are folded directly into the corresponding `.kiro/agents/*.md` file as an "Invocation Modes" section instead of standalone files.
 
-| Prompt                      | Agent            | Purpose                                             |
-| --------------------------- | ---------------- | --------------------------------------------------- |
-| `product-engineer-init`     | product-engineer | Initialize foundation documents                     |
-| `product-engineer-feature`  | product-engineer | Design and plan a feature                           |
-| `product-engineer-issue`    | product-engineer | Refine and plan a GitHub Issue                      |
-| `developer-execute`         | developer        | Execute an existing task list                       |
-| `planner`                   | planner          | Orchestrate multi-story execution                   |
-| `planner-resume`            | planner          | Resume from checkpoint                              |
-| `ux-engineer`               | ux-engineer      | Generate UX mockups                                 |
-| `github-ops`                | github-ops       | GitHub consistency                                  |
-| `technical-writer`          | technical-writer | Documentation maintenance                           |
-| `housekeeping`              | housekeeping     | Lint, type, test fixes                              |
-| `black-box-tester-design`   | black-box-tester | Generate compliance test plan from spec or stories  |
-| `black-box-tester-validate` | black-box-tester | Validate delivered behavior against spec or stories |
+| Prompt                     | Agent            | Purpose                                                                                         |
+| -------------------------- | ---------------- | ----------------------------------------------------------------------------------------------- |
+| `product-engineer-init`    | product-engineer | Initialize foundation documents                                                                 |
+| `product-engineer-feature` | product-engineer | Design and plan a feature                                                                       |
+| `product-engineer-issue`   | product-engineer | Refine and plan a GitHub Issue                                                                  |
+| `developer-execute`        | developer        | Execute an existing task list                                                                   |
+| `planner`                  | planner          | Orchestrate multi-story execution                                                               |
+| `planner-resume`           | planner          | Resume from checkpoint                                                                          |
+| `ux-engineer`              | ux-engineer      | Generate UX mockups                                                                             |
+| `github-ops`               | github-ops       | GitHub consistency                                                                              |
+| `technical-writer`         | technical-writer | Documentation maintenance                                                                       |
+| `housekeeping`             | housekeeping     | Lint, type, test fixes                                                                          |
+| `verifier-design`          | verifier         | Generate compliance test plan from spec or stories (Design Mode)                                |
+| `verifier-audit`           | verifier         | Grey-box fidelity audit of delivered work against spec/stories and PRD/spec intent (Audit Mode) |
 
 ---
 
@@ -336,16 +336,16 @@ developer: implement
 product-engineer: refine → generate-spec → ux-engineer: mockups → product-engineer: update
 ```
 
-### Test-First Design (Black-Box)
+### Test-First Design (Verifier)
 
 ```
 product-engineer: refine → spec → stories → plan
                                                  ↓
-black-box-tester: generate test plan (from spec or stories)
+verifier (design mode): generate test plan (from spec or stories)
                                                  ↓
 developer: implement (feature + tests from test plan)
                                                  ↓
-black-box-tester: validate compliance → validation report
+verifier (audit mode): grey-box fidelity audit → fidelity report
 ```
 
 ---

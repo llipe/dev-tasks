@@ -5,7 +5,7 @@ description: "Systematically discover edge cases by category with concrete examp
 
 # Activity: Edge-Case Refinement
 
-Systematic edge-case discovery by category with concrete examples for each. Produces a categorized edge-case catalog mapped to acceptance criteria, ensuring no high-risk boundary goes untested. Invoked by the `black-box-tester` agent in Design Mode.
+Systematic edge-case discovery by category with concrete examples for each. Produces a categorized edge-case catalog mapped to acceptance criteria, ensuring no high-risk boundary goes untested. Invoked by the `verifier` agent in Design Mode.
 
 ---
 
@@ -19,9 +19,9 @@ Discover and catalog edge cases across all relevant categories for the feature u
 
 This activity assumes:
 
-- A numbered list of acceptance criteria is available (produced by Phase 2 of `black-box-tester`).
+- A numbered list of acceptance criteria is available (produced by Phase 2 of `verifier`).
 - E2E scenarios and contract scenarios have already been drafted (or will be composed alongside).
-- The output feeds into the edge-case section of the test plan assembled by `black-box-tester`.
+- The output feeds into the edge-case section of the test plan assembled by `verifier`.
 
 ## Edge-Case Categories
 
@@ -122,7 +122,7 @@ Given a user story with AC-5: "Discount code can only be used once per user."
 
 ## Output
 
-This skill returns a categorized list of edge cases in the template format above. The calling agent (`black-box-tester`) assembles them into the edge-case section of the test plan.
+This skill returns a categorized list of edge cases in the template format above. The calling agent (`verifier`) assembles them into the edge-case section of the test plan.
 
 ## Execution Checklist
 

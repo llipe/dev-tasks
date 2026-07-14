@@ -5,7 +5,7 @@ description: "Design consumer/provider contract and schema-compatibility tests f
 
 # Activity: Contract Test Design
 
-Generate consumer/provider contract test strategies and schema compatibility checks from a specification or user story. Produces contract validation scenarios that ensure API boundaries, data schemas, and inter-service agreements are honored. Invoked by the `black-box-tester` agent in Design Mode.
+Generate consumer/provider contract test strategies and schema compatibility checks from a specification or user story. Produces contract validation scenarios that ensure API boundaries, data schemas, and inter-service agreements are honored. Invoked by the `verifier` agent in Design Mode.
 
 ---
 
@@ -19,9 +19,9 @@ Derive contract-level test scenarios that validate API boundaries, data schemas,
 
 This activity assumes:
 
-- A numbered list of acceptance criteria is available (produced by Phase 2 of `black-box-tester`).
+- A numbered list of acceptance criteria is available (produced by Phase 2 of `verifier`).
 - API endpoints, data entities, and integration points have been identified from the source artifact.
-- The output feeds into the contract section of the test plan assembled by `black-box-tester`.
+- The output feeds into the contract section of the test plan assembled by `verifier`.
 
 ## Process
 
@@ -111,7 +111,7 @@ Given a spec defining:
 
 ## Output
 
-This skill returns a list of contract scenarios in the template format above. The calling agent (`black-box-tester`) assembles them into the contract section of the test plan.
+This skill returns a list of contract scenarios in the template format above. The calling agent (`verifier`) assembles them into the contract section of the test plan.
 
 ## Final Instructions
 
