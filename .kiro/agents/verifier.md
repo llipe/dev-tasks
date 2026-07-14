@@ -84,7 +84,7 @@ Artifacts produced:
 - `/workstream/fidelity-report-{issue-or-story-id}.md` — Per-AC fidelity results, drift catalog, human-readable summary, and overall verdict
 - GitHub issue or PR updated with the report's header/verdict section
 
-When defects or Unintended drift are found, hand off to `developer` for fixes (or `product-engineer` for spec-gap escalation), then re-run Audit Mode. Per this issue's scope, the audit is **additive and non-blocking**: it does not gate PR/issue completion, and it does not replace existing quality gates (`test`/`lint`/`format:check`/`typecheck`/`audit`). Automatic trigger wiring into `developer`/`planner` and the drift-reconciliation write-back flow are out of scope for this agent definition and are tracked in the linked follow-up issue.
+When defects or Unintended drift are found, hand off to `developer` for fixes (or `product-engineer` for spec-gap escalation), then re-run Audit Mode. The audit is **additive and non-blocking**: it does not gate PR/issue completion, and it does not replace existing quality gates (`test`/`lint`/`format:check`/`typecheck`/`audit`). This mode is invoked automatically as a mandatory, non-skippable step by `developer` (post-implementation, pre-PR-ready) and by `planner` (per-story and PRD-level rollup) — `verifier` itself never triggers its own invocation or decides when to run. Drift findings from this mode are routed to `product-engineer`'s `activity-drift-reconciliation` skill for write-back into task lists, GitHub issues, or PRD/spec changelogs; `verifier` reports findings only and never performs that write-back itself.
 
 ---
 
@@ -129,7 +129,8 @@ If required inputs are missing, ask one focused clarification question with a de
 - Editing application code, PRD, spec, or the task list directly — findings are reported, not applied.
 - Hard-gating completion on drift, or replacing existing quality gates.
 - White-box code coverage or mutation testing tied to internals.
-- Automatic trigger wiring into `developer`/`planner`, and the drift-reconciliation write-back flow (task-list/checklist expansion, PRD/spec changelog updates) — tracked in the linked follow-up issue.
+- Deciding when to trigger its own invocation — automatic trigger wiring is owned by `developer` and `planner`, not by `verifier`.
+- Writing drift findings back into task lists, GitHub checklists, new issues, or PRD/spec changelogs — that write-back flow is owned by `product-engineer` via the `activity-drift-reconciliation` skill. `verifier` reports findings only.
 - Git merge/rebase operations (delegate to `developer`/`git-ops`).
 
 ## Phases
@@ -186,7 +187,7 @@ Execution follows a strict phase-gated flow. You **MUST NOT** advance to the nex
 2. **Fidelity Audit Gate (post-implement):**
    - Input: delivered behavior (codebase/PR) + `/workstream` artifacts + tests + original source (PRD/spec)
    - Output: fidelity report with drift catalog and human-readable summary
-   - This gate is additive and non-blocking to PR/issue completion (mandatory trigger wiring is out of scope for this agent — see linked follow-up issue).
+   - This gate is additive and non-blocking to PR/issue completion. It is triggered automatically and mandatorily by `developer` and `planner` (see `.kiro/agents/developer.md` and `.kiro/agents/planner.md`); drift findings route to `product-engineer`'s `activity-drift-reconciliation` skill.
 
 ## Non-Negotiable Operating Rules
 
