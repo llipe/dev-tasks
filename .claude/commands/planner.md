@@ -338,6 +338,10 @@ workstream_files:
 - typecheck: PASS | FAIL | NOT RUN
 - audit: PASS | FAIL | NOT RUN
   checklist_sync: synced | mismatch-fixed | blocked
+  verifier_audit: run | blocked
+  fidelity_verdict: High | Medium | Low | none
+  highest_drift_impact: Critical | Major | Minor | None
+  drift_findings: <count-or-none>
   next_action: <single sentence>
   END CLOSEOUT PAYLOAD
 ```
@@ -371,13 +375,14 @@ For each completed story PR:
 2. Verify required checks are successful.
 3. Verify delegated closeout payload reports `docs_drift_status` as `clean` or `drift-fixed`.
 4. Verify delegated quality gates are all `PASS` (`test`, `lint`, `format:check`, `typecheck`, `audit`).
-5. For migration-bearing stories, verify explicit user confirmation was recorded before migration apply.
-6. Verify branch is up to date with integration branch (update/rebase if required by policy). Use the `git-ops` skill for rebase and conflict resolution.
-7. Detect merge conflicts before attempting merge. If conflicts are found, invoke the `git-ops` skill to resolve them.
-8. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test and quality-gate results) and approve it.
-9. Merge PR into integration branch using one consistent strategy (default: `squash`).
-10. Confirm integration branch is green after merge before moving to next story.
-11. **Write checkpoint** — update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table.
+5. Verify the delegated closeout payload reports `verifier_audit: run` — this confirms `developer` invoked the mandatory `verifier` audit for this story. This check is a merge gate on trigger evidence only; the audit's drift findings (`fidelity_verdict`/`highest_drift_impact`/`drift_findings`) **MUST NOT** block the merge.
+6. For migration-bearing stories, verify explicit user confirmation was recorded before migration apply.
+7. Verify branch is up to date with integration branch (update/rebase if required by policy). Use the `git-ops` skill for rebase and conflict resolution.
+8. Detect merge conflicts before attempting merge. If conflicts are found, invoke the `git-ops` skill to resolve them.
+9. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test and quality-gate results) and approve it.
+10. Merge PR into integration branch using one consistent strategy (default: `squash`).
+11. Confirm integration branch is green after merge before moving to next story.
+12. **Write checkpoint** — update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table.
 
 If any merge gate fails, stop and report exact blocker and PR link.
 
@@ -401,14 +406,15 @@ Planner **MUST NOT** allow multiple open story PRs to merge concurrently.
 After all stories are merged into integration:
 
 1. Run full integration test suite on integration branch.
-2. Invoke `technical-writer` for a planner-level drift/stale-doc validation pass against integrated changes; unresolved drift **MUST** block handoff.
-3. Open one consolidated PR from integration branch to `main`.
-4. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
-5. Wait for the user to approve and merge the PR into `main`.
-6. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
+2. Invoke `verifier` in `audit` mode for a **PRD-level rollup audit** against the full integrated scope (all merged stories on the integration branch, cross-checked against the source PRD/spec/milestone). This is mandatory and non-skippable — it runs whether or not any story-level drift was previously reported. Post the resulting human-readable summary to the plan/milestone issue via `github-ops` comment conventions. Rollup drift findings **MUST NOT** block the consolidated PR handoff; Unintended/Intended drift routes to `product-engineer`'s `activity-drift-reconciliation` flow.
+3. Invoke `technical-writer` for a planner-level drift/stale-doc validation pass against integrated changes; unresolved drift **MUST** block handoff.
+4. Open one consolidated PR from integration branch to `main`.
+5. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
+6. Wait for the user to approve and merge the PR into `main`.
+7. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
    - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
    - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
-7. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
+8. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
 
 - consolidated PR URL
 - current CI/check status
@@ -464,6 +470,7 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 - All GitHub outputs are in English.
 - Final user-facing local branch state **MUST** be the integration branch for the current run, or planner **MUST** explicitly report verification failure and provide the exact checkout command.
 - Planner **MUST** end a successful run with explicit PR directives for the user (review/approve/merge) and **MUST NOT** mark the run complete before that handoff is emitted.
+- Planner **MUST** verify `verifier_audit: run` in every story's closeout payload before merging that story's PR into the integration branch, and **MUST** invoke `verifier` in `audit` mode for a PRD-level rollup audit before/alongside the consolidated PR — both triggers are mandatory and non-skippable, and neither trigger's drift findings block the corresponding merge/handoff.
 
 ---
 
