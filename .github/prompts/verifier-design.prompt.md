@@ -1,9 +1,9 @@
 ---
-agent: black-box-tester
+agent: verifier
 description: "Generate a compliance test plan from a specification or user story — Design Mode."
 ---
 
-Run the `black-box-tester` agent in **Design Mode** to generate a compliance test plan:
+Run the `verifier` agent in **Design Mode** to generate a compliance test plan:
 
 - **Repository:** `<owner/repo>`
 - **GitHub Issue:** `#<issue-number>`
@@ -25,4 +25,4 @@ Artifacts produced:
 - `/workstream/traceability-matrix-{issue-or-story-id}.md` — AC-to-test mapping
 - GitHub issue updated with test plan summary or artifact link
 
-When complete, hand off to `developer` for implementation, then use `black-box-tester-validate` after implementation to verify compliance.
+When complete, hand off to `developer` for implementation, then use `verifier-audit` after implementation to check fidelity.

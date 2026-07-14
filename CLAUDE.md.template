@@ -48,12 +48,12 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 | `/technical-writer` | Sync `/docs` with the codebase. |
 | `/housekeeping` | Fix lint/type/test-wiring issues. |
 | `/ux-engineer` | PRD/SPEC → React mockups + refinement handoff. |
-| `/black-box-tester-design` | Generate a compliance test plan + traceability matrix from a spec/story. |
-| `/black-box-tester-validate` | Validate delivered behavior against requirements + test plan. |
+| `/verifier-design` | Generate a compliance test plan + traceability matrix from a spec/story (Design Mode). |
+| `/verifier-audit` | Grey-box fidelity audit of delivered work against requirements and PRD/spec intent (Audit Mode). |
 
 ### Subagents (`.claude/agents/`)
 
-`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `black-box-tester` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
+`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `verifier` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
 
 ### Orchestration model (important)
 

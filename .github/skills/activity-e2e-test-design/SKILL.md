@@ -1,6 +1,6 @@
 # Activity: E2E Black-Box Test Design
 
-Generate end-to-end black-box test scenarios from a complete specification or a single user story. Produces executable scenario descriptions tied to acceptance criteria, covering happy paths, negative paths, and abuse cases. Invoked by the `black-box-tester` agent in Design Mode.
+Generate end-to-end black-box test scenarios from a complete specification or a single user story. Produces executable scenario descriptions tied to acceptance criteria, covering happy paths, negative paths, and abuse cases. Invoked by the `verifier` agent in Design Mode.
 
 ---
 
@@ -14,9 +14,9 @@ Derive a comprehensive set of end-to-end black-box test scenarios from requireme
 
 This activity assumes:
 
-- A numbered list of acceptance criteria is available (produced by Phase 2 of `black-box-tester`).
+- A numbered list of acceptance criteria is available (produced by Phase 2 of `verifier`).
 - The source artifact (spec or user story) has been read and parsed.
-- The output feeds into the test plan assembled by `black-box-tester`.
+- The output feeds into the test plan assembled by `verifier`.
 
 ## Process
 
@@ -108,7 +108,7 @@ Given a user story:
 
 ## Output
 
-This skill returns a list of scenarios in the template format above. The calling agent (`black-box-tester`) assembles them into the E2E section of the test plan.
+This skill returns a list of scenarios in the template format above. The calling agent (`verifier`) assembles them into the E2E section of the test plan.
 
 ## Final Instructions
 

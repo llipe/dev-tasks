@@ -46,16 +46,16 @@ If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MU
 
 > **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). All three platforms define the same 8 agents below. On Kiro, each agent file also embeds an "Invocation Modes" section in place of separate prompt files (see [Prompts](#prompts)).
 
-| Agent                | File                        | Purpose                                                                                                                               |
-| -------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **product-engineer** | `product-engineer.agent.md` | Preparation agent — owns the full pre-coding chain: PRD, spec, stories, plan. Hands off to `developer` or `planner` for execution.    |
-| **developer**        | `developer.agent.md`        | Execution agent — implements code from an existing task list. Runs `implement` only.                                                  |
-| **planner**          | `planner.agent.md`          | Multi-story orchestration — dependency-ordered sequential execution with checkpoint/resume and one consolidated integration PR.       |
-| **technical-writer** | `technical-writer.agent.md` | Autonomous documentation maintenance                                                                                                  |
-| **housekeeping**     | `housekeeping.agent.md`     | Lint, type, and test-wiring fixes                                                                                                     |
-| **github-ops**       | `github-ops.agent.md`       | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy            |
-| **ux-engineer**      | `ux-engineer.agent.md`      | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer`               |
-| **black-box-tester** | `black-box-tester.agent.md` | Deep black-box testing — derives compliance test plans and edge cases from specs/stories, validates "requested vs delivered" behavior |
+| Agent                | File                        | Purpose                                                                                                                                                                                             |
+| -------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **product-engineer** | `product-engineer.agent.md` | Preparation agent — owns the full pre-coding chain: PRD, spec, stories, plan. Hands off to `developer` or `planner` for execution.                                                                  |
+| **developer**        | `developer.agent.md`        | Execution agent — implements code from an existing task list. Runs `implement` only.                                                                                                                |
+| **planner**          | `planner.agent.md`          | Multi-story orchestration — dependency-ordered sequential execution with checkpoint/resume and one consolidated integration PR.                                                                     |
+| **technical-writer** | `technical-writer.agent.md` | Autonomous documentation maintenance                                                                                                                                                                |
+| **housekeeping**     | `housekeeping.agent.md`     | Lint, type, and test-wiring fixes                                                                                                                                                                   |
+| **github-ops**       | `github-ops.agent.md`       | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy                                                                          |
+| **ux-engineer**      | `ux-engineer.agent.md`      | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer`                                                                             |
+| **verifier**         | `verifier.agent.md`         | Verification agent — owns compliance test-plan design (`design` mode) and post-implementation grey-box fidelity auditing (`audit` mode) against codebase, `/workstream`, tests, and PRD/spec intent |
 
 ## Skills
 
@@ -74,10 +74,10 @@ These are the composable activities from the development workflow, converted to 
 | **activity-generate-spec**        | `skills/activity-generate-spec/`        | Transform PRD into technical specification                                   | `product-engineer` |
 | **activity-generate-stories**     | `skills/activity-generate-stories/`     | Break spec into user stories with coverage validation                        | `product-engineer` |
 | **activity-publish-github**       | `skills/activity-publish-github/`       | Publish stories as GitHub Issues via MCP                                     | `product-engineer` |
-| **activity-e2e-test-design**      | `skills/activity-e2e-test-design/`      | End-to-end black-box test scenario generation from spec/stories              | `black-box-tester` |
-| **activity-contract-test-design** | `skills/activity-contract-test-design/` | Consumer/provider contract and schema compatibility test strategy            | `black-box-tester` |
-| **activity-edge-case-refinement** | `skills/activity-edge-case-refinement/` | Systematic edge-case discovery by category with concrete examples            | `black-box-tester` |
-| **activity-random-test-tactics**  | `skills/activity-random-test-tactics/`  | Randomized, fuzz, and property-inspired test generation with reproducibility | `black-box-tester` |
+| **activity-e2e-test-design**      | `skills/activity-e2e-test-design/`      | End-to-end black-box test scenario generation from spec/stories              | `verifier`         |
+| **activity-contract-test-design** | `skills/activity-contract-test-design/` | Consumer/provider contract and schema compatibility test strategy            | `verifier`         |
+| **activity-edge-case-refinement** | `skills/activity-edge-case-refinement/` | Systematic edge-case discovery by category with concrete examples            | `verifier`         |
+| **activity-random-test-tactics**  | `skills/activity-random-test-tactics/`  | Randomized, fuzz, and property-inspired test generation with reproducibility | `verifier`         |
 
 ### Operational Skills
 
@@ -112,20 +112,20 @@ Prompts are entry points that configure an agent for a specific use case.
 
 > **Available for:** Copilot (`.github/prompts/*.prompt.md`), Claude Code (`.claude/commands/*.md`, invoked with `/command-name`). Kiro has no separate "prompts" concept — the invocation modes below are folded directly into the corresponding `.kiro/agents/*.md` file as an "Invocation Modes" section instead of standalone files.
 
-| Prompt                      | Agent            | Purpose                                             |
-| --------------------------- | ---------------- | --------------------------------------------------- |
-| `product-engineer-init`     | product-engineer | Initialize project foundation documents             |
-| `product-engineer-feature`  | product-engineer | Design and plan a new feature end-to-end            |
-| `product-engineer-issue`    | product-engineer | Refine and plan a GitHub Issue                      |
-| `developer-execute`         | developer        | Execute an existing task list                       |
-| `planner`                   | planner          | Orchestrate multi-story execution                   |
-| `planner-resume`            | planner          | Resume interrupted multi-story run from checkpoint  |
-| `ux-engineer`               | ux-engineer      | Generate UX mockups from PRD/SPEC                   |
-| `github-ops`                | github-ops       | GitHub consistency operations                       |
-| `technical-writer`          | technical-writer | Documentation maintenance                           |
-| `housekeeping`              | housekeeping     | Lint, type, and test fixes                          |
-| `black-box-tester-design`   | black-box-tester | Generate compliance test plan from spec or stories  |
-| `black-box-tester-validate` | black-box-tester | Validate delivered behavior against spec or stories |
+| Prompt                     | Agent            | Purpose                                                                                         |
+| -------------------------- | ---------------- | ----------------------------------------------------------------------------------------------- |
+| `product-engineer-init`    | product-engineer | Initialize project foundation documents                                                         |
+| `product-engineer-feature` | product-engineer | Design and plan a new feature end-to-end                                                        |
+| `product-engineer-issue`   | product-engineer | Refine and plan a GitHub Issue                                                                  |
+| `developer-execute`        | developer        | Execute an existing task list                                                                   |
+| `planner`                  | planner          | Orchestrate multi-story execution                                                               |
+| `planner-resume`           | planner          | Resume interrupted multi-story run from checkpoint                                              |
+| `ux-engineer`              | ux-engineer      | Generate UX mockups from PRD/SPEC                                                               |
+| `github-ops`               | github-ops       | GitHub consistency operations                                                                   |
+| `technical-writer`         | technical-writer | Documentation maintenance                                                                       |
+| `housekeeping`             | housekeeping     | Lint, type, and test fixes                                                                      |
+| `verifier-design`          | verifier         | Generate compliance test plan from spec or stories (Design Mode)                                |
+| `verifier-audit`           | verifier         | Grey-box fidelity audit of delivered work against spec/stories and PRD/spec intent (Audit Mode) |
 
 ---
 
@@ -171,16 +171,16 @@ ux-engineer: mockups → gap analysis → refinement handoff
 product-engineer: update spec/stories
 ```
 
-### Test-First Design (Black-Box)
+### Test-First Design (Verifier)
 
 ```text
 product-engineer: refine → spec → stories → plan
                                                  ↓
-black-box-tester: generate test plan (from spec or stories)
+verifier (design mode): generate test plan (from spec or stories)
                                                  ↓
 developer: implement (feature + tests from test plan)
                                                  ↓
-black-box-tester: validate compliance → validation report
+verifier (audit mode): grey-box fidelity audit → fidelity report
 ```
 
 ### Project Initialization

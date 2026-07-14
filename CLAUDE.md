@@ -42,21 +42,21 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 
 ### Commands (entry points)
 
-| Command                      | Purpose                                                                                                                                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/product-engineer`          | **Orchestrator (main thread).** Init / Feature / Issue mode: refine → spec → stories → publish → plan. Hands off to `/developer` or `/planner`.                                               |
-| `/planner`                   | **Orchestrator (main thread).** Multi-story execution with dependency ordering, per-story delegation to the `developer` subagent, checkpoint/resume (auto-detected), and one consolidated PR. |
-| `/developer`                 | **Interactive (main thread).** Step-gated implementation of a task list, pausing for approval after each sub-task.                                                                            |
-| `/github-ops`                | Audit/standardize GitHub artifacts.                                                                                                                                                           |
-| `/technical-writer`          | Sync `/docs` with the codebase.                                                                                                                                                               |
-| `/housekeeping`              | Fix lint/type/test-wiring issues.                                                                                                                                                             |
-| `/ux-engineer`               | PRD/SPEC → React mockups + refinement handoff.                                                                                                                                                |
-| `/black-box-tester-design`   | Generate a compliance test plan + traceability matrix from a spec/story.                                                                                                                      |
-| `/black-box-tester-validate` | Validate delivered behavior against requirements + test plan.                                                                                                                                 |
+| Command             | Purpose                                                                                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/product-engineer` | **Orchestrator (main thread).** Init / Feature / Issue mode: refine → spec → stories → publish → plan. Hands off to `/developer` or `/planner`.                                               |
+| `/planner`          | **Orchestrator (main thread).** Multi-story execution with dependency ordering, per-story delegation to the `developer` subagent, checkpoint/resume (auto-detected), and one consolidated PR. |
+| `/developer`        | **Interactive (main thread).** Step-gated implementation of a task list, pausing for approval after each sub-task.                                                                            |
+| `/github-ops`       | Audit/standardize GitHub artifacts.                                                                                                                                                           |
+| `/technical-writer` | Sync `/docs` with the codebase.                                                                                                                                                               |
+| `/housekeeping`     | Fix lint/type/test-wiring issues.                                                                                                                                                             |
+| `/ux-engineer`      | PRD/SPEC → React mockups + refinement handoff.                                                                                                                                                |
+| `/verifier-design`  | Generate a compliance test plan + traceability matrix from a spec/story (Design Mode).                                                                                                        |
+| `/verifier-audit`   | Grey-box fidelity audit of delivered work against requirements and PRD/spec intent (Audit Mode).                                                                                              |
 
 ### Subagents (`.claude/agents/`)
 
-`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `black-box-tester` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
+`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `verifier` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
 
 ### Orchestration model (important)
 
