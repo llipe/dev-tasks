@@ -1,6 +1,8 @@
 ---
-applyTo: "**/*.tsx"
+applyTo: "**/app/**/*.tsx"
 ---
+
+<!-- Consumers: adjust applyTo to match your Next.js app path. For React Native projects, replace with a react-native steering file (see issue #13). -->
 
 # Rule: Keep Next.js Pages and React Components Consistent
 
