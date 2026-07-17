@@ -101,11 +101,11 @@ Instructions are scoped via `applyTo` and auto-applied. Only cross-cutting rules
 
 > **Available for:** Copilot (`.github/instructions/*.instructions.md`, scoped via `applyTo`), Claude Code (`plan` and `implement` are on-demand skills instead of always-loaded instructions), Kiro (`.kiro/steering/*.md`, called "steering" and scoped via `inclusion: always|fileMatch` + `fileMatchPattern`, the Kiro analogue of `applyTo`). Kiro's steering set has a 4th file, `git-guard-notice.md` (`inclusion: always`), with no equivalent on Copilot or Claude Code — it discloses a Kiro-specific hook enforcement gap.
 
-| Instruction                 | File                                             | Scope      | Purpose                                                                  |
-| --------------------------- | ------------------------------------------------ | ---------- | ------------------------------------------------------------------------ |
-| **plan**                    | `plan.instructions.md`                           | `**`       | Convert stories or refined issues into execution-ready task lists        |
-| **implement**               | `implement.instructions.md`                      | `**`       | Execute task list with step-gated approval, branching, and PR discipline |
-| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions                                              |
+| Instruction                 | File                                             | Scope                       | Purpose                                                                  |
+| --------------------------- | ------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------ |
+| **plan**                    | `plan.instructions.md`                           | `workstream/**`             | Convert stories or refined issues into execution-ready task lists        |
+| **implement**               | `implement.instructions.md`                      | `workstream/**/tasks-*.md`  | Execute task list with step-gated approval, branching, and PR discipline |
+| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/app/**/*.tsx`           | Next.js + React conventions                                              |
 
 ## Prompts
 

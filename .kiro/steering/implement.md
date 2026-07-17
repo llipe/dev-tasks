@@ -1,5 +1,6 @@
 ---
-inclusion: always
+inclusion: fileMatch
+fileMatchPattern: "workstream/**/tasks-*.md"
 ---
 
 # Activity: Implement Task List

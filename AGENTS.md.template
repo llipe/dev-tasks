@@ -103,9 +103,9 @@ Instructions are scoped via `applyTo` and auto-applied. Only cross-cutting rules
 
 | Instruction | File | Scope | Purpose |
 |---|---|---|---|
-| **plan** | `plan.instructions.md` | `**` | Convert stories or refined issues into execution-ready task lists |
-| **implement** | `implement.instructions.md` | `**` | Execute task list with step-gated approval, branching, and PR discipline |
-| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions |
+| **plan** | `plan.instructions.md` | `workstream/**` | Convert stories or refined issues into execution-ready task lists |
+| **implement** | `implement.instructions.md` | `workstream/**/tasks-*.md` | Execute task list with step-gated approval, branching, and PR discipline |
+| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/app/**/*.tsx` | Next.js + React conventions |
 
 ## Prompts
 

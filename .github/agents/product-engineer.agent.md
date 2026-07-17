@@ -53,6 +53,12 @@ If any required input is missing, you **MUST** ask concise clarifying questions.
 
 ---
 
+## Steering Context Check
+
+> If no workstream planning artifact is open or referenced, open the relevant workstream file to ensure plan guidance loads. The plan playbook only activates when a matching workstream file is in context.
+
+---
+
 ## memo-cli Integration (When Available)
 
 ### Availability Check
