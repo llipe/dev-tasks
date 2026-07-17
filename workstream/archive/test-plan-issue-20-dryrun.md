@@ -18,53 +18,53 @@ Story input: issue #20 acceptance criteria (5 ACs covering hook wiring, ported s
 
 ### SC-1: Push to main is blocked
 
-| Field | Value |
-|---|---|
-| **AC(s)** | AC-1, AC-3 |
-| **Type** | happy-path |
-| **Severity** | critical |
-| **Preconditions** | Hook is enabled and receives a non-empty command payload. |
-| **Steps** | 1. Trigger `PreToolUse` with `git push origin main`. |
-| **Expected Result** | Hook exits 2, stderr shows a BLOCKED message. |
-| **Pass Criteria** | Exit code is 2. |
+| Field               | Value                                                     |
+| ------------------- | --------------------------------------------------------- |
+| **AC(s)**           | AC-1, AC-3                                                |
+| **Type**            | happy-path                                                |
+| **Severity**        | critical                                                  |
+| **Preconditions**   | Hook is enabled and receives a non-empty command payload. |
+| **Steps**           | 1. Trigger `PreToolUse` with `git push origin main`.      |
+| **Expected Result** | Hook exits 2, stderr shows a BLOCKED message.             |
+| **Pass Criteria**   | Exit code is 2.                                           |
 
 ### SC-2: Safe branch push is allowed
 
-| Field | Value |
-|---|---|
-| **AC(s)** | AC-3 |
-| **Type** | happy-path |
-| **Severity** | major |
-| **Preconditions** | Hook enabled. |
-| **Steps** | 1. Trigger `PreToolUse` with `git push origin feature-branch`. |
-| **Expected Result** | Hook exits 0, no output. |
-| **Pass Criteria** | Exit code is 0. |
+| Field               | Value                                                          |
+| ------------------- | -------------------------------------------------------------- |
+| **AC(s)**           | AC-3                                                           |
+| **Type**            | happy-path                                                     |
+| **Severity**        | major                                                          |
+| **Preconditions**   | Hook enabled.                                                  |
+| **Steps**           | 1. Trigger `PreToolUse` with `git push origin feature-branch`. |
+| **Expected Result** | Hook exits 0, no output.                                       |
+| **Pass Criteria**   | Exit code is 0.                                                |
 
 ### SC-3: Empty payload fails loud
 
-| Field | Value |
-|---|---|
-| **AC(s)** | AC-3 |
-| **Type** | negative-path |
-| **Severity** | critical |
-| **Preconditions** | Hook enabled. |
-| **Steps** | 1. Trigger `PreToolUse` with an empty `{}` payload. |
-| **Expected Result** | Hook exits 0 but prints a warning to stderr. |
-| **Pass Criteria** | Exit code is 0 AND stderr is non-empty. |
+| Field               | Value                                               |
+| ------------------- | --------------------------------------------------- |
+| **AC(s)**           | AC-3                                                |
+| **Type**            | negative-path                                       |
+| **Severity**        | critical                                            |
+| **Preconditions**   | Hook enabled.                                       |
+| **Steps**           | 1. Trigger `PreToolUse` with an empty `{}` payload. |
+| **Expected Result** | Hook exits 0 but prints a warning to stderr.        |
+| **Pass Criteria**   | Exit code is 0 AND stderr is non-empty.             |
 
 ## Contract Validation Scenarios
 
 ### CT-1: `PreToolUse` payload shape tolerance
 
-| Field | Value |
-|---|---|
-| **AC(s)** | AC-1, AC-3 |
-| **Contract type** | consumer-driven |
-| **Boundary** | `.kiro/hooks/scripts/git-guard.sh` stdin |
-| **Direction** | request |
-| **Input** | JSON payload with command under `.tool_input.command` instead of `.toolArgs.command` |
-| **Expected Result** | Script's fallback field extraction still finds the command and evaluates it. |
-| **Pass Criteria** | Same block/allow outcome as the canonical field name. |
+| Field               | Value                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| **AC(s)**           | AC-1, AC-3                                                                           |
+| **Contract type**   | consumer-driven                                                                      |
+| **Boundary**        | `.kiro/hooks/scripts/git-guard.sh` stdin                                             |
+| **Direction**       | request                                                                              |
+| **Input**           | JSON payload with command under `.tool_input.command` instead of `.toolArgs.command` |
+| **Expected Result** | Script's fallback field extraction still finds the command and evaluates it.         |
+| **Pass Criteria**   | Same block/allow outcome as the canonical field name.                                |
 
 ## Edge-Case Catalog
 
@@ -76,16 +76,16 @@ Story input: issue #20 acceptance criteria (5 ACs covering hook wiring, ported s
 
 ### RT-1: Fuzz commit message formats
 
-| Field | Value |
-|---|---|
-| **AC(s)** | AC-3 |
-| **Tactic type** | fuzz |
-| **Input surface** | `-m "<message>"` string |
-| **Property/Oracle** | Only messages matching the Conventional Commits regex are allowed through (exit 0); all others block (exit 2). |
-| **Iterations** | 100 |
-| **Seed** | `fuzz-AC3-{timestamp}-{hex}` |
-| **Replay instruction** | `test-runner --seed=<seed> --tactic=RT-1 --iterations=1` |
-| **Shrink strategy** | Minimize message string while preserving mismatch. |
+| Field                  | Value                                                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **AC(s)**              | AC-3                                                                                                           |
+| **Tactic type**        | fuzz                                                                                                           |
+| **Input surface**      | `-m "<message>"` string                                                                                        |
+| **Property/Oracle**    | Only messages matching the Conventional Commits regex are allowed through (exit 0); all others block (exit 2). |
+| **Iterations**         | 100                                                                                                            |
+| **Seed**               | `fuzz-AC3-{timestamp}-{hex}`                                                                                   |
+| **Replay instruction** | `test-runner --seed=<seed> --tactic=RT-1 --iterations=1`                                                       |
+| **Shrink strategy**    | Minimize message string while preserving mismatch.                                                             |
 
 ## Execution Checklist
 
@@ -96,10 +96,10 @@ Story input: issue #20 acceptance criteria (5 ACs covering hook wiring, ported s
 
 ## Traceability Matrix
 
-| AC-ID | Test-Case-ID | Observed-Result | Pass/Fail/Drift |
-|---|---|---|---|
-| AC-1 | Manual JSON structural review | Matches claim | Pass (not re-executed as automated test in this dry-run) |
-| AC-2 | Diff against `.claude/hooks/git-guard.sh` | Matches claim | Pass (not re-executed in this dry-run) |
-| AC-3 | SC-1, SC-2, SC-3, RT-1 | Not re-executed in this dry-run | Pending (would require live synthetic stdin harness) |
-| AC-4 | Manual doc review | Matches claim | Pass |
-| AC-5 | Manual doc review | Matches claim | Pass |
+| AC-ID | Test-Case-ID                              | Observed-Result                 | Pass/Fail/Drift                                          |
+| ----- | ----------------------------------------- | ------------------------------- | -------------------------------------------------------- |
+| AC-1  | Manual JSON structural review             | Matches claim                   | Pass (not re-executed as automated test in this dry-run) |
+| AC-2  | Diff against `.claude/hooks/git-guard.sh` | Matches claim                   | Pass (not re-executed in this dry-run)                   |
+| AC-3  | SC-1, SC-2, SC-3, RT-1                    | Not re-executed in this dry-run | Pending (would require live synthetic stdin harness)     |
+| AC-4  | Manual doc review                         | Matches claim                   | Pass                                                     |
+| AC-5  | Manual doc review                         | Matches claim                   | Pass                                                     |

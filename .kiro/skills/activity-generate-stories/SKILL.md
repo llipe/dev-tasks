@@ -140,12 +140,12 @@ So that [business value/benefit].
 - For JS/TS projects, you **MUST** prefer `pnpm` over `npm`.
 - You **MAY** use `npm` only when `pnpm` is unavailable or the project is explicitly npm-locked.
 - When stories reference commands, you **MUST** prefer canonical script names:
-	- `lint`, `lint:fix`
-	- `format`, `format:check`
-	- `typecheck`
-	- `test`, `test:unit`, `test:integration`, `test:e2e`
-	- `audit`
-	- `validate` (aggregate quality gate)
+  - `lint`, `lint:fix`
+  - `format`, `format:check`
+  - `typecheck`
+  - `test`, `test:unit`, `test:integration`, `test:e2e`
+  - `audit`
+  - `validate` (aggregate quality gate)
 
 ## Story Quality Criteria
 

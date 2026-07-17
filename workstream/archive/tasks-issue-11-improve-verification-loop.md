@@ -2,8 +2,8 @@
 
 ## Changelog
 
-| Version | Date       | Summary         | Author            |
-| ------- | ---------- | ---------------- | ----------------- |
+| Version | Date       | Summary           | Author           |
+| ------- | ---------- | ----------------- | ---------------- |
 | 1.0     | 2026-07-14 | Initial task list | product-engineer |
 
 ## Relevant Files
@@ -56,7 +56,6 @@
 - [ ] 1.0 Implement Issue #11 - https://github.com/llipe/dev-tasks/issues/11: Improve verification loop (deliver `verifier` agent, report format, and `black-box-tester` elimination)
 
   > Note: Scope is limited to the `verifier` agent itself, its `design`/`audit` report formats, and full removal of `black-box-tester`. Trigger wiring into `developer`/`planner` and the drift-reconciliation flow into `product-engineer`/`github-ops` are explicitly out of scope here — tracked in the linked follow-up issue #25 (blocked by this issue).
-
   - [x] 1.1 Draft the `verifier` agent identity and scope (Kiro convention first, as source of truth): author `.kiro/agents/verifier.md` with Identity section, constraints references (`AGENTS.md`, `.kiro/agents/developer.md`, `.kiro/agents/product-engineer.md`, `.kiro/agents/github-ops.md`), and explicit statement that verifier never edits code/PRD/spec/task-list directly.
   - [x] 1.2 Define the `design` invocation mode in `.kiro/agents/verifier.md`: inputs (repo, issue, source artifact, input type spec/story), chained skills (`activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`), and artifacts produced (`/workstream/test-plan-*.md`, `/workstream/traceability-matrix-*.md`) — preserving `black-box-tester`'s existing Design Mode behavior with no loss of capability (AC-7).
   - [x] 1.3 Define the `audit` invocation mode in `.kiro/agents/verifier.md`: grey-box fidelity audit reading (a) codebase implementation, (b) `/workstream` artifacts, (c) test suite vs. acceptance criteria, and (d) PRD/spec intent, producing a fidelity report with per-AC results (AC-3).

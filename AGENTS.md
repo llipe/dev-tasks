@@ -28,11 +28,11 @@ If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MU
 
 ## Taxonomy: Agent vs Skill vs Instruction
 
-| Concept         | Purpose                                                              | Loaded When                      |
-| --------------- | -------------------------------------------------------------------- | -------------------------------- |
-| **Agent**       | Autonomous role with decision-making and handoff discipline          | Invoked by name (`@agent`)       |
-| **Skill**       | Reusable on-demand capability (procedures/activities)                | On demand (invoked by agent)     |
-| **Instruction** | Scoped rule enforced automatically for matching context              | Auto-applied by runtime          |
+| Concept         | Purpose                                                     | Loaded When                  |
+| --------------- | ----------------------------------------------------------- | ---------------------------- |
+| **Agent**       | Autonomous role with decision-making and handoff discipline | Invoked by name (`@agent`)   |
+| **Skill**       | Reusable on-demand capability (procedures/activities)       | On demand (invoked by agent) |
+| **Instruction** | Scoped rule enforced automatically for matching context     | Auto-applied by runtime      |
 
 ---
 
@@ -87,11 +87,11 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 
 Instructions are scoped via `applyTo`/`fileMatchPattern` and auto-applied to matching files.
 
-| Instruction                 | File                                             | Scope                       | Purpose                                                                  |
-| --------------------------- | ------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------ |
-| **plan**                    | `plan.instructions.md`                           | `workstream/**`             | Convert stories or refined issues into execution-ready task lists        |
-| **implement**               | `implement.instructions.md`                      | `workstream/**/tasks-*.md`  | Execute task list with step-gated approval, branching, and PR discipline |
-| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/app/**/*.tsx`           | Next.js + React conventions                                              |
+| Instruction                 | File                                             | Scope                      | Purpose                                                                  |
+| --------------------------- | ------------------------------------------------ | -------------------------- | ------------------------------------------------------------------------ |
+| **plan**                    | `plan.instructions.md`                           | `workstream/**`            | Convert stories or refined issues into execution-ready task lists        |
+| **implement**               | `implement.instructions.md`                      | `workstream/**/tasks-*.md` | Execute task list with step-gated approval, branching, and PR discipline |
+| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/app/**/*.tsx`          | Next.js + React conventions                                              |
 
 ## Prompts
 

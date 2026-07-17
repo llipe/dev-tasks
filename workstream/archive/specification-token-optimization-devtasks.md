@@ -43,27 +43,27 @@ Two cost buckets exist:
 
 Always-injected on every turn:
 
-| File | Words | ~Tokens | Actually relevant when |
-| --- | --- | --- | --- |
-| `AGENTS.md` | 1,792 | ~2,400 | implementation / orchestration only |
-| `.kiro/steering/plan.md` | 1,102 | ~1,500 | **plan** activity only |
-| `.kiro/steering/implement.md` | 959 | ~1,300 | **implement** activity only |
-| `.kiro/steering/git-guard-notice.md` | 225 | ~300 | git push / merge only |
-| **Always-on baseline** | **4,078** | **~5,500 / turn** | |
+| File                                 | Words     | ~Tokens           | Actually relevant when              |
+| ------------------------------------ | --------- | ----------------- | ----------------------------------- |
+| `AGENTS.md`                          | 1,792     | ~2,400            | implementation / orchestration only |
+| `.kiro/steering/plan.md`             | 1,102     | ~1,500            | **plan** activity only              |
+| `.kiro/steering/implement.md`        | 959       | ~1,300            | **implement** activity only         |
+| `.kiro/steering/git-guard-notice.md` | 225       | ~300              | git push / merge only               |
+| **Always-on baseline**               | **4,078** | **~5,500 / turn** |                                     |
 
 Conditionally injected (`fileMatch`):
 
-| File | Words | ~Tokens | Current pattern |
-| --- | --- | --- | --- |
-| `.kiro/steering/nextjs-pages-components.md` | 2,292 | ~3,100 | `**/*.tsx` |
+| File                                        | Words | ~Tokens | Current pattern |
+| ------------------------------------------- | ----- | ------- | --------------- |
+| `.kiro/steering/nextjs-pages-components.md` | 2,292 | ~3,100  | `**/*.tsx`      |
 
 Triple-maintained (on-demand, not auto-injected):
 
-| Tree | Agents (words) | Skills (words) |
-| --- | --- | --- |
-| `.kiro/` | 14,080 | 15,178 |
-| `.github/` | 13,060 | 14,924 |
-| `.claude/` | 9,134 | 17,296 |
+| Tree       | Agents (words) | Skills (words) |
+| ---------- | -------------- | -------------- |
+| `.kiro/`   | 14,080         | 15,178         |
+| `.github/` | 13,060         | 14,924         |
+| `.claude/` | 9,134          | 17,296         |
 
 `memo-cli-usage/SKILL.md` is ~4,293 words (~5,800 tokens), roughly 4x the average
 skill.
@@ -102,8 +102,8 @@ consolidation of duplicated definition trees, skill file splitting.
 **Out of scope:** Any application code under `apps/`, `packages/`, or `docs/`.
 No behavioral change to the agents themselves — only what context loads and when.
 
-**Constraint:** All guidance MUST remain reachable. The goal is *right time*,
-not *removal*. No rule text may be deleted unless it is provably dead (e.g.
+**Constraint:** All guidance MUST remain reachable. The goal is _right time_,
+not _removal_. No rule text may be deleted unless it is provably dead (e.g.
 references a non-existent app) and confirmed with the user.
 
 ---
@@ -134,7 +134,7 @@ exactly when needed.
     ```yaml
     ---
     inclusion: fileMatch
-    fileMatchPattern: 'workstream/**/{user-stories,*-refinement,*-prd,*-plan}*.md'
+    fileMatchPattern: "workstream/**/{user-stories,*-refinement,*-prd,*-plan}*.md"
     ---
     ```
 - File: `.kiro/steering/implement.md`
@@ -148,11 +148,12 @@ exactly when needed.
     ```yaml
     ---
     inclusion: fileMatch
-    fileMatchPattern: 'workstream/**/tasks-*.md'
+    fileMatchPattern: "workstream/**/tasks-*.md"
     ---
     ```
 
 **Acceptance criteria:**
+
 - AC-R1.1: Opening/referencing a `workstream/**/tasks-*.md` file causes
   `implement.md` guidance to be available; a turn with no such file does not
   inject it.
@@ -180,20 +181,21 @@ exactly when needed.
     ```yaml
     ---
     inclusion: fileMatch
-    fileMatchPattern: '**/*.tsx'
+    fileMatchPattern: "**/*.tsx"
     ---
     ```
   - Decision gate (confirm with user before choosing):
     - **Option A (narrow):** If a Next.js surface exists or is planned, set the
       pattern to its real path, e.g.:
       ```yaml
-      fileMatchPattern: 'apps/management-hub/**/*.tsx'
+      fileMatchPattern: "apps/management-hub/**/*.tsx"
       ```
     - **Option B (retire):** If `apps/management-hub` will not exist, delete this
       steering file. React Native guidance for `apps/app` already lives in
       `AGENTS.md` ("Design Specification Practice — apps/app").
 
 **Acceptance criteria:**
+
 - AC-R2.1: Editing a `.tsx` file under `apps/app` (React Native) does NOT inject
   the Next.js pages/components rule.
 - AC-R2.2: If Option A is chosen, editing a `.tsx` file under the real Next.js
@@ -228,6 +230,7 @@ always-on and agent-specific / historical content loads on demand.
     guidance referenced in R2 Option B).
 
 **Acceptance criteria:**
+
 - AC-R3.1: `AGENTS.md` always-on content is reduced to the global constraints and
   checklist (target: < ~800 words).
 - AC-R3.2: No per-agent rule is lost — each is present in the corresponding agent
@@ -250,6 +253,7 @@ always-on and agent-specific / historical content loads on demand.
 references.
 
 Choose one canonical mechanism and apply consistently:
+
 - **Preferred:** Use Kiro's file-reference include (`#[[file:<relative_path>]]`)
   so shared body content exists once and is referenced from the thin
   tool-specific wrapper files.
@@ -257,7 +261,8 @@ Choose one canonical mechanism and apply consistently:
   and `.claude/` copies via a small sync script run in CI or a pre-commit hook.
 
 **Acceptance criteria:**
-- AC-R4.1: The plan and implement rule *body* text exists in exactly one place;
+
+- AC-R4.1: The plan and implement rule _body_ text exists in exactly one place;
   other locations reference it.
 - AC-R4.2: A documented mechanism (include or sync script) prevents future
   divergence.
@@ -274,11 +279,13 @@ Choose one canonical mechanism and apply consistently:
 **Problem:** P5. ~5,800 tokens per invocation.
 
 Split `memo-cli-usage/SKILL.md` (present in all three skill trees) into:
+
 - A concise "read/write a memo" quick reference (loaded by default) —
   target < ~1,200 words.
 - A full CLI spec loaded only when configuring/administering memo.
 
 **Acceptance criteria:**
+
 - AC-R5.1: The common read/write path is documented in the small file.
 - AC-R5.2: The full spec remains available and is referenced from the small file.
 - AC-R5.3: Applied consistently across whichever skill trees remain after R4.
@@ -297,6 +304,7 @@ Split `memo-cli-usage/SKILL.md` (present in all three skill trees) into:
     the git section of `AGENTS.md` and remove the standalone always-on file.
 
 **Acceptance criteria:**
+
 - AC-R6.1: The git-guard enforcement-gap warning is preserved somewhere
   reachable.
 - AC-R6.2: It no longer loads on every non-git turn.
@@ -314,22 +322,23 @@ Split `memo-cli-usage/SKILL.md` (present in all three skill trees) into:
 
 ### 5.1 Measured Results (Post-Implementation)
 
-| Metric | Before | After | Reduction |
-| --- | --- | --- | --- |
-| Always-on words (AGENTS.md + git-guard-notice.md) | ~4,078 | 1,119 | **73%** |
-| Always-on tokens (~words × 1.35) | ~5,500 | ~1,511 | **73%** |
-| memo-cli SKILL.md words (per invocation) | 4,293 | 553 | **87%** |
-| AGENTS.md template words | ~1,792 | 1,031 | **42%** |
-| git-guard-notice.md words | 225 | 56 | **75%** |
-| Next.js steering scope | `**/*.tsx` | `**/app/**/*.tsx` | Scoped to App Router only |
-| plan.md injection | Every turn | Only workstream files | Scoped |
-| implement.md injection | Every turn | Only tasks-*.md files | Scoped |
+| Metric                                            | Before     | After                 | Reduction                 |
+| ------------------------------------------------- | ---------- | --------------------- | ------------------------- |
+| Always-on words (AGENTS.md + git-guard-notice.md) | ~4,078     | 1,119                 | **73%**                   |
+| Always-on tokens (~words × 1.35)                  | ~5,500     | ~1,511                | **73%**                   |
+| memo-cli SKILL.md words (per invocation)          | 4,293      | 553                   | **87%**                   |
+| AGENTS.md template words                          | ~1,792     | 1,031                 | **42%**                   |
+| git-guard-notice.md words                         | 225        | 56                    | **75%**                   |
+| Next.js steering scope                            | `**/*.tsx` | `**/app/**/*.tsx`     | Scoped to App Router only |
+| plan.md injection                                 | Every turn | Only workstream files | Scoped                    |
+| implement.md injection                            | Every turn | Only tasks-*.md files | Scoped                    |
 
 ---
 
 ## 6. Verification plan
 
 For each change:
+
 1. **Front-matter/content edits (R1, R2, R6):** confirm the file body is
    byte-unchanged except the intended lines (`diff` against the pre-edit copy).
 2. **Injection behavior:** in the host environment, open a file that should

@@ -124,12 +124,12 @@ When the project includes JavaScript/TypeScript:
 - `pnpm` **MUST** be the default package manager.
 - `npm` **MAY** be used only when `pnpm` is unavailable or explicitly disallowed by project constraints.
 - `package.json` scripts **SHOULD** include canonical names:
-	- `lint`, `lint:fix`
-	- `format`, `format:check`
-	- `typecheck`
-	- `test`, `test:unit`, `test:integration`, `test:e2e`
-	- `audit`
-	- `validate` (aggregate quality gate script)
+  - `lint`, `lint:fix`
+  - `format`, `format:check`
+  - `typecheck`
+  - `test`, `test:unit`, `test:integration`, `test:e2e`
+  - `audit`
+  - `validate` (aggregate quality gate script)
 
 ---
 

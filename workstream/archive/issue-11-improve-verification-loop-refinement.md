@@ -2,10 +2,10 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                                    | Author           |
-| ------- | ---------- | ------------------------------------------------------------------------------------------------------------ | ---------------- |
-| 1.0     | 2026-07-14 | Initial refinement                                                                                            | product-engineer |
-| 1.1     | 2026-07-14 | Resolved Q1 (eliminate `black-box-tester`, full merge into `verifier`) and Q4 (drift-driven task-list expansion via `product-engineer` instead of direct developer defect handoff) | product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                      | Author           |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.0     | 2026-07-14 | Initial refinement                                                                                                                                                                                                                                                                                                                                                           | product-engineer |
+| 1.1     | 2026-07-14 | Resolved Q1 (eliminate `black-box-tester`, full merge into `verifier`) and Q4 (drift-driven task-list expansion via `product-engineer` instead of direct developer defect handoff)                                                                                                                                                                                           | product-engineer |
 | 1.2     | 2026-07-14 | Confirmed Q4 closed-task-list follow-up behavior. Split scope per Q5: this issue (#11) now covers only the `verifier` agent + report format + `black-box-tester` elimination. Trigger wiring (developer/planner mandatory audit calls) and drift reconciliation wiring (product-engineer task-list/PRD/spec updates, github-ops issue creation) moved to a new linked issue. | product-engineer |
 
 ## Summary
@@ -27,7 +27,7 @@
 1. **New agent: `verifier`.** Fully replaces `black-box-tester`. Owns both test-plan design (E2E/contract/edge/random test design — the skills `black-box-tester` used) and post-implementation fidelity auditing, as two invocation modes (`design` and `audit`) of one agent.
 2. **Eliminate `black-box-tester`.** Its agent file is removed from `.kiro/agents/` (and platform mirrors). Its design-time skills (`activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`) are retargeted to `verifier` as their primary consumer. No agent is left invoking `black-box-tester`.
 3. **Grey-box audit capability.** The verifier reads implementation source + tests (not observable behavior only) and cross-checks them against acceptance criteria and the PRD/spec, producing a fidelity report with per-AC results.
-4. **Drift classification (non-blocking) — report schema.** Every detected drift is classified by impact (e.g., Critical / Major / Minor) and by intent (Intended / Unintended / Undetermined). Results are surfaced prominently in the report. (The *routing* of that classification into task-list/PRD/spec updates is the follow-up issue's scope; this issue defines the classification and report itself.)
+4. **Drift classification (non-blocking) — report schema.** Every detected drift is classified by impact (e.g., Critical / Major / Minor) and by intent (Intended / Unintended / Undetermined). Results are surfaced prominently in the report. (The _routing_ of that classification into task-list/PRD/spec updates is the follow-up issue's scope; this issue defines the classification and report itself.)
 5. **Human-readable summary format.** Plain-language "what changed and why" summary section, part of the report artifact format.
 6. **Framework doc updates.** `AGENTS.md`, agent/skill tables, and workflow chains updated to remove `black-box-tester` and add `verifier` (delegated to `technical-writer`).
 

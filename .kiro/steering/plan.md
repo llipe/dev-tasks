@@ -83,15 +83,17 @@ When converting a **User Story** or **Refined Issue** to a **Parent Task**:
 2. **Sub-tasks:**
    - You **MUST** convert every item in the **Implementation Steps** section into a sub-task.
    - You **MUST** add explicit sub-tasks for each **Acceptance Criterion** verification.
-  - You **MUST** add explicit sub-tasks for each **Testing** requirement (unit/integration/manual/edge cases).
-  - You **MUST** include explicit validation means for each major behavior:
-    - Automated verification (test command or script).
-    - Manual/UI verification path when user-visible behavior is affected.
-  - You **MUST** include an acceptance-criteria-to-tests mapping step so each AC is explicitly covered.
-  - For JS/TS repositories, testing and quality tasks **MUST** reference canonical script names (`pnpm run <script>` preferred).
-  - If schema or data-model changes are involved, migration tasks are **required by default**; omission is allowed only with an explicit documented opt-out rationale.
-  - Migration flows **MUST** include: create migration artifact, document rollback/impact, request user confirmation before apply, apply migration after confirmation, and verify applied state.
-   - If the story involves data models, you **SHOULD** include a sub-task to generate seed data.
+
+- You **MUST** add explicit sub-tasks for each **Testing** requirement (unit/integration/manual/edge cases).
+- You **MUST** include explicit validation means for each major behavior:
+  - Automated verification (test command or script).
+  - Manual/UI verification path when user-visible behavior is affected.
+- You **MUST** include an acceptance-criteria-to-tests mapping step so each AC is explicitly covered.
+- For JS/TS repositories, testing and quality tasks **MUST** reference canonical script names (`pnpm run <script>` preferred).
+- If schema or data-model changes are involved, migration tasks are **required by default**; omission is allowed only with an explicit documented opt-out rationale.
+- Migration flows **MUST** include: create migration artifact, document rollback/impact, request user confirmation before apply, apply migration after confirmation, and verify applied state.
+- If the story involves data models, you **SHOULD** include a sub-task to generate seed data.
+
 3. **Context:** You **MAY** add a `> Note:` block under the parent task for quick reference (User Story text or Business Rules), but the checkbox structure **MUST** remain clean.
 4. **Relevant Files:** You **MUST** aggregate all "Files to Create/Modify" from selected stories into the top-level `Relevant Files` section.
 

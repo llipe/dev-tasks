@@ -31,6 +31,7 @@ memo search "<key contract or dependency>" --scope related --limit 5 --json
 ```
 
 Synthesize findings into:
+
 - Constraints to preserve
 - Rejected alternatives to avoid
 - Contracts/boundaries that must remain stable
@@ -83,11 +84,11 @@ memo write \
 
 ## Entry Types
 
-| Type | Use For |
-|------|---------|
-| `decision` | Architectural/design choices, intent, outcome |
-| `integration_point` | Cross-service contracts, API boundaries |
-| `structure` | Module layout, naming conventions |
+| Type                | Use For                                       |
+| ------------------- | --------------------------------------------- |
+| `decision`          | Architectural/design choices, intent, outcome |
+| `integration_point` | Cross-service contracts, API boundaries       |
+| `structure`         | Module layout, naming conventions             |
 
 ---
 

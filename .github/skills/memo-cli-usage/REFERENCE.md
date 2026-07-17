@@ -39,13 +39,13 @@ Using memo-cli correctly SHOULD produce these outcomes:
 
 Every write MUST have one clear purpose. Do not combine multiple purposes into one long entry.
 
-| Purpose                    | What it captures                                     | Entry Type          | Required lifecycle tag |
-| -------------------------- | ---------------------------------------------------- | ------------------- | ---------------------- |
-| Intent                     | Planned approach, constraints, expected impact       | `decision`          | `intent`               |
-| Outcome                    | Delivered behavior and validation evidence           | `decision`          | `outcome`              |
-| Durable architecture       | Long-lived technical decisions and trade-offs        | `decision`          | `decision`             |
-| Integration contract       | Cross-boundary assumptions and compatibility details | `integration_point` | `contract`             |
-| Structural convention      | Module boundaries and naming/layout rules            | `structure`         | `structure`            |
+| Purpose               | What it captures                                     | Entry Type          | Required lifecycle tag |
+| --------------------- | ---------------------------------------------------- | ------------------- | ---------------------- |
+| Intent                | Planned approach, constraints, expected impact       | `decision`          | `intent`               |
+| Outcome               | Delivered behavior and validation evidence           | `decision`          | `outcome`              |
+| Durable architecture  | Long-lived technical decisions and trade-offs        | `decision`          | `decision`             |
+| Integration contract  | Cross-boundary assumptions and compatibility details | `integration_point` | `contract`             |
+| Structural convention | Module boundaries and naming/layout rules            | `structure`         | `structure`            |
 
 Write only reusable knowledge. Do not write routine activity noise that is already obvious from a diff.
 

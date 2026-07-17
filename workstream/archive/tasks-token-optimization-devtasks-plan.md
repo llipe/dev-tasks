@@ -36,7 +36,7 @@
 ## Tasks
 
 - [x] 1.0 Convert plan/implement steering from `always` to `fileMatch` (R1)
-  - [x] 1.1 Edit `.kiro/steering/plan.md` front-matter: change `inclusion: always` to `inclusion: fileMatch` with `fileMatchPattern: "workstream/**"` 
+  - [x] 1.1 Edit `.kiro/steering/plan.md` front-matter: change `inclusion: always` to `inclusion: fileMatch` with `fileMatchPattern: "workstream/**"`
   - [x] 1.2 Edit `.kiro/steering/implement.md` front-matter: change `inclusion: always` to `inclusion: fileMatch` with `fileMatchPattern: "workstream/**/tasks-*.md"`
   - [x] 1.3 Edit `.github/instructions/plan.instructions.md` front-matter: change `applyTo: "**"` to `applyTo: "workstream/**"`
   - [x] 1.4 Edit `.github/instructions/implement.instructions.md` front-matter: change `applyTo: "**"` to `applyTo: "workstream/**/tasks-*.md"`

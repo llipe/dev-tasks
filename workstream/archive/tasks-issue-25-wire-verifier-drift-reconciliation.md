@@ -2,16 +2,16 @@
 
 ## Changelog
 
-| Version | Date       | Summary            | Author           |
-| ------- | ---------- | ------------------- | ---------------- |
-| 1.0     | 2026-07-14 | Initial task list   | product-engineer |
+| Version | Date       | Summary           | Author           |
+| ------- | ---------- | ----------------- | ---------------- |
+| 1.0     | 2026-07-14 | Initial task list | product-engineer |
 
 ## Context
 
 - **Source of scope:** GitHub Issue [#25](https://github.com/llipe/dev-tasks/issues/25) already carries a fully refined body (Summary, Refined Scope, AC-1 through AC-8, Dependencies, Testing Notes) published as part of the #11 split decision. Per the `plan` skill's Mode Detection table, the GitHub Issue itself is an acceptable refinement source when a standalone `/workstream/issue-25-*-refinement.md` doesn't exist yet — no separate refinement pass was run for this task list.
 - **Dependency:** Blocked by #11, which is closed and merged (PR #26, merged 2026-07-14T18:02:08Z). The `verifier` agent, its `design`/`audit` modes, and its fidelity/drift report format already exist at `.kiro/agents/verifier.md` (+ platform mirrors). This issue only wires mandatory trigger points into `developer`/`planner` and adds the drift-reconciliation flow into `product-engineer`/`github-ops`.
 - **Migration lifecycle tasks — documented opt-out:** No schema or data-model changes are in scope. This repository is a markdown/bash agent-definition toolkit with no database, so migration artifact/rollback/apply/verify tasks are not applicable.
-- **Package manager / quality gates:** This repository has no `package.json`; the canonical `pnpm`/`npm` script gates (`test`, `lint`, `format:check`, `typecheck`, `audit`) referenced inside the agent files are guidance for *consumer* repositories, not for verifying this repo's own changes. Verification of this repo's own changes uses `./scripts/format.sh --check` plus structural/manual review, matching the precedent set in issue #11's task list.
+- **Package manager / quality gates:** This repository has no `package.json`; the canonical `pnpm`/`npm` script gates (`test`, `lint`, `format:check`, `typecheck`, `audit`) referenced inside the agent files are guidance for _consumer_ repositories, not for verifying this repo's own changes. Verification of this repo's own changes uses `./scripts/format.sh --check` plus structural/manual review, matching the precedent set in issue #11's task list.
 
 ## Relevant Files
 
@@ -65,7 +65,6 @@
 - [x] 1.0 Implement Issue #25 - https://github.com/llipe/dev-tasks/issues/25: Wire verifier into developer/planner and drift reconciliation
 
   > Note: Scope is limited to (a) making `verifier` Audit Mode a mandatory, non-skippable trigger point in `developer` (per-issue) and `planner` (per-story + PRD-level rollup), and (b) building the drift-reconciliation flow that routes verifier findings back into task lists, GitHub checklists, new issues, and PRD/spec changelogs via `product-engineer`/`github-ops`. The `verifier` agent itself, its report format, and `black-box-tester` elimination were delivered in #11 (merged) and are out of scope here. None of this work may make drift a hard blocker of PR/issue completion (AC-8) or replace existing quality gates.
-
   - [x] 1.1 Confirm dependency satisfied: verify issue #11 is closed and merged (PR #26) and `.kiro/agents/verifier.md` exists with design/audit modes before starting any wiring work.
   - [x] 1.2 Kiro (source of truth) — wire the mandatory audit trigger into `.kiro/agents/developer.md`: add a Non-Negotiable Operating Rule stating `developer` MUST invoke `verifier` in `audit` mode post-implementation and pre-PR-ready, for every issue, with no path that skips the call (AC-1); insert the call into the Execution Flow between "run mandatory quality gates" and "convert PR from Draft to Ready for Review"; require posting the verifier human-readable summary to the issue/PR via `github-ops` comment conventions as part of that same step (AC-7); update the Completion Gate list to add "verifier audit executed and summary posted" as a mandatory condition while explicitly stating drift findings do not block completion (AC-8); add a `verifier` row to the "Integration with Other Agents" table.
   - [x] 1.3 Extend the developer closeout payload schema in `.kiro/agents/developer.md` with `verifier_audit: run | blocked` and `fidelity_verdict`/`highest_drift_impact`/`drift_findings` fields so `planner` can validate the gate was reached during delegated runs.
