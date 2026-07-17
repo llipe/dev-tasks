@@ -200,6 +200,16 @@ Rules:
 - The attribution value **MUST** identify the assisting system and version when available (for example, `GitHub Copilot v1`, `Claude Code v3`).
 - The `## Why` section **MUST** reference the appropriate issue (`Closes #<number>` or `Refs #<number>`). If no issue exists, it **MUST** reference the motivating commit (`Refs <sha>`).
 
+### Multi-Line Body Formatting
+
+When passing multi-line content via `--body` (PRs, issues, or comments), agents **MUST** ensure actual newlines are preserved in the output. Approaches, in order of preference:
+
+1. **`--body-file`** — write the body to a temp file and pass `--body-file <path>`. This avoids all shell-escaping issues.
+2. **`$'...'` quoting** — use ANSI-C quoting so `\n` is interpreted as a real newline: `--body $'## What\n\nSummary here.\n\n## Why\n\nCloses #42'`
+3. **`printf` piping** — `printf '## What\n\nSummary\n' | gh pr create --body-file -`
+
+Agents **MUST NOT** pass markdown with literal `\n` text inside double-quoted strings (e.g., `--body "## What\n\nSummary"`) — the shell does not expand `\n` in double quotes, causing the entire body to render as a single paragraph.
+
 ### PR Comments
 
 - Every PR comment **MUST** include a relevant tracker reference: issue (`#<number>`) or commit (`<sha>`).
