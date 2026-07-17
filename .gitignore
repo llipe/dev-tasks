@@ -19,6 +19,8 @@ Thumbs.db
 /docs/*.md
 !/docs/product-context.md
 !/docs/technical-guidelines.md
+!/docs/workflow-chains.md
+!/docs/agents-md-guidelines.md
 !/docs/requirements/
 
 # Ignore log files

@@ -144,6 +144,14 @@ When the project includes JavaScript/TypeScript:
 - **Location:** `/docs/`
 - **Filenames:** `product-context.md`, `technical-guidelines.md`
 
+## AGENTS.md Sizing
+
+When generating or updating `AGENTS.md` during project initialization, you **MUST** follow the sizing guidelines in `docs/agents-md-guidelines.md`:
+
+- Target ~1,000 words (~1,350 tokens)
+- Include only operational per-turn guidance (agent roster, skill roster, instructions table, general rules)
+- Move reference content (workflow chains, prompt tables, verbose explanations) to `docs/`
+
 ## Final Instructions
 
 1. You **MUST NOT** start implementing anything.
