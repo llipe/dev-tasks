@@ -502,26 +502,26 @@ Every git tag matching `v*.*.*` triggers `.github/workflows/release-bundle.yml`,
 
 #### How to create a new release
 
-1. Ensure the release changes are merged into `main`.
-2. Sync your local branch:
+Use the release automation script:
 
 ```bash
 git checkout main
 git pull origin main
+./scripts/release.sh patch   # or minor / major
 ```
 
-3. Create and push a semantic version tag (`vMAJOR.MINOR.PATCH`):
+The script:
 
-```bash
-git tag -a v1.3.0 -m "Release v1.3.0"
-git push origin v1.3.0
-```
+1. Validates pre-flight conditions (branch, clean tree, format check).
+2. Auto-generates a CHANGELOG.md entry from commit history and merged PR metadata.
+3. Suggests an increment type based on Conventional Commit analysis.
+4. Commits the changelog, creates an annotated tag, and pushes the tag.
+5. The tag push triggers `.github/workflows/release-bundle.yml` automatically.
 
-4. Wait for `.github/workflows/release-bundle.yml` to complete.
-5. Verify the GitHub Release contains both assets:
+After the workflow completes, verify the GitHub Release contains both assets:
 
-- `dev-tasks-bundle-v1.3.0.tar.gz`
-- `dev-tasks-bundle-v1.3.0.tar.gz.sha256`
+- `dev-tasks-bundle-v<version>.tar.gz`
+- `dev-tasks-bundle-v<version>.tar.gz.sha256`
 
 Optional post-release validation:
 
