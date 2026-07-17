@@ -92,24 +92,25 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
    - apply step executed only after user confirmation
    - post-apply verification recorded
 5. `technical-writer` validation **MUST** include a drift/stale-doc check report, and completion **MUST NOT** proceed while unresolved drift remains.
-6. The PR **MUST** be converted from draft to ready for review.
-7. The PR **MUST** be approved by the appropriate reviewer per the merge authority policy in `github-ops`:
+6. A `verifier` audit in `audit` mode **MUST** have run against the delivered implementation, with its human-readable summary posted to the issue/PR. This gate is mandatory and non-skippable — it **MUST NOT** be skipped regardless of drift findings, and drift findings reported by this audit **MUST NOT** block completion. This condition is satisfied once the audit has run and been posted; any resulting drift is handled by `product-engineer`'s `activity-drift-reconciliation` flow after this gate, not before it.
+7. The PR **MUST** be converted from draft to ready for review.
+8. The PR **MUST** be approved by the appropriate reviewer per the merge authority policy in `github-ops`:
    - PRs targeting an **integration branch**: `planner` reviews and approves.
    - PRs targeting **`main`**: the **user** reviews and approves.
-8. The PR **MUST** be merged by the authorized party (planner for integration branches, user for `main`).
-9. You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.
-10. You **MUST NOT** close the issue while the PR is still in draft or pending review.
-11. You **MUST** notify the user when the PR is ready for review — explicitly inform them so they can review and merge.
+9. The PR **MUST** be merged by the authorized party (planner for integration branches, user for `main`).
+10. You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.
+11. You **MUST NOT** close the issue while the PR is still in draft or pending review.
+12. You **MUST** notify the user when the PR is ready for review — explicitly inform them so they can review and merge.
 
 ---
 
 ## GitHub Execution Rules Summary
 
-| Phase              | Rule                                                                                               |
-| ------------------ | -------------------------------------------------------------------------------------------------- |
-| **Before coding**  | Confirm issue open → Create branch (`github-ops`) → Open draft PR (`github-ops`) → Sync checklists |
-| **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval                           |
-| **Before closing** | All ACs verified → Quality gates pass (test/lint/format/typecheck/audit) → migration confirmation/apply/verify (when applicable) → docs drift check clear → PR ready → Approved → Merged → Then close issue |
+| Phase              | Rule                                                                                                                                                                                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Before coding**  | Confirm issue open → Create branch (`github-ops`) → Open draft PR (`github-ops`) → Sync checklists                                                                                                                                                                        |
+| **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval                                                                                                                                                                                                  |
+| **Before closing** | All ACs verified → Quality gates pass (test/lint/format/typecheck/audit) → migration confirmation/apply/verify (when applicable) → docs drift check clear → verifier audit run + summary posted (non-blocking on drift) → PR ready → Approved → Merged → Then close issue |
 
 ---
 

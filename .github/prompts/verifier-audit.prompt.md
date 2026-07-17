@@ -30,4 +30,4 @@ The fidelity report includes:
 - Edge-case and randomized test outcomes (when a prior test plan exists)
 - Recommendations per drift item
 
-When defects or Unintended drift are found, hand off to `developer` for fixes (or `product-engineer` for spec-gap escalation), then re-run the audit.
+This mode is now also invoked automatically as a mandatory, non-skippable step by `developer` (post-implementation, pre-PR-ready, per issue) and by `planner` (per-story and PRD-level rollup) — this manual prompt remains available for ad-hoc or standalone audits outside that automatic flow. When defects or Unintended drift are found, they route to `product-engineer`'s `activity-drift-reconciliation` skill (task-list/checklist expansion, new issue via `github-ops`, or a human-confirmed PRD/spec changelog update), rather than only "hand off to developer for fixes" — implementation defects still go to `developer`, but write-back of drift findings is owned by `product-engineer`. Re-run the audit after remediation.

@@ -20,6 +20,7 @@ All work in this repository **MUST**:
 - Treat `/DESIGN.md` as the source of truth for visual tokens, components, and design guidance; update it whenever UI contracts change.
 - Maintain document changelogs when updating generated artifacts (PRDs, specs, stories, refinements).
 - Produce English-only output for docs, comments, and generated content.
+- The `verifier` audit (`audit` mode) is a mandatory, non-skippable step triggered automatically by `developer` (per issue, pre-PR-ready) and `planner` (per story and PRD-level rollup). Drift findings are non-blocking to PR/issue completion and route to `product-engineer`'s `activity-drift-reconciliation` skill for write-back into task lists, GitHub issues, or PRD/spec changelogs.
 
 These mirror the General Agent Guidelines in `AGENTS.md`. The "no merge to `main`" and Conventional Commits rules are additionally enforced deterministically by hooks in `.claude/settings.json`.
 
@@ -64,7 +65,7 @@ Claude Code subagents **cannot spawn other subagents** — the hierarchy is flat
 
 ### Skills (`.claude/skills/`)
 
-Activity skills: `activity-init`, `activity-refine`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`. Process skills: `plan`, `implement` (the single source of truth for task-list execution rules). Operational: `git-ops`, `webapp-mockup`, `memo-cli-usage`.
+Activity skills: `activity-init`, `activity-refine`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`, `activity-drift-reconciliation` (routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates — used by `product-engineer`). Process skills: `plan`, `implement` (the single source of truth for task-list execution rules, including the mandatory `verifier` audit gate). Operational: `git-ops`, `webapp-mockup`, `memo-cli-usage`.
 
 `plan` and `implement` were the always-loaded Copilot instructions; as skills they load on demand instead of consuming context every turn.
 

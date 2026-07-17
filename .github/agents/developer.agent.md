@@ -75,6 +75,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 15. **Package manager preference:** For JS/TS projects, you **MUST** prefer `pnpm` over `npm` for dependency and script commands, except when `pnpm` is unavailable or project constraints explicitly require `npm`.
 16. **Canonical quality scripts:** For JS/TS projects, you **MUST** use canonical scripts when available: `lint`, `format:check`, `typecheck`, `test`, `audit`, and `validate`.
 17. **Migration safety gate:** For schema/data-model changes, you **MUST** obtain explicit user confirmation before running any migration apply command.
+18. **Mandatory verifier audit trigger:** You **MUST** invoke `verifier` in `audit` mode post-implementation and pre-PR-ready, for every issue you implement, with no path that skips the call. This is not optional and is not gated behind user request. You **MUST** post the resulting human-readable summary to the issue/PR via `github-ops` comment conventions as part of this same step. Drift findings from the audit **MUST NOT** block completion — remediation of Unintended drift and PRD/spec changelog updates for Intended drift are routed through `product-engineer`'s `activity-drift-reconciliation` skill, not handled inline by `developer`.
 
 ---
 
@@ -89,22 +90,25 @@ Follow `.github/instructions/implement.instructions.md`:
 5. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
 6. When all sub-tasks are complete:
    - Verify all acceptance criteria.
-  - Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
-  - For migration-bearing changes, confirm migration artifact/rollback notes and execute apply only after explicit user confirmation.
-  - Invoke `technical-writer` for documentation update and drift/stale-doc validation.
-   - Convert PR from Draft to Ready for Review.
+
+- Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
+- For migration-bearing changes, confirm migration artifact/rollback notes and execute apply only after explicit user confirmation.
+- Invoke `verifier` in `audit` mode against the delivered implementation, and post its human-readable summary to the issue/PR via `github-ops` comment conventions. This step is mandatory and non-skippable; drift findings reported by `verifier` do not block this step or PR/issue completion.
+- Invoke `technical-writer` for documentation update and drift/stale-doc validation.
+- Convert PR from Draft to Ready for Review.
 
 ---
 
 ## Integration with Other Agents
 
-| Agent              | Relationship                                                                                                            |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `product-engineer` | Produces the task lists and refined issues that `developer` executes                                                    |
-| `planner`          | Orchestrates multi-story runs — delegates each story to `developer` in Execute Mode with an integration branch override |
-| `technical-writer` | Invoked by `developer` before PR is marked ready — updates `/docs`                                                      |
-| `housekeeping`     | Can be invoked during implementation for lint/type/test-wiring fixes                                                    |
-| `github-ops`       | Defines conventions for all GitHub artifacts — `developer` follows these rules                                          |
+| Agent              | Relationship                                                                                                                                                                                                               |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `product-engineer` | Produces the task lists and refined issues that `developer` executes                                                                                                                                                       |
+| `planner`          | Orchestrates multi-story runs — delegates each story to `developer` in Execute Mode with an integration branch override                                                                                                    |
+| `verifier`         | Invoked by `developer` in `audit` mode, post-implementation and pre-PR-ready, mandatory and non-skippable — reports fidelity/drift; findings route to `product-engineer`'s `activity-drift-reconciliation` for remediation |
+| `technical-writer` | Invoked by `developer` before PR is marked ready — updates `/docs`                                                                                                                                                         |
+| `housekeeping`     | Can be invoked during implementation for lint/type/test-wiring fixes                                                                                                                                                       |
+| `github-ops`       | Defines conventions for all GitHub artifacts — `developer` follows these rules                                                                                                                                             |
 
 ---
 
@@ -201,13 +205,14 @@ Before marking a Story/Issue done:
 2. Required tests **MUST** pass and be recorded.
 3. Mandatory quality gates **MUST** pass and be recorded: `test`, `lint`, `format:check`, `typecheck`, `audit`.
 4. For migration-bearing changes, migration lifecycle evidence **MUST** be recorded (artifact, rollback notes, explicit user-confirmed apply, verification).
-5. `technical-writer` agent **MUST** have run and produced both a delta report and a drift/stale-doc validation result.
-6. `/docs` **MUST** be updated to current state.
-7. `/workstream` **SHOULD** be cleaned (active artifacts retained, obsolete artifacts archived/removed).
-8. If memo-cli is available, outcome entry **MUST** be written to memo before PR conversion.
-9. PR **MUST** be ready, approved, and merged.
-10. You **MUST NOT** close the GitHub Issue until all conditions above are met.
-11. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.
+5. `verifier` audit **MUST** have run and its human-readable summary **MUST** be posted to the issue/PR. Drift findings reported by this audit **MUST NOT** block completion — this condition is satisfied once the audit has run and been posted, regardless of drift findings.
+6. `technical-writer` agent **MUST** have run and produced both a delta report and a drift/stale-doc validation result.
+7. `/docs` **MUST** be updated to current state.
+8. `/workstream` **SHOULD** be cleaned (active artifacts retained, obsolete artifacts archived/removed).
+9. If memo-cli is available, outcome entry **MUST** be written to memo before PR conversion.
+10. PR **MUST** be ready, approved, and merged.
+11. You **MUST NOT** close the GitHub Issue until all conditions above are met.
+12. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.
 
 ---
 
@@ -263,6 +268,10 @@ workstream_files:
 - typecheck: PASS | FAIL | NOT RUN
 - audit: PASS | FAIL | NOT RUN
   checklist_sync: synced | mismatch-fixed | blocked
+  verifier_audit: run | blocked
+  fidelity_verdict: High | Medium | Low | none
+  highest_drift_impact: Critical | Major | Minor | None
+  drift_findings: <count-or-none>
   next_action: <single sentence>
   END CLOSEOUT PAYLOAD
 ```

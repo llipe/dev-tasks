@@ -48,9 +48,9 @@ If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MU
 
 | Agent | File | Purpose |
 |---|---|---|
-| **product-engineer** | `product-engineer.agent.md` | Preparation agent — owns the full pre-coding chain: PRD, spec, stories, plan. Hands off to `developer` or `planner` for execution. |
-| **developer** | `developer.agent.md` | Execution agent — implements code from an existing task list. Runs `implement` only. |
-| **planner** | `planner.agent.md` | Multi-story orchestration — dependency-ordered sequential execution with checkpoint/resume and one consolidated integration PR. |
+| **product-engineer** | `product-engineer.agent.md` | Preparation agent — owns the full pre-coding chain: PRD, spec, stories, plan. Owns drift-reconciliation (`activity-drift-reconciliation`) for findings handed off by `developer`/`planner`. Hands off to `developer` or `planner` for execution. |
+| **developer** | `developer.agent.md` | Execution agent — implements code from an existing task list. Runs `implement`, including a mandatory, non-skippable `verifier` audit before every PR is marked ready. |
+| **planner** | `planner.agent.md` | Multi-story orchestration — dependency-ordered sequential execution with checkpoint/resume, a mandatory per-story and PRD-level rollup `verifier` audit gate, and one consolidated integration PR. |
 | **technical-writer** | `technical-writer.agent.md` | Autonomous documentation maintenance |
 | **housekeeping** | `housekeeping.agent.md` | Lint, type, and test-wiring fixes |
 | **github-ops** | `github-ops.agent.md` | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy |
@@ -78,6 +78,7 @@ These are the composable activities from the development workflow, converted to 
 | **activity-contract-test-design** | `skills/activity-contract-test-design/` | Consumer/provider contract and schema compatibility test strategy | `verifier` |
 | **activity-edge-case-refinement** | `skills/activity-edge-case-refinement/` | Systematic edge-case discovery by category with concrete examples | `verifier` |
 | **activity-random-test-tactics** | `skills/activity-random-test-tactics/` | Randomized, fuzz, and property-inspired test generation with reproducibility | `verifier` |
+| **activity-drift-reconciliation** | `skills/activity-drift-reconciliation/` | Routes verifier drift findings into task-list/checklist expansion, new issues, or PRD/spec changelog write-back (human-confirmed) | `product-engineer` |
 
 ### Operational Skills
 
@@ -178,9 +179,11 @@ product-engineer: refine → spec → stories → plan
                                                  ↓
 verifier (design mode): generate test plan (from spec or stories)
                                                  ↓
-developer: implement (feature + tests from test plan)
-                                                 ↓
-verifier (audit mode): grey-box fidelity audit → fidelity report
+developer/planner: implement (feature + tests from test plan)
+                        ↓ (automatic, mandatory, non-skippable)
+                    verifier (audit mode): grey-box fidelity audit → fidelity report
+                        ↓ (drift findings, non-blocking)
+                    product-engineer: activity-drift-reconciliation
 ```
 
 ### Project Initialization
@@ -206,3 +209,4 @@ All AI coding agents working in this repository **MUST**:
 - Use the `git-ops` skill for branch management, rebase, and conflict resolution
 - If `memo-cli` is installed and `memo setup validate` passes: `product-engineer` **MUST** read from memo at session start; `developer` **MUST** write intent and outcome entries per story; `technical-writer` **MUST** write one memo entry per ADR created and per significant doc change
 - If `memo-cli` is installed but not configured (validation fails), ask the user to run `memo setup init` before proceeding with memo operations
+- The `verifier` audit (`audit` mode) is a mandatory, non-skippable step triggered automatically by `developer` (per issue, pre-PR-ready) and `planner` (per story and PRD-level rollup) — it is never optional and never manually invoked as a substitute for this automatic trigger. Drift findings from this audit are non-blocking to PR/issue completion and are routed to `product-engineer`'s `activity-drift-reconciliation` skill for write-back.

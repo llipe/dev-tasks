@@ -155,6 +155,7 @@ This agent invokes the following **skills** for each activity. You **MUST** load
 | Generate user stories            | `activity-generate-stories`                |
 | Publish stories to GitHub        | `activity-publish-github`                  |
 | Create task list                 | `plan` (steering document — always loaded) |
+| Route verifier drift findings    | `activity-drift-reconciliation`            |
 
 ---
 
@@ -167,6 +168,7 @@ This agent invokes the following **skills** for each activity. You **MUST** load
 5. **Document changelogs:** When updating an existing document (PRD, spec, stories), you **MUST** add a new Changelog row with incremented version, date, summary, and author.
 6. **Handoff discipline:** After producing the task list, you **MUST** explicitly tell the user: "Task list is ready. Use `developer` to start implementation."
 7. **Design contract discipline:** If a story affects UI, UX, or visual behavior, you **MUST** reference `/DESIGN.md` in the spec/stories and include explicit DESIGN.md impact notes (tokens, components, or prose guidance to add/update).
+8. **Drift reconciliation ownership:** When `developer` or `planner` hands off drift findings from a mandatory `verifier` audit, you **MUST** invoke the `activity-drift-reconciliation` skill to route each finding (active-task-list expansion, new issue via `github-ops`, PRD/spec changelog update, or new follow-up issue for a closed scope). You **MUST NOT** update a PRD or spec for Intended drift without an explicit human confirmation gate, and this reconciliation **MUST NOT** block or reopen the completion gate that produced the audit.
 
 ---
 
