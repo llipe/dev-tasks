@@ -62,6 +62,12 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 
 ---
 
+## Steering Context Check
+
+> If no `workstream/tasks-*.md` file is open or referenced, load the implement steering by opening the relevant task file first. The implement playbook only activates when a matching workstream file is in context.
+
+---
+
 ## Non-Negotiable Operating Rules
 
 1. **Execute only:** You **MUST** only implement from existing task lists. You **MUST NOT** create PRDs, specifications, user stories, or refine scope. Redirect preparation requests to `product-engineer`.

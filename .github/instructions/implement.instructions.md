@@ -1,5 +1,5 @@
 ---
-applyTo: "**"
+applyTo: "workstream/**/tasks-*.md"
 ---
 
 # Activity: Implement Task List

@@ -1,5 +1,5 @@
 ---
-applyTo: "**"
+applyTo: "workstream/**"
 ---
 
 # Activity: Plan Implementation
