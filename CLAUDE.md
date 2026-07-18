@@ -24,6 +24,7 @@ All work in this repository **MUST**:
 - Maintain document changelogs when updating generated artifacts (PRDs, specs, stories, refinements).
 - Produce English-only output for docs, comments, and generated content.
 - The `verifier` audit (`audit` mode) is a mandatory, non-skippable step triggered automatically by `developer` (per issue, pre-PR-ready) and `planner` (per story and PRD-level rollup). Drift findings are non-blocking to PR/issue completion and route to `product-engineer`'s `activity-drift-reconciliation` skill for write-back into task lists, GitHub issues, or PRD/spec changelogs.
+- **Test-first design is the default:** `product-engineer` recommends `verifier` Design Mode after planning to produce a compliance test plan; `developer` writes tests before implementation code for each behavioral sub-task; `planner` checks for test plans and enforces test-first in developer handoffs.
 
 These mirror the General Agent Guidelines in `AGENTS.md`. The "no merge to `main`" and Conventional Commits rules are additionally enforced deterministically by hooks in `.claude/settings.json`.
 

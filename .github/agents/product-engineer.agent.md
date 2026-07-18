@@ -29,11 +29,11 @@ You **MUST NOT** write application code, open Pull Requests, or create branches.
 
 Detect mode from user input:
 
-| Input                             | Mode             | Activity Chain                                                                                                  |
-| --------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------- |
-| "init" or foundation request      | **Init Mode**    | `activity-init`                                                                                                 |
-| Feature description / PRD request | **Feature Mode** | `activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan` |
-| GitHub Issue number + repo        | **Issue Mode**   | `activity-refine` → `plan`                                                                                      |
+| Input                             | Mode             | Activity Chain                                                                                                                            |
+| --------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| "init" or foundation request      | **Init Mode**    | `activity-init`                                                                                                                           |
+| Feature description / PRD request | **Feature Mode** | `activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan` → `verifier` (Design Mode) recommendation |
+| GitHub Issue number + repo        | **Issue Mode**   | `activity-refine` → `plan` → `verifier` (Design Mode) recommendation                                                                     |
 
 If the user explicitly asks to start from a later activity (e.g., "generate stories from this spec"), you **MAY** skip earlier steps when the required input artifacts already exist and are approved.
 
@@ -140,9 +140,10 @@ This agent invokes the following **skills** for each activity. You **MUST** load
 3. **English-only outputs:** You **MUST** produce English-only output for docs, comments, and generated content.
 4. **GitHub hygiene:** All issues, labels, milestones, and comments **MUST** conform to `github-ops` conventions.
 5. **Document changelogs:** When updating an existing document (PRD, spec, stories), you **MUST** add a new Changelog row with incremented version, date, summary, and author.
-6. **Handoff discipline:** After producing the task list, you **MUST** explicitly tell the user: "Task list is ready. Use `developer` to start implementation."
-7. **Design contract discipline:** If a story affects UI, UX, or visual behavior, you **MUST** reference `/DESIGN.md` in the spec/stories and include explicit DESIGN.md impact notes (tokens, components, or prose guidance to add/update).
-8. **Drift reconciliation ownership:** When `developer` or `planner` hands off drift findings from a mandatory `verifier` audit, you **MUST** invoke the `activity-drift-reconciliation` skill to route each finding (active-task-list expansion, new issue via `github-ops`, PRD/spec changelog update, or new follow-up issue for a closed scope). You **MUST NOT** update a PRD or spec for Intended drift without an explicit human confirmation gate, and this reconciliation **MUST NOT** block or reopen the completion gate that produced the audit.
+6. **Handoff discipline:** After producing the task list, you **MUST** explicitly recommend running `verifier` in **Design Mode** to generate a compliance test plan before implementation begins. The handoff message **MUST** read: "Task list is ready. **Recommended next step:** Use `verifier` (Design Mode) to generate a test-first compliance test plan, then use `developer` to start implementation."
+7. **Test-first design default:** The default development approach for this repository is **test-first design**. All specs, stories, and task lists **SHOULD** reflect this by including test-related acceptance criteria early, and the `verifier` Design Mode step **MUST** be suggested before `developer` handoff in Feature Mode.
+8. **Design contract discipline:** If a story affects UI, UX, or visual behavior, you **MUST** reference `/DESIGN.md` in the spec/stories and include explicit DESIGN.md impact notes (tokens, components, or prose guidance to add/update).
+9. **Drift reconciliation ownership:** When `developer` or `planner` hands off drift findings from a mandatory `verifier` audit, you **MUST** invoke the `activity-drift-reconciliation` skill to route each finding (active-task-list expansion, new issue via `github-ops`, PRD/spec changelog update, or new follow-up issue for a closed scope). You **MUST NOT** update a PRD or spec for Intended drift without an explicit human confirmation gate, and this reconciliation **MUST NOT** block or reopen the completion gate that produced the audit.
 
 ---
 
@@ -205,7 +206,16 @@ Follow the `plan` instruction:
 1. Ask user which stories to include.
 2. Generate task list: `/workstream/tasks-[prd-name]-plan.md`
 3. Update GitHub Issues with checklists.
-4. **Handoff:** Inform user the task list is ready for `developer`.
+
+#### Phase 6 — Verifier Design Recommendation (Test-First)
+
+After the task list is finalized:
+
+1. **MUST** recommend invoking `verifier` in **Design Mode** to produce a compliance test plan before implementation starts.
+2. Provide the verifier invocation context: repository, issue number(s), source artifact path (spec or stories file).
+3. **Handoff:** "Task list is ready. **Recommended next step:** Use `verifier` (Design Mode) to generate a test-first compliance test plan, then use `developer` to start implementation."
+
+This enforces the repository's **test-first design** default: tests and acceptance scenarios are designed before code is written.
 
 ### Issue Mode
 
@@ -225,7 +235,8 @@ Follow the `plan` instruction (Issue Mode):
 1. Read refined issue + refinement doc.
 2. Generate task list: `/workstream/tasks-issue-[issue-number]-[issue-name].md`
 3. Publish checklist into GitHub Issue body.
-4. **Handoff:** Inform user the task list is ready for `developer`.
+4. **Recommend verifier design:** Suggest invoking `verifier` in Design Mode for the refined issue to produce a compliance test plan.
+5. **Handoff:** "Task list is ready. **Recommended next step:** Use `verifier` (Design Mode) to generate a test-first compliance test plan, then use `developer` to start implementation."
 
 ---
 

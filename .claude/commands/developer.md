@@ -86,6 +86,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 16. **Canonical quality scripts:** For JS/TS projects, you **MUST** use canonical scripts when available: `lint`, `format:check`, `typecheck`, `test`, `audit`, and `validate`.
 17. **Migration safety gate:** For schema/data-model changes, you **MUST** obtain explicit user confirmation before running any migration apply command.
 18. **Mandatory verifier audit trigger:** You **MUST** invoke `verifier` in `audit` mode post-implementation and pre-PR-ready, for every issue you implement, with no path that skips the call. This is not optional and is not gated behind user request. You **MUST** post the resulting human-readable summary to the issue/PR via `github-ops` comment conventions as part of this same step. Drift findings from the audit **MUST NOT** block completion — remediation of Unintended drift and PRD/spec changelog updates for Intended drift are routed through `product-engineer`'s `activity-drift-reconciliation` skill, not handled inline by `developer`.
+19. **Test-first design (default approach):** The default development approach is **test-first design**. For each sub-task that introduces or modifies behavior, you **MUST** write or update tests *before* writing the implementation code, unless the sub-task is purely infrastructure/config with no testable behavior. When a `verifier` Design Mode test plan exists (`/workstream/test-plan-*.md`), you **MUST** use it as the primary guide for which tests to write first. If no test plan exists, derive test cases from the acceptance criteria in the task list before coding.
 
 ---
 
@@ -95,10 +96,11 @@ Follow the `implement` skill:
 
 1. Confirm issue is open and checklist exists in both local task file and GitHub Issue.
 2. If `/DESIGN.md` exists and the story has UI impact, load it before coding and include DESIGN.md checks in validation.
-3. Create branch + open Draft PR (if not already present).
-4. Execute one sub-task at a time in checklist order.
-5. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
-6. When all sub-tasks are complete, verify all acceptance criteria, run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available), confirm migration artifact/rollback notes and execute apply only after explicit user confirmation for migration-bearing changes, invoke `verifier` in `audit` mode against the delivered implementation and post its human-readable summary to the issue/PR via `github-ops` comment conventions (mandatory and non-skippable; drift findings do not block this step or PR/issue completion), invoke `technical-writer` for documentation update and drift/stale-doc validation, and convert the PR from Draft to Ready for Review.
+3. If a `verifier` Design Mode test plan exists (`/workstream/test-plan-*.md`) for this issue/story, load it as the test-first guide.
+4. Create branch + open Draft PR (if not already present).
+5. Execute one sub-task at a time in checklist order. For each behavioral sub-task, follow **test-first**: write/update tests first, verify they fail for the right reason, then implement to make them pass.
+6. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
+7. When all sub-tasks are complete, verify all acceptance criteria, run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available), confirm migration artifact/rollback notes and execute apply only after explicit user confirmation for migration-bearing changes, invoke `verifier` in `audit` mode against the delivered implementation and post its human-readable summary to the issue/PR via `github-ops` comment conventions (mandatory and non-skippable; drift findings do not block this step or PR/issue completion), invoke `technical-writer` for documentation update and drift/stale-doc validation, and convert the PR from Draft to Ready for Review.
 
 ---
 

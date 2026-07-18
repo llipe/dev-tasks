@@ -277,6 +277,18 @@ For each story invoke `developer` in **Execute Mode** with:
 - Execution mode (`pre-approved autonomous sequential` by default)
 - Integration target branch override
 - Story scope to avoid cross-story edits
+- Test-first directive: developer **MUST** follow test-first design (write tests before implementation)
+- Test plan reference (if available): path to `/workstream/test-plan-*.md` for this story
+
+### Verifier Design Mode (Pre-Implementation)
+
+Before delegating the first story, planner **SHOULD** check for existing `verifier` Design Mode test plans in `/workstream/test-plan-*.md`. If no test plan exists for the current scope:
+
+1. **Recommend** invoking `verifier` in Design Mode before starting implementation.
+2. If the user approves, invoke `verifier` Design Mode with the source spec/stories artifact to produce a compliance test plan.
+3. Include the test plan path in all subsequent developer handoffs.
+
+This enforces the repository's **test-first design** default at the orchestration level.
 
 Handoff template:
 
@@ -290,8 +302,11 @@ GitHub Issue: #{{ story.issue_number }}
 Task list path: {{ story.task_file }}
 Execution mode: pre-approved autonomous sequential
 Integration target branch: {{ integration_branch }}
+Test-first: YES — write/update tests before implementation for each behavioral sub-task
+Test plan: {{ test_plan_path | default: "none — derive tests from acceptance criteria" }}
 
 Implement only this story scope.
+Follow test-first design: for each behavioral sub-task, write tests first, verify they fail, then implement.
 Before coding, ask blocking clarifications if needed.
 If none, state "No clarifications needed" and proceed autonomously.
 

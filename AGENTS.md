@@ -12,6 +12,7 @@ This system brings structure and clarity to AI-assisted development by:
 - Providing specialized **agents** that orchestrate the workflow end-to-end
 - Enforcing documentation, branch discipline, and GitHub-as-source-of-truth
 - Standardizing visual design decisions through `/DESIGN.md` as the canonical UI contract
+- **Test-first design as the default**: `verifier` (Design Mode) produces compliance test plans before implementation, and `developer` writes tests before code
 
 ## Design Standard Contract (DESIGN.md)
 
@@ -115,6 +116,7 @@ All AI coding agents working in this repository **MUST**:
 - Enforce quality gates before completion: `test`, `lint`, `format:check`, `typecheck`, `audit`
 - Use the `git-ops` skill for branch management, rebase, and conflict resolution
 - The `verifier` audit is mandatory and non-skippable before every PR is marked ready. Drift findings are non-blocking and route to `product-engineer`'s `activity-drift-reconciliation`.
+- **Test-first design is the default:** `product-engineer` recommends `verifier` Design Mode after planning; `developer` writes tests before implementation code; `planner` checks for test plans and enforces test-first in developer handoffs
 - If `memo-cli` is installed and configured: agents **MUST** read/write entries per their role (see agent files for details)
 
 For workflow chains and sequencing diagrams, see [`docs/workflow-chains.md`](docs/workflow-chains.md).

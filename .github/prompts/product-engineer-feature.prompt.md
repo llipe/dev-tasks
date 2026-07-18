@@ -9,7 +9,7 @@ Run the `product-engineer` agent to design a new feature:
 - **Feature description:**
   > <Describe the feature in one or more sentences, or paste a PRD excerpt here>
 
-The agent will chain: `refine` → `generate-spec` → `generate-stories` → `publish-github` → `plan`.
+The agent will chain: `refine` → `generate-spec` → `generate-stories` → `publish-github` → `plan` → `verifier` (Design Mode) recommendation.
 
 Artifacts produced:
 
@@ -18,4 +18,4 @@ Artifacts produced:
 - User stories published as GitHub Issues
 - Execution-ready task list under `/workstream/`
 
-When complete, use `developer` (Execute Mode) or `planner` to start implementation.
+When complete, use `verifier` (Design Mode) to generate a test-first compliance test plan, then use `developer` (Execute Mode) or `planner` to start implementation.

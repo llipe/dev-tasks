@@ -8,7 +8,7 @@ Run the `product-engineer` agent to refine and plan a GitHub Issue:
 - **Repository:** `<owner/repo>`
 - **Issue number:** `#<issue-number>`
 
-The agent will chain: `refine` → `plan`.
+The agent will chain: `refine` → `plan` → `verifier` (Design Mode) recommendation.
 
 Artifacts produced:
 
@@ -16,4 +16,4 @@ Artifacts produced:
 - GitHub Issue updated with "Refined Scope" section
 - Execution-ready task list under `/workstream/`
 
-When complete, use `developer` (Execute Mode) to start implementation.
+When complete, use `verifier` (Design Mode) to generate a test-first compliance test plan, then use `developer` (Execute Mode) to start implementation.
