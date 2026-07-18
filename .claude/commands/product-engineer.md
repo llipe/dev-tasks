@@ -39,11 +39,11 @@ You **MUST NOT** write application code, open Pull Requests, or create branches.
 
 Detect mode from user input:
 
-| Input                             | Mode             | Activity Chain                                                                                                                            |
-| --------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| "init" or foundation request      | **Init Mode**    | `activity-init`                                                                                                                           |
+| Input                             | Mode             | Activity Chain                                                                                                                                            |
+| --------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "init" or foundation request      | **Init Mode**    | `activity-init`                                                                                                                                           |
 | Feature description / PRD request | **Feature Mode** | `activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan` → `verifier` (Design Mode) recommendation |
-| GitHub Issue number + repo        | **Issue Mode**   | `activity-refine` → `plan` → `verifier` (Design Mode) recommendation                                                                     |
+| GitHub Issue number + repo        | **Issue Mode**   | `activity-refine` → `plan` → `verifier` (Design Mode) recommendation                                                                                      |
 
 If the user explicitly asks to start from a later activity (e.g., "generate stories from this spec"), you **MAY** skip earlier steps when the required input artifacts already exist and are approved.
 
