@@ -2,6 +2,44 @@
 
 A set of agents, skills, and instructions for GitHub Copilot, Claude Code, Kiro, and other AI coding agents to run structured, PRD-driven development workflows. Inspired by [snarktank/ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks).
 
+## Quick Start
+
+```bash
+# 1. Bootstrap the installer into your repo
+curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \
+  -o dev-tasks.sh && chmod +x dev-tasks.sh
+
+# 2. Install (default: all platforms — Copilot + Claude Code + Kiro)
+./dev-tasks.sh install
+
+# 3. Initialize your project context (run once per project)
+#    Invoke @product-engineer in Init Mode — produces docs/product-context.md
+#    and docs/technical-guidelines.md
+
+# 4. Build a feature
+#    a) Invoke @product-engineer with a feature description or GitHub issue number
+#       → creates PRD → spec → stories → task list
+#    b) Invoke @developer with the task list path
+#       → implements, tests, and opens a PR
+
+# 5. Keep up to date
+./dev-tasks.sh update          # update toolkit files
+./dev-tasks.sh update --backup # same, but backs up current files first
+./dev-tasks.sh check           # compare installed vs latest version
+```
+
+**Platform profiles** — install only what you need:
+
+```bash
+./dev-tasks.sh install --profile copilot       # .github/ only
+./dev-tasks.sh install --profile claude        # .claude/ only
+./dev-tasks.sh install --profile kiro          # .kiro/ only
+./dev-tasks.sh install --profile claude,kiro   # mix and match
+./dev-tasks.sh install --profile all           # everything (default)
+```
+
+---
+
 ## The Core Idea
 
 This system brings structure and clarity to AI-assisted development by:
@@ -196,6 +234,62 @@ applyTo: "apps/my-app/src/**/*.tsx"
 
 ---
 
+## Workflow Chains
+
+These diagrams show how agents hand off to one another for each type of work. Match your situation to a chain below, then invoke the first agent in the chain — it drives the rest of the flow. The per-agent details are in the [Agents](#agents) reference that follows.
+
+### Full Feature (PRD-Driven)
+
+```
+product-engineer: refine → generate-spec → generate-stories → publish-github → plan
+                                                                                  ↓
+developer: implement
+```
+
+### Single GitHub Issue
+
+```
+product-engineer: refine → plan
+                            ↓
+developer: implement
+```
+
+### Multi-Story Orchestration
+
+```
+product-engineer: ... → plan
+                          ↓
+planner: orchestrate → developer: implement (per story, sequential)
+```
+
+### Quick Fix
+
+```
+developer: implement
+```
+
+### UX Validation Loop
+
+```
+product-engineer: refine → generate-spec → ux-engineer: mockups → product-engineer: update
+```
+
+### Test-First Design (Verifier)
+
+```
+product-engineer: refine → spec → stories → plan
+                                                 ↓
+verifier (design mode): generate test plan (from spec or stories)
+                                                 ↓
+developer/planner: implement (feature + tests from test plan)
+                        ↓ (automatic, mandatory, non-skippable)
+                    verifier (audit mode): grey-box fidelity audit → fidelity report
+                        ↓ (drift findings, non-blocking)
+                    product-engineer: activity-drift-reconciliation
+```
+
+---
+
 ## Agents
 
 Agents are autonomous personas that orchestrate skills and activities.
@@ -298,60 +392,6 @@ On-demand capabilities loaded only when invoked.
 | `housekeeping`             | housekeeping     | Lint, type, test fixes                                                                          |
 | `verifier-design`          | verifier         | Generate compliance test plan from spec or stories (Design Mode)                                |
 | `verifier-audit`           | verifier         | Grey-box fidelity audit of delivered work against spec/stories and PRD/spec intent (Audit Mode) |
-
----
-
-## Workflow Chains
-
-### Full Feature (PRD-Driven)
-
-```
-product-engineer: refine → generate-spec → generate-stories → publish-github → plan
-                                                                                  ↓
-developer: implement
-```
-
-### Single GitHub Issue
-
-```
-product-engineer: refine → plan
-                            ↓
-developer: implement
-```
-
-### Multi-Story Orchestration
-
-```
-product-engineer: ... → plan
-                          ↓
-planner: orchestrate → developer: implement (per story, sequential)
-```
-
-### Quick Fix
-
-```
-developer: implement
-```
-
-### UX Validation Loop
-
-```
-product-engineer: refine → generate-spec → ux-engineer: mockups → product-engineer: update
-```
-
-### Test-First Design (Verifier)
-
-```
-product-engineer: refine → spec → stories → plan
-                                                 ↓
-verifier (design mode): generate test plan (from spec or stories)
-                                                 ↓
-developer/planner: implement (feature + tests from test plan)
-                        ↓ (automatic, mandatory, non-skippable)
-                    verifier (audit mode): grey-box fidelity audit → fidelity report
-                        ↓ (drift findings, non-blocking)
-                    product-engineer: activity-drift-reconciliation
-```
 
 ---
 

@@ -462,6 +462,52 @@ install_files() {
   printf '%s\n' "${installed[@]+"${installed[@]}"}"
 }
 
+# ─── Remove Stale Files ────────────────────────────────────────────────────────
+
+remove_stale_files() {
+  # Remove files in managed directories that exist locally but are NOT in the
+  # incoming bundle. This handles renamed/deleted agents, skills, etc.
+  local src_dir="$1" dry_run="${2:-false}"
+  local removed=()
+
+  for dir in "${MANAGED_DIRS[@]}"; do
+    local local_dir="./${dir}"
+    local bundle_dir="${src_dir}/${dir}"
+
+    # Skip if the local directory doesn't exist (nothing to clean)
+    [ -d "$local_dir" ] || continue
+    # Skip if the bundle doesn't ship this directory (avoid wiping user content)
+    [ -d "$bundle_dir" ] || continue
+
+    while IFS= read -r -d '' local_file; do
+      local rel="${local_file#./}"
+      local bundle_file="${src_dir}/${rel}"
+      if [ ! -f "$bundle_file" ]; then
+        if [ "$dry_run" = "true" ]; then
+          info "[dry-run] Would remove stale file: ${rel}"
+        else
+          rm -f "$local_file"
+        fi
+        removed+=("$rel")
+      fi
+    done < <(find "$local_dir" -type f -print0 2>/dev/null)
+  done
+
+  # Clean up empty directories left behind
+  if [ "$dry_run" = "false" ]; then
+    for dir in "${MANAGED_DIRS[@]}"; do
+      [ -d "./${dir}" ] && find "./${dir}" -type d -empty -delete 2>/dev/null || true
+    done
+  fi
+
+  if [ ${#removed[@]} -gt 0 ]; then
+    info "Removed ${#removed[@]} stale file(s) no longer in the bundle."
+    for f in "${removed[@]}"; do
+      info "  - ${f}"
+    done
+  fi
+}
+
 # ─── Script Self-Update ────────────────────────────────────────────────────────
 
 self_update_script() {
@@ -795,6 +841,9 @@ cmd_install() {
 
   [ "$do_backup" = "true" ] && backup_managed_files "$dry_run"
 
+  info "Removing stale files from previous installation (profile: ${profile}) ..."
+  remove_stale_files "$src_dir" "$dry_run"
+
   info "Installing managed files (profile: ${profile}) ..."
   install_files "$src_dir" "$dry_run"
 
@@ -878,6 +927,9 @@ cmd_update() {
   fi
 
   [ "$do_backup" = "true" ] && backup_managed_files "$dry_run"
+
+  info "Removing stale files no longer in the bundle (profile: ${profile}) ..."
+  remove_stale_files "$src_dir" "$dry_run"
 
   info "Installing updated files (profile: ${profile}) ..."
   install_files "$src_dir" "$dry_run"
