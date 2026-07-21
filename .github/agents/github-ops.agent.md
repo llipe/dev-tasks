@@ -202,13 +202,22 @@ Rules:
 
 ### Multi-Line Body Formatting
 
-When passing multi-line content via `--body` (PRs, issues, or comments), agents **MUST** ensure actual newlines are preserved in the output. Approaches, in order of preference:
+Collapsed/mangled PR and issue bodies (headings, checklists, and paragraphs all flattened into one line) are a recurring failure mode. To prevent this, the following is **mandatory**, not a preference order:
 
-1. **`--body-file`** — write the body to a temp file and pass `--body-file <path>`. This avoids all shell-escaping issues.
-2. **`$'...'` quoting** — use ANSI-C quoting so `\n` is interpreted as a real newline: `--body $'## What\n\nSummary here.\n\n## Why\n\nCloses #42'`
-3. **`printf` piping** — `printf '## What\n\nSummary\n' | gh pr create --body-file -`
+1. **MCP first.** When GitHub MCP is available, agents **MUST** pass the body as a native multi-line string parameter to the MCP tool (`create_pull_request`, `update_pull_request`, `add_issue_comment`, `create_issue`, `update_issue`). This never touches a shell, so newlines cannot be lost or word-split. This is the required path whenever MCP is reachable.
+2. **`gh` fallback: `--body-file` only.** When MCP is unavailable, agents **MUST** write the body content to a temp file using the file-write tool (not `echo`, `printf`, or a heredoc assigned to a shell variable) and pass it with `--body-file <path>`. Building the body as a shell variable and interpolating it — quoted or not — **MUST NOT** be used, because unquoted expansion word-splits on newlines/spaces and quoted expansion is still vulnerable to how the variable was assembled upstream (e.g. `tr`, `printf` without `-v`, command substitution stripping trailing newlines).
+3. Agents **MUST NOT** pass markdown with literal `\n` text inside double-quoted strings (e.g., `--body "## What\n\nSummary"`) — the shell does not expand `\n` in double quotes, causing the entire body to render as a single paragraph.
+4. `$'...'` ANSI-C quoting **MAY** be used only for short, single-purpose status comments with no headings/lists; it **MUST NOT** be used for structured PR/issue bodies (What/Why/How/Testing/Checklist), where `--body-file` is required.
 
-Agents **MUST NOT** pass markdown with literal `\n` text inside double-quoted strings (e.g., `--body "## What\n\nSummary"`) — the shell does not expand `\n` in double quotes, causing the entire body to render as a single paragraph.
+#### Mandatory Verification After Write
+
+After every `create`/`update` operation that sets a multi-section body (PR description, issue body, structured comment), the agent **MUST** immediately read the body back (`gh pr view <number> --json body -q .body`, `gh issue view <number> --json body -q .body`, or the MCP equivalent read) and confirm:
+
+- Each `## <Section>` heading appears at the start of its own line (not mid-paragraph).
+- Checklist items render as `- [ ]` / `- [x]` on their own lines, not inline with surrounding prose.
+- Sections are separated by blank lines.
+
+If the read-back body is flattened or malformed, the agent **MUST** immediately re-edit it via `--body-file` (or the MCP update tool) before proceeding — it **MUST NOT** leave a malformed body in place and move on.
 
 ### PR Comments
 
@@ -384,6 +393,7 @@ Rules:
 5. **Idempotent operations:** Running `github-ops` on an already-compliant artifact **MUST** produce no changes.
 6. **No destructive actions without confirmation:** Renaming issues, deleting labels, or closing milestones **MUST** require explicit user approval.
 7. **No merging into `main` without user approval:** PRs targeting `main` **MUST NOT** be merged by any agent. Only the user may approve and merge.
+8. **No shell-interpolated multi-line bodies:** Every PR/issue body or structured comment **MUST** be created via MCP native parameters or `gh --body-file`, and **MUST** be read back and verified to render with intact headings/line breaks before the operation is considered complete (see [Multi-Line Body Formatting](#multi-line-body-formatting)).
 
 ---
 
