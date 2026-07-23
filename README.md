@@ -238,6 +238,85 @@ applyTo: "apps/my-app/src/**/*.tsx"
 
 These diagrams show how agents hand off to one another for each type of work. Match your situation to a chain below, then invoke the first agent in the chain — it drives the rest of the flow. The per-agent details are in the [Agents](#agents) reference that follows.
 
+### Agent Interaction Overview
+
+```mermaid
+flowchart TD
+    %% Agents
+    PE[product-engineer]
+    DEV[developer]
+    PL[planner]
+    UX[ux-engineer]
+    VD[verifier\nDesign Mode]
+    VA[verifier\nAudit Mode]
+    GO[github-ops]
+    TW[technical-writer]
+    HK[housekeeping]
+
+    %% Skills (grouped)
+    subgraph "product-engineer skills"
+        S_INIT[activity-init]
+        S_REFINE[activity-refine]
+        S_SPEC[activity-generate-spec]
+        S_STORIES[activity-generate-stories]
+        S_PUBLISH[activity-publish-github]
+        S_DRIFT[activity-drift-reconciliation]
+    end
+
+    subgraph "verifier skills"
+        S_E2E[activity-e2e-test-design]
+        S_CONTRACT[activity-contract-test-design]
+        S_EDGE[activity-edge-case-refinement]
+        S_RANDOM[activity-random-test-tactics]
+    end
+
+    subgraph "shared skills"
+        S_GITOPS[git-ops]
+        S_MEMO[memo-cli-usage]
+        S_MOCKUP[webapp-mockup]
+    end
+
+    %% Main workflow: product-engineer → developer
+    PE -->|"PRD → spec → stories → plan"| DEV
+    PE -->|"multi-story plan"| PL
+    PL -->|"delegates per story"| DEV
+
+    %% UX loop
+    PE -->|"spec"| UX
+    UX -->|"gap analysis & refinements"| PE
+
+    %% Verifier design mode (test-first)
+    PE -->|"spec/stories"| VD
+    VD -->|"test plan"| DEV
+
+    %% Mandatory audit before PR
+    DEV -->|"PR ready"| VA
+    VA -->|"fidelity report"| DEV
+
+    %% Drift reconciliation
+    VA -.->|"drift findings\n(non-blocking)"| PE
+
+    %% Skill usage
+    PE --- S_INIT & S_REFINE & S_SPEC & S_STORIES & S_PUBLISH & S_DRIFT
+    VD --- S_E2E & S_CONTRACT & S_EDGE & S_RANDOM
+    DEV --- S_GITOPS & S_MEMO
+    PL --- S_GITOPS
+    UX --- S_MOCKUP
+    TW --- S_MEMO
+    PE --- S_MEMO
+
+    %% GitHub-ops supports all agents
+    GO -.->|"issues, PRs, labels"| PE
+    GO -.->|"issues, PRs, labels"| DEV
+    GO -.->|"issues, PRs, labels"| PL
+```
+
+**Reading the diagram:**
+- Solid arrows → direct handoffs between agents
+- Dashed arrows → supporting/non-blocking interactions
+- Boxes at the bottom → skills invoked by each agent
+- The `verifier` audit before every PR is mandatory and non-skippable
+
 ### Full Feature (PRD-Driven)
 
 ```
@@ -480,7 +559,7 @@ The toolkit is distributed as a versioned tarball via **GitHub Releases**. `dev-
 | `--backup`         | Copy managed files to `.dev-tasks-backup/<timestamp>/` before replacing                                                       |
 | `--yes`            | Skip confirmation prompts (useful in CI)                                                                                      |
 
-> **Kiro guard hook — enforcement gap disclosure:** `--profile kiro`/`all` installs `.kiro/hooks/git-guard.json` + `.kiro/hooks/scripts/git-guard.sh`, a best-effort port of `.claude/hooks/git-guard.sh` that blocks pushes/merges to `main` and non-Conventional-Commit messages. **This hook is not guaranteed to be equivalent to `.claude/hooks/git-guard.sh`.** A tracked upstream Kiro defect (kirodotdev/Kiro#7375) may prevent Kiro IDE's `PreToolUse` hook from seeing command text, in which case it cannot reliably block anything; when it can't see command context it fails loud (stderr warning) rather than silently allowing. Until this is verified fixed on a live Kiro install, treat PR review as the actual enforcement backstop for these rules on Kiro. See `.kiro/steering/git-guard-notice.md` for the full disclosure.
+> **Kiro guard hook — enforcement gap disclosure:** `--profile kiro`/`all` installs `.kiro/hooks/git-guard.json` + `.kiro/hooks/scripts/git-guard.sh`, a best-effort port of `.claude/hooks/git-guard.sh` that blocks pushes/merges to `main`, non-Conventional-Commit messages, and inline `--body` on `gh issue`/`pr create|edit|comment|review` (must use `--body-file`, which prevents markdown-flattening in PR/issue bodies). **This hook is not guaranteed to be equivalent to `.claude/hooks/git-guard.sh`.** A tracked upstream Kiro defect (kirodotdev/Kiro#7375) may prevent Kiro IDE's `PreToolUse` hook from seeing command text, in which case it cannot reliably block anything; when it can't see command context it fails loud (stderr warning) rather than silently allowing. Until this is verified fixed on a live Kiro install, treat PR review as the actual enforcement backstop for these rules on Kiro. See `.kiro/steering/git-guard-notice.md` for the full disclosure.
 
 ### Managed file surface
 

@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # dev-tasks PreToolUse guard for Bash commands.
 #
-# Enforces two repository invariants deterministically (not left to the model):
+# Enforces three repository invariants deterministically (not left to the model):
 #   1. No agent may merge or push into the default branch `main`.
 #   2. `git commit` messages must follow Conventional Commits.
+#   3. `gh issue|pr create|edit|comment|review` must not pass a multi-line body
+#      inline via `--body`; `--body-file` (or stdin `--body-file -`) is required.
 #
 # Contract: receives the PreToolUse hook payload as JSON on stdin. Exit code 2
 # blocks the tool call and returns stderr to Claude as feedback; exit 0 allows.
@@ -73,6 +75,20 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +commit'; then
     if ! printf '%s' "$msg" | grep -Eq '^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-z0-9._-]+\))?!?: .+'; then
       block "commit message must follow Conventional Commits, e.g. 'feat(auth): add password reset'. Got: '$msg'"
     fi
+  fi
+fi
+
+# --- Rule 3: no inline --body on gh issue/PR create|edit|comment|review ------
+# PR/issue bodies passed as an inline `--body "..."` argument are a recurring
+# source of flattened markdown: multi-line strings get word-split or have
+# their newlines stripped depending on how the shell assembled them upstream.
+# `--body-file <path>` (including `--body-file -` fed from a real file) is the
+# only path that reliably preserves headings/line-breaks. See github-ops docs
+# ("Multi-Line Body Formatting") for the full rationale.
+if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +(issue|pr) +(create|edit|comment|review)([[:space:]]|$)'; then
+  if printf '%s' "$norm" | grep -Eq -- '(^|[[:space:]])--body([[:space:]=]|$)' \
+     && ! printf '%s' "$norm" | grep -Eq -- '--body-file'; then
+    block "gh issue/pr create|edit|comment|review must not pass '--body' inline. Write the body to a file and pass '--body-file <path>' (or pipe into '--body-file -'). See github-ops 'Multi-Line Body Formatting'."
   fi
 fi
 
