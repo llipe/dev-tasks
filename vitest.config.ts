@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { resolve } from "node:path";
 
 export default defineConfig({
   test: {
@@ -12,9 +13,9 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: {
-      "#core": new URL("./core", import.meta.url).pathname,
-      "#adapters": new URL("./adapters", import.meta.url).pathname,
-    },
+    alias: [
+      { find: /^#core\/(.*)/, replacement: resolve(import.meta.dirname, "core/$1") },
+      { find: /^#adapters\/(.*)/, replacement: resolve(import.meta.dirname, "adapters/$1") },
+    ],
   },
 });
