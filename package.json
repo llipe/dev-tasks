@@ -4,8 +4,12 @@
   "description": "Multi-repo context tooling for dev-tasks",
   "type": "module",
   "imports": {
-    "#core/*": "./core/*",
-    "#adapters/*": "./adapters/*"
+    "#core/*": "./dist/core/*",
+    "#adapters/*": "./dist/adapters/*"
+  },
+  "bin": {
+    "dev-tasks": "./dist/bin/dev-tasks.js",
+    "dt": "./dist/bin/dt.js"
   },
   "engines": {
     "node": ">=20"
@@ -36,6 +40,7 @@
     "eslint-plugin-import-x": "4.12.2",
     "globals": "16.1.0",
     "prettier": "3.5.3",
+    "tsx": "4.19.4",
     "typescript": "5.8.3",
     "typescript-eslint": "8.32.1",
     "vitest": "3.2.6"
