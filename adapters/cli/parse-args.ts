@@ -14,6 +14,7 @@ export interface ParsedArgs {
     help: boolean;
     pin: string | undefined;
     force: boolean;
+    dbUrl: string | undefined;
   };
 }
 
@@ -26,6 +27,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     help: false,
     pin: undefined as string | undefined,
     force: false,
+    dbUrl: undefined as string | undefined,
   };
 
   const positional: string[] = [];
@@ -39,6 +41,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
       flags.metaRepo = argv[++i];
     } else if (arg === "--pin") {
       flags.pin = argv[++i];
+    } else if (arg === "--db-url") {
+      flags.dbUrl = argv[++i];
     } else if (arg === "--force" || arg === "-f") {
       flags.force = true;
     } else if (arg === "-v" || arg === "--verbose") {

@@ -138,26 +138,26 @@
   - [x] 5.16 Verify Acceptance Criterion: --json output
   - [x] 5.17 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
-- [ ] 6.0 Implement Story S-006 - https://github.com/llipe/dev-tasks/issues/38: dt extract schema
-  - [ ] 6.1 Implement `core/extract/orm/prisma.ts` — parse `schema.prisma` AST: extract models, fields (type, nullability, attributes), relations, enums
-  - [ ] 6.2 Implement `core/extract/orm/drizzle.ts` — parse Drizzle table definitions via TypeScript Compiler API: extract tables, columns, types, constraints
-  - [ ] 6.3 Implement `core/extract/orm/typeorm.ts` — parse entity decorators via TypeScript Compiler API: extract entities, columns, relations
-  - [ ] 6.4 Implement `core/extract/schema.ts` — orchestrator: detect ORM from S-005, delegate to the right extractor, attach `source: introspected`
-  - [ ] 6.5 Implement optional `information_schema` reader behind `--db-url`: connect to dev DB, query tables/columns/constraints; attach `source: introspected`
-  - [ ] 6.6 Implement fallback: no ORM + no `--db-url` → if SQL migrations exist, use LLM to infer schema from them; mark `source: inferred`, `confidence: low`
-  - [ ] 6.7 Implement `core/extract/render/schema-md.ts` — render tables, columns (type + nullability), PK/FK, indexes, and a Mermaid ER diagram
-  - [ ] 6.8 Add LLM description pass: semantic table descriptions over extracted structure (never invent columns)
-  - [ ] 6.9 Wire `dt extract schema [--db-url]` CLI command
-  - [ ] 6.10 Create ORM fixture repos: prisma fixture, drizzle fixture, typeorm fixture, no-orm fixture
-  - [ ] 6.11 Write unit tests: per-ORM AST extraction; Mermaid rendering; nullability/PK/FK handling
-  - [ ] 6.12 Write integration tests: each fixture → expected `schema.md` structure (descriptions can be stubbed)
-  - [ ] 6.13 Write edge-case tests: no ORM + no --db-url; composite keys; self-referential FK; enum types
-  - [ ] 6.14 Verify Acceptance Criterion: Prisma/Drizzle/TypeORM marked `introspected`
-  - [ ] 6.15 Verify Acceptance Criterion: --db-url uses information_schema; without it, fallback or skip
-  - [ ] 6.16 Verify Acceptance Criterion: output includes tables, columns, PK/FK, indexes, Mermaid diagram
-  - [ ] 6.17 Verify Acceptance Criterion: LLM writes descriptions only; no invented columns
-  - [ ] 6.18 Verify Acceptance Criterion: DB introspection off by default
-  - [ ] 6.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+- [x] 6.0 Implement Story S-006 - https://github.com/llipe/dev-tasks/issues/38: dt extract schema
+  - [x] 6.1 Implement `core/extract/orm/prisma.ts` — parse `schema.prisma` AST: extract models, fields (type, nullability, attributes), relations, enums
+  - [x] 6.2 Implement `core/extract/orm/drizzle.ts` — parse Drizzle table definitions via TypeScript Compiler API: extract tables, columns, types, constraints
+  - [x] 6.3 Implement `core/extract/orm/typeorm.ts` — parse entity decorators via TypeScript Compiler API: extract entities, columns, relations
+  - [x] 6.4 Implement `core/extract/schema.ts` — orchestrator: detect ORM from S-005, delegate to the right extractor, attach `source: introspected`
+  - [x] 6.5 Implement optional `information_schema` reader behind `--db-url`: connect to dev DB, query tables/columns/constraints; attach `source: introspected`
+  - [x] 6.6 Implement fallback: no ORM + no `--db-url` → if SQL migrations exist, use LLM to infer schema from them; mark `source: inferred`, `confidence: low`
+  - [x] 6.7 Implement `core/extract/render/schema-md.ts` — render tables, columns (type + nullability), PK/FK, indexes, and a Mermaid ER diagram
+  - [x] 6.8 Add LLM description pass: semantic table descriptions over extracted structure (never invent columns)
+  - [x] 6.9 Wire `dt extract schema [--db-url]` CLI command
+  - [x] 6.10 Create ORM fixture repos: prisma fixture, drizzle fixture, typeorm fixture, no-orm fixture
+  - [x] 6.11 Write unit tests: per-ORM AST extraction; Mermaid rendering; nullability/PK/FK handling
+  - [x] 6.12 Write integration tests: each fixture → expected `schema.md` structure (descriptions can be stubbed)
+  - [x] 6.13 Write edge-case tests: no ORM + no --db-url; composite keys; self-referential FK; enum types
+  - [x] 6.14 Verify Acceptance Criterion: Prisma/Drizzle/TypeORM marked `introspected`
+  - [x] 6.15 Verify Acceptance Criterion: --db-url uses information_schema; without it, fallback or skip
+  - [x] 6.16 Verify Acceptance Criterion: output includes tables, columns, PK/FK, indexes, Mermaid diagram
+  - [x] 6.17 Verify Acceptance Criterion: LLM writes descriptions only; no invented columns
+  - [x] 6.18 Verify Acceptance Criterion: DB introspection off by default
+  - [x] 6.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 7.0 Implement Story S-007 - https://github.com/llipe/dev-tasks/issues/39: dt extract openapi (routes 1 and 3)
   - [ ] 7.1 Implement `core/extract/openapi/route1.ts` — detect on-disk `openapi.yaml/json`; copy, normalize (resolve $refs, set openapi: 3.1.x), validate; attach `source: introspected`, `confidence: high`
