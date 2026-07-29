@@ -28,6 +28,11 @@
 - `core/extract/openapi/route1.ts` - OpenAPI route 1 (copy + normalize)
 - `core/extract/openapi/route3.ts` - OpenAPI route 3 (AST + LLM descriptions)
 - `core/extract/openapi/validate.ts` - OpenAPI 3.1 schema validation
+- `core/extract/openapi/types.ts` - OpenAPI extraction shared types
+- `core/extract/openapi/route2.ts` - Route 2 interface hook (not implemented)
+- `core/extract/openapi/llm-descriptions.ts` - LLM description pass (summary/description/tags only)
+- `core/extract/openapi/index.ts` - OpenAPI module barrel export
+- `adapters/cli/extract-openapi.ts` - CLI handler for dt extract openapi
 - `core/extract/asyncapi/topics.ts` - Kafka topic inventory AST extraction
 - `core/extract/asyncapi/payloads.ts` - Kafka payload classification
 - `core/extract/asyncapi/validate.ts` - AsyncAPI schema validation
@@ -160,30 +165,30 @@
   - [x] 6.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 7.0 Implement Story S-007 - https://github.com/llipe/dev-tasks/issues/39: dt extract openapi (routes 1 and 3)
-  - [ ] 7.1 Implement `core/extract/openapi/route1.ts` — detect on-disk `openapi.yaml/json`; copy, normalize (resolve $refs, set openapi: 3.1.x), validate; attach `source: introspected`, `confidence: high`
-  - [ ] 7.2 Implement `core/extract/openapi/route3.ts` — AST route discovery:
-    - [ ] 7.2.1 Locate route registrations: Express `app|router.get|post|put|patch|delete(path, handler)`, Fastify same pattern, Hono `app.get(path, handler)` + `.route()` groupings, NestJS `@Controller/@Get/@Post` decorators
-    - [ ] 7.2.2 Resolve full path by composing router prefixes
-    - [ ] 7.2.3 Derive path params from the route pattern
-    - [ ] 7.2.4 Derive query/body params from handler type signature (TypeScript Compiler API); support zod schemas
-    - [ ] 7.2.5 Derive response schema from return type; mark `any`/`unknown` as schema-less
-    - [ ] 7.2.6 Report dynamically registered routes in `unresolved[]` (loops over config, spread arrays)
-  - [ ] 7.3 Add LLM pass: write only `summary`, `description`, `tags` per endpoint — nothing structural
-  - [ ] 7.4 Implement `core/extract/openapi/validate.ts` — validate output against OpenAPI 3.1 JSON Schema
-  - [ ] 7.5 Attach provenance: `source: inferred`, `confidence: medium` (typed handlers) / `low` (untyped)
-  - [ ] 7.6 Wire `dt extract openapi [--strategy auto|1|3]` CLI command; record selected strategy + confidence
-  - [ ] 7.7 Leave a capability hook for route 2 (isolated framework boot) — interface only, not implemented
-  - [ ] 7.8 Create fixtures: repo with committed openapi.yaml (route 1); Express + typed handlers (route 3); Fastify + zod (route 3); Hono (route 3); dynamic routes (unresolved)
-  - [ ] 7.9 Write unit tests: path composition; param/body type resolution; zod handling; response marking; unresolved detection
-  - [ ] 7.10 Write integration tests: each fixture → expected OpenAPI output + schema validation pass
-  - [ ] 7.11 Write edge-case tests: nested routers; dynamic route loop → unresolved; untyped handlers → low confidence; malformed on-disk spec → route 1 error
-  - [ ] 7.12 Verify Acceptance Criterion: route 1 copies + normalizes + introspected/high
-  - [ ] 7.13 Verify Acceptance Criterion: route 3 AST + typed params + zod + marks unknown responses
-  - [ ] 7.14 Verify Acceptance Criterion: LLM writes only summary/description/tags
-  - [ ] 7.15 Verify Acceptance Criterion: output validates against OpenAPI 3.1
-  - [ ] 7.16 Verify Acceptance Criterion: dynamic routes → unresolved[], not omitted
-  - [ ] 7.17 Verify Acceptance Criterion: --strategy selects route; confidence recorded
-  - [ ] 7.18 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+  - [x] 7.1 Implement `core/extract/openapi/route1.ts` — detect on-disk `openapi.yaml/json`; copy, normalize (resolve $refs, set openapi: 3.1.x), validate; attach `source: introspected`, `confidence: high`
+  - [x] 7.2 Implement `core/extract/openapi/route3.ts` — AST route discovery:
+    - [x] 7.2.1 Locate route registrations: Express `app|router.get|post|put|patch|delete(path, handler)`, Fastify same pattern, Hono `app.get(path, handler)` + `.route()` groupings, NestJS `@Controller/@Get/@Post` decorators
+    - [x] 7.2.2 Resolve full path by composing router prefixes
+    - [x] 7.2.3 Derive path params from the route pattern
+    - [x] 7.2.4 Derive query/body params from handler type signature (TypeScript Compiler API); support zod schemas
+    - [x] 7.2.5 Derive response schema from return type; mark `any`/`unknown` as schema-less
+    - [x] 7.2.6 Report dynamically registered routes in `unresolved[]` (loops over config, spread arrays)
+  - [x] 7.3 Add LLM pass: write only `summary`, `description`, `tags` per endpoint — nothing structural
+  - [x] 7.4 Implement `core/extract/openapi/validate.ts` — validate output against OpenAPI 3.1 JSON Schema
+  - [x] 7.5 Attach provenance: `source: inferred`, `confidence: medium` (typed handlers) / `low` (untyped)
+  - [x] 7.6 Wire `dt extract openapi [--strategy auto|1|3]` CLI command; record selected strategy + confidence
+  - [x] 7.7 Leave a capability hook for route 2 (isolated framework boot) — interface only, not implemented
+  - [x] 7.8 Create fixtures: repo with committed openapi.yaml (route 1); Express + typed handlers (route 3); Fastify + zod (route 3); Hono (route 3); dynamic routes (unresolved)
+  - [x] 7.9 Write unit tests: path composition; param/body type resolution; zod handling; response marking; unresolved detection
+  - [x] 7.10 Write integration tests: each fixture → expected OpenAPI output + schema validation pass
+  - [x] 7.11 Write edge-case tests: nested routers; dynamic route loop → unresolved; untyped handlers → low confidence; malformed on-disk spec → route 1 error
+  - [x] 7.12 Verify Acceptance Criterion: route 1 copies + normalizes + introspected/high
+  - [x] 7.13 Verify Acceptance Criterion: route 3 AST + typed params + zod + marks unknown responses
+  - [x] 7.14 Verify Acceptance Criterion: LLM writes only summary/description/tags
+  - [x] 7.15 Verify Acceptance Criterion: output validates against OpenAPI 3.1
+  - [x] 7.16 Verify Acceptance Criterion: dynamic routes → unresolved[], not omitted
+  - [x] 7.17 Verify Acceptance Criterion: --strategy selects route; confidence recorded
+  - [x] 7.18 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 8.0 Implement Story S-008 - https://github.com/llipe/dev-tasks/issues/41: dt extract asyncapi (Kafka topic inventory + payloads)
   - [ ] 8.1 Implement `core/extract/asyncapi/topics.ts` — AST over kafkajs:
