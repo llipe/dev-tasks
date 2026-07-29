@@ -105,19 +105,19 @@
   - [x] 3.13 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 4.0 Implement Story S-004 - https://github.com/llipe/dev-tasks/issues/36: Migration shim from dev-tasks.sh
-  - [ ] 4.1 Implement `core/distribution/migrate.ts` — legacy detection logic (is the current install driven by the old shell script?)
-  - [ ] 4.2 Implement manifest generation from legacy state: compute hashes of already-installed files, mark all as `modified: unknown`
-  - [ ] 4.3 Replace `dev-tasks.sh` with the migration shim: detects legacy → installs `@llipe/dev-tasks` → writes manifest → prints npm-updates notice
-  - [ ] 4.4 Verify the first `dev-tasks update` after migration reports a conflict for pre-existing files (because `modified: unknown` maps to the conflict branch)
-  - [ ] 4.5 Document archival in `CHANGELOG.md` (breaking change: legacy self-update removed)
-  - [ ] 4.6 Write unit tests: legacy detection; manifest generation with `modified: unknown`
-  - [ ] 4.7 Write integration test: simulate legacy install dir → run shim → manifest written → first update yields conflicts
-  - [ ] 4.8 Write edge-case tests: no legacy install present (noop); partial legacy install; npm install failure → clean error, no partial manifest
-  - [ ] 4.9 Verify Acceptance Criterion: shim detects legacy
-  - [ ] 4.10 Verify Acceptance Criterion: manifest with `modified: unknown`
-  - [ ] 4.11 Verify Acceptance Criterion: first update reports conflicts
-  - [ ] 4.12 Verify Acceptance Criterion: npm-updates notice printed
-  - [ ] 4.13 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+  - [x] 4.1 Implement `core/distribution/migrate.ts` — legacy detection logic (is the current install driven by the old shell script?)
+  - [x] 4.2 Implement manifest generation from legacy state: compute hashes of already-installed files, mark all as `modified: unknown`
+  - [x] 4.3 Replace `dev-tasks.sh` with the migration shim: detects legacy → installs `@llipe/dev-tasks` → writes manifest → prints npm-updates notice
+  - [x] 4.4 Verify the first `dev-tasks update` after migration reports a conflict for pre-existing files (because `modified: unknown` maps to the conflict branch)
+  - [x] 4.5 Document archival in `CHANGELOG.md` (breaking change: legacy self-update removed)
+  - [x] 4.6 Write unit tests: legacy detection; manifest generation with `modified: unknown`
+  - [x] 4.7 Write integration test: simulate legacy install dir → run shim → manifest written → first update yields conflicts
+  - [x] 4.8 Write edge-case tests: no legacy install present (noop); partial legacy install; npm install failure → clean error, no partial manifest
+  - [x] 4.9 Verify Acceptance Criterion: shim detects legacy
+  - [x] 4.10 Verify Acceptance Criterion: manifest with `modified: unknown`
+  - [x] 4.11 Verify Acceptance Criterion: first update reports conflicts
+  - [x] 4.12 Verify Acceptance Criterion: npm-updates notice printed
+  - [x] 4.13 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 5.0 Implement Story S-005 - https://github.com/llipe/dev-tasks/issues/37: dt extract detect and the pluggable extractor interface
   - [ ] 5.1 Define `ExtractionProvider` interface in `core/extract/provider.ts`: `id`, `detect(repo: RepoContext): DetectionResult | null`, `capabilities: Capability[]`, optional `extractSchema/extractOpenApi/extractAsyncApi`

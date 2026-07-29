@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- feat: migration shim from legacy `dev-tasks.sh` to `@llipe/dev-tasks` npm package
+- feat: `dev-tasks migrate` command — generates manifest from legacy state with `modified: unknown` origin hashes
+- feat: legacy detection logic (`core/distribution/migrate.ts`) — detects `.dev-tasks-version` or `.dev-tasks/` without `manifest.json`
+
+### Changed
+
+- **BREAKING:** `dev-tasks.sh` is replaced by a thin migration shim that detects legacy installs, installs `@llipe/dev-tasks`, and runs the migration. The legacy self-update mechanism (`install`, `update`, `self-update`, `check`, `list`, `version` commands) has been removed.
+- **BREAKING:** Future updates are managed through npm/pnpm (`pnpm add -g @llipe/dev-tasks@latest`) and the `dev-tasks update` command with hash-based reconciliation.
+
+### Migration
+
+- After running the shim, all pre-existing skill files are tracked in `.dev-tasks/manifest.json` with `origin_sha256: "unknown"`.
+- The first `dev-tasks update` will report conflicts for all migrated files (because the original hash is unknown). This is by design — review changes before accepting, or use `--force` to accept all.
+- The `dev-tasks.sh` script can be safely removed from your repo after migration.
+
 ## [0.5.4] - 2026-07-21
 
 ### Changed

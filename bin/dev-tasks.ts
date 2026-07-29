@@ -13,8 +13,9 @@ import { runUpdate } from "#core/distribution/update.js";
 import { writePin } from "#core/distribution/pin.js";
 import { getStatus } from "#core/distribution/status.js";
 import { runDoctor } from "#core/distribution/doctor.js";
+import { runMigration } from "#core/distribution/migrate.js";
 
-const COMMANDS = ["install", "update", "status", "pin", "doctor"] as const;
+const COMMANDS = ["install", "update", "status", "pin", "doctor", "migrate"] as const;
 
 function getVersion(): string {
   // Walk up from bin/ (source) or dist/bin/ (compiled) to find package.json
@@ -56,6 +57,7 @@ Commands:
   status     Show installed vs. pinned vs. latest versions
   pin        Pin to a specific version
   doctor     Check environment prerequisites
+  migrate    Migrate from legacy dev-tasks.sh installation
 
 Options:
   --version      Print version
@@ -266,6 +268,43 @@ async function main(): Promise<void> {
       }
 
       process.exit(hasConflicts ? ExitCode.ReconciliationConflict : ExitCode.Success);
+      break;
+    }
+
+    case "migrate": {
+      const result = await runMigration(targetDir);
+
+      if (args.flags.json) {
+        process.stdout.write(
+          JSON.stringify(
+            {
+              command: "migrate",
+              success: result.success,
+              manifestWritten: result.manifestWritten,
+              reason: result.reason,
+              filesDiscovered: result.filesDiscovered,
+            },
+            null,
+            2,
+          ) + "\n",
+        );
+      } else {
+        if (result.manifestWritten) {
+          process.stdout.write(`Migration complete: ${result.reason}\n`);
+          process.stdout.write(
+            `Manifest written with ${result.filesDiscovered} file(s) marked as modified: unknown.\n`,
+          );
+          process.stdout.write(
+            "\nYour first 'dev-tasks update' will report conflicts for these files.\n",
+          );
+          process.stdout.write(
+            "This is expected — review changes before accepting them, or use --force.\n",
+          );
+        } else {
+          process.stdout.write(`No migration needed: ${result.reason}\n`);
+        }
+      }
+      process.exit(ExitCode.Success);
       break;
     }
   }
