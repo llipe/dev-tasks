@@ -90,19 +90,19 @@
   - [x] 2.15 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 3.0 Implement Story S-003 - https://github.com/llipe/dev-tasks/issues/34: Hash-based reconciliation engine and dev-tasks update
-  - [ ] 3.1 Implement `core/reconcile.ts` — generic reconciliation function: for each file determine action (install/overwrite/skip/conflict) based on local hash vs. origin hash vs. package hash
-  - [ ] 3.2 Implement `core/distribution/backup.ts` — timestamped backup directory creation under `.dev-tasks/backup/<ts>/`
-  - [ ] 3.3 Wire `dev-tasks update [--force]` — reconcile each skill file; without --force report conflicts + exit 14; with --force backup + overwrite
-  - [ ] 3.4 Emit deterministic conflict report: list conflicting paths with a diff summary; support `--json`
-  - [ ] 3.5 Ensure `core/reconcile.ts` is exported and importable by extraction (S-009) without circular dependency
-  - [ ] 3.6 Write unit tests: all four reconciliation branches (install/overwrite/skip/conflict); backup path generation
-  - [ ] 3.7 Write integration test: repo with one edited and one unedited skill → update reports conflict on edited only + exit 14; --force backs up + overwrites
-  - [ ] 3.8 Write edge-case tests: file deleted locally; file added to package; identical content different mtime; --force with unwritable backup dir → error
-  - [ ] 3.9 Verify Acceptance Criterion: four-branch reconciliation
-  - [ ] 3.10 Verify Acceptance Criterion: --force writes backup
-  - [ ] 3.11 Verify Acceptance Criterion: conflict → exit 14 + diff summary
-  - [ ] 3.12 Verify Acceptance Criterion: reconcile function is shared (import from core/ by extraction)
-  - [ ] 3.13 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+  - [x] 3.1 Implement `core/reconcile.ts` — generic reconciliation function: for each file determine action (install/overwrite/skip/conflict) based on local hash vs. origin hash vs. package hash
+  - [x] 3.2 Implement `core/distribution/backup.ts` — timestamped backup directory creation under `.dev-tasks/backup/<ts>/`
+  - [x] 3.3 Wire `dev-tasks update [--force]` — reconcile each skill file; without --force report conflicts + exit 14; with --force backup + overwrite
+  - [x] 3.4 Emit deterministic conflict report: list conflicting paths with a diff summary; support `--json`
+  - [x] 3.5 Ensure `core/reconcile.ts` is exported and importable by extraction (S-009) without circular dependency
+  - [x] 3.6 Write unit tests: all four reconciliation branches (install/overwrite/skip/conflict); backup path generation
+  - [x] 3.7 Write integration test: repo with one edited and one unedited skill → update reports conflict on edited only + exit 14; --force backs up + overwrites
+  - [x] 3.8 Write edge-case tests: file deleted locally; file added to package; identical content different mtime; --force with unwritable backup dir → error
+  - [x] 3.9 Verify Acceptance Criterion: four-branch reconciliation
+  - [x] 3.10 Verify Acceptance Criterion: --force writes backup
+  - [x] 3.11 Verify Acceptance Criterion: conflict → exit 14 + diff summary
+  - [x] 3.12 Verify Acceptance Criterion: reconcile function is shared (import from core/ by extraction)
+  - [x] 3.13 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 4.0 Implement Story S-004 - https://github.com/llipe/dev-tasks/issues/36: Migration shim from dev-tasks.sh
   - [ ] 4.1 Implement `core/distribution/migrate.ts` — legacy detection logic (is the current install driven by the old shell script?)
