@@ -1,0 +1,11 @@
+asyncapi: "2.6.0"
+info:
+  title: Order Events
+  version: "1.0.0"
+channels:
+  order-created:
+    publish:
+      operationId: publishOrderCreated
+  order-shipped:
+    subscribe:
+      operationId: onOrderShipped
