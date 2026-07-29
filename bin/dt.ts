@@ -110,6 +110,14 @@ if (args.command === "extract") {
       strategy: strategyFlag,
     });
     process.exit(exitCode);
+  } else if (subcommand === "asyncapi") {
+    const { runExtractAsyncApi } = await import("#adapters/cli/extract-asyncapi.js");
+    const targetDir = args.positional[1]; // optional: path to repo
+    const exitCode = runExtractAsyncApi({
+      json: args.flags.json,
+      targetDir,
+    });
+    process.exit(exitCode);
   } else if (!subcommand) {
     process.stderr.write("Usage: dt extract <subcommand>\n\n");
     process.stderr.write("Subcommands:\n");
