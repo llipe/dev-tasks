@@ -33,9 +33,12 @@
 - `core/extract/openapi/llm-descriptions.ts` - LLM description pass (summary/description/tags only)
 - `core/extract/openapi/index.ts` - OpenAPI module barrel export
 - `adapters/cli/extract-openapi.ts` - CLI handler for dt extract openapi
+- `core/extract/asyncapi/types.ts` - AsyncAPI extraction shared types
 - `core/extract/asyncapi/topics.ts` - Kafka topic inventory AST extraction
 - `core/extract/asyncapi/payloads.ts` - Kafka payload classification
 - `core/extract/asyncapi/validate.ts` - AsyncAPI schema validation
+- `core/extract/asyncapi/index.ts` - AsyncAPI module barrel export
+- `adapters/cli/extract-asyncapi.ts` - CLI handler for dt extract asyncapi
 - `core/extract/component.ts` - component.yaml derivation + provenance
 - `core/extract/report.ts` - extraction_report.json generation
 - `core/extract/prompt.ts` - Interactive prompt for non-derivable fields
@@ -190,34 +193,34 @@
   - [x] 7.17 Verify Acceptance Criterion: --strategy selects route; confidence recorded
   - [x] 7.18 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
-- [ ] 8.0 Implement Story S-008 - https://github.com/llipe/dev-tasks/issues/41: dt extract asyncapi (Kafka topic inventory + payloads)
-  - [ ] 8.1 Implement `core/extract/asyncapi/topics.ts` — AST over kafkajs:
-    - [ ] 8.1.1 `producer.send({ topic: X, messages })` → provides
-    - [ ] 8.1.2 `producer.sendBatch(...)` → provides
-    - [ ] 8.1.3 `consumer.subscribe({ topic: X })` → consumes
-    - [ ] 8.1.4 `consumer.subscribe({ topics: [X, Y] })` → consumes
-  - [ ] 8.2 Implement topic resolution with confidence:
-    - [ ] 8.2.1 String literal → high
-    - [ ] 8.2.2 Module constant or enum (follow reference in AST) → high
-    - [ ] 8.2.3 Template literal with env var → medium (record pattern + variable)
-    - [ ] 8.2.4 Unresolvable expression → low + entry in `unresolved[]`
-  - [ ] 8.3 Implement `core/extract/asyncapi/payloads.ts` — payload classification:
-    - [ ] 8.3.1 Typed `send()` (generic or interface in the signature) → medium, derive schema from the type
-    - [ ] 8.3.2 Inline object literal built at call site → low, LLM infers shape
-    - [ ] 8.3.3 Opaque serialization (`Buffer`, `JSON.stringify(variable)`) → low + `unresolved[]`
-  - [ ] 8.4 Emit AsyncAPI document with separate `topic_confidence` and `payload_confidence` per channel/operation
-  - [ ] 8.5 Implement `core/extract/asyncapi/validate.ts` — validate output against AsyncAPI schema
-  - [ ] 8.6 Wire `dt extract asyncapi` CLI command
-  - [ ] 8.7 Create fixtures: kafkajs with string-literal topics; topics from config/env; typed payloads; opaque payloads
-  - [ ] 8.8 Write unit tests: topic literal/constant/template/unresolvable resolution; payload typed/inline/opaque classification
-  - [ ] 8.9 Write integration tests: kafkajs fixture repos → expected topic inventory + confidence split + AsyncAPI validation
-  - [ ] 8.10 Write edge-case tests: `subscribe({ topics: [...] })`; topic from config array; Buffer payload → low + unresolved; producer with no consumers in the same repo
-  - [ ] 8.11 Verify Acceptance Criterion: producer.send/sendBatch → provides; subscribe → consumes
-  - [ ] 8.12 Verify Acceptance Criterion: topic confidence literal→high, template→medium, unresolvable→low+unresolved
-  - [ ] 8.13 Verify Acceptance Criterion: payload confidence typed→medium, inline→low, opaque→low+unresolved
-  - [ ] 8.14 Verify Acceptance Criterion: topic_confidence and payload_confidence tracked separately
-  - [ ] 8.15 Verify Acceptance Criterion: output validates against AsyncAPI schema
-  - [ ] 8.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+- [x] 8.0 Implement Story S-008 - https://github.com/llipe/dev-tasks/issues/41: dt extract asyncapi (Kafka topic inventory + payloads)
+  - [x] 8.1 Implement `core/extract/asyncapi/topics.ts` — AST over kafkajs:
+    - [x] 8.1.1 `producer.send({ topic: X, messages })` → provides
+    - [x] 8.1.2 `producer.sendBatch(...)` → provides
+    - [x] 8.1.3 `consumer.subscribe({ topic: X })` → consumes
+    - [x] 8.1.4 `consumer.subscribe({ topics: [X, Y] })` → consumes
+  - [x] 8.2 Implement topic resolution with confidence:
+    - [x] 8.2.1 String literal → high
+    - [x] 8.2.2 Module constant or enum (follow reference in AST) → high
+    - [x] 8.2.3 Template literal with env var → medium (record pattern + variable)
+    - [x] 8.2.4 Unresolvable expression → low + entry in `unresolved[]`
+  - [x] 8.3 Implement `core/extract/asyncapi/payloads.ts` — payload classification:
+    - [x] 8.3.1 Typed `send()` (generic or interface in the signature) → medium, derive schema from the type
+    - [x] 8.3.2 Inline object literal built at call site → low, LLM infers shape
+    - [x] 8.3.3 Opaque serialization (`Buffer`, `JSON.stringify(variable)`) → low + `unresolved[]`
+  - [x] 8.4 Emit AsyncAPI document with separate `topic_confidence` and `payload_confidence` per channel/operation
+  - [x] 8.5 Implement `core/extract/asyncapi/validate.ts` — validate output against AsyncAPI schema
+  - [x] 8.6 Wire `dt extract asyncapi` CLI command
+  - [x] 8.7 Create fixtures: kafkajs with string-literal topics; topics from config/env; typed payloads; opaque payloads
+  - [x] 8.8 Write unit tests: topic literal/constant/template/unresolvable resolution; payload typed/inline/opaque classification
+  - [x] 8.9 Write integration tests: kafkajs fixture repos → expected topic inventory + confidence split + AsyncAPI validation
+  - [x] 8.10 Write edge-case tests: `subscribe({ topics: [...] })`; topic from config array; Buffer payload → low + unresolved; producer with no consumers in the same repo
+  - [x] 8.11 Verify Acceptance Criterion: producer.send/sendBatch → provides; subscribe → consumes
+  - [x] 8.12 Verify Acceptance Criterion: topic confidence literal→high, template→medium, unresolvable→low+unresolved
+  - [x] 8.13 Verify Acceptance Criterion: payload confidence typed→medium, inline→low, opaque→low+unresolved
+  - [x] 8.14 Verify Acceptance Criterion: topic_confidence and payload_confidence tracked separately
+  - [x] 8.15 Verify Acceptance Criterion: output validates against AsyncAPI schema
+  - [x] 8.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 9.0 Implement Story S-009 - https://github.com/llipe/dev-tasks/issues/40: dt extract component — provenance, human gate, idempotency, report
   - [ ] 9.1 Implement `core/extract/component.ts` — field-category derivation:
