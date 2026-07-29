@@ -4,6 +4,12 @@ node_modules/
 venv/
 __pycache__/
 
+# TypeScript build output
+dist/
+
+# pnpm
+pnpm-debug.log*
+
 # Ignore system files
 .DS_Store
 Thumbs.db
