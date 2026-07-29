@@ -12,6 +12,7 @@ export interface ParsedArgs {
     verbose: boolean;
     version: boolean;
     help: boolean;
+    pin: string | undefined;
   };
 }
 
@@ -22,6 +23,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     verbose: false,
     version: false,
     help: false,
+    pin: undefined as string | undefined,
   };
 
   const positional: string[] = [];
@@ -33,6 +35,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
       flags.json = true;
     } else if (arg === "--meta-repo") {
       flags.metaRepo = argv[++i];
+    } else if (arg === "--pin") {
+      flags.pin = argv[++i];
     } else if (arg === "-v" || arg === "--verbose") {
       flags.verbose = true;
     } else if (arg === "--version") {
