@@ -91,6 +91,15 @@ if (args.command === "extract") {
       targetDir,
     });
     process.exit(exitCode);
+  } else if (subcommand === "schema") {
+    const { runExtractSchema } = await import("#adapters/cli/extract-schema.js");
+    const targetDir = args.positional[1]; // optional: path to repo
+    const exitCode = await runExtractSchema({
+      json: args.flags.json,
+      targetDir,
+      dbUrl: args.flags.dbUrl,
+    });
+    process.exit(exitCode);
   } else if (!subcommand) {
     process.stderr.write("Usage: dt extract <subcommand>\n\n");
     process.stderr.write("Subcommands:\n");
