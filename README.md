@@ -4,6 +4,8 @@ A set of agents, skills, and instructions for GitHub Copilot, Claude Code, Kiro,
 
 ## Quick Start
 
+### Agent workflow (skills + instructions)
+
 ```bash
 # 1. Bootstrap the installer into your repo
 curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \
@@ -26,6 +28,23 @@ curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \
 ./dev-tasks.sh update          # update toolkit files
 ./dev-tasks.sh update --backup # same, but backs up current files first
 ./dev-tasks.sh check           # compare installed vs latest version
+```
+
+### `dt` CLI (multi-repo context)
+
+```bash
+# 1. Install the npm package
+pnpm add -g @llipe/dev-tasks
+
+# 2. Extract your repo's metadata
+dt extract all --interactive
+
+# 3. Review the generated component.yaml and extraction_report.json
+cat component.yaml
+cat extraction_report.json
+
+# 4. Keep distribution up to date with hash-based reconciliation
+dev-tasks update
 ```
 
 **Platform profiles** — install only what you need:
@@ -312,6 +331,7 @@ flowchart TD
 ```
 
 **Reading the diagram:**
+
 - Solid arrows → direct handoffs between agents
 - Dashed arrows → supporting/non-blocking interactions
 - Boxes at the bottom → skills invoked by each agent
@@ -481,6 +501,11 @@ On-demand capabilities loaded only when invoked.
 | `/docs/`                       | Foundation documents — product-context, technical-guidelines, ADRs                                |
 | `/docs/requirements/`          | PRDs produced by the refine skill                                                                 |
 | `/workstream/`                 | Active feature work — specs, stories, task lists, planner state files                             |
+| `bin/`                         | CLI entrypoints (`dev-tasks.ts`, `dt.ts`)                                                         |
+| `core/`                        | Business logic library (extract, distribution, reconcile) — no CLI deps                           |
+| `adapters/cli/`                | CLI adapter — wraps core, formats stdout/JSON                                                     |
+| `schemas/`                     | JSON Schemas for validation (`component.schema.json`)                                             |
+| `test/`                        | Unit and integration tests + fixture repos                                                        |
 | `.github/instructions/`        | Always-loaded instruction files                                                                   |
 | `.github/instructions/domain/` | Project-specific coding standards (auto-applied)                                                  |
 | `.github/agents/`              | Agent definition files                                                                            |
@@ -671,6 +696,125 @@ shasum -a 256 -c "dev-tasks-bundle-${VERSION}.tar.gz.sha256"
 # Extract
 tar -xzf "dev-tasks-bundle-${VERSION}.tar.gz"
 ```
+
+---
+
+## `dt` — Multi-Repo Context CLI
+
+`dt` is the runtime binary for the `@llipe/dev-tasks` npm package. It extracts repository metadata (schema, OpenAPI, AsyncAPI), derives a `component.yaml` manifest with provenance and confidence tracking, and (in later phases) builds a cross-repo catalog and resolves scoped context bundles for agent sessions.
+
+### Installation
+
+```bash
+# Install globally (or as a dev dependency)
+pnpm add -g @llipe/dev-tasks
+
+# Verify
+dt --version
+dev-tasks --version
+```
+
+Two binaries are provided:
+
+| Binary      | Purpose                                             |
+| ----------- | --------------------------------------------------- |
+| `dev-tasks` | Bootstrap: install, update, status, pin, doctor     |
+| `dt`        | Runtime: extract, catalog, ctx, scope, init, verify |
+
+### Commands
+
+#### `dt extract` — Repository metadata extraction
+
+```bash
+# Detect stack, framework, ORM, and messaging with evidence
+dt extract detect
+
+# Extract database schema from ORM definitions (Prisma, Drizzle, TypeORM)
+dt extract schema [--db-url <url>]
+
+# Extract OpenAPI spec (route 1: copy existing, route 3: AST inference)
+dt extract openapi [--strategy auto|1|3]
+
+# Extract AsyncAPI spec from Kafka topic patterns (kafkajs)
+dt extract asyncapi
+
+# Derive component.yaml with provenance and confidence
+dt extract component [--interactive]
+
+# Run full extraction pipeline (detect → schema → openapi → asyncapi → component → report)
+dt extract all [--interactive] [--force]
+```
+
+#### `dev-tasks` — Bootstrap and distribution
+
+```bash
+dev-tasks install [--pin <version>]   # Install skill files + write manifest
+dev-tasks update [--force]            # Reconcile with hash-based conflict detection
+dev-tasks status                      # Compare installed/pinned/latest versions
+dev-tasks pin <version>               # Pin to a specific version
+dev-tasks doctor                      # Check Node ≥20, git ≥2.37, cache writable
+dev-tasks migrate                     # Migrate from legacy dev-tasks.sh
+```
+
+### Global options
+
+All commands accept:
+
+| Flag                 | Description                  |
+| -------------------- | ---------------------------- |
+| `--json`             | Machine-readable JSON output |
+| `--meta-repo <path>` | Path or URL to the meta-repo |
+| `-v`                 | Verbose diagnostics (stderr) |
+
+### Exit codes
+
+| Code | Meaning                                           |
+| ---- | ------------------------------------------------- |
+| 0    | OK                                                |
+| 1    | Unexpected error                                  |
+| 2    | Incorrect usage                                   |
+| 13   | Incomplete extraction: required fields unresolved |
+| 14   | Reconciliation conflict (edited fields)           |
+
+### Typical workflow
+
+```bash
+# 1. Run extraction in a component repo
+cd my-service
+dt extract all --interactive
+
+# 2. Review outputs
+cat component.yaml           # manifest with _provenance
+cat extraction_report.json   # coverage, confidence, unresolved items
+
+# 3. Validate
+dt validate-component        # (Phase 2+) checks against JSON Schema
+
+# 4. Commit and push
+git add component.yaml contracts/ docs/schema.md extraction_report.json
+git commit -m "feat: add component manifest via dt extract"
+```
+
+### Current implementation status
+
+Phase 0 (distribution) and Phase 1 (extraction) are implemented. The following are available:
+
+- `dev-tasks install|update|status|pin|doctor|migrate`
+- `dt extract detect|schema|openapi|asyncapi|component|all`
+- Hash-based reconciliation with conflict detection
+- Legacy shell-script migration shim
+
+Phases 2-5 (catalog, context, scoping, product-engineer integration) are specified but not yet implemented.
+
+---
+
+## Known Limitations
+
+- **Route 2 (isolated framework boot) is interface-only** — the hook exists but is not implemented; only routes 1 and 3 are functional for OpenAPI extraction.
+- **LLM inference is stubbed** — no real LLM provider is wired yet; description passes produce placeholder output.
+- **Only Node/TS provider** — other language stacks (Python, Go, Java, etc.) require additional extraction providers.
+- **Zod extraction handles basic `z.object` patterns only** — complex Zod compositions (unions, intersections, lazy schemas) are not fully supported.
+- **Only kafkajs Kafka patterns supported** — other messaging clients (confluent-kafka, rhea/AMQP, bullmq) are not detected.
 
 ---
 
