@@ -1,0 +1,11 @@
+{
+  "name": "fastify-zod-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "fastify": "^4.21.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -100,6 +100,16 @@ if (args.command === "extract") {
       dbUrl: args.flags.dbUrl,
     });
     process.exit(exitCode);
+  } else if (subcommand === "openapi") {
+    const { runExtractOpenApi } = await import("#adapters/cli/extract-openapi.js");
+    const targetDir = args.positional[1]; // optional: path to repo
+    const strategyFlag = args.flags.strategy as "auto" | "1" | "3" | undefined;
+    const exitCode = runExtractOpenApi({
+      json: args.flags.json,
+      targetDir,
+      strategy: strategyFlag,
+    });
+    process.exit(exitCode);
   } else if (!subcommand) {
     process.stderr.write("Usage: dt extract <subcommand>\n\n");
     process.stderr.write("Subcommands:\n");
