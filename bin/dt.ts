@@ -80,6 +80,32 @@ if (!COMMANDS.includes(args.command as (typeof COMMANDS)[number])) {
   process.exit(ExitCode.InvalidUsage);
 }
 
-// Command routing — stubs for now
-process.stderr.write(`Command '${args.command}' is not yet implemented.\n`);
-process.exit(ExitCode.GeneralError);
+// Command routing
+if (args.command === "extract") {
+  const subcommand = args.positional[0];
+  if (subcommand === "detect") {
+    const { runExtractDetect } = await import("#adapters/cli/extract-detect.js");
+    const targetDir = args.positional[1]; // optional: path to repo
+    const exitCode = runExtractDetect({
+      json: args.flags.json,
+      targetDir,
+    });
+    process.exit(exitCode);
+  } else if (!subcommand) {
+    process.stderr.write("Usage: dt extract <subcommand>\n\n");
+    process.stderr.write("Subcommands:\n");
+    process.stderr.write("  detect    Detect repository stack and framework\n");
+    process.stderr.write("  schema    Extract database schema\n");
+    process.stderr.write("  openapi   Extract OpenAPI specification\n");
+    process.stderr.write("  asyncapi  Extract AsyncAPI specification\n");
+    process.stderr.write("  component Derive component.yaml\n");
+    process.stderr.write("  all       Run full extraction pipeline\n");
+    process.exit(ExitCode.InvalidUsage);
+  } else {
+    process.stderr.write(`Subcommand 'extract ${subcommand}' is not yet implemented.\n`);
+    process.exit(ExitCode.GeneralError);
+  }
+} else {
+  process.stderr.write(`Command '${args.command}' is not yet implemented.\n`);
+  process.exit(ExitCode.GeneralError);
+}
