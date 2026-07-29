@@ -118,6 +118,26 @@ if (args.command === "extract") {
       targetDir,
     });
     process.exit(exitCode);
+  } else if (subcommand === "component") {
+    const { runExtractComponent } = await import("#adapters/cli/extract-component.js");
+    const targetDir = args.positional[1]; // optional: path to repo
+    const exitCode = await runExtractComponent({
+      json: args.flags.json,
+      interactive: args.flags.interactive,
+      force: args.flags.force,
+      targetDir,
+    });
+    process.exit(exitCode);
+  } else if (subcommand === "all") {
+    const { runExtractAll } = await import("#adapters/cli/extract-all.js");
+    const targetDir = args.positional[1]; // optional: path to repo
+    const exitCode = await runExtractAll({
+      json: args.flags.json,
+      interactive: args.flags.interactive,
+      force: args.flags.force,
+      targetDir,
+    });
+    process.exit(exitCode);
   } else if (!subcommand) {
     process.stderr.write("Usage: dt extract <subcommand>\n\n");
     process.stderr.write("Subcommands:\n");

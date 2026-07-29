@@ -16,6 +16,7 @@ export interface ParsedArgs {
     force: boolean;
     dbUrl: string | undefined;
     strategy: string | undefined;
+    interactive: boolean;
   };
 }
 
@@ -30,6 +31,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     force: false,
     dbUrl: undefined as string | undefined,
     strategy: undefined as string | undefined,
+    interactive: false,
   };
 
   const positional: string[] = [];
@@ -47,6 +49,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
       flags.dbUrl = argv[++i];
     } else if (arg === "--strategy") {
       flags.strategy = argv[++i];
+    } else if (arg === "--interactive" || arg === "-i") {
+      flags.interactive = true;
     } else if (arg === "--force" || arg === "-f") {
       flags.force = true;
     } else if (arg === "-v" || arg === "--verbose") {
