@@ -9,6 +9,7 @@ import { resolve } from "node:path";
 import { parseArgs } from "#adapters/cli/parse-args.js";
 import { ExitCode } from "#core/exit-codes.js";
 import { installSkills } from "#core/distribution/install.js";
+import { runUpdate } from "#core/distribution/update.js";
 import { writePin } from "#core/distribution/pin.js";
 import { getStatus } from "#core/distribution/status.js";
 import { runDoctor } from "#core/distribution/doctor.js";
@@ -184,9 +185,87 @@ async function main(): Promise<void> {
     }
 
     case "update": {
-      // Stub — will be implemented in S-003
-      process.stderr.write("Command 'update' is not yet implemented.\n");
-      process.exit(ExitCode.GeneralError);
+      const result = await runUpdate({
+        targetDir,
+        sourceDir: packageRoot,
+        force: args.flags.force,
+        version: currentVersion,
+      });
+
+      const hasConflicts = result.conflicts.length > 0;
+
+      if (args.flags.json) {
+        process.stdout.write(
+          JSON.stringify(
+            {
+              command: "update",
+              conflicts: result.conflicts.map((c) => ({
+                path: c.path,
+                action: c.action,
+                localHash: c.localHash,
+                originHash: c.originHash,
+                packageHash: c.packageHash,
+              })),
+              updated: result.updated.map((u) => ({
+                path: u.path,
+                action: u.action,
+              })),
+              installed: result.installed.map((i) => ({
+                path: i.path,
+                action: i.action,
+              })),
+              skipped: result.skipped.map((s) => ({
+                path: s.path,
+                action: s.action,
+              })),
+              backupDir: result.backupDir,
+            },
+            null,
+            2,
+          ) + "\n",
+        );
+      } else {
+        // Human-readable output
+        if (
+          result.installed.length === 0 &&
+          result.updated.length === 0 &&
+          result.conflicts.length === 0 &&
+          result.skipped.length === 0
+        ) {
+          process.stdout.write("Nothing to update — no manifest found or no skills installed.\n");
+        } else {
+          if (result.installed.length > 0) {
+            process.stdout.write(`Installed ${result.installed.length} new file(s):\n`);
+            for (const f of result.installed) {
+              process.stdout.write(`  + ${f.path}\n`);
+            }
+          }
+          if (result.updated.length > 0) {
+            process.stdout.write(`Updated ${result.updated.length} file(s):\n`);
+            for (const f of result.updated) {
+              process.stdout.write(`  ↑ ${f.path}\n`);
+            }
+          }
+          if (result.skipped.length > 0) {
+            process.stdout.write(`Skipped ${result.skipped.length} file(s) (up to date).\n`);
+          }
+          if (result.backupDir) {
+            process.stdout.write(`Backup created at: ${result.backupDir}\n`);
+          }
+          if (hasConflicts) {
+            process.stdout.write(`\nConflicts detected (${result.conflicts.length} file(s)):\n`);
+            for (const c of result.conflicts) {
+              process.stdout.write(`  ✗ ${c.path}\n`);
+              process.stdout.write(`    local:   ${c.localHash}\n`);
+              process.stdout.write(`    origin:  ${c.originHash}\n`);
+              process.stdout.write(`    package: ${c.packageHash}\n`);
+            }
+            process.stdout.write("\nUse --force to backup conflicting files and overwrite.\n");
+          }
+        }
+      }
+
+      process.exit(hasConflicts ? ExitCode.ReconciliationConflict : ExitCode.Success);
       break;
     }
   }
