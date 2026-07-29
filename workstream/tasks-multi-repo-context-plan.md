@@ -42,6 +42,8 @@
 - `core/extract/component.ts` - component.yaml derivation + provenance
 - `core/extract/report.ts` - extraction_report.json generation
 - `core/extract/prompt.ts` - Interactive prompt for non-derivable fields
+- `adapters/cli/extract-component.ts` - CLI handler for dt extract component
+- `adapters/cli/extract-all.ts` - CLI handler for dt extract all pipeline
 - `adapters/cli/index.ts` - CLI adapter (wraps core, formats stdout/JSON)
 - `schemas/component.schema.json` - component.yaml JSON Schema (draft for validation during extraction)
 - `test/fixtures/extract/*` - Fixture repos per stack combination
@@ -223,25 +225,25 @@
   - [x] 8.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 9.0 Implement Story S-009 - https://github.com/llipe/dev-tasks/issues/40: dt extract component — provenance, human gate, idempotency, report
-  - [ ] 9.1 Implement `core/extract/component.ts` — field-category derivation:
-    - [ ] 9.1.1 Derivable fields (`stack`, `type`, `provides[].path`, `datastores`, `paths`, `docs.*`, `consumes`) from detection + extraction outputs
-    - [ ] 9.1.2 Inferable fields (`description`, `aliases`, `subdomain`, `consumes[].criticality`) via LLM; require human confirmation before persisting
-    - [ ] 9.1.3 Non-derivable fields (`owner`, `domain`, `criticality`, `lifecycle`) via interactive prompt only
-  - [ ] 9.2 Implement `core/extract/prompt.ts` — interactive prompt for non-derivable fields (TTY detection; no-op when non-interactive; unanswered → empty)
-  - [ ] 9.3 Assemble `_provenance` block: `extracted_at`, `extractor` (dt version), `repo_sha`, `detector` result, per-field `source`/`confidence` (with `confirmed_by` for confirmed inferences), `field_hashes` (SHA-256 per serialized field value)
-  - [ ] 9.4 Wire idempotency through `core/reconcile.ts` (from S-003): for each field — write if absent, write if hash matches origin (unedited), skip if value equal, conflict otherwise
-  - [ ] 9.5 Implement `core/extract/report.ts` — `extraction_report.json` generation: strategies used, coverage (endpoints/topics/tables resolved vs. unresolved), confidence counts, `unresolved[]` with location + reason, `requires_human[]`
-  - [ ] 9.6 Implement `dt extract component [--interactive]` and `dt extract all [--interactive] [--force]` CLI commands
-  - [ ] 9.7 Orchestrate `extract all`: detect → schema → openapi → asyncapi → component → report; aggregate results; exit 13 if required fields unresolved, exit 14 on conflict
-  - [ ] 9.8 Create fixture: repo with prior extraction outputs ready for component derivation
-  - [ ] 9.9 Write unit tests: field-category routing; provenance assembly; field_hashes computation; report aggregation; reconcile integration
-  - [ ] 9.10 Write integration tests: full `extract all` on fixture → expected `component.yaml` + `extraction_report.json`; re-run → no rewrite (idempotent); edit a field + re-run → conflict
-  - [ ] 9.11 Write edge-case tests: unanswered prompts → empty + exit 13; --force overwrite; alias unconfirmed → not persisted; all-low-confidence repo → report reflects it
-  - [ ] 9.12 Verify Acceptance Criterion: derivable fields come from detection/extraction
-  - [ ] 9.13 Verify Acceptance Criterion: inferable fields require human confirmation; aliases not persisted without confirmation
-  - [ ] 9.14 Verify Acceptance Criterion: non-derivable fields prompted; unanswered → empty → invalid manifest
-  - [ ] 9.15 Verify Acceptance Criterion: every field/artifact carries source + confidence + _provenance
-  - [ ] 9.16 Verify Acceptance Criterion: idempotent re-run; edited fields → conflict + diff; no overwrite without --force
-  - [ ] 9.17 Verify Acceptance Criterion: extraction_report.json with strategies, coverage, confidence, unresolved, requires_human
-  - [ ] 9.18 Verify Acceptance Criterion: exit 13 on missing required fields; exit 14 on conflict
-  - [ ] 9.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+  - [x] 9.1 Implement `core/extract/component.ts` — field-category derivation:
+    - [x] 9.1.1 Derivable fields (`stack`, `type`, `provides[].path`, `datastores`, `paths`, `docs.*`, `consumes`) from detection + extraction outputs
+    - [x] 9.1.2 Inferable fields (`description`, `aliases`, `subdomain`, `consumes[].criticality`) via LLM; require human confirmation before persisting
+    - [x] 9.1.3 Non-derivable fields (`owner`, `domain`, `criticality`, `lifecycle`) via interactive prompt only
+  - [x] 9.2 Implement `core/extract/prompt.ts` — interactive prompt for non-derivable fields (TTY detection; no-op when non-interactive; unanswered → empty)
+  - [x] 9.3 Assemble `_provenance` block: `extracted_at`, `extractor` (dt version), `repo_sha`, `detector` result, per-field `source`/`confidence` (with `confirmed_by` for confirmed inferences), `field_hashes` (SHA-256 per serialized field value)
+  - [x] 9.4 Wire idempotency through `core/reconcile.ts` (from S-003): for each field — write if absent, write if hash matches origin (unedited), skip if value equal, conflict otherwise
+  - [x] 9.5 Implement `core/extract/report.ts` — `extraction_report.json` generation: strategies used, coverage (endpoints/topics/tables resolved vs. unresolved), confidence counts, `unresolved[]` with location + reason, `requires_human[]`
+  - [x] 9.6 Implement `dt extract component [--interactive]` and `dt extract all [--interactive] [--force]` CLI commands
+  - [x] 9.7 Orchestrate `extract all`: detect → schema → openapi → asyncapi → component → report; aggregate results; exit 13 if required fields unresolved, exit 14 on conflict
+  - [x] 9.8 Create fixture: repo with prior extraction outputs ready for component derivation
+  - [x] 9.9 Write unit tests: field-category routing; provenance assembly; field_hashes computation; report aggregation; reconcile integration
+  - [x] 9.10 Write integration tests: full `extract all` on fixture → expected `component.yaml` + `extraction_report.json`; re-run → no rewrite (idempotent); edit a field + re-run → conflict
+  - [x] 9.11 Write edge-case tests: unanswered prompts → empty + exit 13; --force overwrite; alias unconfirmed → not persisted; all-low-confidence repo → report reflects it
+  - [x] 9.12 Verify Acceptance Criterion: derivable fields come from detection/extraction
+  - [x] 9.13 Verify Acceptance Criterion: inferable fields require human confirmation; aliases not persisted without confirmation
+  - [x] 9.14 Verify Acceptance Criterion: non-derivable fields prompted; unanswered → empty → invalid manifest
+  - [x] 9.15 Verify Acceptance Criterion: every field/artifact carries source + confidence + _provenance
+  - [x] 9.16 Verify Acceptance Criterion: idempotent re-run; edited fields → conflict + diff; no overwrite without --force
+  - [x] 9.17 Verify Acceptance Criterion: extraction_report.json with strategies, coverage, confidence, unresolved, requires_human
+  - [x] 9.18 Verify Acceptance Criterion: exit 13 on missing required fields; exit 14 on conflict
+  - [x] 9.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
