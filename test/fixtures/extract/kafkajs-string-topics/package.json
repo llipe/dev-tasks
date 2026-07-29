@@ -1,0 +1,10 @@
+{
+  "name": "kafkajs-string-topics",
+  "version": "1.0.0",
+  "dependencies": {
+    "kafkajs": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
