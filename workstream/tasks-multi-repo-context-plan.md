@@ -119,24 +119,24 @@
   - [x] 4.12 Verify Acceptance Criterion: npm-updates notice printed
   - [x] 4.13 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
-- [ ] 5.0 Implement Story S-005 - https://github.com/llipe/dev-tasks/issues/37: dt extract detect and the pluggable extractor interface
-  - [ ] 5.1 Define `ExtractionProvider` interface in `core/extract/provider.ts`: `id`, `detect(repo: RepoContext): DetectionResult | null`, `capabilities: Capability[]`, optional `extractSchema/extractOpenApi/extractAsyncApi`
-  - [ ] 5.2 Define `Capability` enum/type: `openapi_native`, `openapi_ast`, `db_introspection`, `orm_ast`, `topic_ast`, `payload_typed`
-  - [ ] 5.3 Define `DetectionResult` type: `stack[]`, `http: {framework, openapi_strategy, evidence[]}`, `orm: {kind, schema_path}`, `messaging: {client, evidence[]}`, `type_hint`
-  - [ ] 5.4 Implement `core/extract/detect.ts` — orchestrator that loads registered providers, runs `detect()`, returns the first match (or null)
-  - [ ] 5.5 Implement `core/extract/providers/node-ts.ts` — Node/TS provider: inspect `package.json` deps, directory structure, config files; report framework (nestjs/express/fastify/hono), ORM (prisma/drizzle/typeorm), messaging (kafkajs), with evidence; report `openapi_strategy` per the matrix (route 1/2/3) and per-strategy count
-  - [ ] 5.6 Handle missing capability: mark artifact not-produced, record in `requires_human`; do not fail
-  - [ ] 5.7 Wire `dt extract detect` CLI command with human + `--json` output
-  - [ ] 5.8 Create fixture repos under `test/fixtures/extract/`: nestjs-prisma-kafkajs, express-drizzle, fastify-no-orm, hono-typeorm, no-framework
-  - [ ] 5.9 Write unit tests: per-signal detector functions (swagger dep, prisma config, kafkajs dep, express dep)
-  - [ ] 5.10 Write integration tests: each fixture repo → expected DetectionResult JSON snapshot
-  - [ ] 5.11 Write edge-case tests: no `package.json`; multiple ORMs; monorepo-shaped dir (detect single package)
-  - [ ] 5.12 Verify Acceptance Criterion: output includes stack/http/orm/messaging/type_hint
-  - [ ] 5.13 Verify Acceptance Criterion: per-strategy OpenAPI count reported even without route 2
-  - [ ] 5.14 Verify Acceptance Criterion: ExtractionProvider interface with id/detect/capabilities/optional extract
-  - [ ] 5.15 Verify Acceptance Criterion: missing capability → requires_human, no failure
-  - [ ] 5.16 Verify Acceptance Criterion: --json output
-  - [ ] 5.17 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+- [x] 5.0 Implement Story S-005 - https://github.com/llipe/dev-tasks/issues/37: dt extract detect and the pluggable extractor interface
+  - [x] 5.1 Define `ExtractionProvider` interface in `core/extract/provider.ts`: `id`, `detect(repo: RepoContext): DetectionResult | null`, `capabilities: Capability[]`, optional `extractSchema/extractOpenApi/extractAsyncApi`
+  - [x] 5.2 Define `Capability` enum/type: `openapi_native`, `openapi_ast`, `db_introspection`, `orm_ast`, `topic_ast`, `payload_typed`
+  - [x] 5.3 Define `DetectionResult` type: `stack[]`, `http: {framework, openapi_strategy, evidence[]}`, `orm: {kind, schema_path}`, `messaging: {client, evidence[]}`, `type_hint`
+  - [x] 5.4 Implement `core/extract/detect.ts` — orchestrator that loads registered providers, runs `detect()`, returns the first match (or null)
+  - [x] 5.5 Implement `core/extract/providers/node-ts.ts` — Node/TS provider: inspect `package.json` deps, directory structure, config files; report framework (nestjs/express/fastify/hono), ORM (prisma/drizzle/typeorm), messaging (kafkajs), with evidence; report `openapi_strategy` per the matrix (route 1/2/3) and per-strategy count
+  - [x] 5.6 Handle missing capability: mark artifact not-produced, record in `requires_human`; do not fail
+  - [x] 5.7 Wire `dt extract detect` CLI command with human + `--json` output
+  - [x] 5.8 Create fixture repos under `test/fixtures/extract/`: nestjs-prisma-kafkajs, express-drizzle, fastify-no-orm, hono-typeorm, no-framework
+  - [x] 5.9 Write unit tests: per-signal detector functions (swagger dep, prisma config, kafkajs dep, express dep)
+  - [x] 5.10 Write integration tests: each fixture repo → expected DetectionResult JSON snapshot
+  - [x] 5.11 Write edge-case tests: no `package.json`; multiple ORMs; monorepo-shaped dir (detect single package)
+  - [x] 5.12 Verify Acceptance Criterion: output includes stack/http/orm/messaging/type_hint
+  - [x] 5.13 Verify Acceptance Criterion: per-strategy OpenAPI count reported even without route 2
+  - [x] 5.14 Verify Acceptance Criterion: ExtractionProvider interface with id/detect/capabilities/optional extract
+  - [x] 5.15 Verify Acceptance Criterion: missing capability → requires_human, no failure
+  - [x] 5.16 Verify Acceptance Criterion: --json output
+  - [x] 5.17 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 6.0 Implement Story S-006 - https://github.com/llipe/dev-tasks/issues/38: dt extract schema
   - [ ] 6.1 Implement `core/extract/orm/prisma.ts` — parse `schema.prisma` AST: extract models, fields (type, nullability, attributes), relations, enums
