@@ -1,6 +1,6 @@
 {
-  "name": "@llipe/dev-tasks",
-  "version": "0.6.0",
+  "name": "@llipe.com/dev-tasks",
+  "version": "0.6.1",
   "description": "Multi-repo context tooling for dev-tasks",
   "type": "module",
   "imports": {
