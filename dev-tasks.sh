@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dev-tasks migration shim
 # This script replaces the legacy dev-tasks.sh self-update mechanism.
-# It detects legacy installations and migrates to @llipe/dev-tasks.
+# It detects legacy installations and migrates to @llipe.com/dev-tasks.
 #
 # After migration, all distribution is handled by:
 #   dev-tasks install   — install skills into a repo
@@ -11,14 +11,14 @@
 #   dev-tasks doctor    — check environment prerequisites
 #
 # BREAKING CHANGE: Legacy self-update logic has been removed.
-# Future updates go through npm/pnpm: `pnpm add -g @llipe/dev-tasks`
-# or `npx @llipe/dev-tasks update`.
+# Future updates go through npm/pnpm: `pnpm add -g @llipe.com/dev-tasks`
+# or `npx @llipe.com/dev-tasks update`.
 
 set -euo pipefail
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
-PACKAGE_NAME="@llipe/dev-tasks"
+PACKAGE_NAME="@llipe.com/dev-tasks"
 LEGACY_VERSION_FILE=".dev-tasks-version"
 
 # Colors (disabled when stderr is not a tty)
@@ -40,7 +40,7 @@ die()     { error "$*"; exit 1; }
 # ─── Detection ────────────────────────────────────────────────────────────────
 
 is_package_installed() {
-  # Check if @llipe/dev-tasks is available via npx or global install
+  # Check if @llipe.com/dev-tasks is available via npx or global install
   if command -v dev-tasks >/dev/null 2>&1; then
     return 0
   fi

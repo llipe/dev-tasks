@@ -102,7 +102,7 @@ describe("dev-tasks update (integration)", () => {
     // Write a package.json in the "package" so it can find its skills
     writeFileSync(
       join(packageDir, "package.json"),
-      JSON.stringify({ name: "@llipe/dev-tasks", version: "0.2.0" }),
+      JSON.stringify({ name: "@llipe.com/dev-tasks", version: "0.2.0" }),
       "utf-8",
     );
 

@@ -7,11 +7,13 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   publish:
     name: Build and publish to npm
     runs-on: ubuntu-latest
+    environment: npm
 
     steps:
       - name: Checkout repository
@@ -37,9 +39,16 @@ jobs:
           VERSION="${TAG#v}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Set package version from tag
+      - name: Verify package version matches tag
         run: |
-          pnpm pkg set version="${{ steps.version.outputs.version }}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "WARNING: package.json version ($PKG_VERSION) differs from tag ($TAG_VERSION). Updating."
+            pnpm pkg set version="$TAG_VERSION"
+          else
+            echo "package.json version matches tag: $TAG_VERSION"
+          fi
 
       - name: Run quality gates
         run: pnpm run validate
@@ -58,7 +67,7 @@ jobs:
       - name: Dry-run pack to verify contents
         run: npm pack --dry-run
 
-      - name: Publish to npm
-        run: pnpm publish --no-git-checks
+      - name: Publish to npm with provenance
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -354,18 +354,35 @@ main() {
   insert_changelog_entry "$changelog_entry"
   info "Updated CHANGELOG.md"
 
-  # Commit changelog
+  # Update package.json version
+  local pkg_file="${REPO_ROOT}/package.json"
+  if [ -f "$pkg_file" ]; then
+    # Use node to update version in package.json (preserves formatting better than sed)
+    node -e "
+      const fs = require('fs');
+      const pkg = JSON.parse(fs.readFileSync('${pkg_file}', 'utf-8'));
+      pkg.version = '${new_version}';
+      fs.writeFileSync('${pkg_file}', JSON.stringify(pkg, null, 2) + '\n');
+    "
+    info "Updated package.json version to ${new_version}"
+  fi
+
+  # Commit changelog and package.json
   git -C "$REPO_ROOT" add CHANGELOG.md
-  git -C "$REPO_ROOT" commit -m "docs: update CHANGELOG for ${new_tag}"
-  info "Committed CHANGELOG.md"
+  if [ -f "$pkg_file" ]; then
+    git -C "$REPO_ROOT" add package.json
+  fi
+  git -C "$REPO_ROOT" commit -m "chore(release): ${new_tag}"
+  info "Committed release changes"
 
   # Create annotated tag
   git -C "$REPO_ROOT" tag -a "$new_tag" -m "Release ${new_tag}"
   info "Created tag: ${new_tag}"
 
-  # Push tag
+  # Push commit and tag
+  git -C "$REPO_ROOT" push origin main
   git -C "$REPO_ROOT" push origin "$new_tag"
-  info "Pushed tag: ${new_tag}"
+  info "Pushed release commit and tag: ${new_tag}"
 
   # Summary
   printf '\n'
@@ -377,7 +394,7 @@ main() {
   info "║  Commits:  %-32s ║" "${commit_count} since ${prev_tag}"
   info "╚══════════════════════════════════════════════╝"
   printf '\n'
-  info "The tag push will trigger the release-bundle.yml workflow."
+  info "The tag push will trigger the release-bundle.yml and publish-npm.yml workflows."
   info "Check CI: https://github.com/llipe/dev-tasks/actions"
 }
 

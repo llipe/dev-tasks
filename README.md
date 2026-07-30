@@ -34,7 +34,7 @@ curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \
 
 ```bash
 # 1. Install the npm package
-pnpm add -g @llipe/dev-tasks
+pnpm add -g @llipe.com/dev-tasks
 
 # 2. Extract your repo's metadata
 dt extract all --interactive
@@ -637,12 +637,10 @@ cp -r .dev-tasks-backup/<timestamp>/. ./
 
 ### Release publishing (maintainers)
 
-Every git tag matching `v*.*.*` triggers `.github/workflows/release-bundle.yml`, which:
+Every git tag matching `v*.*.*` triggers two workflows:
 
-1. Runs `scripts/build-bundle.sh` to package managed files into `dev-tasks-bundle-v<version>.tar.gz`
-2. Generates a SHA256 checksum
-3. Runs a smoke test against the bundle
-4. Creates the GitHub Release and attaches the bundle + checksum as assets
+- `.github/workflows/release-bundle.yml` — builds the tarball bundle and creates a GitHub Release
+- `.github/workflows/publish-npm.yml` — publishes the `@llipe.com/dev-tasks` npm package
 
 #### How to create a new release
 
@@ -659,19 +657,30 @@ The script:
 1. Validates pre-flight conditions (branch, clean tree, format check).
 2. Auto-generates a CHANGELOG.md entry from commit history and merged PR metadata.
 3. Suggests an increment type based on Conventional Commit analysis.
-4. Commits the changelog, creates an annotated tag, and pushes the tag.
-5. The tag push triggers `.github/workflows/release-bundle.yml` automatically.
+4. Updates `package.json` version to the new semver value.
+5. Commits both CHANGELOG.md and package.json (`chore(release): v<version>`).
+6. Creates an annotated git tag.
+7. Pushes the commit to `main` and the tag to `origin`.
+8. The tag push triggers both CI workflows automatically.
 
-After the workflow completes, verify the GitHub Release contains both assets:
+After the workflows complete, verify:
 
-- `dev-tasks-bundle-v<version>.tar.gz`
-- `dev-tasks-bundle-v<version>.tar.gz.sha256`
+- GitHub Release contains `dev-tasks-bundle-v<version>.tar.gz` + `.sha256`
+- npm package is published: `npm view @llipe.com/dev-tasks version`
 
 Optional post-release validation:
 
 ```bash
 ./dev-tasks.sh install v1.3.0
 ```
+
+#### CI secrets required
+
+| Secret      | Where to set                         | Purpose                        |
+| ----------- | ------------------------------------ | ------------------------------ |
+| `NPM_TOKEN` | GitHub repo → Settings → Secrets → Actions | npm publish authentication |
+
+Generate the token at [npmjs.com/settings/llipe/tokens](https://www.npmjs.com/settings/llipe/tokens) — use a Granular Access Token scoped to `@llipe.com` with publish permission.
 
 #### Option: download assets directly from the Releases page
 
@@ -701,13 +710,13 @@ tar -xzf "dev-tasks-bundle-${VERSION}.tar.gz"
 
 ## `dt` — Multi-Repo Context CLI
 
-`dt` is the runtime binary for the `@llipe/dev-tasks` npm package. It extracts repository metadata (schema, OpenAPI, AsyncAPI), derives a `component.yaml` manifest with provenance and confidence tracking, and (in later phases) builds a cross-repo catalog and resolves scoped context bundles for agent sessions.
+`dt` is the runtime binary for the `@llipe.com/dev-tasks` npm package. It extracts repository metadata (schema, OpenAPI, AsyncAPI), derives a `component.yaml` manifest with provenance and confidence tracking, and (in later phases) builds a cross-repo catalog and resolves scoped context bundles for agent sessions.
 
 ### Installation
 
 ```bash
 # Install globally (or as a dev dependency)
-pnpm add -g @llipe/dev-tasks
+pnpm add -g @llipe.com/dev-tasks
 
 # Verify
 dt --version
