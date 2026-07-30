@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.2] - 2026-07-30
+
+### Changed
+
+- ci(npm-publish): migrate to OIDC trusted publishers and update Node.js
+- docs(readme): align markdown table formatting for consistency
+- ci: enhance release workflow and npm publishing
+- ci(npm-publish): add provenance attestation and version verification
+- chore(package): update package name and bump version to 0.6.1
+
 ## [0.6.1] - 2026-07-30
 
 ### Changed
