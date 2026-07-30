@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-07-30
+
+### Added
+
+- feat: dt extract component with provenance and idempotency (#40)
+- feat: dt extract asyncapi Kafka topic inventory and payloads (#41)
+- feat: dt extract openapi routes 1 and 3 (#39)
+- feat: dt extract schema (#38)
+- feat: dt extract detect and pluggable extractor interface (#37)
+- feat: migration shim from dev-tasks.sh (#36)
+- feat: hash-based reconciliation engine and dev-tasks update (#34)
+- feat: dev-tasks bootstrap - install, status, pin, doctor (#35)
+- feat: package scaffold with two binaries and layered core (#33)
+
+### Changed
+
+- docs: standardize markdown formatting across documentation and instructions
+- chore(.npmrc): clarify npm authentication configuration
+- ci: add npm publishing workflow and package configuration
+- Merge pull request #74 from llipe:integration/mrc-phase1-extraction
+- docs: add dt CLI and architecture documentation
+- Merge pull request #68 from llipe:integration/mrc-phase0-1-scaffold
+- chore: project setup - greenfield @llipe/dev-tasks scaffold
+- docs: add PRD for multi-repo context feature
+- chore: enforce --body-file requirement for gh issue/pr operations
+
 ## [Unreleased]
 
 ### Added
