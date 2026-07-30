@@ -39,13 +39,13 @@
 - `core/extract/asyncapi/validate.ts` - AsyncAPI schema validation
 - `core/extract/asyncapi/index.ts` - AsyncAPI module barrel export
 - `adapters/cli/extract-asyncapi.ts` - CLI handler for dt extract asyncapi
-- `core/extract/component.ts` - component.yaml derivation + provenance
+- `core/extract/component.ts` - component.json derivation + provenance
 - `core/extract/report.ts` - extraction_report.json generation
 - `core/extract/prompt.ts` - Interactive prompt for non-derivable fields
 - `adapters/cli/extract-component.ts` - CLI handler for dt extract component
 - `adapters/cli/extract-all.ts` - CLI handler for dt extract all pipeline
 - `adapters/cli/index.ts` - CLI adapter (wraps core, formats stdout/JSON)
-- `schemas/component.schema.json` - component.yaml JSON Schema (draft for validation during extraction)
+- `schemas/component.schema.json` - component.json JSON Schema (draft for validation during extraction)
 - `test/fixtures/extract/*` - Fixture repos per stack combination
 - `dev-tasks.sh` - Replaced by migration shim
 - `.dev-tasks/manifest.json` - Per-repo install manifest (generated)
@@ -237,7 +237,7 @@
   - [x] 9.7 Orchestrate `extract all`: detect → schema → openapi → asyncapi → component → report; aggregate results; exit 13 if required fields unresolved, exit 14 on conflict
   - [x] 9.8 Create fixture: repo with prior extraction outputs ready for component derivation
   - [x] 9.9 Write unit tests: field-category routing; provenance assembly; field_hashes computation; report aggregation; reconcile integration
-  - [x] 9.10 Write integration tests: full `extract all` on fixture → expected `component.yaml` + `extraction_report.json`; re-run → no rewrite (idempotent); edit a field + re-run → conflict
+  - [x] 9.10 Write integration tests: full `extract all` on fixture → expected `component.json` + `extraction_report.json`; re-run → no rewrite (idempotent); edit a field + re-run → conflict
   - [x] 9.11 Write edge-case tests: unanswered prompts → empty + exit 13; --force overwrite; alias unconfirmed → not persisted; all-low-confidence repo → report reflects it
   - [x] 9.12 Verify Acceptance Criterion: derivable fields come from detection/extraction
   - [x] 9.13 Verify Acceptance Criterion: inferable fields require human confirmation; aliases not persisted without confirmation

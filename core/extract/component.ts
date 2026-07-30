@@ -1,6 +1,6 @@
 /**
- * Component.yaml derivation + provenance assembly.
- * Spec §8.5 — derives component.yaml fields from detection + extraction outputs,
+ * Component.json derivation + provenance assembly.
+ * Spec §8.5 — derives component.json fields from detection + extraction outputs,
  * assembles _provenance metadata, and integrates with reconciliation for idempotency.
  *
  * Field categories:
@@ -33,7 +33,7 @@ export interface FieldProvenance {
 }
 
 /**
- * The _provenance block embedded inside component.yaml.
+ * The _provenance block embedded inside component.json.
  */
 export interface ProvenanceBlock {
   extracted_at: string;
@@ -45,7 +45,7 @@ export interface ProvenanceBlock {
 }
 
 /**
- * A provides entry in component.yaml.
+ * A provides entry in component.json.
  */
 export interface ProvidesEntry {
   path: string;
@@ -55,7 +55,7 @@ export interface ProvidesEntry {
 }
 
 /**
- * A consumes entry in component.yaml.
+ * A consumes entry in component.json.
  */
 export interface ConsumesEntry {
   service: string;
@@ -64,7 +64,7 @@ export interface ConsumesEntry {
 }
 
 /**
- * The component.yaml data structure.
+ * The component.json data structure.
  */
 export interface ComponentYaml {
   name: string;
@@ -400,10 +400,10 @@ export function deriveComponent(options: DeriveComponentOptions): ComponentYaml 
 }
 
 /**
- * Reconcile a component.yaml field against its prior version.
+ * Reconcile a component.json field against its prior version.
  * Uses the hash-based reconcile engine from core/reconcile.ts.
  *
- * - localHash: current hash of the field in the existing component.yaml on disk
+ * - localHash: current hash of the field in the existing component.json on disk
  * - originHash: hash recorded in _provenance.field_hashes at last extraction
  * - newHash: hash of the newly derived value
  *
@@ -418,7 +418,7 @@ export function reconcileField(
 }
 
 /**
- * Reconcile an entire component.yaml against a prior version on disk.
+ * Reconcile an entire component.json against a prior version on disk.
  * Returns a map of field → action.
  */
 export function reconcileComponent(

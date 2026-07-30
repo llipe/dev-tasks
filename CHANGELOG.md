@@ -64,9 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- feat: `dt extract component [--interactive] [--force]` — derives `component.yaml` from detection/extraction with \_provenance, field hashes, and interactive prompts for non-derivable fields
+- feat: `dt extract component [--interactive] [--force]` — derives `component.json` from detection/extraction with \_provenance, field hashes, and interactive prompts for non-derivable fields
 - feat: `dt extract all [--interactive] [--force]` — orchestrates full extraction pipeline and generates `extraction_report.json`
-- feat: hash-based idempotent reconciliation for component.yaml (exit 13 on missing required fields, exit 14 on reconciliation conflicts)
+- feat: hash-based idempotent reconciliation for component.json (exit 13 on missing required fields, exit 14 on reconciliation conflicts)
 - feat: migration shim from legacy `dev-tasks.sh` to `@llipe/dev-tasks` npm package
 - feat: `dev-tasks migrate` command — generates manifest from legacy state with `modified: unknown` origin hashes
 - feat: legacy detection logic (`core/distribution/migrate.ts`) — detects `.dev-tasks-version` or `.dev-tasks/` without `manifest.json`

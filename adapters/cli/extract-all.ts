@@ -164,8 +164,8 @@ export async function runExtractAll(options: ExtractAllOptions): Promise<number>
     confirmed,
   });
 
-  // Check reconciliation against existing component.yaml
-  const componentPath = join(rootDir, "component.yaml");
+  // Check reconciliation against existing component.json
+  const componentPath = join(rootDir, "component.json");
   let conflicts: string[] = [];
 
   if (existsSync(componentPath) && !options.force) {
@@ -203,7 +203,7 @@ export async function runExtractAll(options: ExtractAllOptions): Promise<number>
     }
   }
 
-  // Write component.yaml
+  // Write component.json
   writeFileSync(componentPath, JSON.stringify(component, null, 2) + "\n", "utf-8");
 
   // Non-derivable fields that are empty → requires_human
@@ -438,7 +438,7 @@ function printHumanOutput(output: ExtractAllOutput): void {
     }
   }
 
-  process.stdout.write(`\nFiles written: component.yaml, extraction_report.json\n`);
+  process.stdout.write(`\nFiles written: component.json, extraction_report.json\n`);
 
   if (output.missing_required.length > 0) {
     process.stdout.write(

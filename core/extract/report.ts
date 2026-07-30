@@ -1,6 +1,6 @@
 /**
  * Extraction report generation.
- * Produces extraction_report.json alongside component.yaml.
+ * Produces extraction_report.json alongside component.json.
  *
  * Reports: strategies used, coverage (endpoints/topics/tables resolved vs unresolved),
  * confidence counts, unresolved[] with location + reason, requires_human[].

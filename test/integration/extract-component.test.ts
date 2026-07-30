@@ -1,6 +1,6 @@
 /**
  * Integration tests for component extraction.
- * Tests: full `extract all` on fixture → expected component.yaml + extraction_report.json;
+ * Tests: full `extract all` on fixture → expected component.json + extraction_report.json;
  * re-run → no rewrite (idempotent); edit a field + re-run → conflict.
  */
 
@@ -48,7 +48,7 @@ describe("Component extraction integration — component-derivation fixture", ()
     expect(detection!.stack).toContain("typescript");
   });
 
-  it("derives component.yaml with all derivable fields populated", () => {
+  it("derives component.json with all derivable fields populated", () => {
     const detection = runDetection({ rootDir: workDir });
 
     const inputs: ExtractionInputs = {
@@ -169,7 +169,7 @@ describe("Component extraction integration — component-derivation fixture", ()
     const component1 = deriveComponent({ inputs, inference: null, prompted, confirmed });
 
     // Write to disk
-    const componentPath = join(workDir, "component.yaml");
+    const componentPath = join(workDir, "component.json");
     writeFileSync(componentPath, JSON.stringify(component1, null, 2) + "\n");
 
     // Second extraction (same inputs)

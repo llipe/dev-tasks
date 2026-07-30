@@ -39,8 +39,8 @@ pnpm add -g @llipe.com/dev-tasks
 # 2. Extract your repo's metadata
 dt extract all --interactive
 
-# 3. Review the generated component.yaml and extraction_report.json
-cat component.yaml
+# 3. Review the generated component.json and extraction_report.json
+cat component.json
 cat extraction_report.json
 
 # 4. Keep distribution up to date with hash-based reconciliation
@@ -716,7 +716,7 @@ tar -xzf "dev-tasks-bundle-${VERSION}.tar.gz"
 
 ## `dt` — Multi-Repo Context CLI
 
-`dt` is the runtime binary for the `@llipe.com/dev-tasks` npm package. It extracts repository metadata (schema, OpenAPI, AsyncAPI), derives a `component.yaml` manifest with provenance and confidence tracking, and (in later phases) builds a cross-repo catalog and resolves scoped context bundles for agent sessions.
+`dt` is the runtime binary for the `@llipe.com/dev-tasks` npm package. It extracts repository metadata (schema, OpenAPI, AsyncAPI), derives a `component.json` manifest with provenance and confidence tracking, and (in later phases) builds a cross-repo catalog and resolves scoped context bundles for agent sessions.
 
 ### Installation
 
@@ -753,7 +753,7 @@ dt extract openapi [--strategy auto|1|3]
 # Extract AsyncAPI spec from Kafka topic patterns (kafkajs)
 dt extract asyncapi
 
-# Derive component.yaml with provenance and confidence
+# Derive component.json with provenance and confidence
 dt extract component [--interactive]
 
 # Run full extraction pipeline (detect → schema → openapi → asyncapi → component → report)
@@ -799,14 +799,14 @@ cd my-service
 dt extract all --interactive
 
 # 2. Review outputs
-cat component.yaml           # manifest with _provenance
+cat component.json           # manifest with _provenance
 cat extraction_report.json   # coverage, confidence, unresolved items
 
 # 3. Validate
 dt validate-component        # (Phase 2+) checks against JSON Schema
 
 # 4. Commit and push
-git add component.yaml contracts/ docs/schema.md extraction_report.json
+git add component.json contracts/ docs/schema.md extraction_report.json
 git commit -m "feat: add component manifest via dt extract"
 ```
 

@@ -44,8 +44,8 @@ Commands:
   ctx                  Generate or query multi-repo context
   scope                Define and manage extraction scope
   init                 Initialize a new component configuration
-  verify               Verify component.yaml integrity
-  validate-component   Validate component.yaml against schema
+  verify               Verify component.json integrity
+  validate-component   Validate component.json against schema
 
 Options:
   --version      Print version
@@ -145,7 +145,7 @@ if (args.command === "extract") {
     process.stderr.write("  schema    Extract database schema\n");
     process.stderr.write("  openapi   Extract OpenAPI specification\n");
     process.stderr.write("  asyncapi  Extract AsyncAPI specification\n");
-    process.stderr.write("  component Derive component.yaml\n");
+    process.stderr.write("  component Derive component.json\n");
     process.stderr.write("  all       Run full extraction pipeline\n");
     process.exit(ExitCode.InvalidUsage);
   } else {

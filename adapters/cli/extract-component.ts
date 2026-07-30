@@ -1,6 +1,6 @@
 /**
  * CLI handler for `dt extract component [--interactive]`.
- * Derives component.yaml from prior extraction outputs.
+ * Derives component.json from prior extraction outputs.
  */
 
 import { resolve, join } from "node:path";
@@ -69,8 +69,8 @@ export async function runExtractComponent(options: ExtractComponentOptions): Pro
     confirmed,
   });
 
-  // Check for existing component.yaml and reconcile
-  const componentPath = join(rootDir, "component.yaml");
+  // Check for existing component.json and reconcile
+  const componentPath = join(rootDir, "component.json");
   let conflicts: string[] = [];
   let written = false;
 
@@ -108,7 +108,7 @@ export async function runExtractComponent(options: ExtractComponentOptions): Pro
     }
   }
 
-  // Write component.yaml
+  // Write component.json
   writeFileSync(componentPath, serializeComponent(component), "utf-8");
   written = true;
 
