@@ -86,6 +86,8 @@ jobs:
           NOTES=$(cat <<EOF
           ## dev-tasks v${VERSION}
 
+          ### Agent toolkit (shell installer)
+
           Install or update the agent toolkit using the single-script installer:
 
           \`\`\`bash
@@ -98,6 +100,12 @@ jobs:
 
           # Or update from a previous version
           ./dev-tasks.sh update ${TAG}
+          \`\`\`
+
+          ### dt CLI (npm package)
+
+          \`\`\`bash
+          pnpm add -g @llipe.com/dev-tasks@${VERSION}
           \`\`\`
 
           See the [README](https://github.com/llipe/dev-tasks#readme) for full documentation.

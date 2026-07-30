@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/release.sh — Automate release: generate CHANGELOG, commit, tag, push.
+# scripts/release.sh — Automate release: generate CHANGELOG, bump version, commit, tag, push.
 #
 # Usage: ./scripts/release.sh <major|minor|patch>
 #
@@ -13,9 +13,11 @@
 #   2. Computes the next semver version based on the provided increment type
 #   3. Suggests an increment based on commit analysis (informational only)
 #   4. Generates a CHANGELOG.md entry grouped by Conventional Commit type
-#   5. Commits the CHANGELOG.md update
-#   6. Creates an annotated git tag
-#   7. Pushes the tag to origin (triggering release-bundle.yml)
+#   5. Updates package.json version to the new semver value
+#   6. Commits CHANGELOG.md + package.json
+#   7. Creates an annotated git tag
+#   8. Pushes the commit to main and the tag to origin
+#   9. The tag push triggers release-bundle.yml and publish-npm.yml
 
 set -euo pipefail
 
@@ -40,8 +42,9 @@ Arguments:
 Options:
   -h, --help   Show this help message
 
-The script generates a CHANGELOG.md entry, commits it, creates an annotated
-git tag, and pushes the tag to trigger the release-bundle.yml workflow.
+The script generates a CHANGELOG.md entry, bumps package.json version, commits
+both, creates an annotated git tag, and pushes everything to trigger the
+release-bundle.yml and publish-npm.yml workflows.
 EOF
 }
 
