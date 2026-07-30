@@ -9,10 +9,10 @@
  */
 
 import { existsSync, statSync } from "node:fs";
-import { readFile, readdir, mkdir, copyFile } from "node:fs/promises";
-import { join, relative, dirname } from "node:path";
+import { readFile, readdir } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { hashContent } from "./hash.js";
-import { writeManifest, readManifest, type Manifest, type SkillEntry } from "./manifest.js";
+import { writeManifest, readManifest, type Manifest, type ManagedFileEntry } from "./manifest.js";
 
 /**
  * Sentinel value for origin_sha256 indicating the original hash is unknown.
@@ -148,18 +148,23 @@ export async function generateMigrationManifest(
   repoRoot: string,
   filePaths: string[],
 ): Promise<Manifest> {
-  const skills: SkillEntry[] = [];
+  const files: ManagedFileEntry[] = [];
 
   for (const relPath of filePaths) {
     const fullPath = join(repoRoot, relPath);
     try {
       const content = await readFile(fullPath, "utf-8");
       const sha256 = hashContent(content);
-      const name = relPath.split("/")[0];
 
-      skills.push({
-        name,
+      // Infer profile from path prefix
+      let profile = "legacy";
+      if (relPath.startsWith(".github/")) profile = "copilot";
+      else if (relPath.startsWith(".claude/")) profile = "claude";
+      else if (relPath.startsWith(".kiro/")) profile = "kiro";
+
+      files.push({
         path: relPath,
+        profile,
         sha256,
         origin_sha256: UNKNOWN_ORIGIN,
       });
@@ -172,7 +177,7 @@ export async function generateMigrationManifest(
     version: "migrated",
     pinned: "latest",
     installed_at: new Date().toISOString(),
-    skills,
+    files,
     extraction: {},
   };
 }
@@ -181,9 +186,12 @@ export async function generateMigrationManifest(
  * Run the full migration process:
  * 1. Detect legacy install
  * 2. Discover legacy files
- * 3. Copy files into .dev-tasks/skills/ (where the update engine expects them)
- * 4. Generate manifest with UNKNOWN_ORIGIN
- * 5. Write manifest
+ * 3. Generate manifest with UNKNOWN_ORIGIN (files stay at native paths)
+ * 4. Write manifest
+ *
+ * Files remain at their platform-native paths (.github/, .claude/, .kiro/).
+ * The manifest marks them with origin_sha256 = UNKNOWN_ORIGIN so the
+ * reconciliation engine reports conflicts on the first update.
  */
 export async function runMigration(repoRoot: string): Promise<MigrationResult> {
   // Check if already migrated
@@ -211,16 +219,7 @@ export async function runMigration(repoRoot: string): Promise<MigrationResult> {
   // Discover all files in known legacy locations
   const files = await discoverLegacyFiles(repoRoot);
 
-  // Copy files into .dev-tasks/skills/ (the update engine's expected location)
-  const skillsDir = join(repoRoot, ".dev-tasks", "skills");
-  for (const relPath of files) {
-    const srcPath = join(repoRoot, relPath);
-    const destPath = join(skillsDir, relPath);
-    await mkdir(dirname(destPath), { recursive: true });
-    await copyFile(srcPath, destPath);
-  }
-
-  // Generate manifest with paths relative to .dev-tasks/skills/
+  // Generate manifest — files stay at native paths, no copying needed
   const manifest = await generateMigrationManifest(repoRoot, files);
 
   // Write manifest

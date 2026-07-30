@@ -34,7 +34,7 @@ describe("core/distribution/update — runUpdate()", () => {
     writeFileSync(join(dir, "manifest.json"), JSON.stringify(manifest, null, 2), "utf-8");
   }
 
-  function createSkillFile(baseDir: string, relativePath: string, content: string): void {
+  function createFile(baseDir: string, relativePath: string, content: string): void {
     const fullPath = join(baseDir, relativePath);
     mkdirSync(join(fullPath, ".."), { recursive: true });
     writeFileSync(fullPath, content, "utf-8");
@@ -45,18 +45,18 @@ describe("core/distribution/update — runUpdate()", () => {
       const repoRoot = setup();
       const packageRoot = join(repoRoot, "__pkg__");
 
-      const pkgContent = "# New skill from package";
-      createSkillFile(join(packageRoot, "skills"), "new-skill/SKILL.md", pkgContent);
+      const pkgContent = "# New agent from package";
+      createFile(packageRoot, ".github/agents/new.agent.md", pkgContent);
 
       // Manifest references a file that doesn't exist locally
       writeManifest(repoRoot, {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: "2024-01-01T00:00:00.000Z",
-        skills: [
+        files: [
           {
-            name: "new-skill",
-            path: "new-skill/SKILL.md",
+            path: ".github/agents/new.agent.md",
+            profile: "copilot",
             sha256: hashContent("old content"),
             origin_sha256: hashContent("old content"),
           },
@@ -72,11 +72,11 @@ describe("core/distribution/update — runUpdate()", () => {
       });
 
       expect(result.installed.length).toBe(1);
-      expect(result.installed[0].path).toBe("new-skill/SKILL.md");
+      expect(result.installed[0].path).toBe(".github/agents/new.agent.md");
       expect(result.installed[0].action).toBe("install");
 
-      // File should exist locally now
-      const installedPath = join(repoRoot, ".dev-tasks", "skills", "new-skill", "SKILL.md");
+      // File should exist locally now at the native path
+      const installedPath = join(repoRoot, ".github/agents/new.agent.md");
       expect(existsSync(installedPath)).toBe(true);
       expect(readFileSync(installedPath, "utf-8")).toBe(pkgContent);
     });
@@ -89,17 +89,17 @@ describe("core/distribution/update — runUpdate()", () => {
       const newPkgContent = "# Updated v2";
 
       // Local file matches origin (not edited)
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "my-skill/SKILL.md", originalContent);
-      createSkillFile(join(packageRoot, "skills"), "my-skill/SKILL.md", newPkgContent);
+      createFile(repoRoot, ".claude/agents/developer.md", originalContent);
+      createFile(packageRoot, ".claude/agents/developer.md", newPkgContent);
 
       writeManifest(repoRoot, {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: "2024-01-01T00:00:00.000Z",
-        skills: [
+        files: [
           {
-            name: "my-skill",
-            path: "my-skill/SKILL.md",
+            path: ".claude/agents/developer.md",
+            profile: "claude",
             sha256: hashContent(originalContent),
             origin_sha256: hashContent(originalContent),
           },
@@ -117,7 +117,7 @@ describe("core/distribution/update — runUpdate()", () => {
       expect(result.updated.length).toBe(1);
       expect(result.updated[0].action).toBe("overwrite");
 
-      const localPath = join(repoRoot, ".dev-tasks", "skills", "my-skill", "SKILL.md");
+      const localPath = join(repoRoot, ".claude/agents/developer.md");
       expect(readFileSync(localPath, "utf-8")).toBe(newPkgContent);
     });
 
@@ -127,17 +127,17 @@ describe("core/distribution/update — runUpdate()", () => {
 
       const content = "# Same content in both";
 
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "my-skill/SKILL.md", content);
-      createSkillFile(join(packageRoot, "skills"), "my-skill/SKILL.md", content);
+      createFile(repoRoot, ".kiro/agents/developer.md", content);
+      createFile(packageRoot, ".kiro/agents/developer.md", content);
 
       writeManifest(repoRoot, {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: "2024-01-01T00:00:00.000Z",
-        skills: [
+        files: [
           {
-            name: "my-skill",
-            path: "my-skill/SKILL.md",
+            path: ".kiro/agents/developer.md",
+            profile: "kiro",
             sha256: hashContent(content),
             origin_sha256: hashContent(content),
           },
@@ -167,17 +167,17 @@ describe("core/distribution/update — runUpdate()", () => {
       const userEdited = "# User edited this";
       const newPkgContent = "# Updated from package";
 
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "my-skill/SKILL.md", userEdited);
-      createSkillFile(join(packageRoot, "skills"), "my-skill/SKILL.md", newPkgContent);
+      createFile(repoRoot, ".github/agents/developer.agent.md", userEdited);
+      createFile(packageRoot, ".github/agents/developer.agent.md", newPkgContent);
 
       writeManifest(repoRoot, {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: "2024-01-01T00:00:00.000Z",
-        skills: [
+        files: [
           {
-            name: "my-skill",
-            path: "my-skill/SKILL.md",
+            path: ".github/agents/developer.agent.md",
+            profile: "copilot",
             sha256: hashContent(originalContent),
             origin_sha256: hashContent(originalContent),
           },
@@ -194,10 +194,10 @@ describe("core/distribution/update — runUpdate()", () => {
 
       expect(result.conflicts.length).toBe(1);
       expect(result.conflicts[0].action).toBe("conflict");
-      expect(result.conflicts[0].path).toBe("my-skill/SKILL.md");
+      expect(result.conflicts[0].path).toBe(".github/agents/developer.agent.md");
 
       // File should NOT be modified
-      const localPath = join(repoRoot, ".dev-tasks", "skills", "my-skill", "SKILL.md");
+      const localPath = join(repoRoot, ".github/agents/developer.agent.md");
       expect(readFileSync(localPath, "utf-8")).toBe(userEdited);
     });
   });
@@ -211,17 +211,17 @@ describe("core/distribution/update — runUpdate()", () => {
       const userEdited = "# User edited this";
       const newPkgContent = "# Force-updated from package";
 
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "my-skill/SKILL.md", userEdited);
-      createSkillFile(join(packageRoot, "skills"), "my-skill/SKILL.md", newPkgContent);
+      createFile(repoRoot, ".github/agents/developer.agent.md", userEdited);
+      createFile(packageRoot, ".github/agents/developer.agent.md", newPkgContent);
 
       writeManifest(repoRoot, {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: "2024-01-01T00:00:00.000Z",
-        skills: [
+        files: [
           {
-            name: "my-skill",
-            path: "my-skill/SKILL.md",
+            path: ".github/agents/developer.agent.md",
+            profile: "copilot",
             sha256: hashContent(originalContent),
             origin_sha256: hashContent(originalContent),
           },
@@ -242,13 +242,13 @@ describe("core/distribution/update — runUpdate()", () => {
       expect(result.backupDir).not.toBeNull();
 
       // File should be overwritten
-      const localPath = join(repoRoot, ".dev-tasks", "skills", "my-skill", "SKILL.md");
+      const localPath = join(repoRoot, ".github/agents/developer.agent.md");
       expect(readFileSync(localPath, "utf-8")).toBe(newPkgContent);
 
       // Backup should contain the user's version
-      const backupFile = join(result.backupDir!, "my-skill/SKILL.md");
-      expect(existsSync(backupFile)).toBe(true);
-      expect(readFileSync(backupFile, "utf-8")).toBe(userEdited);
+      const backupFilePath = join(result.backupDir!, ".github/agents/developer.agent.md");
+      expect(existsSync(backupFilePath)).toBe(true);
+      expect(readFileSync(backupFilePath, "utf-8")).toBe(userEdited);
     });
 
     it("updates manifest with new hashes after force overwrite", async () => {
@@ -259,17 +259,17 @@ describe("core/distribution/update — runUpdate()", () => {
       const userEdited = "# User edited";
       const newPkgContent = "# Updated from package";
 
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "my-skill/SKILL.md", userEdited);
-      createSkillFile(join(packageRoot, "skills"), "my-skill/SKILL.md", newPkgContent);
+      createFile(repoRoot, ".claude/commands/refine.md", userEdited);
+      createFile(packageRoot, ".claude/commands/refine.md", newPkgContent);
 
       writeManifest(repoRoot, {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: "2024-01-01T00:00:00.000Z",
-        skills: [
+        files: [
           {
-            name: "my-skill",
-            path: "my-skill/SKILL.md",
+            path: ".claude/commands/refine.md",
+            profile: "claude",
             sha256: hashContent(originalContent),
             origin_sha256: hashContent(originalContent),
           },
@@ -288,7 +288,7 @@ describe("core/distribution/update — runUpdate()", () => {
       const manifest = JSON.parse(
         readFileSync(join(repoRoot, ".dev-tasks", "manifest.json"), "utf-8"),
       ) as Manifest;
-      const entry = manifest.skills.find((s) => s.path === "my-skill/SKILL.md");
+      const entry = manifest.files.find((f) => f.path === ".claude/commands/refine.md");
       expect(entry).toBeDefined();
       expect(entry!.sha256).toBe(hashContent(newPkgContent));
       expect(entry!.origin_sha256).toBe(hashContent(newPkgContent));
@@ -316,22 +316,22 @@ describe("core/distribution/update — runUpdate()", () => {
   });
 
   describe("package file missing", () => {
-    it("skips skill entry when package source file doesn't exist (skill removed from package)", async () => {
+    it("skips entry when package source file doesn't exist (file removed from package)", async () => {
       const repoRoot = setup();
       const packageRoot = join(repoRoot, "__pkg__");
 
       const content = "# Local content";
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "removed-skill/SKILL.md", content);
-      // Don't create the package skill — simulates removal from package
+      createFile(repoRoot, ".github/agents/removed.agent.md", content);
+      // Don't create the package file — simulates removal from package
 
       writeManifest(repoRoot, {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: "2024-01-01T00:00:00.000Z",
-        skills: [
+        files: [
           {
-            name: "removed-skill",
-            path: "removed-skill/SKILL.md",
+            path: ".github/agents/removed.agent.md",
+            profile: "copilot",
             sha256: hashContent(content),
             origin_sha256: hashContent(content),
           },
@@ -364,37 +364,37 @@ describe("core/distribution/update — runUpdate()", () => {
       const newPkgC = "# C same as local";
 
       // File A: unedited locally, package updated → overwrite
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "skill-a/A.md", origA);
-      createSkillFile(join(packageRoot, "skills"), "skill-a/A.md", newPkgA);
+      createFile(repoRoot, ".github/agents/a.md", origA);
+      createFile(packageRoot, ".github/agents/a.md", newPkgA);
 
       // File B: user edited, package updated → conflict
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "skill-b/B.md", "# B user edit");
-      createSkillFile(join(packageRoot, "skills"), "skill-b/B.md", newPkgB);
+      createFile(repoRoot, ".claude/agents/b.md", "# B user edit");
+      createFile(packageRoot, ".claude/agents/b.md", newPkgB);
 
       // File C: local matches package → skip
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "skill-c/C.md", newPkgC);
-      createSkillFile(join(packageRoot, "skills"), "skill-c/C.md", newPkgC);
+      createFile(repoRoot, ".kiro/agents/c.md", newPkgC);
+      createFile(packageRoot, ".kiro/agents/c.md", newPkgC);
 
       writeManifest(repoRoot, {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: "2024-01-01T00:00:00.000Z",
-        skills: [
+        files: [
           {
-            name: "skill-a",
-            path: "skill-a/A.md",
+            path: ".github/agents/a.md",
+            profile: "copilot",
             sha256: hashContent(origA),
             origin_sha256: hashContent(origA),
           },
           {
-            name: "skill-b",
-            path: "skill-b/B.md",
+            path: ".claude/agents/b.md",
+            profile: "claude",
             sha256: hashContent(origB),
             origin_sha256: hashContent(origB),
           },
           {
-            name: "skill-c",
-            path: "skill-c/C.md",
+            path: ".kiro/agents/c.md",
+            profile: "kiro",
             sha256: hashContent(origC),
             origin_sha256: hashContent(origC),
           },
@@ -410,11 +410,11 @@ describe("core/distribution/update — runUpdate()", () => {
       });
 
       expect(result.updated.length).toBe(1);
-      expect(result.updated[0].path).toBe("skill-a/A.md");
+      expect(result.updated[0].path).toBe(".github/agents/a.md");
       expect(result.conflicts.length).toBe(1);
-      expect(result.conflicts[0].path).toBe("skill-b/B.md");
+      expect(result.conflicts[0].path).toBe(".claude/agents/b.md");
       expect(result.skipped.length).toBe(1);
-      expect(result.skipped[0].path).toBe("skill-c/C.md");
+      expect(result.skipped[0].path).toBe(".kiro/agents/c.md");
     });
   });
 
@@ -427,17 +427,17 @@ describe("core/distribution/update — runUpdate()", () => {
       const userEdited = "# User edited";
       const newPkgContent = "# Package v2";
 
-      createSkillFile(join(repoRoot, ".dev-tasks", "skills"), "my-skill/SKILL.md", userEdited);
-      createSkillFile(join(packageRoot, "skills"), "my-skill/SKILL.md", newPkgContent);
+      createFile(repoRoot, ".github/agents/dev.md", userEdited);
+      createFile(packageRoot, ".github/agents/dev.md", newPkgContent);
 
       writeManifest(repoRoot, {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: "2024-01-01T00:00:00.000Z",
-        skills: [
+        files: [
           {
-            name: "my-skill",
-            path: "my-skill/SKILL.md",
+            path: ".github/agents/dev.md",
+            profile: "copilot",
             sha256: hashContent(originalContent),
             origin_sha256: hashContent(originalContent),
           },

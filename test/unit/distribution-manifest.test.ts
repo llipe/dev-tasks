@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { readManifest, writeManifest, type Manifest } from "#core/distribution/manifest.js";
-import { mkdtempSync, rmSync, mkdirSync, readFileSync } from "node:fs";
+import { mkdtempSync, rmSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -22,10 +22,10 @@ describe("core/distribution/manifest", () => {
     version: "0.1.0",
     pinned: "0.1.0",
     installed_at: "2024-01-01T00:00:00.000Z",
-    skills: [
+    files: [
       {
-        name: "activity-refine",
         path: ".claude/skills/activity-refine/SKILL.md",
+        profile: "claude",
         sha256: "abc123",
         origin_sha256: "def456",
       },
@@ -39,7 +39,7 @@ describe("core/distribution/manifest", () => {
       const raw = readFileSync(join(devTasksDir, "manifest.json"), "utf-8");
       const parsed = JSON.parse(raw) as Manifest;
       expect(parsed.version).toBe("0.1.0");
-      expect(parsed.skills).toHaveLength(1);
+      expect(parsed.files).toHaveLength(1);
     });
 
     it("creates .dev-tasks directory if missing", async () => {
@@ -83,20 +83,52 @@ describe("core/distribution/manifest", () => {
       const result = await readManifest(tmpDir);
       expect(result).toEqual(sampleManifest);
     });
+
+    it("migrates legacy manifests (skills[] only) to files[] format", async () => {
+      const legacyManifest = {
+        version: "0.1.0",
+        pinned: "0.1.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        skills: [
+          {
+            name: "my-skill",
+            path: "my-skill/SKILL.md",
+            sha256: "abc123",
+            origin_sha256: "def456",
+          },
+        ],
+        extraction: {},
+      };
+      writeFileSync(
+        join(devTasksDir, "manifest.json"),
+        JSON.stringify(legacyManifest, null, 2) + "\n",
+        "utf-8",
+      );
+
+      const result = await readManifest(tmpDir);
+      expect(result).not.toBeNull();
+      expect(result!.files).toHaveLength(1);
+      expect(result!.files[0].path).toBe("my-skill/SKILL.md");
+      expect(result!.files[0].profile).toBe("legacy");
+      expect(result!.files[0].sha256).toBe("abc123");
+      expect(result!.files[0].origin_sha256).toBe("def456");
+      // Preserves legacy skills array
+      expect(result!.skills).toHaveLength(1);
+    });
   });
 
-  describe("manifest schema validation", () => {
-    it("allows empty skills array", async () => {
+  describe("manifest schema", () => {
+    it("allows empty files array", async () => {
       const manifest: Manifest = {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: new Date().toISOString(),
-        skills: [],
+        files: [],
         extraction: {},
       };
       await writeManifest(tmpDir, manifest);
       const result = await readManifest(tmpDir);
-      expect(result?.skills).toEqual([]);
+      expect(result?.files).toEqual([]);
     });
 
     it("preserves extraction data", async () => {
@@ -104,7 +136,7 @@ describe("core/distribution/manifest", () => {
         version: "0.1.0",
         pinned: "0.1.0",
         installed_at: new Date().toISOString(),
-        skills: [],
+        files: [],
         extraction: { schema: { lastRun: "2024-01-01" } },
       };
       await writeManifest(tmpDir, manifest);

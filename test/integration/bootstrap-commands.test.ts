@@ -44,34 +44,16 @@ describe("dev-tasks bootstrap commands (integration)", () => {
 
   describe("install", () => {
     let tmpDir: string;
-    let skillsDir: string;
-    let skillTestDir: string;
 
     beforeEach(() => {
       tmpDir = mkdtempSync(join(tmpdir(), "dev-tasks-int-install-"));
-      // Create a test skills dir in the package source
-      skillsDir = join(ROOT, "skills");
-      skillTestDir = join(skillsDir, "test-integration-skill");
-      mkdirSync(skillTestDir, { recursive: true });
-      writeFileSync(
-        join(skillTestDir, "SKILL.md"),
-        "# Integration Test Skill\nContent here.",
-        "utf-8",
-      );
     });
 
     afterEach(() => {
       rmSync(tmpDir, { recursive: true, force: true });
-      rmSync(skillTestDir, { recursive: true, force: true });
-      // Remove skills dir only if empty
-      try {
-        rmSync(skillsDir, { recursive: false });
-      } catch {
-        // Not empty, fine
-      }
     });
 
-    it("installs skills and writes manifest with sha256/origin_sha256", () => {
+    it("installs files and writes manifest with sha256/origin_sha256", () => {
       const result = run(["install"], { cwd: tmpDir });
       expect(result.exitCode).toBe(0);
 
@@ -80,12 +62,63 @@ describe("dev-tasks bootstrap commands (integration)", () => {
 
       const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as Manifest;
       expect(manifest.version).toBe(PKG_VERSION);
-      expect(manifest.skills.length).toBeGreaterThanOrEqual(1);
+      expect(manifest.files.length).toBeGreaterThanOrEqual(1);
 
-      for (const skill of manifest.skills) {
-        expect(skill.sha256).toMatch(/^[a-f0-9]{64}$/);
-        expect(skill.origin_sha256).toMatch(/^[a-f0-9]{64}$/);
+      for (const file of manifest.files) {
+        expect(file.sha256).toMatch(/^[a-f0-9]{64}$/);
+        expect(file.origin_sha256).toMatch(/^[a-f0-9]{64}$/);
+        expect(file.profile).toMatch(/^(copilot|claude|kiro)$/);
       }
+    });
+
+    it("default profile (both) installs copilot + claude but not kiro", () => {
+      const result = run(["install", "--json"], { cwd: tmpDir });
+      expect(result.exitCode).toBe(0);
+
+      const output = JSON.parse(result.stdout) as {
+        platforms: string[];
+        files: Array<{ profile: string }>;
+      };
+      expect(output.platforms).toEqual(["copilot", "claude"]);
+      for (const file of output.files) {
+        expect(["copilot", "claude"]).toContain(file.profile);
+      }
+    });
+
+    it("--profile kiro installs only kiro files", () => {
+      const result = run(["install", "--profile", "kiro", "--json"], { cwd: tmpDir });
+      expect(result.exitCode).toBe(0);
+
+      const output = JSON.parse(result.stdout) as {
+        platforms: string[];
+        files: Array<{ profile: string }>;
+      };
+      expect(output.platforms).toEqual(["kiro"]);
+      for (const file of output.files) {
+        expect(file.profile).toBe("kiro");
+      }
+    });
+
+    it("--profile all installs all three platforms", () => {
+      const result = run(["install", "--profile", "all", "--json"], { cwd: tmpDir });
+      expect(result.exitCode).toBe(0);
+
+      const output = JSON.parse(result.stdout) as {
+        platforms: string[];
+        files: Array<{ profile: string }>;
+      };
+      expect(output.platforms).toEqual(["copilot", "claude", "kiro"]);
+      const profiles = new Set(output.files.map((f) => f.profile));
+      expect(profiles.has("copilot")).toBe(true);
+      expect(profiles.has("claude")).toBe(true);
+      expect(profiles.has("kiro")).toBe(true);
+    });
+
+    it("invalid --profile value exits 2 with error message", () => {
+      const result = run(["install", "--profile", "invalid"], { cwd: tmpDir });
+      expect(result.exitCode).toBe(2);
+      expect(result.stderr).toMatch(/Invalid profile/);
+      expect(result.stderr).toMatch(/copilot/);
     });
 
     it("supports --json output for install", () => {
@@ -96,7 +129,8 @@ describe("dev-tasks bootstrap commands (integration)", () => {
       expect(output.command).toBe("install");
       expect(output.version).toBe(PKG_VERSION);
       expect(typeof output.installed).toBe("number");
-      expect(Array.isArray(output.skills)).toBe(true);
+      expect(Array.isArray(output.files)).toBe(true);
+      expect(output.profile).toBe("both");
     });
 
     it("supports --pin flag to set a specific pinned version", () => {
@@ -112,6 +146,14 @@ describe("dev-tasks bootstrap commands (integration)", () => {
         readFileSync(join(tmpDir, ".dev-tasks", "manifest.json"), "utf-8"),
       ) as Manifest;
       expect(manifest.pinned).toBe("0.0.5");
+    });
+
+    it("installs files to native platform paths (not .dev-tasks/skills/)", () => {
+      run(["install", "--profile", "copilot"], { cwd: tmpDir });
+
+      // Files should be at .github/, not .dev-tasks/skills/
+      expect(existsSync(join(tmpDir, ".github", "agents"))).toBe(true);
+      expect(existsSync(join(tmpDir, ".dev-tasks", "skills"))).toBe(false);
     });
   });
 
@@ -150,10 +192,8 @@ describe("dev-tasks bootstrap commands (integration)", () => {
     });
 
     it("pin is honored — subsequent status reports pinned version", () => {
-      // First pin
       run(["pin", "0.5.0"], { cwd: tmpDir });
 
-      // Then check status
       const statusResult = run(["status", "--json"], { cwd: tmpDir });
       const output = JSON.parse(statusResult.stdout) as Record<string, unknown>;
       expect(output.pinned).toBe("0.5.0");
@@ -185,7 +225,7 @@ describe("dev-tasks bootstrap commands (integration)", () => {
           version: "0.1.0",
           pinned: "0.1.0",
           installed_at: "2024-01-01T00:00:00.000Z",
-          skills: [],
+          files: [],
           extraction: {},
         }),
         "utf-8",
@@ -204,7 +244,7 @@ describe("dev-tasks bootstrap commands (integration)", () => {
           version: "0.1.0",
           pinned: "0.1.0",
           installed_at: "2024-01-01T00:00:00.000Z",
-          skills: [],
+          files: [],
           extraction: {},
         }),
         "utf-8",
@@ -272,7 +312,7 @@ describe("dev-tasks bootstrap commands (integration)", () => {
           version: "0.0.1",
           pinned: "0.0.1",
           installed_at: "2024-01-01T00:00:00.000Z",
-          skills: [],
+          files: [],
           extraction: {},
         }),
         "utf-8",
