@@ -28,12 +28,22 @@
 - `core/extract/openapi/route1.ts` - OpenAPI route 1 (copy + normalize)
 - `core/extract/openapi/route3.ts` - OpenAPI route 3 (AST + LLM descriptions)
 - `core/extract/openapi/validate.ts` - OpenAPI 3.1 schema validation
+- `core/extract/openapi/types.ts` - OpenAPI extraction shared types
+- `core/extract/openapi/route2.ts` - Route 2 interface hook (not implemented)
+- `core/extract/openapi/llm-descriptions.ts` - LLM description pass (summary/description/tags only)
+- `core/extract/openapi/index.ts` - OpenAPI module barrel export
+- `adapters/cli/extract-openapi.ts` - CLI handler for dt extract openapi
+- `core/extract/asyncapi/types.ts` - AsyncAPI extraction shared types
 - `core/extract/asyncapi/topics.ts` - Kafka topic inventory AST extraction
 - `core/extract/asyncapi/payloads.ts` - Kafka payload classification
 - `core/extract/asyncapi/validate.ts` - AsyncAPI schema validation
+- `core/extract/asyncapi/index.ts` - AsyncAPI module barrel export
+- `adapters/cli/extract-asyncapi.ts` - CLI handler for dt extract asyncapi
 - `core/extract/component.ts` - component.yaml derivation + provenance
 - `core/extract/report.ts` - extraction_report.json generation
 - `core/extract/prompt.ts` - Interactive prompt for non-derivable fields
+- `adapters/cli/extract-component.ts` - CLI handler for dt extract component
+- `adapters/cli/extract-all.ts` - CLI handler for dt extract all pipeline
 - `adapters/cli/index.ts` - CLI adapter (wraps core, formats stdout/JSON)
 - `schemas/component.schema.json` - component.yaml JSON Schema (draft for validation during extraction)
 - `test/fixtures/extract/*` - Fixture repos per stack combination
@@ -119,121 +129,121 @@
   - [x] 4.12 Verify Acceptance Criterion: npm-updates notice printed
   - [x] 4.13 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
-- [ ] 5.0 Implement Story S-005 - https://github.com/llipe/dev-tasks/issues/37: dt extract detect and the pluggable extractor interface
-  - [ ] 5.1 Define `ExtractionProvider` interface in `core/extract/provider.ts`: `id`, `detect(repo: RepoContext): DetectionResult | null`, `capabilities: Capability[]`, optional `extractSchema/extractOpenApi/extractAsyncApi`
-  - [ ] 5.2 Define `Capability` enum/type: `openapi_native`, `openapi_ast`, `db_introspection`, `orm_ast`, `topic_ast`, `payload_typed`
-  - [ ] 5.3 Define `DetectionResult` type: `stack[]`, `http: {framework, openapi_strategy, evidence[]}`, `orm: {kind, schema_path}`, `messaging: {client, evidence[]}`, `type_hint`
-  - [ ] 5.4 Implement `core/extract/detect.ts` — orchestrator that loads registered providers, runs `detect()`, returns the first match (or null)
-  - [ ] 5.5 Implement `core/extract/providers/node-ts.ts` — Node/TS provider: inspect `package.json` deps, directory structure, config files; report framework (nestjs/express/fastify/hono), ORM (prisma/drizzle/typeorm), messaging (kafkajs), with evidence; report `openapi_strategy` per the matrix (route 1/2/3) and per-strategy count
-  - [ ] 5.6 Handle missing capability: mark artifact not-produced, record in `requires_human`; do not fail
-  - [ ] 5.7 Wire `dt extract detect` CLI command with human + `--json` output
-  - [ ] 5.8 Create fixture repos under `test/fixtures/extract/`: nestjs-prisma-kafkajs, express-drizzle, fastify-no-orm, hono-typeorm, no-framework
-  - [ ] 5.9 Write unit tests: per-signal detector functions (swagger dep, prisma config, kafkajs dep, express dep)
-  - [ ] 5.10 Write integration tests: each fixture repo → expected DetectionResult JSON snapshot
-  - [ ] 5.11 Write edge-case tests: no `package.json`; multiple ORMs; monorepo-shaped dir (detect single package)
-  - [ ] 5.12 Verify Acceptance Criterion: output includes stack/http/orm/messaging/type_hint
-  - [ ] 5.13 Verify Acceptance Criterion: per-strategy OpenAPI count reported even without route 2
-  - [ ] 5.14 Verify Acceptance Criterion: ExtractionProvider interface with id/detect/capabilities/optional extract
-  - [ ] 5.15 Verify Acceptance Criterion: missing capability → requires_human, no failure
-  - [ ] 5.16 Verify Acceptance Criterion: --json output
-  - [ ] 5.17 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+- [x] 5.0 Implement Story S-005 - https://github.com/llipe/dev-tasks/issues/37: dt extract detect and the pluggable extractor interface
+  - [x] 5.1 Define `ExtractionProvider` interface in `core/extract/provider.ts`: `id`, `detect(repo: RepoContext): DetectionResult | null`, `capabilities: Capability[]`, optional `extractSchema/extractOpenApi/extractAsyncApi`
+  - [x] 5.2 Define `Capability` enum/type: `openapi_native`, `openapi_ast`, `db_introspection`, `orm_ast`, `topic_ast`, `payload_typed`
+  - [x] 5.3 Define `DetectionResult` type: `stack[]`, `http: {framework, openapi_strategy, evidence[]}`, `orm: {kind, schema_path}`, `messaging: {client, evidence[]}`, `type_hint`
+  - [x] 5.4 Implement `core/extract/detect.ts` — orchestrator that loads registered providers, runs `detect()`, returns the first match (or null)
+  - [x] 5.5 Implement `core/extract/providers/node-ts.ts` — Node/TS provider: inspect `package.json` deps, directory structure, config files; report framework (nestjs/express/fastify/hono), ORM (prisma/drizzle/typeorm), messaging (kafkajs), with evidence; report `openapi_strategy` per the matrix (route 1/2/3) and per-strategy count
+  - [x] 5.6 Handle missing capability: mark artifact not-produced, record in `requires_human`; do not fail
+  - [x] 5.7 Wire `dt extract detect` CLI command with human + `--json` output
+  - [x] 5.8 Create fixture repos under `test/fixtures/extract/`: nestjs-prisma-kafkajs, express-drizzle, fastify-no-orm, hono-typeorm, no-framework
+  - [x] 5.9 Write unit tests: per-signal detector functions (swagger dep, prisma config, kafkajs dep, express dep)
+  - [x] 5.10 Write integration tests: each fixture repo → expected DetectionResult JSON snapshot
+  - [x] 5.11 Write edge-case tests: no `package.json`; multiple ORMs; monorepo-shaped dir (detect single package)
+  - [x] 5.12 Verify Acceptance Criterion: output includes stack/http/orm/messaging/type_hint
+  - [x] 5.13 Verify Acceptance Criterion: per-strategy OpenAPI count reported even without route 2
+  - [x] 5.14 Verify Acceptance Criterion: ExtractionProvider interface with id/detect/capabilities/optional extract
+  - [x] 5.15 Verify Acceptance Criterion: missing capability → requires_human, no failure
+  - [x] 5.16 Verify Acceptance Criterion: --json output
+  - [x] 5.17 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
-- [ ] 6.0 Implement Story S-006 - https://github.com/llipe/dev-tasks/issues/38: dt extract schema
-  - [ ] 6.1 Implement `core/extract/orm/prisma.ts` — parse `schema.prisma` AST: extract models, fields (type, nullability, attributes), relations, enums
-  - [ ] 6.2 Implement `core/extract/orm/drizzle.ts` — parse Drizzle table definitions via TypeScript Compiler API: extract tables, columns, types, constraints
-  - [ ] 6.3 Implement `core/extract/orm/typeorm.ts` — parse entity decorators via TypeScript Compiler API: extract entities, columns, relations
-  - [ ] 6.4 Implement `core/extract/schema.ts` — orchestrator: detect ORM from S-005, delegate to the right extractor, attach `source: introspected`
-  - [ ] 6.5 Implement optional `information_schema` reader behind `--db-url`: connect to dev DB, query tables/columns/constraints; attach `source: introspected`
-  - [ ] 6.6 Implement fallback: no ORM + no `--db-url` → if SQL migrations exist, use LLM to infer schema from them; mark `source: inferred`, `confidence: low`
-  - [ ] 6.7 Implement `core/extract/render/schema-md.ts` — render tables, columns (type + nullability), PK/FK, indexes, and a Mermaid ER diagram
-  - [ ] 6.8 Add LLM description pass: semantic table descriptions over extracted structure (never invent columns)
-  - [ ] 6.9 Wire `dt extract schema [--db-url]` CLI command
-  - [ ] 6.10 Create ORM fixture repos: prisma fixture, drizzle fixture, typeorm fixture, no-orm fixture
-  - [ ] 6.11 Write unit tests: per-ORM AST extraction; Mermaid rendering; nullability/PK/FK handling
-  - [ ] 6.12 Write integration tests: each fixture → expected `schema.md` structure (descriptions can be stubbed)
-  - [ ] 6.13 Write edge-case tests: no ORM + no --db-url; composite keys; self-referential FK; enum types
-  - [ ] 6.14 Verify Acceptance Criterion: Prisma/Drizzle/TypeORM marked `introspected`
-  - [ ] 6.15 Verify Acceptance Criterion: --db-url uses information_schema; without it, fallback or skip
-  - [ ] 6.16 Verify Acceptance Criterion: output includes tables, columns, PK/FK, indexes, Mermaid diagram
-  - [ ] 6.17 Verify Acceptance Criterion: LLM writes descriptions only; no invented columns
-  - [ ] 6.18 Verify Acceptance Criterion: DB introspection off by default
-  - [ ] 6.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+- [x] 6.0 Implement Story S-006 - https://github.com/llipe/dev-tasks/issues/38: dt extract schema
+  - [x] 6.1 Implement `core/extract/orm/prisma.ts` — parse `schema.prisma` AST: extract models, fields (type, nullability, attributes), relations, enums
+  - [x] 6.2 Implement `core/extract/orm/drizzle.ts` — parse Drizzle table definitions via TypeScript Compiler API: extract tables, columns, types, constraints
+  - [x] 6.3 Implement `core/extract/orm/typeorm.ts` — parse entity decorators via TypeScript Compiler API: extract entities, columns, relations
+  - [x] 6.4 Implement `core/extract/schema.ts` — orchestrator: detect ORM from S-005, delegate to the right extractor, attach `source: introspected`
+  - [x] 6.5 Implement optional `information_schema` reader behind `--db-url`: connect to dev DB, query tables/columns/constraints; attach `source: introspected`
+  - [x] 6.6 Implement fallback: no ORM + no `--db-url` → if SQL migrations exist, use LLM to infer schema from them; mark `source: inferred`, `confidence: low`
+  - [x] 6.7 Implement `core/extract/render/schema-md.ts` — render tables, columns (type + nullability), PK/FK, indexes, and a Mermaid ER diagram
+  - [x] 6.8 Add LLM description pass: semantic table descriptions over extracted structure (never invent columns)
+  - [x] 6.9 Wire `dt extract schema [--db-url]` CLI command
+  - [x] 6.10 Create ORM fixture repos: prisma fixture, drizzle fixture, typeorm fixture, no-orm fixture
+  - [x] 6.11 Write unit tests: per-ORM AST extraction; Mermaid rendering; nullability/PK/FK handling
+  - [x] 6.12 Write integration tests: each fixture → expected `schema.md` structure (descriptions can be stubbed)
+  - [x] 6.13 Write edge-case tests: no ORM + no --db-url; composite keys; self-referential FK; enum types
+  - [x] 6.14 Verify Acceptance Criterion: Prisma/Drizzle/TypeORM marked `introspected`
+  - [x] 6.15 Verify Acceptance Criterion: --db-url uses information_schema; without it, fallback or skip
+  - [x] 6.16 Verify Acceptance Criterion: output includes tables, columns, PK/FK, indexes, Mermaid diagram
+  - [x] 6.17 Verify Acceptance Criterion: LLM writes descriptions only; no invented columns
+  - [x] 6.18 Verify Acceptance Criterion: DB introspection off by default
+  - [x] 6.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 7.0 Implement Story S-007 - https://github.com/llipe/dev-tasks/issues/39: dt extract openapi (routes 1 and 3)
-  - [ ] 7.1 Implement `core/extract/openapi/route1.ts` — detect on-disk `openapi.yaml/json`; copy, normalize (resolve $refs, set openapi: 3.1.x), validate; attach `source: introspected`, `confidence: high`
-  - [ ] 7.2 Implement `core/extract/openapi/route3.ts` — AST route discovery:
-    - [ ] 7.2.1 Locate route registrations: Express `app|router.get|post|put|patch|delete(path, handler)`, Fastify same pattern, Hono `app.get(path, handler)` + `.route()` groupings, NestJS `@Controller/@Get/@Post` decorators
-    - [ ] 7.2.2 Resolve full path by composing router prefixes
-    - [ ] 7.2.3 Derive path params from the route pattern
-    - [ ] 7.2.4 Derive query/body params from handler type signature (TypeScript Compiler API); support zod schemas
-    - [ ] 7.2.5 Derive response schema from return type; mark `any`/`unknown` as schema-less
-    - [ ] 7.2.6 Report dynamically registered routes in `unresolved[]` (loops over config, spread arrays)
-  - [ ] 7.3 Add LLM pass: write only `summary`, `description`, `tags` per endpoint — nothing structural
-  - [ ] 7.4 Implement `core/extract/openapi/validate.ts` — validate output against OpenAPI 3.1 JSON Schema
-  - [ ] 7.5 Attach provenance: `source: inferred`, `confidence: medium` (typed handlers) / `low` (untyped)
-  - [ ] 7.6 Wire `dt extract openapi [--strategy auto|1|3]` CLI command; record selected strategy + confidence
-  - [ ] 7.7 Leave a capability hook for route 2 (isolated framework boot) — interface only, not implemented
-  - [ ] 7.8 Create fixtures: repo with committed openapi.yaml (route 1); Express + typed handlers (route 3); Fastify + zod (route 3); Hono (route 3); dynamic routes (unresolved)
-  - [ ] 7.9 Write unit tests: path composition; param/body type resolution; zod handling; response marking; unresolved detection
-  - [ ] 7.10 Write integration tests: each fixture → expected OpenAPI output + schema validation pass
-  - [ ] 7.11 Write edge-case tests: nested routers; dynamic route loop → unresolved; untyped handlers → low confidence; malformed on-disk spec → route 1 error
-  - [ ] 7.12 Verify Acceptance Criterion: route 1 copies + normalizes + introspected/high
-  - [ ] 7.13 Verify Acceptance Criterion: route 3 AST + typed params + zod + marks unknown responses
-  - [ ] 7.14 Verify Acceptance Criterion: LLM writes only summary/description/tags
-  - [ ] 7.15 Verify Acceptance Criterion: output validates against OpenAPI 3.1
-  - [ ] 7.16 Verify Acceptance Criterion: dynamic routes → unresolved[], not omitted
-  - [ ] 7.17 Verify Acceptance Criterion: --strategy selects route; confidence recorded
-  - [ ] 7.18 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+  - [x] 7.1 Implement `core/extract/openapi/route1.ts` — detect on-disk `openapi.yaml/json`; copy, normalize (resolve $refs, set openapi: 3.1.x), validate; attach `source: introspected`, `confidence: high`
+  - [x] 7.2 Implement `core/extract/openapi/route3.ts` — AST route discovery:
+    - [x] 7.2.1 Locate route registrations: Express `app|router.get|post|put|patch|delete(path, handler)`, Fastify same pattern, Hono `app.get(path, handler)` + `.route()` groupings, NestJS `@Controller/@Get/@Post` decorators
+    - [x] 7.2.2 Resolve full path by composing router prefixes
+    - [x] 7.2.3 Derive path params from the route pattern
+    - [x] 7.2.4 Derive query/body params from handler type signature (TypeScript Compiler API); support zod schemas
+    - [x] 7.2.5 Derive response schema from return type; mark `any`/`unknown` as schema-less
+    - [x] 7.2.6 Report dynamically registered routes in `unresolved[]` (loops over config, spread arrays)
+  - [x] 7.3 Add LLM pass: write only `summary`, `description`, `tags` per endpoint — nothing structural
+  - [x] 7.4 Implement `core/extract/openapi/validate.ts` — validate output against OpenAPI 3.1 JSON Schema
+  - [x] 7.5 Attach provenance: `source: inferred`, `confidence: medium` (typed handlers) / `low` (untyped)
+  - [x] 7.6 Wire `dt extract openapi [--strategy auto|1|3]` CLI command; record selected strategy + confidence
+  - [x] 7.7 Leave a capability hook for route 2 (isolated framework boot) — interface only, not implemented
+  - [x] 7.8 Create fixtures: repo with committed openapi.yaml (route 1); Express + typed handlers (route 3); Fastify + zod (route 3); Hono (route 3); dynamic routes (unresolved)
+  - [x] 7.9 Write unit tests: path composition; param/body type resolution; zod handling; response marking; unresolved detection
+  - [x] 7.10 Write integration tests: each fixture → expected OpenAPI output + schema validation pass
+  - [x] 7.11 Write edge-case tests: nested routers; dynamic route loop → unresolved; untyped handlers → low confidence; malformed on-disk spec → route 1 error
+  - [x] 7.12 Verify Acceptance Criterion: route 1 copies + normalizes + introspected/high
+  - [x] 7.13 Verify Acceptance Criterion: route 3 AST + typed params + zod + marks unknown responses
+  - [x] 7.14 Verify Acceptance Criterion: LLM writes only summary/description/tags
+  - [x] 7.15 Verify Acceptance Criterion: output validates against OpenAPI 3.1
+  - [x] 7.16 Verify Acceptance Criterion: dynamic routes → unresolved[], not omitted
+  - [x] 7.17 Verify Acceptance Criterion: --strategy selects route; confidence recorded
+  - [x] 7.18 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
-- [ ] 8.0 Implement Story S-008 - https://github.com/llipe/dev-tasks/issues/41: dt extract asyncapi (Kafka topic inventory + payloads)
-  - [ ] 8.1 Implement `core/extract/asyncapi/topics.ts` — AST over kafkajs:
-    - [ ] 8.1.1 `producer.send({ topic: X, messages })` → provides
-    - [ ] 8.1.2 `producer.sendBatch(...)` → provides
-    - [ ] 8.1.3 `consumer.subscribe({ topic: X })` → consumes
-    - [ ] 8.1.4 `consumer.subscribe({ topics: [X, Y] })` → consumes
-  - [ ] 8.2 Implement topic resolution with confidence:
-    - [ ] 8.2.1 String literal → high
-    - [ ] 8.2.2 Module constant or enum (follow reference in AST) → high
-    - [ ] 8.2.3 Template literal with env var → medium (record pattern + variable)
-    - [ ] 8.2.4 Unresolvable expression → low + entry in `unresolved[]`
-  - [ ] 8.3 Implement `core/extract/asyncapi/payloads.ts` — payload classification:
-    - [ ] 8.3.1 Typed `send()` (generic or interface in the signature) → medium, derive schema from the type
-    - [ ] 8.3.2 Inline object literal built at call site → low, LLM infers shape
-    - [ ] 8.3.3 Opaque serialization (`Buffer`, `JSON.stringify(variable)`) → low + `unresolved[]`
-  - [ ] 8.4 Emit AsyncAPI document with separate `topic_confidence` and `payload_confidence` per channel/operation
-  - [ ] 8.5 Implement `core/extract/asyncapi/validate.ts` — validate output against AsyncAPI schema
-  - [ ] 8.6 Wire `dt extract asyncapi` CLI command
-  - [ ] 8.7 Create fixtures: kafkajs with string-literal topics; topics from config/env; typed payloads; opaque payloads
-  - [ ] 8.8 Write unit tests: topic literal/constant/template/unresolvable resolution; payload typed/inline/opaque classification
-  - [ ] 8.9 Write integration tests: kafkajs fixture repos → expected topic inventory + confidence split + AsyncAPI validation
-  - [ ] 8.10 Write edge-case tests: `subscribe({ topics: [...] })`; topic from config array; Buffer payload → low + unresolved; producer with no consumers in the same repo
-  - [ ] 8.11 Verify Acceptance Criterion: producer.send/sendBatch → provides; subscribe → consumes
-  - [ ] 8.12 Verify Acceptance Criterion: topic confidence literal→high, template→medium, unresolvable→low+unresolved
-  - [ ] 8.13 Verify Acceptance Criterion: payload confidence typed→medium, inline→low, opaque→low+unresolved
-  - [ ] 8.14 Verify Acceptance Criterion: topic_confidence and payload_confidence tracked separately
-  - [ ] 8.15 Verify Acceptance Criterion: output validates against AsyncAPI schema
-  - [ ] 8.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+- [x] 8.0 Implement Story S-008 - https://github.com/llipe/dev-tasks/issues/41: dt extract asyncapi (Kafka topic inventory + payloads)
+  - [x] 8.1 Implement `core/extract/asyncapi/topics.ts` — AST over kafkajs:
+    - [x] 8.1.1 `producer.send({ topic: X, messages })` → provides
+    - [x] 8.1.2 `producer.sendBatch(...)` → provides
+    - [x] 8.1.3 `consumer.subscribe({ topic: X })` → consumes
+    - [x] 8.1.4 `consumer.subscribe({ topics: [X, Y] })` → consumes
+  - [x] 8.2 Implement topic resolution with confidence:
+    - [x] 8.2.1 String literal → high
+    - [x] 8.2.2 Module constant or enum (follow reference in AST) → high
+    - [x] 8.2.3 Template literal with env var → medium (record pattern + variable)
+    - [x] 8.2.4 Unresolvable expression → low + entry in `unresolved[]`
+  - [x] 8.3 Implement `core/extract/asyncapi/payloads.ts` — payload classification:
+    - [x] 8.3.1 Typed `send()` (generic or interface in the signature) → medium, derive schema from the type
+    - [x] 8.3.2 Inline object literal built at call site → low, LLM infers shape
+    - [x] 8.3.3 Opaque serialization (`Buffer`, `JSON.stringify(variable)`) → low + `unresolved[]`
+  - [x] 8.4 Emit AsyncAPI document with separate `topic_confidence` and `payload_confidence` per channel/operation
+  - [x] 8.5 Implement `core/extract/asyncapi/validate.ts` — validate output against AsyncAPI schema
+  - [x] 8.6 Wire `dt extract asyncapi` CLI command
+  - [x] 8.7 Create fixtures: kafkajs with string-literal topics; topics from config/env; typed payloads; opaque payloads
+  - [x] 8.8 Write unit tests: topic literal/constant/template/unresolvable resolution; payload typed/inline/opaque classification
+  - [x] 8.9 Write integration tests: kafkajs fixture repos → expected topic inventory + confidence split + AsyncAPI validation
+  - [x] 8.10 Write edge-case tests: `subscribe({ topics: [...] })`; topic from config array; Buffer payload → low + unresolved; producer with no consumers in the same repo
+  - [x] 8.11 Verify Acceptance Criterion: producer.send/sendBatch → provides; subscribe → consumes
+  - [x] 8.12 Verify Acceptance Criterion: topic confidence literal→high, template→medium, unresolvable→low+unresolved
+  - [x] 8.13 Verify Acceptance Criterion: payload confidence typed→medium, inline→low, opaque→low+unresolved
+  - [x] 8.14 Verify Acceptance Criterion: topic_confidence and payload_confidence tracked separately
+  - [x] 8.15 Verify Acceptance Criterion: output validates against AsyncAPI schema
+  - [x] 8.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 9.0 Implement Story S-009 - https://github.com/llipe/dev-tasks/issues/40: dt extract component — provenance, human gate, idempotency, report
-  - [ ] 9.1 Implement `core/extract/component.ts` — field-category derivation:
-    - [ ] 9.1.1 Derivable fields (`stack`, `type`, `provides[].path`, `datastores`, `paths`, `docs.*`, `consumes`) from detection + extraction outputs
-    - [ ] 9.1.2 Inferable fields (`description`, `aliases`, `subdomain`, `consumes[].criticality`) via LLM; require human confirmation before persisting
-    - [ ] 9.1.3 Non-derivable fields (`owner`, `domain`, `criticality`, `lifecycle`) via interactive prompt only
-  - [ ] 9.2 Implement `core/extract/prompt.ts` — interactive prompt for non-derivable fields (TTY detection; no-op when non-interactive; unanswered → empty)
-  - [ ] 9.3 Assemble `_provenance` block: `extracted_at`, `extractor` (dt version), `repo_sha`, `detector` result, per-field `source`/`confidence` (with `confirmed_by` for confirmed inferences), `field_hashes` (SHA-256 per serialized field value)
-  - [ ] 9.4 Wire idempotency through `core/reconcile.ts` (from S-003): for each field — write if absent, write if hash matches origin (unedited), skip if value equal, conflict otherwise
-  - [ ] 9.5 Implement `core/extract/report.ts` — `extraction_report.json` generation: strategies used, coverage (endpoints/topics/tables resolved vs. unresolved), confidence counts, `unresolved[]` with location + reason, `requires_human[]`
-  - [ ] 9.6 Implement `dt extract component [--interactive]` and `dt extract all [--interactive] [--force]` CLI commands
-  - [ ] 9.7 Orchestrate `extract all`: detect → schema → openapi → asyncapi → component → report; aggregate results; exit 13 if required fields unresolved, exit 14 on conflict
-  - [ ] 9.8 Create fixture: repo with prior extraction outputs ready for component derivation
-  - [ ] 9.9 Write unit tests: field-category routing; provenance assembly; field_hashes computation; report aggregation; reconcile integration
-  - [ ] 9.10 Write integration tests: full `extract all` on fixture → expected `component.yaml` + `extraction_report.json`; re-run → no rewrite (idempotent); edit a field + re-run → conflict
-  - [ ] 9.11 Write edge-case tests: unanswered prompts → empty + exit 13; --force overwrite; alias unconfirmed → not persisted; all-low-confidence repo → report reflects it
-  - [ ] 9.12 Verify Acceptance Criterion: derivable fields come from detection/extraction
-  - [ ] 9.13 Verify Acceptance Criterion: inferable fields require human confirmation; aliases not persisted without confirmation
-  - [ ] 9.14 Verify Acceptance Criterion: non-derivable fields prompted; unanswered → empty → invalid manifest
-  - [ ] 9.15 Verify Acceptance Criterion: every field/artifact carries source + confidence + _provenance
-  - [ ] 9.16 Verify Acceptance Criterion: idempotent re-run; edited fields → conflict + diff; no overwrite without --force
-  - [ ] 9.17 Verify Acceptance Criterion: extraction_report.json with strategies, coverage, confidence, unresolved, requires_human
-  - [ ] 9.18 Verify Acceptance Criterion: exit 13 on missing required fields; exit 14 on conflict
-  - [ ] 9.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+  - [x] 9.1 Implement `core/extract/component.ts` — field-category derivation:
+    - [x] 9.1.1 Derivable fields (`stack`, `type`, `provides[].path`, `datastores`, `paths`, `docs.*`, `consumes`) from detection + extraction outputs
+    - [x] 9.1.2 Inferable fields (`description`, `aliases`, `subdomain`, `consumes[].criticality`) via LLM; require human confirmation before persisting
+    - [x] 9.1.3 Non-derivable fields (`owner`, `domain`, `criticality`, `lifecycle`) via interactive prompt only
+  - [x] 9.2 Implement `core/extract/prompt.ts` — interactive prompt for non-derivable fields (TTY detection; no-op when non-interactive; unanswered → empty)
+  - [x] 9.3 Assemble `_provenance` block: `extracted_at`, `extractor` (dt version), `repo_sha`, `detector` result, per-field `source`/`confidence` (with `confirmed_by` for confirmed inferences), `field_hashes` (SHA-256 per serialized field value)
+  - [x] 9.4 Wire idempotency through `core/reconcile.ts` (from S-003): for each field — write if absent, write if hash matches origin (unedited), skip if value equal, conflict otherwise
+  - [x] 9.5 Implement `core/extract/report.ts` — `extraction_report.json` generation: strategies used, coverage (endpoints/topics/tables resolved vs. unresolved), confidence counts, `unresolved[]` with location + reason, `requires_human[]`
+  - [x] 9.6 Implement `dt extract component [--interactive]` and `dt extract all [--interactive] [--force]` CLI commands
+  - [x] 9.7 Orchestrate `extract all`: detect → schema → openapi → asyncapi → component → report; aggregate results; exit 13 if required fields unresolved, exit 14 on conflict
+  - [x] 9.8 Create fixture: repo with prior extraction outputs ready for component derivation
+  - [x] 9.9 Write unit tests: field-category routing; provenance assembly; field_hashes computation; report aggregation; reconcile integration
+  - [x] 9.10 Write integration tests: full `extract all` on fixture → expected `component.yaml` + `extraction_report.json`; re-run → no rewrite (idempotent); edit a field + re-run → conflict
+  - [x] 9.11 Write edge-case tests: unanswered prompts → empty + exit 13; --force overwrite; alias unconfirmed → not persisted; all-low-confidence repo → report reflects it
+  - [x] 9.12 Verify Acceptance Criterion: derivable fields come from detection/extraction
+  - [x] 9.13 Verify Acceptance Criterion: inferable fields require human confirmation; aliases not persisted without confirmation
+  - [x] 9.14 Verify Acceptance Criterion: non-derivable fields prompted; unanswered → empty → invalid manifest
+  - [x] 9.15 Verify Acceptance Criterion: every field/artifact carries source + confidence + _provenance
+  - [x] 9.16 Verify Acceptance Criterion: idempotent re-run; edited fields → conflict + diff; no overwrite without --force
+  - [x] 9.17 Verify Acceptance Criterion: extraction_report.json with strategies, coverage, confidence, unresolved, requires_human
+  - [x] 9.18 Verify Acceptance Criterion: exit 13 on missing required fields; exit 14 on conflict
+  - [x] 9.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`

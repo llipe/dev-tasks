@@ -1,0 +1,22 @@
+openapi: "3.1.0"
+info:
+  title: Order Service API
+  version: "1.0.0"
+paths:
+  /orders:
+    get:
+      summary: List orders
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create order
+      responses:
+        "201":
+          description: Created
+  /orders/{id}:
+    get:
+      summary: Get order by ID
+      responses:
+        "200":
+          description: OK
