@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.4] - 2026-07-30
+
+### Changed
+
+- chore(package): add repository field to package.json
+
 ## [0.6.3] - 2026-07-30
 
 ### Changed
