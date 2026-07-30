@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.6] - 2026-07-30
+
+### Fixed
+
+- fix(cli): support --flag=value syntax for all value-bearing flags The parser only matched exact '--profile' followed by a separate argument. Passing '--profile=kiro' was treated as an unknown flag and the profile defaulted to 'both'. Now all value flags (--profile, --pin, --meta-repo, --db-url, --strategy) correctly handle both '--flag value' and '--flag=value' syntax.
+
+### Changed
+
+- Merge pull request #95 from llipe:fix/91-profile-equals-syntax
+
 ## [0.6.5] - 2026-07-30
 
 ### Added
