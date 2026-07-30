@@ -676,8 +676,8 @@ Optional post-release validation:
 
 #### CI secrets required
 
-| Secret      | Where to set                         | Purpose                        |
-| ----------- | ------------------------------------ | ------------------------------ |
+| Secret      | Where to set                               | Purpose                    |
+| ----------- | ------------------------------------------ | -------------------------- |
 | `NPM_TOKEN` | GitHub repo → Settings → Secrets → Actions | npm publish authentication |
 
 Generate the token at [npmjs.com/settings/llipe/tokens](https://www.npmjs.com/settings/llipe/tokens) — use a Granular Access Token scoped to `@llipe.com` with publish permission.
