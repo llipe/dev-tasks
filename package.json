@@ -8,8 +8,8 @@
     "#adapters/*": "./dist/adapters/*"
   },
   "bin": {
-    "dev-tasks": "./dist/bin/dev-tasks.js",
-    "dt": "./dist/bin/dt.js"
+    "dev-tasks": "dist/bin/dev-tasks.js",
+    "dt": "dist/bin/dt.js"
   },
   "files": [
     "dist/bin/",

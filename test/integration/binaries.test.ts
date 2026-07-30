@@ -78,8 +78,12 @@ describe("binary integration — built binaries resolve and execute", () => {
       bin: Record<string, string>;
     };
 
-    expect(pkg.bin["dev-tasks"]).toBe("./dist/bin/dev-tasks.js");
-    expect(pkg.bin["dt"]).toBe("./dist/bin/dt.js");
+    // Normalize away any leading "./" — npm strips it on publish, so both
+    // "./dist/bin/dt.js" and "dist/bin/dt.js" are valid declarations.
+    const normalize = (p: string) => p.replace(/^\.\//, "");
+
+    expect(normalize(pkg.bin["dev-tasks"])).toBe("dist/bin/dev-tasks.js");
+    expect(normalize(pkg.bin["dt"])).toBe("dist/bin/dt.js");
 
     expect(existsSync(resolve(ROOT, pkg.bin["dev-tasks"]))).toBe(true);
     expect(existsSync(resolve(ROOT, pkg.bin["dt"]))).toBe(true);
