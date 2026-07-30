@@ -39,20 +39,28 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const positional: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
+    let arg = argv[i];
+
+    // Handle --flag=value syntax: split into --flag and value
+    let inlineValue: string | undefined;
+    if (arg.startsWith("--") && arg.includes("=")) {
+      const eqIdx = arg.indexOf("=");
+      inlineValue = arg.slice(eqIdx + 1);
+      arg = arg.slice(0, eqIdx);
+    }
 
     if (arg === "--json") {
       flags.json = true;
     } else if (arg === "--meta-repo") {
-      flags.metaRepo = argv[++i];
+      flags.metaRepo = inlineValue ?? argv[++i];
     } else if (arg === "--pin") {
-      flags.pin = argv[++i];
+      flags.pin = inlineValue ?? argv[++i];
     } else if (arg === "--db-url") {
-      flags.dbUrl = argv[++i];
+      flags.dbUrl = inlineValue ?? argv[++i];
     } else if (arg === "--strategy") {
-      flags.strategy = argv[++i];
+      flags.strategy = inlineValue ?? argv[++i];
     } else if (arg === "--profile") {
-      flags.profile = argv[++i];
+      flags.profile = inlineValue ?? argv[++i];
     } else if (arg === "--interactive" || arg === "-i") {
       flags.interactive = true;
     } else if (arg === "--force" || arg === "-f") {
@@ -63,11 +71,11 @@ export function parseArgs(argv: string[]): ParsedArgs {
       flags.version = true;
     } else if (arg === "--help" || arg === "-h") {
       flags.help = true;
-    } else if (arg.startsWith("-")) {
+    } else if (argv[i].startsWith("-")) {
       // Unknown flag — treat as positional for now
-      positional.push(arg);
+      positional.push(argv[i]);
     } else {
-      positional.push(arg);
+      positional.push(argv[i]);
     }
   }
 
