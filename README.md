@@ -674,13 +674,19 @@ Optional post-release validation:
 ./dev-tasks.sh install v1.3.0
 ```
 
-#### CI secrets required
+#### CI setup required
 
-| Secret      | Where to set                               | Purpose                    |
-| ----------- | ------------------------------------------ | -------------------------- |
-| `NPM_TOKEN` | GitHub repo → Settings → Secrets → Actions | npm publish authentication |
+The npm publish workflow uses **Trusted Publishers (OIDC)** — no npm token secret is needed. Configure once on npmjs.com:
 
-Generate the token at [npmjs.com/settings/llipe/tokens](https://www.npmjs.com/settings/llipe/tokens) — use a Granular Access Token scoped to `@llipe.com` with publish permission.
+1. Go to npmjs.com → Packages → `@llipe.com/dev-tasks` → Settings → Trusted Publisher
+2. Select **GitHub Actions** and fill in:
+   - Organization or user: `llipe`
+   - Repository: `dev-tasks`
+   - Workflow filename: `publish-npm.yml`
+   - Environment name: `npm`
+   - Allowed actions: npm publish
+
+Also create a GitHub environment named `npm` in the repo (Settings → Environments → New environment → `npm`). No secrets needed.
 
 #### Option: download assets directly from the Releases page
 
