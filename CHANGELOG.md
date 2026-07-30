@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.5] - 2026-07-30
+
+### Added
+
+- feat(distribution): profile-aware install to native platform paths Closes #91 - Add core/distribution/profiles.ts with profile-to-paths mapping - Rewrite install.ts to copy files to native platform paths (.github/, .claude/, .kiro/) instead of .dev-tasks/skills/ - Generalize manifest.ts from skills[] to files[] with profile field - Update update.ts to reconcile files at native paths - Add --profile flag (copilot|claude|kiro|both|all, default: both) - Update package.json files array to include platform directories - Remove deprecated top-level skills/ directory - Maintain backward compat: readManifest migrates legacy format BREAKING CHANGE: manifest.json now uses files[] instead of skills[]. The readManifest function handles migration from legacy format transparently.
+- feat(extract): migrate component manifest from YAML to JSON format
+
+### Fixed
+
+- fix: format fix
+
+### Changed
+
+- Merge pull request #94 from llipe:issue/91-npm-install-distribution
+- docs(workstream): mark issue #91 npm install distribution complete
+
 ## [0.6.4] - 2026-07-30
 
 ### Changed
