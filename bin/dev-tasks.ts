@@ -8,7 +8,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "#adapters/cli/parse-args.js";
 import { ExitCode } from "#core/exit-codes.js";
-import { installSkills } from "#core/distribution/install.js";
+import { installFiles } from "#core/distribution/install.js";
+import { isValidProfile, VALID_PROFILES, type Profile } from "#core/distribution/profiles.js";
 import { runUpdate } from "#core/distribution/update.js";
 import { writePin } from "#core/distribution/pin.js";
 import { getStatus } from "#core/distribution/status.js";
@@ -52,17 +53,19 @@ function printUsage(): void {
   const usage = `Usage: dev-tasks <command> [options]
 
 Commands:
-  install    Install dev-tasks skills into the target repository
-  update     Update installed skills (hash-based reconciliation)
+  install    Install dev-tasks agent toolkit into the target repository
+  update     Update installed files (hash-based reconciliation)
   status     Show installed vs. pinned vs. latest versions
   pin        Pin to a specific version
   doctor     Check environment prerequisites
   migrate    Migrate from legacy dev-tasks.sh installation
 
 Options:
+  --profile <p>  Platform profile: copilot, claude, kiro, both, all (default: both)
   --version      Print version
   --json         Output as JSON
   --pin <ver>    Pin to a specific version (used with install)
+  --force        Force-overwrite conflicting files (backs them up first)
   --meta-repo    Path to meta repository
   -v, --verbose  Verbose output
   -h, --help     Show this help message
@@ -100,12 +103,23 @@ async function main(): Promise<void> {
 
   switch (args.command) {
     case "install": {
+      // Validate --profile flag
+      const profileValue = args.flags.profile ?? "both";
+      if (!isValidProfile(profileValue)) {
+        process.stderr.write(
+          `Invalid profile: "${profileValue}"\nValid profiles: ${VALID_PROFILES.join(", ")}\n`,
+        );
+        process.exit(ExitCode.InvalidUsage);
+      }
+      const profile = profileValue as Profile;
+
       const pinVersion = args.flags.pin ?? currentVersion;
-      const result = await installSkills({
+      const result = await installFiles({
         sourceDir: packageRoot,
         targetDir,
         version: currentVersion,
         pin: pinVersion,
+        profile,
       });
 
       if (args.flags.json) {
@@ -115,8 +129,10 @@ async function main(): Promise<void> {
               command: "install",
               version: currentVersion,
               pinned: pinVersion,
+              profile,
+              platforms: result.platforms,
               installed: result.installed.length,
-              skills: result.installed,
+              files: result.installed,
               manifestPath: result.manifestPath,
             },
             null,
@@ -125,10 +141,11 @@ async function main(): Promise<void> {
         );
       } else {
         process.stdout.write(
-          `Installed ${result.installed.length} skill(s) (v${currentVersion})\n`,
+          `Installed ${result.installed.length} file(s) for profile "${profile}" (v${currentVersion})\n`,
         );
-        for (const skill of result.installed) {
-          process.stdout.write(`  ✓ ${skill.name} → ${skill.path}\n`);
+        process.stdout.write(`Platforms: ${result.platforms.join(", ")}\n`);
+        for (const file of result.installed) {
+          process.stdout.write(`  ✓ ${file.path}\n`);
         }
         process.stdout.write(`Manifest written to ${result.manifestPath}\n`);
       }
@@ -234,7 +251,7 @@ async function main(): Promise<void> {
           result.conflicts.length === 0 &&
           result.skipped.length === 0
         ) {
-          process.stdout.write("Nothing to update — no manifest found or no skills installed.\n");
+          process.stdout.write("Nothing to update — no manifest found or no files installed.\n");
         } else {
           if (result.installed.length > 0) {
             process.stdout.write(`Installed ${result.installed.length} new file(s):\n`);

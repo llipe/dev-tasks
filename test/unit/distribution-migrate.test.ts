@@ -26,7 +26,6 @@ describe("core/distribution/migrate — legacy detection", () => {
   describe("detectLegacyInstall()", () => {
     it("returns true when .dev-tasks/ directory exists but no manifest.json", () => {
       const repoRoot = setup();
-      // Create .dev-tasks dir with some files but no manifest.json
       const devTasksDir = join(repoRoot, ".dev-tasks");
       mkdirSync(devTasksDir, { recursive: true });
       writeFileSync(join(devTasksDir, "some-file.txt"), "legacy content");
@@ -38,7 +37,6 @@ describe("core/distribution/migrate — legacy detection", () => {
 
     it("returns true when .dev-tasks-version file exists (legacy version marker)", () => {
       const repoRoot = setup();
-      // Legacy version file
       writeFileSync(
         join(repoRoot, ".dev-tasks-version"),
         JSON.stringify({ version: "0.4.0", installed_at: "2024-01-01T00:00:00Z" }),
@@ -55,7 +53,7 @@ describe("core/distribution/migrate — legacy detection", () => {
       mkdirSync(devTasksDir, { recursive: true });
       writeFileSync(
         join(devTasksDir, "manifest.json"),
-        JSON.stringify({ version: "0.1.0", pinned: "0.1.0", skills: [] }),
+        JSON.stringify({ version: "0.1.0", pinned: "0.1.0", files: [] }),
       );
 
       const result = detectLegacyInstall(repoRoot);
@@ -64,7 +62,6 @@ describe("core/distribution/migrate — legacy detection", () => {
 
     it("returns false when no legacy indicators are present (no legacy install)", () => {
       const repoRoot = setup();
-      // Empty directory — no legacy install
 
       const result = detectLegacyInstall(repoRoot);
       expect(result.isLegacy).toBe(false);
@@ -72,10 +69,8 @@ describe("core/distribution/migrate — legacy detection", () => {
 
     it("detects legacy when skill files exist in known locations without manifest", () => {
       const repoRoot = setup();
-      // Simulate legacy skill files in known locations (e.g., .github/agents/)
       mkdirSync(join(repoRoot, ".github", "agents"), { recursive: true });
       writeFileSync(join(repoRoot, ".github", "agents", "developer.md"), "# Developer agent");
-      // Also has .dev-tasks-version
       writeFileSync(join(repoRoot, ".dev-tasks-version"), JSON.stringify({ version: "0.3.0" }));
 
       const result = detectLegacyInstall(repoRoot);
@@ -86,7 +81,6 @@ describe("core/distribution/migrate — legacy detection", () => {
   describe("generateMigrationManifest()", () => {
     it("generates manifest with all files marked as modified: unknown origin", async () => {
       const repoRoot = setup();
-      // Simulate legacy installed skill files
       const skillsDir = join(repoRoot, ".github", "agents");
       mkdirSync(skillsDir, { recursive: true });
       const content1 = "# Developer agent content";
@@ -101,17 +95,18 @@ describe("core/distribution/migrate — legacy detection", () => {
 
       expect(manifest.version).toBe("migrated");
       expect(manifest.pinned).toBe("latest");
-      expect(manifest.skills).toHaveLength(2);
+      expect(manifest.files).toHaveLength(2);
 
       // All entries should have origin_sha256 set to UNKNOWN_ORIGIN
-      for (const entry of manifest.skills) {
+      for (const entry of manifest.files) {
         expect(entry.origin_sha256).toBe(UNKNOWN_ORIGIN);
       }
 
       // sha256 should be the actual hash of the file content
       const expectedHash1 = hashContent(content1);
-      const dev = manifest.skills.find((s) => s.path === ".github/agents/developer.md");
+      const dev = manifest.files.find((f) => f.path === ".github/agents/developer.md");
       expect(dev?.sha256).toBe(expectedHash1);
+      expect(dev?.profile).toBe("copilot");
     });
 
     it("sets origin_sha256 to UNKNOWN_ORIGIN sentinel value", async () => {
@@ -121,20 +116,29 @@ describe("core/distribution/migrate — legacy detection", () => {
 
       const manifest = await generateMigrationManifest(repoRoot, [".github/agents/test.md"]);
 
-      expect(manifest.skills[0].origin_sha256).toBe(UNKNOWN_ORIGIN);
-      // The UNKNOWN_ORIGIN should never match any real hash
+      expect(manifest.files[0].origin_sha256).toBe(UNKNOWN_ORIGIN);
       const realHash = hashContent("test content");
       expect(UNKNOWN_ORIGIN).not.toBe(realHash);
     });
 
-    it("derives skill name from the first path segment", async () => {
+    it("infers profile from path prefix", async () => {
       const repoRoot = setup();
       mkdirSync(join(repoRoot, ".github", "agents"), { recursive: true });
-      writeFileSync(join(repoRoot, ".github", "agents", "dev.md"), "content");
+      mkdirSync(join(repoRoot, ".claude", "commands"), { recursive: true });
+      mkdirSync(join(repoRoot, ".kiro", "steering"), { recursive: true });
+      writeFileSync(join(repoRoot, ".github", "agents", "dev.md"), "g");
+      writeFileSync(join(repoRoot, ".claude", "commands", "refine.md"), "c");
+      writeFileSync(join(repoRoot, ".kiro", "steering", "impl.md"), "k");
 
-      const manifest = await generateMigrationManifest(repoRoot, [".github/agents/dev.md"]);
+      const manifest = await generateMigrationManifest(repoRoot, [
+        ".github/agents/dev.md",
+        ".claude/commands/refine.md",
+        ".kiro/steering/impl.md",
+      ]);
 
-      expect(manifest.skills[0].name).toBe(".github");
+      expect(manifest.files[0].profile).toBe("copilot");
+      expect(manifest.files[1].profile).toBe("claude");
+      expect(manifest.files[2].profile).toBe("kiro");
     });
 
     it("handles empty file list gracefully", async () => {
@@ -142,7 +146,7 @@ describe("core/distribution/migrate — legacy detection", () => {
 
       const manifest = await generateMigrationManifest(repoRoot, []);
 
-      expect(manifest.skills).toHaveLength(0);
+      expect(manifest.files).toHaveLength(0);
       expect(manifest.version).toBe("migrated");
     });
 
@@ -163,18 +167,15 @@ describe("core/distribution/migrate — legacy detection", () => {
 
   describe("UNKNOWN_ORIGIN sentinel", () => {
     it("is a string that cannot be a valid SHA-256 hash", () => {
-      // SHA-256 hashes are 64 hex characters
       expect(UNKNOWN_ORIGIN).toBe("unknown");
       expect(UNKNOWN_ORIGIN.length).not.toBe(64);
     });
 
     it("triggers conflict when used with reconcile engine", async () => {
-      // This verifies the integration point: unknown origin always conflicts
       const { reconcile } = await import("#core/reconcile.js");
       const localHash = hashContent("any file content");
       const packageHash = hashContent("new package content");
 
-      // With UNKNOWN_ORIGIN as origin, local != origin and local != package → conflict
       const action = reconcile(localHash, UNKNOWN_ORIGIN, packageHash);
       expect(action).toBe("conflict");
     });

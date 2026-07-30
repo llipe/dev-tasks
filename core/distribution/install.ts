@@ -1,15 +1,22 @@
 /**
- * Install skills from the package source into the target repo.
- * Copies skill files, computes hashes, and writes the manifest.
+ * Install managed files from the package source into the target repo.
+ * Copies platform-specific agent toolkit files, computes hashes, and writes the manifest.
  */
 
 import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { hashContent } from "./hash.js";
-import { writeManifest, type Manifest, type SkillEntry } from "./manifest.js";
+import { writeManifest, type Manifest, type ManagedFileEntry } from "./manifest.js";
+import {
+  resolveProfile,
+  PROFILE_PATHS,
+  type Profile,
+  type Platform,
+  type ManagedPath,
+} from "./profiles.js";
 
 export interface InstallOptions {
-  /** Path to the package source directory (contains skills/) */
+  /** Path to the package source directory (contains .github/, .claude/, .kiro/) */
   sourceDir: string;
   /** Path to the target repo root */
   targetDir: string;
@@ -17,11 +24,14 @@ export interface InstallOptions {
   version: string;
   /** Version to pin (defaults to version if not provided) */
   pin: string;
+  /** Profile to install (default: 'both' = copilot + claude) */
+  profile?: Profile;
 }
 
 export interface InstallResult {
-  installed: SkillEntry[];
+  installed: ManagedFileEntry[];
   manifestPath: string;
+  platforms: Platform[];
 }
 
 /**
@@ -29,7 +39,16 @@ export interface InstallResult {
  * Returns paths relative to the given baseDir.
  */
 async function collectFiles(dir: string, baseDir: string): Promise<string[]> {
-  const entries = await readdir(dir, { withFileTypes: true });
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch (err: unknown) {
+    if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {
+      return [];
+    }
+    throw err;
+  }
+
   const files: string[] = [];
   for (const entry of entries) {
     const fullPath = join(dir, entry.name);
@@ -43,64 +62,106 @@ async function collectFiles(dir: string, baseDir: string): Promise<string[]> {
 }
 
 /**
- * Install skills from the package into the target repository.
- * Copies each skill file, computes sha256 and origin_sha256, writes manifest.
+ * Collect files from a single managed path entry.
+ * If recursive=false, only collects files directly in the directory (one level).
+ * If recursive=true, collects all files in subdirectories.
  */
-export async function installSkills(options: InstallOptions): Promise<InstallResult> {
-  const { sourceDir, targetDir, version, pin } = options;
-  const skillsSourceDir = join(sourceDir, "skills");
-  const skillsTargetDir = join(targetDir, ".dev-tasks", "skills");
+async function collectManagedPathFiles(
+  sourceDir: string,
+  managedPath: ManagedPath,
+): Promise<string[]> {
+  const fullSourceDir = join(sourceDir, managedPath.source);
 
-  // Collect all files from skills source
-  let relFiles: string[] = [];
-  try {
-    relFiles = await collectFiles(skillsSourceDir, skillsSourceDir);
-  } catch (err: unknown) {
-    if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {
-      relFiles = [];
-    } else {
-      throw err;
-    }
+  if (managedPath.recursive) {
+    return collectFiles(fullSourceDir, fullSourceDir);
   }
 
-  const skills: SkillEntry[] = [];
+  // Non-recursive: only files directly in the directory
+  let entries;
+  try {
+    entries = await readdir(fullSourceDir, { withFileTypes: true });
+  } catch (err: unknown) {
+    if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {
+      return [];
+    }
+    throw err;
+  }
 
-  for (const relPath of relFiles) {
-    const sourcePath = join(skillsSourceDir, relPath);
-    const destPath = join(skillsTargetDir, relPath);
+  const files: string[] = [];
+  for (const entry of entries) {
+    if (entry.isFile()) {
+      files.push(entry.name);
+    }
+  }
+  return files;
+}
 
-    // Read source content
-    const content = await readFile(sourcePath, "utf-8");
-    const hash = hashContent(content);
+/**
+ * Install managed files from the package into the target repository.
+ * Copies files to their native platform paths (.github/, .claude/, .kiro/),
+ * computes sha256 per file, and writes the manifest.
+ */
+export async function installFiles(options: InstallOptions): Promise<InstallResult> {
+  const { sourceDir, targetDir, version, pin, profile = "both" } = options;
+  const platforms = resolveProfile(profile);
+  const managedFiles: ManagedFileEntry[] = [];
 
-    // Write to target
-    const destDir = join(destPath, "..");
-    await mkdir(destDir, { recursive: true });
-    await writeFile(destPath, content, "utf-8");
+  for (const platform of platforms) {
+    const paths = PROFILE_PATHS[platform];
 
-    // Derive skill name from first path segment
-    const skillName = relPath.split("/")[0];
+    for (const managedPath of paths) {
+      const relFiles = await collectManagedPathFiles(sourceDir, managedPath);
 
-    skills.push({
-      name: skillName,
-      path: relPath,
-      sha256: hash,
-      origin_sha256: hash,
-    });
+      for (const relFile of relFiles) {
+        const sourcePath = join(sourceDir, managedPath.source, relFile);
+        const targetPath = join(targetDir, managedPath.target, relFile);
+
+        // Read source content
+        const content = await readFile(sourcePath, "utf-8");
+        const hash = hashContent(content);
+
+        // Write to target
+        const destDir = join(targetPath, "..");
+        await mkdir(destDir, { recursive: true });
+        await writeFile(targetPath, content, "utf-8");
+
+        // Full relative path in consumer repo
+        const fullRelPath = join(managedPath.target, relFile);
+
+        managedFiles.push({
+          path: fullRelPath,
+          profile: platform,
+          sha256: hash,
+          origin_sha256: hash,
+        });
+      }
+    }
   }
 
   const manifest: Manifest = {
     version,
     pinned: pin,
     installed_at: new Date().toISOString(),
-    skills,
+    files: managedFiles,
     extraction: {},
   };
 
   await writeManifest(targetDir, manifest);
 
   return {
-    installed: skills,
+    installed: managedFiles,
     manifestPath: join(targetDir, ".dev-tasks", "manifest.json"),
+    platforms,
   };
+}
+
+/**
+ * @deprecated Use installFiles() instead. Kept for backward compatibility during migration.
+ */
+export async function installSkills(options: InstallOptions): Promise<{
+  installed: ManagedFileEntry[];
+  manifestPath: string;
+}> {
+  const result = await installFiles(options);
+  return { installed: result.installed, manifestPath: result.manifestPath };
 }

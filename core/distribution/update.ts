@@ -1,6 +1,7 @@
 /**
- * Update command logic — reconcile each installed skill file against the package.
+ * Update command logic — reconcile all managed files against the package.
  * Uses the generic reconcile engine from core/reconcile.ts.
+ * Works across all platform profiles (copilot, claude, kiro).
  */
 
 import { readFile, writeFile, mkdir, access } from "node:fs/promises";
@@ -12,6 +13,7 @@ import { createBackupDir, backupFile } from "./backup.js";
 
 export interface UpdateFileResult {
   path: string;
+  profile: string;
   action: ReconcileAction;
   localHash: string | null;
   originHash: string;
@@ -29,7 +31,7 @@ export interface UpdateResult {
 export interface UpdateOptions {
   /** Path to the target repo root (where .dev-tasks/ lives) */
   targetDir: string;
-  /** Path to the package source directory (contains skills/) */
+  /** Path to the package source directory (contains .github/, .claude/, .kiro/) */
   sourceDir: string;
   /** Whether to force-overwrite conflicting files (backs them up first) */
   force: boolean;
@@ -50,9 +52,9 @@ async function fileExists(path: string): Promise<boolean> {
 }
 
 /**
- * Run the update reconciliation for all skills in the manifest.
+ * Run the update reconciliation for all managed files in the manifest.
  *
- * For each skill file:
+ * For each managed file:
  * 1. Compute localHash from the installed file (null if missing)
  * 2. Read originHash from the manifest
  * 3. Compute packageHash from the package source
@@ -73,19 +75,18 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
     };
   }
 
-  const skillsTargetDir = join(targetDir, ".dev-tasks", "skills");
-  const skillsSourceDir = join(sourceDir, "skills");
-
   const conflicts: UpdateFileResult[] = [];
   const updated: UpdateFileResult[] = [];
   const installed: UpdateFileResult[] = [];
   const skipped: UpdateFileResult[] = [];
   let backupDir: string | null = null;
 
-  // Process each skill entry from the manifest
-  for (const entry of manifest.skills) {
-    const localPath = join(skillsTargetDir, entry.path);
-    const packagePath = join(skillsSourceDir, entry.path);
+  // Process each managed file entry from the manifest
+  for (const entry of manifest.files) {
+    // Files are stored at their native platform path in the consumer repo
+    const localPath = join(targetDir, entry.path);
+    // Source is the same relative path inside the package
+    const packagePath = join(sourceDir, entry.path);
 
     // Compute local hash (null if file doesn't exist)
     let localHash: string | null = null;
@@ -98,9 +99,10 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
     try {
       packageHash = await hashFile(packagePath);
     } catch {
-      // Package file doesn't exist (skill removed from package?) — skip
+      // Package file doesn't exist (file removed from package?) — skip
       skipped.push({
         path: entry.path,
+        profile: entry.profile,
         action: "skip",
         localHash,
         originHash: entry.origin_sha256,
@@ -112,6 +114,7 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
     const action = reconcile(localHash, entry.origin_sha256, packageHash);
     const fileResult: UpdateFileResult = {
       path: entry.path,
+      profile: entry.profile,
       action,
       localHash,
       originHash: entry.origin_sha256,
@@ -121,19 +124,17 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
     switch (action) {
       case "install": {
         // File doesn't exist locally — copy from package
-        const destPath = join(skillsTargetDir, entry.path);
-        await mkdir(dirname(destPath), { recursive: true });
+        await mkdir(dirname(localPath), { recursive: true });
         const content = await readFile(packagePath, "utf-8");
-        await writeFile(destPath, content, "utf-8");
+        await writeFile(localPath, content, "utf-8");
         installed.push(fileResult);
         break;
       }
 
       case "overwrite": {
         // User hasn't edited — safe to overwrite
-        const destPath = join(skillsTargetDir, entry.path);
         const content = await readFile(packagePath, "utf-8");
-        await writeFile(destPath, content, "utf-8");
+        await writeFile(localPath, content, "utf-8");
         updated.push(fileResult);
         break;
       }
@@ -150,9 +151,8 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
             backupDir = await createBackupDir(targetDir);
           }
           await backupFile(backupDir, localPath, entry.path);
-          const destPath = join(skillsTargetDir, entry.path);
           const content = await readFile(packagePath, "utf-8");
-          await writeFile(destPath, content, "utf-8");
+          await writeFile(localPath, content, "utf-8");
           updated.push({ ...fileResult, action: "overwrite" });
         } else {
           conflicts.push(fileResult);
@@ -168,13 +168,13 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
       ...manifest,
       version,
       installed_at: new Date().toISOString(),
-      skills: manifest.skills.map((entry) => {
-        const installedResult = [...installed, ...updated].find((r) => r.path === entry.path);
-        if (installedResult) {
+      files: manifest.files.map((entry) => {
+        const result = [...installed, ...updated].find((r) => r.path === entry.path);
+        if (result) {
           return {
             ...entry,
-            sha256: installedResult.packageHash,
-            origin_sha256: installedResult.packageHash,
+            sha256: result.packageHash,
+            origin_sha256: result.packageHash,
           };
         }
         return entry;
