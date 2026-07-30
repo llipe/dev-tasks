@@ -7,6 +7,9 @@ import type { Manifest } from "#core/distribution/manifest.js";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const DIST_BIN = resolve(ROOT, "dist/bin/dev-tasks.js");
+const PKG_VERSION = (
+  JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8")) as { version: string }
+).version;
 
 describe("dev-tasks bootstrap commands (integration)", () => {
   beforeAll(() => {
@@ -76,7 +79,7 @@ describe("dev-tasks bootstrap commands (integration)", () => {
       expect(existsSync(manifestPath)).toBe(true);
 
       const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as Manifest;
-      expect(manifest.version).toBe("0.1.0");
+      expect(manifest.version).toBe(PKG_VERSION);
       expect(manifest.skills.length).toBeGreaterThanOrEqual(1);
 
       for (const skill of manifest.skills) {
@@ -91,7 +94,7 @@ describe("dev-tasks bootstrap commands (integration)", () => {
 
       const output = JSON.parse(result.stdout) as Record<string, unknown>;
       expect(output.command).toBe("install");
-      expect(output.version).toBe("0.1.0");
+      expect(output.version).toBe(PKG_VERSION);
       expect(typeof output.installed).toBe("number");
       expect(Array.isArray(output.skills)).toBe(true);
     });
