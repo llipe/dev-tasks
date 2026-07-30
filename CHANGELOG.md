@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-07-30
+
+### Changed
+
+- test(bootstrap-commands): use dynamic package version in integration tests
+- chore(package): bump version to 0.6.0
+
 ## [0.6.0] - 2026-07-30
 
 ### Added
