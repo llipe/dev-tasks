@@ -2,8 +2,8 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                                                                                                                                                                                                                     | Author           |
-| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                              | Author           |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-07-28 | Initial version, reformatted from the `dev-tasks-multirepo-PRD.md` draft (v0.2) into the standard PRD format. Content preserved: extraction layer in scope, closed Node/TS stack, single package with two binaries, own catalog (no Backstage/Port), Platform Providers deferred to a separate spec. | product-engineer |
 
 ## Executive Summary
@@ -57,27 +57,27 @@ flowchart LR
 
 ## Goals and Objectives
 
-| #   | Objective                                                     | Metric                                                             |
-| --- | ------------------------------------------------------------- | ----------------------------------------------------------------- |
-| O1  | Resolve a task's context without human intervention           | ≥85% of tasks resolved by `init` without scope correction         |
-| O2  | Eliminate drift in the semantic layer                         | 0 duplicated sources of truth; catalog generated, never written   |
-| O3  | Bound the loaded context                                      | ≤40% of the context budget consumed by the bundle                 |
-| O4  | Make component boundaries verifiable                          | 100% of contract changes get automatic impact analysis            |
-| O5  | Keep single-repo work as cheap as today                       | `init` overhead ≤15s p50 with a warm cache                        |
-| O6  | Populate the catalog by extraction, not by hand               | ≥80% of `component.yaml` fields derived automatically             |
-| O7  | Make generated documentation declare its own trustworthiness  | 100% of extracted artifacts carry `source` and `confidence`       |
+| #   | Objective                                                    | Metric                                                          |
+| --- | ------------------------------------------------------------ | --------------------------------------------------------------- |
+| O1  | Resolve a task's context without human intervention          | ≥85% of tasks resolved by `init` without scope correction       |
+| O2  | Eliminate drift in the semantic layer                        | 0 duplicated sources of truth; catalog generated, never written |
+| O3  | Bound the loaded context                                     | ≤40% of the context budget consumed by the bundle               |
+| O4  | Make component boundaries verifiable                         | 100% of contract changes get automatic impact analysis          |
+| O5  | Keep single-repo work as cheap as today                      | `init` overhead ≤15s p50 with a warm cache                      |
+| O6  | Populate the catalog by extraction, not by hand              | ≥80% of `component.yaml` fields derived automatically           |
+| O7  | Make generated documentation declare its own trustworthiness | 100% of extracted artifacts carry `source` and `confidence`     |
 
 ## Affected Repositories
 
 MRC is delivered from the `dev-tasks` repository and operates over a multi-repo product environment. The following repositories/roles are impacted.
 
 | Repository / Role                     | Role / Impact                                                                                                                                                       |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `llipe/dev-tasks`                     | Source of truth for the harness: the `@llipe/dev-tasks` npm package (two binaries), core library, CLI/MCP adapters, extractors, catalog engine, and updated skills. |
 | Meta-repo (e.g., `checkout-platform`) | New aggregation repository holding `architecture.md`, `domains.md`, `glossary.md`, generated `catalog/`, hand-authored `flows/`, and JSON Schemas. CI rebuilds it.  |
-| Component repositories (~20)          | Each gains a root `component.yaml`, `contracts/` (OpenAPI/AsyncAPI), a generated `docs/schema.md`, an `AGENTS.md`, and a `.dev-tasks/` pin + manifest.               |
-| CI systems (Bitbucket / GitHub)       | Run `dt catalog build|validate` on the meta-repo (scheduled + on push) and `dt validate-component`/`dt verify contract-diff` on component-repo PRs.                 |
-| Platform Providers (dependency only)  | The SCM/tracker abstraction (GitHub+Issues vs. Bitbucket+Jira) is specified separately; this PRD only declares the dependency, it does not define the providers.     |
+| Component repositories (~20)          | Each gains a root `component.yaml`, `contracts/` (OpenAPI/AsyncAPI), a generated `docs/schema.md`, an `AGENTS.md`, and a `.dev-tasks/` pin + manifest.              |
+| CI systems (Bitbucket / GitHub)       | Run `dt catalog build                                                                                                                                               | validate`on the meta-repo (scheduled + on push) and`dt validate-component`/`dt verify contract-diff` on component-repo PRs. |
+| Platform Providers (dependency only)  | The SCM/tracker abstraction (GitHub+Issues vs. Bitbucket+Jira) is specified separately; this PRD only declares the dependency, it does not define the providers.    |
 
 ## Target Users
 
@@ -265,12 +265,12 @@ This feature is developer/agent tooling and CLI behavior, not an end-user UI. `/
 
 The layer architecture separates investment and replaceability:
 
-| Layer            | Content                                                   | Investment | Intended replaceability                     |
-| ---------------- | --------------------------------------------------------- | ---------- | ------------------------------------------- |
-| Methodology      | Skills, phases, approval gates, spec format               | Minimal    | High — align with ecosystem conventions     |
-| Context (MRC)    | Catalog, extraction, scoping, bundle, verification        | Maximal    | Medium — this is the differentiation        |
-| Providers        | SCM (GitHub/Bitbucket), tracker (Issues/Jira)             | Medium     | High — configuration, not a fork            |
-| Distribution     | npm package, install, pin, update                         | Minimal    | High                                        |
+| Layer         | Content                                            | Investment | Intended replaceability                 |
+| ------------- | -------------------------------------------------- | ---------- | --------------------------------------- |
+| Methodology   | Skills, phases, approval gates, spec format        | Minimal    | High — align with ecosystem conventions |
+| Context (MRC) | Catalog, extraction, scoping, bundle, verification | Maximal    | Medium — this is the differentiation    |
+| Providers     | SCM (GitHub/Bitbucket), tracker (Issues/Jira)      | Medium     | High — configuration, not a fork        |
+| Distribution  | npm package, install, pin, update                  | Minimal    | High                                    |
 
 The context-layer core is implemented as a library with two adapters: CLI (today) and MCP server (destination). Both wrap the same code; designing it this way from the start costs nothing and avoids a rewrite. Stack is closed on TypeScript/Node 20 because Node is guaranteed where the agent runs and `npx` gives installation-free distribution. Extraction uses the TypeScript Compiler API (regex over code is unacceptable for contract extraction), `oasdiff` for OpenAPI diffs, and a purpose-built comparator for AsyncAPI. Alignment with existing methodology conventions (Conventional Commits, GitHub-as-source-of-truth) is preserved.
 
@@ -293,16 +293,16 @@ Dependency on Platform Providers is declared at three points: the meta-repo rebu
 
 ## Success Metrics
 
-| Metric                                                | Baseline | Target (90 days post Phase 5)          |
-| ----------------------------------------------------- | -------- | -------------------------------------- |
-| Components with a valid `component.yaml`              | 0/20     | 20/20                                  |
-| `component.yaml` fields derived automatically         | 0%       | ≥80%                                   |
-| Services with OpenAPI in the catalog                  | partial  | 100% (with declared confidence)        |
-| Services with a Kafka topic inventory                 | 0%       | 100%                                   |
-| Cross-repo tasks inside the agentic pipeline          | 0%       | 60%                                    |
-| Manual scope correction                               | n/a      | ≤15%                                   |
-| Breaking changes detected before merge                | 0        | 100% of those that occur               |
-| `init` p50 overhead                                   | n/a      | ≤15s                                   |
+| Metric                                        | Baseline | Target (90 days post Phase 5)   |
+| --------------------------------------------- | -------- | ------------------------------- |
+| Components with a valid `component.yaml`      | 0/20     | 20/20                           |
+| `component.yaml` fields derived automatically | 0%       | ≥80%                            |
+| Services with OpenAPI in the catalog          | partial  | 100% (with declared confidence) |
+| Services with a Kafka topic inventory         | 0%       | 100%                            |
+| Cross-repo tasks inside the agentic pipeline  | 0%       | 60%                             |
+| Manual scope correction                       | n/a      | ≤15%                            |
+| Breaking changes detected before merge        | 0        | 100% of those that occur        |
+| `init` p50 overhead                           | n/a      | ≤15s                            |
 
 ## Assumptions
 

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- feat: `dt extract component [--interactive] [--force]` — derives `component.yaml` from detection/extraction with _provenance, field hashes, and interactive prompts for non-derivable fields
+- feat: `dt extract component [--interactive] [--force]` — derives `component.yaml` from detection/extraction with \_provenance, field hashes, and interactive prompts for non-derivable fields
 - feat: `dt extract all [--interactive] [--force]` — orchestrates full extraction pipeline and generates `extraction_report.json`
 - feat: hash-based idempotent reconciliation for component.yaml (exit 13 on missing required fields, exit 14 on reconciliation conflicts)
 - feat: migration shim from legacy `dev-tasks.sh` to `@llipe/dev-tasks` npm package

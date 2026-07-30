@@ -322,16 +322,16 @@ Split `memo-cli-usage/SKILL.md` (present in all three skill trees) into:
 
 ### 5.1 Measured Results (Post-Implementation)
 
-| Metric                                            | Before     | After                 | Reduction                 |
-| ------------------------------------------------- | ---------- | --------------------- | ------------------------- |
-| Always-on words (AGENTS.md + git-guard-notice.md) | ~4,078     | 1,119                 | **73%**                   |
-| Always-on tokens (~words × 1.35)                  | ~5,500     | ~1,511                | **73%**                   |
-| memo-cli SKILL.md words (per invocation)          | 4,293      | 553                   | **87%**                   |
-| AGENTS.md template words                          | ~1,792     | 1,031                 | **42%**                   |
-| git-guard-notice.md words                         | 225        | 56                    | **75%**                   |
-| Next.js steering scope                            | `**/*.tsx` | `**/app/**/*.tsx`     | Scoped to App Router only |
-| plan.md injection                                 | Every turn | Only workstream files | Scoped                    |
-| implement.md injection                            | Every turn | Only tasks-*.md files | Scoped                    |
+| Metric                                            | Before     | After                  | Reduction                 |
+| ------------------------------------------------- | ---------- | ---------------------- | ------------------------- |
+| Always-on words (AGENTS.md + git-guard-notice.md) | ~4,078     | 1,119                  | **73%**                   |
+| Always-on tokens (~words × 1.35)                  | ~5,500     | ~1,511                 | **73%**                   |
+| memo-cli SKILL.md words (per invocation)          | 4,293      | 553                    | **87%**                   |
+| AGENTS.md template words                          | ~1,792     | 1,031                  | **42%**                   |
+| git-guard-notice.md words                         | 225        | 56                     | **75%**                   |
+| Next.js steering scope                            | `**/*.tsx` | `**/app/**/*.tsx`      | Scoped to App Router only |
+| plan.md injection                                 | Every turn | Only workstream files  | Scoped                    |
+| implement.md injection                            | Every turn | Only tasks-\*.md files | Scoped                    |
 
 ---
 

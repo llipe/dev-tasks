@@ -78,12 +78,14 @@ After install or update, the script:
 1. Reads the bundled `AGENTS.md` (the canonical reference).
 2. Generates a diff or ready-to-paste snippet showing new/changed agents, skills, instructions, and prompts.
 3. Prints the snippet to stdout with clear instructions like:
+
    ```
    === AGENTS.md Integration ===
    The following sections have changed. Update your repo's AGENTS.md:
 
    [paste-ready markdown block]
    ```
+
 4. Optionally writes the snippet to `.dev-tasks-agents-update.md` for later use.
 
 ### 6. Version Metadata

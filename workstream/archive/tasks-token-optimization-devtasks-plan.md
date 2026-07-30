@@ -36,6 +36,7 @@
 ## Tasks
 
 - [x] 1.0 Convert plan/implement steering from `always` to `fileMatch` (R1)
+
   - [x] 1.1 Edit `.kiro/steering/plan.md` front-matter: change `inclusion: always` to `inclusion: fileMatch` with `fileMatchPattern: "workstream/**"`
   - [x] 1.2 Edit `.kiro/steering/implement.md` front-matter: change `inclusion: always` to `inclusion: fileMatch` with `fileMatchPattern: "workstream/**/tasks-*.md"`
   - [x] 1.3 Edit `.github/instructions/plan.instructions.md` front-matter: change `applyTo: "**"` to `applyTo: "workstream/**"`
@@ -47,10 +48,11 @@
   - [x] 1.9 Update `AGENTS.md.template` Instructions table to match
   - [x] 1.10 Verify: confirm body content of plan.md and implement.md is unchanged (diff only front-matter)
   - [x] 1.11 Verify Acceptance Criteria: plain chat turn without workstream files should not inject either playbook
-  - [x] 1.12 Verify Acceptance Criteria: opening a tasks-*.md file should trigger implement guidance
+  - [x] 1.12 Verify Acceptance Criteria: opening a tasks-\*.md file should trigger implement guidance
   - [x] 1.13 Verify Acceptance Criteria: opening a workstream planning artifact triggers plan guidance
 
 - [x] 2.0 Tighten Next.js/React steering fileMatchPattern (R2)
+
   - [x] 2.1 Rename `.kiro/steering/nextjs-pages-components.md` to indicate it's a Next.js App Router specific rule; update `fileMatchPattern` from `"**/*.tsx"` to `"**/app/**/*.tsx"` (Next.js App Router convention — pages, layouts, components within app dir)
   - [x] 2.2 Update `.github/instructions/domain/nextjs-pages-components.instructions.md` `applyTo` from `"**/*.tsx"` to `"**/app/**/*.tsx"`
   - [x] 2.3 Add a comment block at the top of both files (below front-matter): `<!-- Consumers: adjust fileMatchPattern/applyTo to match your Next.js app path. For React Native projects, replace with a react-native steering file (see issue #13). -->`
@@ -59,6 +61,7 @@
   - [x] 2.6 Verify Acceptance Criteria: editing a `.tsx` file inside an `app/` directory DOES inject the rule
 
 - [x] 3.0 Slim AGENTS.md and create consumer sizing guidelines (R3)
+
   - [x] 3.1 Review current `AGENTS.md` and `AGENTS.md.template` — identify content that is reference/documentation vs. operational guidance needed every turn
   - [x] 3.2 Slim `AGENTS.md.template`: remove Workflow Chains section (move to a `docs/workflow-chains.md` reference doc); remove Prompts table (agents already carry their invocation modes); keep: Core Idea, Design Standard Contract, Taxonomy, Agents table, Skills tables, Instructions table, General Agent Guidelines
   - [x] 3.3 Slim `AGENTS.md` to match the template restructure
@@ -70,6 +73,7 @@
   - [x] 3.9 Verify Acceptance Criteria: Workflow Chains content is preserved in docs/
 
 - [x] 4.0 Ensure consistency across all three platform trees (R4 — no deduplication, consistency check)
+
   - [x] 4.1 Verify `.kiro/steering/plan.md` body matches `.github/instructions/plan.instructions.md` body matches `.claude/skills/plan/SKILL.md` body (content only, front-matter differs by platform)
   - [x] 4.2 Verify `.kiro/steering/implement.md` body matches `.github/instructions/implement.instructions.md` body matches `.claude/skills/implement/SKILL.md` body
   - [x] 4.3 Verify `nextjs-pages-components` content is consistent across `.kiro/steering/` and `.github/instructions/domain/`
@@ -77,6 +81,7 @@
   - [x] 4.5 Verify Acceptance Criteria: all three trees carry the same guidance text (diffing body content ignoring front-matter)
 
 - [x] 5.0 Split memo-cli-usage skill into quick-ref + full spec (R5)
+
   - [x] 5.1 Create `.kiro/skills/memo-cli-usage/SKILL.md` as the quick-reference (target: <1,200 words) covering: setup validation check, everyday read commands (memo list, memo search, memo tags list), everyday write commands (memo add), cross-session patterns, and a pointer to `REFERENCE.md` for full CLI spec
   - [x] 5.2 Create `.kiro/skills/memo-cli-usage/REFERENCE.md` containing the full CLI documentation (all commands, flags, configuration, admin operations, schema details)
   - [x] 5.3 Apply same split to `.github/skills/memo-cli-usage/` (SKILL.md quick-ref + REFERENCE.md)
@@ -86,6 +91,7 @@
   - [x] 5.7 Verify Acceptance Criteria: SKILL.md includes a clear instruction for agents to read REFERENCE.md when performing setup/config/admin operations
 
 - [x] 6.0 Trim git-guard-notice.md to essential content (R6)
+
   - [x] 6.1 Edit `.kiro/steering/git-guard-notice.md`: keep only front-matter + the two invariants + the single actionable backstop line; remove the verbose explanation paragraphs about the upstream defect, hook behavior, and verification comments
   - [x] 6.2 Verify Acceptance Criteria: the file still communicates the two invariants and the human PR review backstop
   - [x] 6.3 Verify Acceptance Criteria: word count is reduced from ~225 to ~80-100 words (measured: 56 words)
