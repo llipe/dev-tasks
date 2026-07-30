@@ -53,6 +53,10 @@
     "schema"
   ],
   "author": "llipe",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/llipe/dev-tasks.git"
+  },
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "devDependencies": {
