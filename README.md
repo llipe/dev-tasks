@@ -2,60 +2,146 @@
 
 A set of agents, skills, and instructions for GitHub Copilot, Claude Code, Kiro, and other AI coding agents to run structured, PRD-driven development workflows. Inspired by [snarktank/ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks).
 
-## Quick Start
+---
 
-### Agent workflow (skills + instructions)
+## Getting Started
+
+### 1. Install the package
 
 ```bash
-# 1. Bootstrap the installer into your repo
-curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \
-  -o dev-tasks.sh && chmod +x dev-tasks.sh
-
-# 2. Install (default: all platforms — Copilot + Claude Code + Kiro)
-./dev-tasks.sh install
-
-# 3. Initialize your project context (run once per project)
-#    Invoke @product-engineer in Init Mode — produces docs/product-context.md
-#    and docs/technical-guidelines.md
-
-# 4. Build a feature
-#    a) Invoke @product-engineer with a feature description or GitHub issue number
-#       → creates PRD → spec → stories → task list
-#    b) Invoke @developer with the task list path
-#       → implements, tests, and opens a PR
-
-# 5. Keep up to date
-./dev-tasks.sh update          # update toolkit files
-./dev-tasks.sh update --backup # same, but backs up current files first
-./dev-tasks.sh check           # compare installed vs latest version
+pnpm add -g @llipe.com/dev-tasks
 ```
 
-### `dt` CLI (multi-repo context)
+This gives you two binaries:
+
+| Binary      | Purpose                                                 |
+| ----------- | ------------------------------------------------------- |
+| `dev-tasks` | Bootstrap: install agent files, update, status, migrate |
+| `dt`        | Runtime: extract repo metadata, build context           |
+
+### 2. Install agent workflow files into your repo
 
 ```bash
-# 1. Install the npm package
-pnpm add -g @llipe.com/dev-tasks
+cd your-project
+dev-tasks install
+```
 
-# 2. Extract your repo's metadata
+This installs agent definitions, skills, instructions, and prompts into your project for the AI platforms you use. By default it installs for Copilot + Claude Code (`--profile both`).
+
+**Choose your platform profile:**
+
+```bash
+dev-tasks install --profile copilot       # .github/ only
+dev-tasks install --profile claude        # .claude/ only
+dev-tasks install --profile kiro          # .kiro/ only
+dev-tasks install --profile all           # all platforms
+```
+
+### 3. Initialize your project context
+
+Invoke the `product-engineer` agent in Init Mode (via `@product-engineer` or the `product-engineer-init` prompt). This creates:
+
+- `docs/product-context.md` — what your product is and who it's for
+- `docs/technical-guidelines.md` — stack, conventions, and constraints
+
+Run this once per project.
+
+### 4. Build a feature
+
+```text
+a) Invoke @product-engineer with a feature description or GitHub issue number
+   → creates PRD → spec → stories → task list
+
+b) Invoke @developer with the task list path
+   → implements, tests, and opens a PR
+```
+
+### 5. Keep files up to date
+
+```bash
+dev-tasks update            # reconcile with hash-based conflict detection
+dev-tasks update --force    # accept all upstream changes
+dev-tasks status            # compare installed vs latest version
+```
+
+---
+
+## Using `dt` for Multi-Repo Context
+
+`dt` extracts repository metadata (schema, OpenAPI, AsyncAPI), derives a `component.json` manifest with provenance and confidence tracking, and builds cross-repo context for agent sessions.
+
+### Extract metadata from a repo
+
+```bash
+cd my-service
+
+# Run the full extraction pipeline
 dt extract all --interactive
 
-# 3. Review the generated component.json and extraction_report.json
-cat component.json
-cat extraction_report.json
-
-# 4. Keep distribution up to date with hash-based reconciliation
-dev-tasks update
+# Or run individual extractors
+dt extract detect       # stack, framework, ORM, messaging
+dt extract schema       # database schema from ORM definitions
+dt extract openapi      # OpenAPI spec (copy existing or AST inference)
+dt extract asyncapi     # AsyncAPI spec from Kafka topic patterns
+dt extract component    # derive component.json manifest
 ```
 
-**Platform profiles** — install only what you need:
+### Review outputs
 
 ```bash
-./dev-tasks.sh install --profile copilot       # .github/ only
-./dev-tasks.sh install --profile claude        # .claude/ only
-./dev-tasks.sh install --profile kiro          # .kiro/ only
-./dev-tasks.sh install --profile claude,kiro   # mix and match
-./dev-tasks.sh install --profile all           # everything (default)
+cat component.json           # manifest with _provenance metadata
+cat extraction_report.json   # coverage, confidence, unresolved items
 ```
+
+### Typical workflow
+
+```bash
+dt extract all --interactive
+git add component.json contracts/ docs/schema.md extraction_report.json
+git commit -m "feat: add component manifest via dt extract"
+```
+
+### Global options
+
+| Flag                 | Description                  |
+| -------------------- | ---------------------------- |
+| `--json`             | Machine-readable JSON output |
+| `--meta-repo <path>` | Path or URL to the meta-repo |
+| `-v`                 | Verbose diagnostics (stderr) |
+
+### Exit codes
+
+| Code | Meaning                                           |
+| ---- | ------------------------------------------------- |
+| 0    | OK                                                |
+| 1    | Unexpected error                                  |
+| 2    | Incorrect usage                                   |
+| 13   | Incomplete extraction: required fields unresolved |
+| 14   | Reconciliation conflict (edited fields)           |
+
+---
+
+## `dev-tasks` Command Reference
+
+```bash
+dev-tasks install [--pin <version>]   # Install skill files + write manifest
+dev-tasks update [--force]            # Reconcile with hash-based conflict detection
+dev-tasks status                      # Compare installed/pinned/latest versions
+dev-tasks pin <version>               # Pin to a specific version
+dev-tasks doctor                      # Check Node ≥20, git ≥2.37, cache writable
+dev-tasks migrate                     # Migrate from legacy shell-script install
+```
+
+### Options (install / update)
+
+| Option             | Description                                          |
+| ------------------ | ---------------------------------------------------- |
+| `--profile <name>` | `copilot` \| `claude` \| `kiro` \| `both` \| `all`   |
+| `--dry-run`        | Print planned changes without writing any files      |
+| `--backup`         | Backup managed files before replacing                |
+| `--yes`            | Skip confirmation prompts (useful in CI)             |
+| `--pin <version>`  | Pin to a specific release version                    |
+| `--force`          | Accept all upstream changes without conflict prompts |
 
 ---
 
@@ -73,11 +159,11 @@ This system brings structure and clarity to AI-assisted development by:
 
 ## Taxonomy: Agent vs Skill vs Instruction
 
-| Concept         | Purpose                                                                                                                                    | Loaded When                            | Decision Rule                                                                               |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------- |
-| **Agent**       | Autonomous role with decision-making, phases, and handoff discipline. Owns a workflow end-to-end.                                          | Invoked by name (`@agent`)             | "Does it make decisions, own a multi-phase workflow, and hand off to other agents?" → Agent |
-| **Skill**       | Reusable on-demand capability. Describes _procedures_ or _activities_ that any agent can invoke when needed. Not loaded unless referenced. | On demand (invoked by agent or prompt) | "Is this capability needed only sometimes, by one or more agents?" → Skill                  |
-| **Instruction** | Always-loaded rule scoped via `applyTo` frontmatter. Enforced automatically for every matching context.                                    | Always (auto-applied by runtime)       | "Must this rule be enforced every time, for every matching file or context?" → Instruction  |
+| Concept         | Purpose                                                                                                                                    | Loaded When                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| **Agent**       | Autonomous role with decision-making, phases, and handoff discipline. Owns a workflow end-to-end.                                          | Invoked by name (`@agent`)             |
+| **Skill**       | Reusable on-demand capability. Describes _procedures_ or _activities_ that any agent can invoke when needed. Not loaded unless referenced. | On demand (invoked by agent or prompt) |
+| **Instruction** | Always-loaded rule scoped via `applyTo` frontmatter. Enforced automatically for every matching context.                                    | Always (auto-applied by runtime)       |
 
 **Key distinctions:**
 
@@ -87,255 +173,108 @@ This system brings structure and clarity to AI-assisted development by:
 
 ---
 
-## Installation
+## Agents
 
-### Prerequisites
+Agents are autonomous personas that orchestrate skills and activities.
 
-- macOS / Linux (or WSL on Windows)
-- `git`
-- `curl`
-- `tar`
-- `shasum` (or `sha256sum`)
+> **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). All three platforms define the same 8 agents below.
 
-### Option A: Install `dev-tasks` into any repository (recommended)
+### `product-engineer`
 
-Run this in the repository where you want to use the workflow:
+Preparation agent — owns the full pre-coding chain:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \
-  -o dev-tasks.sh && chmod +x dev-tasks.sh
-./dev-tasks.sh install
-```
+- **Init Mode**: `activity-init` → product-context.md + technical-guidelines.md
+- **Feature Mode**: `activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan`
+- **Issue Mode**: `activity-refine` → `plan`
 
-### Option B: Set up this repository locally (contributors)
+Also owns drift reconciliation via `activity-drift-reconciliation`.
 
-```bash
-git clone https://github.com/llipe/dev-tasks.git
-cd dev-tasks
-chmod +x dev-tasks.sh
-./dev-tasks.sh version
-./dev-tasks.sh check
-```
+### `developer`
 
-### Verify the installation
+Execution agent — implements code from an existing task list. Runs `implement`, including a mandatory `verifier` audit before every PR is marked ready. Uses `git-ops` for branch management.
 
-After install, confirm these paths exist in your target repo:
+### `planner`
 
-- `.github/agents/`
-- `.github/skills/`
-- `.github/instructions/`
-- `.github/prompts/`
-- `.dev-tasks-version`
+Multi-story orchestration with checkpoint/resume:
 
-The default `--profile both` installs Copilot (`.github/`) and Claude Code (`.claude/`) file sets only. If you installed with `--profile kiro` or `--profile all`, also confirm:
+| Phase | What Happens                                                      |
+| ----- | ----------------------------------------------------------------- |
+| 0     | Discover task source                                              |
+| 0.5   | Resume detection                                                  |
+| 1     | Parse stories and infer dependencies                              |
+| 2     | Dependency graph — user approval required                         |
+| 3     | Pre-flight — creates integration branch                           |
+| 4     | Delegate to `developer` per story; merge and write checkpoint     |
+| 5     | PRD-level rollup `verifier` audit, then consolidated PR to `main` |
 
-- `.kiro/agents/`
-- `.kiro/skills/`
-- `.kiro/steering/`
-- `.kiro/hooks/`
+### Other Agents
+
+| Agent              | Purpose                                            |
+| ------------------ | -------------------------------------------------- |
+| `ux-engineer`      | PRD/SPEC-to-mockup prototyping                     |
+| `technical-writer` | Documentation maintenance                          |
+| `housekeeping`     | Lint, type, and test-wiring fixes                  |
+| `github-ops`       | GitHub consistency — issues, PRs, branches, labels |
+| `verifier`         | Compliance test-plan design and fidelity auditing  |
 
 ---
 
-## Getting Started
+## Skills
 
-### 1. Install with the single-script installer
+On-demand capabilities loaded only when invoked.
 
-Bootstrap from any repository with one command:
+| Skill                           | Purpose                                         | Consumer                                            |
+| ------------------------------- | ----------------------------------------------- | --------------------------------------------------- |
+| `activity-init`                 | Product context and technical guidelines        | `product-engineer`                                  |
+| `activity-refine`               | Issue refinement or PRD creation                | `product-engineer`                                  |
+| `activity-generate-spec`        | PRD → technical specification                   | `product-engineer`                                  |
+| `activity-generate-stories`     | Spec → user stories with coverage validation    | `product-engineer`                                  |
+| `activity-publish-github`       | Stories → GitHub Issues                         | `product-engineer`                                  |
+| `activity-drift-reconciliation` | Routes verifier drift findings into remediation | `product-engineer`                                  |
+| `git-ops`                       | Branch, rebase, merge, conflict resolution      | `developer`, `planner`                              |
+| `webapp-mockup`                 | React mockup scaffold for UX testing            | `ux-engineer`                                       |
+| `activity-e2e-test-design`      | E2E black-box test scenario generation          | `verifier`                                          |
+| `activity-contract-test-design` | Consumer/provider contract testing              | `verifier`                                          |
+| `activity-edge-case-refinement` | Systematic edge-case discovery                  | `verifier`                                          |
+| `activity-random-test-tactics`  | Randomized, fuzz, and property-inspired tests   | `verifier`                                          |
+| `memo-cli-usage`                | Shared architectural memory across sessions     | `product-engineer`, `developer`, `technical-writer` |
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \
-  -o dev-tasks.sh && chmod +x dev-tasks.sh
-./dev-tasks.sh install
-```
-
-This downloads the latest versioned bundle from GitHub Releases, places all managed files in `.github/agents/`, `.github/skills/`, `.github/instructions/`, and `.github/prompts/`, writes `.dev-tasks-version` for traceability, and prints an **AGENTS.md integration prompt** showing what changed.
-
-**Pin to a specific version:**
-
-```bash
-./dev-tasks.sh install v1.2.0
-```
-
-**Check for updates:**
-
-```bash
-./dev-tasks.sh check
-```
-
-**List installed files and directories:**
-
-```bash
-./dev-tasks.sh list
-```
-
-**Update (with automatic backup):**
-
-```bash
-./dev-tasks.sh update --backup
-```
-
-**Preview what would change without writing any files:**
-
-```bash
-./dev-tasks.sh update --dry-run
-```
-
-See [Distribution & Script Reference](#distribution--script-reference) below for full documentation.
-
-After install, your repo contains (Copilot + Claude Code, the default `--profile both`):
-
-```text
-your-repo/
-├── dev-tasks.sh               # Keep this — used for future updates
-├── .dev-tasks-version         # Installed version metadata (JSON)
-├── .github/
-│   ├── instructions/          # Always-loaded rules
-│   │   ├── plan.instructions.md
-│   │   ├── implement.instructions.md
-│   │   └── domain/
-│   │       └── nextjs-pages-components.instructions.md
-│   ├── agents/                # Agent definitions (8 agents)
-│   ├── skills/                # On-demand capabilities (13 skills)
-│   └── prompts/               # Ready-to-use prompt templates
-├── docs/                      # Foundation docs (generated by init)
-├── workstream/                # Active feature work
-└── AGENTS.md                  # Master registry (you own this — see integration prompt)
-```
-
-With `--profile kiro` or `--profile all`, your repo additionally (or instead, for `kiro`) contains:
-
-```text
-your-repo/
-└── .kiro/
-    ├── steering/               # Kiro's "instructions" equivalent (4 files)
-    │   ├── plan.md             # inclusion: always
-    │   ├── implement.md        # inclusion: always
-    │   ├── nextjs-pages-components.md   # inclusion: fileMatch, fileMatchPattern: "**/*.tsx"
-    │   └── git-guard-notice.md # inclusion: always — Kiro-specific hook-limitation disclosure
-    ├── agents/                 # Agent definitions (8 agents; prompts folded in as "Invocation Modes")
-    ├── skills/                 # On-demand capabilities (13 skills, one dir each with SKILL.md)
-    └── hooks/
-        ├── git-guard.json      # PreToolUse hook definition
-        └── scripts/git-guard.sh
-```
-
-### 2. Initialize your project foundation
-
-Run the `product-engineer` agent in **Init Mode** to establish your product context and technical guidelines:
-
-> Use the `product-engineer-init` prompt or invoke `@product-engineer` with a project description.
-
-This produces `docs/product-context.md` and `docs/technical-guidelines.md`. Run this once per project (or when a major pivot occurs).
-
-### 3. Start building
-
-| Situation                       | How to start                                                                                                          |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **New feature / epic**          | Invoke `product-engineer` with a feature description, then `developer` to implement                                   |
-| **Single GitHub Issue**         | Invoke `product-engineer` with an issue number, then `developer` to implement                                         |
-| **Already have a task list**    | Invoke `developer` with a task list path                                                                              |
-| **Multi-story PRD batch**       | Invoke `planner` with a `/workstream` task file or milestone                                                          |
-| **UX prototype**                | Invoke `ux-engineer` with a PRD or SPEC path                                                                          |
-| **Docs out of date**            | Invoke `technical-writer`                                                                                             |
-| **Lint/type/test cleanup**      | Invoke `housekeeping`                                                                                                 |
-| **Verifier compliance testing** | Invoke `verifier` with a spec or story to generate test plans (Design Mode) and audit delivered fidelity (Audit Mode) |
-
-### 4. (Optional) Add domain-specific instructions
-
-Create technology-specific instruction files scoped to certain file patterns via `applyTo` frontmatter:
-
-```yaml
 ---
-applyTo: "apps/my-app/src/**/*.tsx"
+
+## Instructions (Always-Loaded)
+
+| Instruction                                      | Scope      | Purpose                                |
+| ------------------------------------------------ | ---------- | -------------------------------------- |
+| `plan.instructions.md`                           | `**`       | Convert stories/issues into task lists |
+| `implement.instructions.md`                      | `**`       | Execute task list with approval gates  |
+| `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions            |
+
 ---
-# Your project-specific component conventions here
-```
+
+## Prompts
+
+> Copilot: `.github/prompts/*.prompt.md`. Claude Code: `.claude/commands/*.md`. Kiro: embedded in `.kiro/agents/*.md`.
+
+| Prompt                     | Agent            | Purpose                           |
+| -------------------------- | ---------------- | --------------------------------- |
+| `product-engineer-init`    | product-engineer | Initialize foundation documents   |
+| `product-engineer-feature` | product-engineer | Design and plan a feature         |
+| `product-engineer-issue`   | product-engineer | Refine and plan a GitHub Issue    |
+| `developer-execute`        | developer        | Execute an existing task list     |
+| `planner`                  | planner          | Orchestrate multi-story execution |
+| `planner-resume`           | planner          | Resume from checkpoint            |
+| `ux-engineer`              | ux-engineer      | Generate UX mockups               |
+| `github-ops`               | github-ops       | GitHub consistency                |
+| `technical-writer`         | technical-writer | Documentation maintenance         |
+| `housekeeping`             | housekeeping     | Lint, type, test fixes            |
+| `verifier-design`          | verifier         | Generate compliance test plan     |
+| `verifier-audit`           | verifier         | Grey-box fidelity audit           |
 
 ---
 
 ## Workflow Chains
 
-These diagrams show how agents hand off to one another for each type of work. Match your situation to a chain below, then invoke the first agent in the chain — it drives the rest of the flow. The per-agent details are in the [Agents](#agents) reference that follows.
-
-### Agent Interaction Overview
-
-```mermaid
-flowchart TD
-    %% Agents
-    PE[product-engineer]
-    DEV[developer]
-    PL[planner]
-    UX[ux-engineer]
-    VD[verifier\nDesign Mode]
-    VA[verifier\nAudit Mode]
-    GO[github-ops]
-    TW[technical-writer]
-    HK[housekeeping]
-
-    %% Skills (grouped)
-    subgraph "product-engineer skills"
-        S_INIT[activity-init]
-        S_REFINE[activity-refine]
-        S_SPEC[activity-generate-spec]
-        S_STORIES[activity-generate-stories]
-        S_PUBLISH[activity-publish-github]
-        S_DRIFT[activity-drift-reconciliation]
-    end
-
-    subgraph "verifier skills"
-        S_E2E[activity-e2e-test-design]
-        S_CONTRACT[activity-contract-test-design]
-        S_EDGE[activity-edge-case-refinement]
-        S_RANDOM[activity-random-test-tactics]
-    end
-
-    subgraph "shared skills"
-        S_GITOPS[git-ops]
-        S_MEMO[memo-cli-usage]
-        S_MOCKUP[webapp-mockup]
-    end
-
-    %% Main workflow: product-engineer → developer
-    PE -->|"PRD → spec → stories → plan"| DEV
-    PE -->|"multi-story plan"| PL
-    PL -->|"delegates per story"| DEV
-
-    %% UX loop
-    PE -->|"spec"| UX
-    UX -->|"gap analysis & refinements"| PE
-
-    %% Verifier design mode (test-first)
-    PE -->|"spec/stories"| VD
-    VD -->|"test plan"| DEV
-
-    %% Mandatory audit before PR
-    DEV -->|"PR ready"| VA
-    VA -->|"fidelity report"| DEV
-
-    %% Drift reconciliation
-    VA -.->|"drift findings\n(non-blocking)"| PE
-
-    %% Skill usage
-    PE --- S_INIT & S_REFINE & S_SPEC & S_STORIES & S_PUBLISH & S_DRIFT
-    VD --- S_E2E & S_CONTRACT & S_EDGE & S_RANDOM
-    DEV --- S_GITOPS & S_MEMO
-    PL --- S_GITOPS
-    UX --- S_MOCKUP
-    TW --- S_MEMO
-    PE --- S_MEMO
-
-    %% GitHub-ops supports all agents
-    GO -.->|"issues, PRs, labels"| PE
-    GO -.->|"issues, PRs, labels"| DEV
-    GO -.->|"issues, PRs, labels"| PL
-```
-
-**Reading the diagram:**
-
-- Solid arrows → direct handoffs between agents
-- Dashed arrows → supporting/non-blocking interactions
-- Boxes at the bottom → skills invoked by each agent
-- The `verifier` audit before every PR is mandatory and non-skippable
+Match your situation to a chain below, then invoke the first agent in the chain.
 
 ### Full Feature (PRD-Driven)
 
@@ -367,154 +306,62 @@ planner: orchestrate → developer: implement (per story, sequential)
 developer: implement
 ```
 
-### UX Validation Loop
-
-```
-product-engineer: refine → generate-spec → ux-engineer: mockups → product-engineer: update
-```
-
 ### Test-First Design (Verifier)
 
 ```
-product-engineer: refine → spec → stories → plan
-                                                 ↓
-verifier (design mode): generate test plan (from spec or stories)
-                                                 ↓
-developer/planner: implement (feature + tests from test plan)
-                        ↓ (automatic, mandatory, non-skippable)
-                    verifier (audit mode): grey-box fidelity audit → fidelity report
+product-engineer: spec → stories → plan
+                                        ↓
+verifier (design mode): generate test plan
+                                        ↓
+developer: implement (tests first, then code)
+                        ↓ (mandatory)
+verifier (audit mode): fidelity audit → report
                         ↓ (drift findings, non-blocking)
-                    product-engineer: activity-drift-reconciliation
+product-engineer: drift-reconciliation
 ```
-
----
-
-## Agents
-
-Agents are autonomous personas that orchestrate skills and activities.
-
-> **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). All three platforms define the same 8 agents below. On Kiro, each agent file also embeds an "Invocation Modes" section (see [Prompts](#prompts)).
-
-### `product-engineer`
-
-Preparation agent — owns the full pre-coding chain:
-
-- **Init Mode**: `activity-init` → product-context.md + technical-guidelines.md
-- **Feature Mode**: `activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan`
-- **Issue Mode**: `activity-refine` → `plan`
-
-Also owns drift reconciliation: routes `verifier` drift findings handed off by `developer`/`planner` into task-list/checklist expansion, new GitHub issues, or human-confirmed PRD/spec changelog updates via `activity-drift-reconciliation`.
-
-Hands off to `developer` or `planner` for execution.
-
-### `developer`
-
-Execution agent — implements code from an existing task list. Runs `implement`, which includes a mandatory, non-skippable `verifier` audit (`audit` mode) before every PR is marked ready — this is automatic, not optional. Uses `git-ops` for branch management.
-
-### `planner`
-
-Multi-story orchestration with checkpoint/resume:
-
-| Phase | What Happens                                                                                               |
-| ----- | ---------------------------------------------------------------------------------------------------------- |
-| 0     | Discover task source                                                                                       |
-| 0.5   | Resume detection — checks for existing checkpoint state file                                               |
-| 1     | Parse stories and infer dependencies                                                                       |
-| 2     | Dependency graph — **user approval required**                                                              |
-| 3     | Pre-flight — creates integration branch                                                                    |
-| 4     | Delegate to `developer` per story (each gated on a mandatory `verifier` audit); merge and write checkpoint |
-| 5     | PRD-level rollup `verifier` audit, then consolidated PR to `main` — **user must approve**                  |
-
-### Other Agents
-
-| Agent              | Purpose                                                                                                                                                                                        |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ux-engineer`      | PRD/SPEC-to-mockup — feeds refinements back to `product-engineer`                                                                                                                              |
-| `technical-writer` | Documentation maintenance                                                                                                                                                                      |
-| `housekeeping`     | Lint, type, and test-wiring fixes                                                                                                                                                              |
-| `github-ops`       | GitHub consistency — issues, PRs, branches, labels, milestones                                                                                                                                 |
-| `verifier`         | Verification agent — compliance test-plan design (`design` mode) and post-implementation grey-box fidelity auditing (`audit` mode) against codebase, `/workstream`, tests, and PRD/spec intent |
-
----
-
-## Skills
-
-On-demand capabilities loaded only when invoked.
-
-> **Available for:** Copilot (`.github/skills/<name>/SKILL.md`), Claude Code (`.claude/skills/<name>/SKILL.md`), Kiro (`.kiro/skills/<name>/SKILL.md`). Same 13 skills on all three platforms.
-
-| Skill                           | Purpose                                                                                                                        | Consumer                                            |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
-| `activity-init`                 | Product context and technical guidelines                                                                                       | `product-engineer`                                  |
-| `activity-refine`               | Issue refinement or PRD creation                                                                                               | `product-engineer`                                  |
-| `activity-generate-spec`        | PRD → technical specification                                                                                                  | `product-engineer`                                  |
-| `activity-generate-stories`     | Spec → user stories with coverage validation                                                                                   | `product-engineer`                                  |
-| `activity-publish-github`       | Stories → GitHub Issues                                                                                                        | `product-engineer`                                  |
-| `activity-drift-reconciliation` | Routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates | `product-engineer`                                  |
-| `git-ops`                       | Branch, rebase, merge, conflict resolution                                                                                     | `developer`, `planner`                              |
-| `webapp-mockup`                 | React mockup scaffold for UX testing                                                                                           | `ux-engineer`                                       |
-| `activity-e2e-test-design`      | E2E black-box test scenario generation from spec/stories                                                                       | `verifier`                                          |
-| `activity-contract-test-design` | Consumer/provider contract and schema compatibility testing                                                                    | `verifier`                                          |
-| `activity-edge-case-refinement` | Systematic edge-case discovery by category with examples                                                                       | `verifier`                                          |
-| `activity-random-test-tactics`  | Randomized, fuzz, and property-inspired test generation                                                                        | `verifier`                                          |
-| `memo-cli-usage`                | Shared architectural memory with `memo-cli` (read session context, write intent/outcome and ADR/decision rationale)            | `product-engineer`, `developer`, `technical-writer` |
-
----
-
-## Instructions (Always-Loaded)
-
-> **Available for:** Copilot (`.github/instructions/*.instructions.md`, scoped via `applyTo`), Claude Code (`plan` and `implement` are on-demand skills instead of always-loaded instructions — see `CLAUDE.md`), Kiro (`.kiro/steering/*.md`, called "steering" and scoped via `inclusion: always|fileMatch` + `fileMatchPattern`, the Kiro analogue of `applyTo`). Kiro's steering set has a 4th file, `git-guard-notice.md` (`inclusion: always`), with no equivalent on Copilot or Claude Code — it discloses a Kiro-specific hook enforcement gap.
-
-| Instruction                                      | Scope      | Purpose                                |
-| ------------------------------------------------ | ---------- | -------------------------------------- |
-| `plan.instructions.md`                           | `**`       | Convert stories/issues into task lists |
-| `implement.instructions.md`                      | `**`       | Execute task list with approval gates  |
-| `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions            |
-
----
-
-## Prompts
-
-> **Available for:** Copilot (`.github/prompts/*.prompt.md`), Claude Code (`.claude/commands/*.md`, invoked with `/command-name`). Kiro has no separate "prompts" concept — the 12 invocation modes below are folded directly into the corresponding `.kiro/agents/*.md` file as an "Invocation Modes" section instead of standalone files.
-
-| Prompt                     | Agent            | Purpose                                                                                         |
-| -------------------------- | ---------------- | ----------------------------------------------------------------------------------------------- |
-| `product-engineer-init`    | product-engineer | Initialize foundation documents                                                                 |
-| `product-engineer-feature` | product-engineer | Design and plan a feature                                                                       |
-| `product-engineer-issue`   | product-engineer | Refine and plan a GitHub Issue                                                                  |
-| `developer-execute`        | developer        | Execute an existing task list                                                                   |
-| `planner`                  | planner          | Orchestrate multi-story execution                                                               |
-| `planner-resume`           | planner          | Resume from checkpoint                                                                          |
-| `ux-engineer`              | ux-engineer      | Generate UX mockups                                                                             |
-| `github-ops`               | github-ops       | GitHub consistency                                                                              |
-| `technical-writer`         | technical-writer | Documentation maintenance                                                                       |
-| `housekeeping`             | housekeeping     | Lint, type, test fixes                                                                          |
-| `verifier-design`          | verifier         | Generate compliance test plan from spec or stories (Design Mode)                                |
-| `verifier-audit`           | verifier         | Grey-box fidelity audit of delivered work against spec/stories and PRD/spec intent (Audit Mode) |
 
 ---
 
 ## File Organization
 
-| Directory                      | Contents                                                                                          |
-| ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `/docs/`                       | Foundation documents — product-context, technical-guidelines, ADRs                                |
-| `/docs/requirements/`          | PRDs produced by the refine skill                                                                 |
-| `/workstream/`                 | Active feature work — specs, stories, task lists, planner state files                             |
-| `bin/`                         | CLI entrypoints (`dev-tasks.ts`, `dt.ts`)                                                         |
-| `core/`                        | Business logic library (extract, distribution, reconcile) — no CLI deps                           |
-| `adapters/cli/`                | CLI adapter — wraps core, formats stdout/JSON                                                     |
-| `schemas/`                     | JSON Schemas for validation (`component.schema.json`)                                             |
-| `test/`                        | Unit and integration tests + fixture repos                                                        |
-| `.github/instructions/`        | Always-loaded instruction files                                                                   |
-| `.github/instructions/domain/` | Project-specific coding standards (auto-applied)                                                  |
-| `.github/agents/`              | Agent definition files                                                                            |
-| `.github/skills/`              | On-demand skill definitions                                                                       |
-| `.github/prompts/`             | Agent invocation prompts                                                                          |
-| `.kiro/steering/`              | Always-loaded/file-matched steering docs (Kiro's instructions equivalent; `--profile kiro`/`all`) |
-| `.kiro/agents/`                | Agent definition files, with invocation modes folded in (`--profile kiro`/`all`)                  |
-| `.kiro/skills/`                | On-demand skill definitions (`--profile kiro`/`all`)                                              |
-| `.kiro/hooks/`                 | Guard hook definition + script (`--profile kiro`/`all`)                                           |
+| Directory             | Contents                                                |
+| --------------------- | ------------------------------------------------------- |
+| `/docs/`              | Foundation docs — product-context, technical-guidelines |
+| `/docs/requirements/` | PRDs produced by the refine skill                       |
+| `/workstream/`        | Active feature work — specs, stories, task lists        |
+| `bin/`                | CLI entrypoints (`dev-tasks.ts`, `dt.ts`)               |
+| `core/`               | Business logic library (extract, distribution)          |
+| `adapters/cli/`       | CLI adapter — wraps core, formats stdout/JSON           |
+| `schemas/`            | JSON Schemas for validation                             |
+| `test/`               | Unit and integration tests + fixtures                   |
+| `.github/`            | Copilot agents, skills, instructions, prompts           |
+| `.kiro/`              | Kiro agents, skills, steering, hooks                    |
+
+---
+
+## memo-cli Integration (Optional)
+
+When `memo-cli` is installed and configured, agents share context across sessions and repositories.
+
+```bash
+which memo && memo setup validate
+```
+
+If `memo` is installed but validation fails:
+
+```bash
+memo setup init --repo <repo-name> --org <org-name> --domain <domain>
+```
+
+---
+
+## Known Limitations
+
+- **Route 2 (isolated framework boot) is interface-only** — only routes 1 and 3 are functional for OpenAPI extraction.
+- **LLM inference is stubbed** — no real LLM provider is wired yet.
+- **Only Node/TS provider** — other language stacks require additional extraction providers.
+- **Zod extraction handles basic `z.object` patterns only** — complex compositions are not fully supported.
+- **Only kafkajs patterns supported** — other messaging clients are not detected.
 
 ---
 
@@ -526,310 +373,91 @@ On-demand capabilities loaded only when invoked.
 - Run `housekeeping` after major feature branches to catch regressions
 - Domain instructions are auto-applied based on `applyTo` patterns
 
-## memo-cli Integration (Optional)
-
-When `memo-cli` is installed and configured, this workflow supports shared context across sessions, agents, and repositories.
-
-- `product-engineer` reads context from memo at session start and before major design choices.
-- `developer` writes an `intent` entry before story implementation and an `outcome` entry after completion.
-- `technical-writer` writes one memo entry per ADR and per significant technical documentation change.
-
-Recommended startup check:
-
-```bash
-which memo && memo setup validate
-```
-
-If `memo` is installed but validation fails, configure the repo first:
-
-```bash
-memo setup init --repo <repo-name> --org <org-name> --domain <domain>
-```
-
-Use `--scope related` for cross-repo context when `relates_to` is configured in `memo.config.json`.
-
-### Formatting
-
-Use the repo-local formatter wrapper for tracked Markdown, JSON, and YAML files:
-
-```bash
-./scripts/format.sh --check
-./scripts/format.sh --write
-```
-
-The script uses `prettier` from your `PATH` when available and falls back to `npx --yes prettier` otherwise.
-
 ---
 
-## Distribution & Script Reference
+## Contributing
 
-The toolkit is distributed as a versioned tarball via **GitHub Releases**. `dev-tasks.sh` is the single installer/updater — no runtime beyond standard POSIX tools (`curl`, `tar`, `shasum`) is required.
+### Prerequisites
 
-### Commands
+- Node.js >= 20
+- pnpm (via `corepack enable`)
+- git >= 2.37
 
-| Command                            | Description                                              |
-| ---------------------------------- | -------------------------------------------------------- |
-| `./dev-tasks.sh install [version]` | Install latest or a pinned version                       |
-| `./dev-tasks.sh update [version]`  | Update managed files to the latest or a specific version |
-| `./dev-tasks.sh check`             | Compare installed version vs latest release              |
-| `./dev-tasks.sh list`              | List installed directories, files, and metadata          |
-| `./dev-tasks.sh version`           | Print installed version and script version               |
-
-### Options (install / update)
-
-| Option             | Description                                                                                                                   |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `--profile <name>` | Install/update file sets: `copilot` \| `claude` \| `kiro` \| `both` \| `all` (default: `both`, meaning Copilot + Claude only) |
-| `--dry-run`        | Print planned changes without writing any files                                                                               |
-| `--backup`         | Copy managed files to `.dev-tasks-backup/<timestamp>/` before replacing                                                       |
-| `--yes`            | Skip confirmation prompts (useful in CI)                                                                                      |
-
-> **Kiro guard hook — enforcement gap disclosure:** `--profile kiro`/`all` installs `.kiro/hooks/git-guard.json` + `.kiro/hooks/scripts/git-guard.sh`, a best-effort port of `.claude/hooks/git-guard.sh` that blocks pushes/merges to `main`, non-Conventional-Commit messages, and inline `--body` on `gh issue`/`pr create|edit|comment|review` (must use `--body-file`, which prevents markdown-flattening in PR/issue bodies). **This hook is not guaranteed to be equivalent to `.claude/hooks/git-guard.sh`.** A tracked upstream Kiro defect (kirodotdev/Kiro#7375) may prevent Kiro IDE's `PreToolUse` hook from seeing command text, in which case it cannot reliably block anything; when it can't see command context it fails loud (stderr warning) rather than silently allowing. Until this is verified fixed on a live Kiro install, treat PR review as the actual enforcement backstop for these rules on Kiro. See `.kiro/steering/git-guard-notice.md` for the full disclosure.
-
-### Managed file surface
-
-The script owns these paths and may overwrite them on update:
-
-| Path                                              | Contents                                                                         |
-| ------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `.github/agents/*.agent.md`                       | Agent definitions                                                                |
-| `.github/skills/*/SKILL.md`                       | Activity and operational skills                                                  |
-| `.github/instructions/*.instructions.md`          | Always-loaded instructions                                                       |
-| `.github/instructions/domain/`                    | Domain-specific instructions                                                     |
-| `.github/prompts/*.prompt.md`                     | Prompt entry points                                                              |
-| `.kiro/agents/*.md`                               | Agent definitions (installed with `--profile kiro`/`all`)                        |
-| `.kiro/skills/*/SKILL.md`                         | Activity and operational skills (installed with `--profile kiro`/`all`)          |
-| `.kiro/steering/*.md`                             | Always-loaded/file-matched steering docs (installed with `--profile kiro`/`all`) |
-| `.kiro/hooks/*.json` + `.kiro/hooks/scripts/*.sh` | Guard hook definition and script (installed with `--profile kiro`/`all`)         |
-| `.dev-tasks-version`                              | Installed version metadata                                                       |
-
-**Never touched by the script:** `AGENTS.md` — the script prints an integration prompt instead (see below).
-
-### AGENTS.md integration prompt
-
-After every install or update, the script prints a `=== AGENTS.md Integration ===` block showing the diff between the bundled reference `AGENTS.md` and your local copy. It also saves the reference to `.dev-tasks-agents-update.md`. The script **never** silently overwrites your `AGENTS.md` — you decide what to merge.
-
-### Version pinning and rollback
+### Setup
 
 ```bash
-# Pin to a specific version
-./dev-tasks.sh install v0.1.3
-
-# Update with backup so you can roll back manually
-./dev-tasks.sh update --backup
-
-# Roll back: restore from backup
-cp -r .dev-tasks-backup/<timestamp>/. ./
+git clone https://github.com/llipe/dev-tasks.git
+cd dev-tasks
+pnpm install
 ```
 
-### Version metadata file
+### Build
 
-`.dev-tasks-version` is written after every install/update:
-
-```json
-{
-  "version": "1.2.0",
-  "installed_at": "2026-04-20T12:00:00Z",
-  "script_version": "1.0.0",
-  "source": "https://github.com/llipe/dev-tasks"
-}
+```bash
+pnpm run build          # compile TypeScript to dist/
+pnpm run typecheck      # type-check without emitting
 ```
 
-### Release publishing (maintainers)
+### Test
 
-Every git tag matching `v*.*.*` triggers two workflows:
+```bash
+pnpm run test           # all tests (vitest)
+pnpm run test:unit      # unit tests only
+pnpm run test:integration  # integration tests only
+```
 
-- `.github/workflows/release-bundle.yml` — builds the tarball bundle and creates a GitHub Release
-- `.github/workflows/publish-npm.yml` — publishes the `@llipe.com/dev-tasks` npm package
+### Lint and Format
 
-#### How to create a new release
+```bash
+pnpm run lint           # ESLint (zero warnings)
+pnpm run lint:fix       # auto-fix lint issues
+pnpm run format:check   # Prettier check
+pnpm run format         # Prettier write
+```
 
-Use the release automation script:
+### Full validation (CI equivalent)
+
+```bash
+pnpm run validate       # typecheck + lint + format:check + test
+```
+
+### Releasing a new version
+
+Releases are automated via git tags. Use the release script:
 
 ```bash
 git checkout main
 git pull origin main
-./scripts/release.sh patch   # or minor / major
+./scripts/release.sh patch   # or: minor / major
 ```
 
 The script:
 
 1. Validates pre-flight conditions (branch, clean tree, format check).
-2. Auto-generates a CHANGELOG.md entry from commit history and merged PR metadata.
-3. Suggests an increment type based on Conventional Commit analysis.
-4. Updates `package.json` version to the new semver value.
-5. Commits both CHANGELOG.md and package.json (`chore(release): v<version>`).
-6. Creates an annotated git tag.
-7. Pushes the commit to `main` and the tag to `origin`.
-8. The tag push triggers both CI workflows automatically.
+2. Auto-generates a CHANGELOG entry from commit history.
+3. Updates `package.json` version.
+4. Commits (`chore(release): v<version>`), creates an annotated tag, and pushes.
+5. The tag push triggers CI workflows:
+   - `.github/workflows/release-bundle.yml` — builds the tarball and creates a GitHub Release
+   - `.github/workflows/publish-npm.yml` — publishes to npm as `@llipe.com/dev-tasks`
 
 After the workflows complete, verify:
 
-- GitHub Release contains `dev-tasks-bundle-v<version>.tar.gz` + `.sha256`
-- npm package is published: `npm view @llipe.com/dev-tasks version`
-
-Optional post-release validation:
-
 ```bash
-./dev-tasks.sh install v1.3.0
+npm view @llipe.com/dev-tasks version
 ```
 
-#### CI setup required
+### CI setup (npm Trusted Publishers)
 
-The npm publish workflow uses **Trusted Publishers (OIDC)** — no npm token secret is needed. Configure once on npmjs.com:
+The npm publish workflow uses OIDC — no npm token secret needed. Configure once on npmjs.com:
 
-1. Go to npmjs.com → Packages → `@llipe.com/dev-tasks` → Settings → Trusted Publisher
-2. Select **GitHub Actions** and fill in:
-   - Organization or user: `llipe`
+1. Go to npmjs.com → `@llipe.com/dev-tasks` → Settings → Trusted Publisher
+2. Select GitHub Actions:
+   - Organization/user: `llipe`
    - Repository: `dev-tasks`
-   - Workflow filename: `publish-npm.yml`
-   - Environment name: `npm`
-   - Allowed actions: npm publish
-
-Also create a GitHub environment named `npm` in the repo (Settings → Environments → New environment → `npm`). No secrets needed.
-
-#### Option: download assets directly from the Releases page
-
-If you prefer manual installation, download the bundle and checksum from:
-
-- https://github.com/llipe/dev-tasks/releases
-
-Example for a specific version:
-
-```bash
-VERSION=v1.3.0
-BASE_URL="https://github.com/llipe/dev-tasks/releases/download/${VERSION}"
-
-curl -fL -o "dev-tasks-bundle-${VERSION}.tar.gz" \
-  "${BASE_URL}/dev-tasks-bundle-${VERSION}.tar.gz"
-curl -fL -o "dev-tasks-bundle-${VERSION}.tar.gz.sha256" \
-  "${BASE_URL}/dev-tasks-bundle-${VERSION}.tar.gz.sha256"
-
-# Verify checksum
-shasum -a 256 -c "dev-tasks-bundle-${VERSION}.tar.gz.sha256"
-
-# Extract
-tar -xzf "dev-tasks-bundle-${VERSION}.tar.gz"
-```
-
----
-
-## `dt` — Multi-Repo Context CLI
-
-`dt` is the runtime binary for the `@llipe.com/dev-tasks` npm package. It extracts repository metadata (schema, OpenAPI, AsyncAPI), derives a `component.json` manifest with provenance and confidence tracking, and (in later phases) builds a cross-repo catalog and resolves scoped context bundles for agent sessions.
-
-### Installation
-
-```bash
-# Install globally (or as a dev dependency)
-pnpm add -g @llipe.com/dev-tasks
-
-# Verify
-dt --version
-dev-tasks --version
-```
-
-Two binaries are provided:
-
-| Binary      | Purpose                                             |
-| ----------- | --------------------------------------------------- |
-| `dev-tasks` | Bootstrap: install, update, status, pin, doctor     |
-| `dt`        | Runtime: extract, catalog, ctx, scope, init, verify |
-
-### Commands
-
-#### `dt extract` — Repository metadata extraction
-
-```bash
-# Detect stack, framework, ORM, and messaging with evidence
-dt extract detect
-
-# Extract database schema from ORM definitions (Prisma, Drizzle, TypeORM)
-dt extract schema [--db-url <url>]
-
-# Extract OpenAPI spec (route 1: copy existing, route 3: AST inference)
-dt extract openapi [--strategy auto|1|3]
-
-# Extract AsyncAPI spec from Kafka topic patterns (kafkajs)
-dt extract asyncapi
-
-# Derive component.json with provenance and confidence
-dt extract component [--interactive]
-
-# Run full extraction pipeline (detect → schema → openapi → asyncapi → component → report)
-dt extract all [--interactive] [--force]
-```
-
-#### `dev-tasks` — Bootstrap and distribution
-
-```bash
-dev-tasks install [--pin <version>]   # Install skill files + write manifest
-dev-tasks update [--force]            # Reconcile with hash-based conflict detection
-dev-tasks status                      # Compare installed/pinned/latest versions
-dev-tasks pin <version>               # Pin to a specific version
-dev-tasks doctor                      # Check Node ≥20, git ≥2.37, cache writable
-dev-tasks migrate                     # Migrate from legacy dev-tasks.sh
-```
-
-### Global options
-
-All commands accept:
-
-| Flag                 | Description                  |
-| -------------------- | ---------------------------- |
-| `--json`             | Machine-readable JSON output |
-| `--meta-repo <path>` | Path or URL to the meta-repo |
-| `-v`                 | Verbose diagnostics (stderr) |
-
-### Exit codes
-
-| Code | Meaning                                           |
-| ---- | ------------------------------------------------- |
-| 0    | OK                                                |
-| 1    | Unexpected error                                  |
-| 2    | Incorrect usage                                   |
-| 13   | Incomplete extraction: required fields unresolved |
-| 14   | Reconciliation conflict (edited fields)           |
-
-### Typical workflow
-
-```bash
-# 1. Run extraction in a component repo
-cd my-service
-dt extract all --interactive
-
-# 2. Review outputs
-cat component.json           # manifest with _provenance
-cat extraction_report.json   # coverage, confidence, unresolved items
-
-# 3. Validate
-dt validate-component        # (Phase 2+) checks against JSON Schema
-
-# 4. Commit and push
-git add component.json contracts/ docs/schema.md extraction_report.json
-git commit -m "feat: add component manifest via dt extract"
-```
-
-### Current implementation status
-
-Phase 0 (distribution) and Phase 1 (extraction) are implemented. The following are available:
-
-- `dev-tasks install|update|status|pin|doctor|migrate`
-- `dt extract detect|schema|openapi|asyncapi|component|all`
-- Hash-based reconciliation with conflict detection
-- Legacy shell-script migration shim
-
-Phases 2-5 (catalog, context, scoping, product-engineer integration) are specified but not yet implemented.
-
----
-
-## Known Limitations
-
-- **Route 2 (isolated framework boot) is interface-only** — the hook exists but is not implemented; only routes 1 and 3 are functional for OpenAPI extraction.
-- **LLM inference is stubbed** — no real LLM provider is wired yet; description passes produce placeholder output.
-- **Only Node/TS provider** — other language stacks (Python, Go, Java, etc.) require additional extraction providers.
-- **Zod extraction handles basic `z.object` patterns only** — complex Zod compositions (unions, intersections, lazy schemas) are not fully supported.
-- **Only kafkajs Kafka patterns supported** — other messaging clients (confluent-kafka, rhea/AMQP, bullmq) are not detected.
+   - Workflow: `publish-npm.yml`
+   - Environment: `npm`
+3. Create a GitHub environment named `npm` in the repo (Settings → Environments)
 
 ---
 

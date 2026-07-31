@@ -28,7 +28,7 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Make scripts executable
-        run: chmod +x scripts/build-bundle.sh dev-tasks.sh
+        run: chmod +x scripts/build-bundle.sh
 
       - name: Build distribution bundle
         run: ./scripts/build-bundle.sh "${{ steps.version.outputs.version }}"
@@ -86,27 +86,21 @@ jobs:
           NOTES=$(cat <<EOF
           ## dev-tasks v${VERSION}
 
-          ### Agent toolkit (shell installer)
-
-          Install or update the agent toolkit using the single-script installer:
-
-          \`\`\`bash
-          # Bootstrap (first time)
-          curl -fsSL https://raw.githubusercontent.com/llipe/dev-tasks/main/dev-tasks.sh \\
-            -o dev-tasks.sh && chmod +x dev-tasks.sh
-
-          # Install this release
-          ./dev-tasks.sh install ${TAG}
-
-          # Or update from a previous version
-          ./dev-tasks.sh update ${TAG}
-          \`\`\`
-
-          ### dt CLI (npm package)
+          ### Install via npm
 
           \`\`\`bash
           pnpm add -g @llipe.com/dev-tasks@${VERSION}
           \`\`\`
+
+          Then install agent files into your repo:
+
+          \`\`\`bash
+          dev-tasks install
+          \`\`\`
+
+          ### Bundle (manual)
+
+          Download the tarball from this release if you prefer manual installation.
 
           See the [README](https://github.com/llipe/dev-tasks#readme) for full documentation.
           EOF
