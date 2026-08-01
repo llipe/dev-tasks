@@ -1,0 +1,203 @@
+{
+  "$id": "component.schema.json",
+  "$comment": "JSON Schema draft 2020-12, validated via ajv's Ajv2020 class in core/catalog/validate-component.ts.",
+  "title": "Component Manifest",
+  "description": "component.json — per-repository manifest describing identity, classification, contracts, and provenance. Spec: specification-multi-repo-context.md section 5.2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "description",
+    "repo",
+    "type",
+    "domain",
+    "owner",
+    "criticality",
+    "lifecycle",
+    "stack",
+    "aliases",
+    "provides",
+    "consumes",
+    "datastores",
+    "docs",
+    "paths",
+    "_provenance"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Schema evolution marker for this artifact type.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "id": {
+      "type": "string",
+      "description": "Globally unique component identifier.",
+      "pattern": "^[a-z][a-z0-9-]{2,49}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "repo": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": ["service", "worker", "frontend", "bff", "lib", "infra", "job"]
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Must exist in the meta-repo domains.md (enforced by dt catalog validate, not this schema)."
+    },
+    "subdomain": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Manual field — team or person responsible. Must not be empty."
+    },
+    "criticality": {
+      "type": "string",
+      "enum": ["tier-1", "tier-2", "tier-3"]
+    },
+    "lifecycle": {
+      "type": "string",
+      "enum": ["production", "beta", "deprecated", "decommissioned"]
+    },
+    "stack": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "aliases": {
+      "type": "array",
+      "description": "Confirmed by a human — feeds lexical routing.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "provides": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/providesEntry" }
+    },
+    "consumes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/consumesEntry" }
+    },
+    "datastores": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "docs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["architecture", "schema"],
+      "properties": {
+        "architecture": { "type": "string", "minLength": 1 },
+        "schema": { "type": "string", "minLength": 1 },
+        "openapi": { "type": "string", "minLength": 1 },
+        "asyncapi": { "type": "string", "minLength": 1 }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "root": { "type": "string" }
+      }
+    },
+    "_provenance": { "$ref": "#/$defs/provenanceBlock" }
+  },
+  "$defs": {
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "contractSource": {
+      "type": "string",
+      "enum": ["introspected", "generated", "inferred", "manual", "partial"]
+    },
+    "providesEntry": {
+      "type": "object",
+      "description": "A provided contract. For kind=asyncapi, use topic_confidence/payload_confidence instead of confidence (spec section 5.2, 8.1). Cross-field enforcement (e.g. path required unless kind=undocumented) is a dt catalog validate concern, not this schema.",
+      "additionalProperties": false,
+      "required": ["id", "kind", "source"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": ["openapi", "asyncapi", "grpc", "graphql", "undocumented"]
+        },
+        "path": { "type": "string", "minLength": 1 },
+        "source": { "$ref": "#/$defs/contractSource" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "topic_confidence": { "$ref": "#/$defs/confidence" },
+        "payload_confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "consumesEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract"],
+      "properties": {
+        "contract": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Must resolve to an existing provides[].id in the catalog (enforced by dt catalog validate, not this schema)."
+        },
+        "criticality": {
+          "type": "string",
+          "enum": ["hard", "soft"]
+        },
+        "source": { "$ref": "#/$defs/contractSource" }
+      }
+    },
+    "fieldProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "confidence"],
+      "properties": {
+        "source": { "$ref": "#/$defs/contractSource" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "confirmed_by": { "type": "string", "minLength": 1 }
+      }
+    },
+    "provenanceBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["extracted_at", "extractor", "repo_sha", "fields", "field_hashes"],
+      "properties": {
+        "extracted_at": { "type": "string", "minLength": 1, "description": "ISO-8601 timestamp." },
+        "extractor": { "type": "string", "minLength": 1 },
+        "repo_sha": { "type": "string", "minLength": 1 },
+        "detector": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/fieldProvenance" }
+        },
+        "field_hashes": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

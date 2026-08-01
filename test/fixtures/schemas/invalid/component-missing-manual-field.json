@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "payment-service",
+  "name": "payment-service",
+  "description": "Missing the required manual field 'owner'.",
+  "repo": "https://github.com/checkout-platform/payment-service",
+  "type": "service",
+  "domain": "payments",
+  "criticality": "tier-1",
+  "lifecycle": "production",
+  "stack": ["node"],
+  "aliases": [],
+  "provides": [],
+  "consumes": [],
+  "datastores": [],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": ["src/"]
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+    "detector": null,
+    "fields": {},
+    "field_hashes": {}
+  }
+}

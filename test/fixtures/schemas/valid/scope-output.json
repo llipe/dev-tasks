@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "primary": ["payment-service"],
+  "secondary": ["order-service", "storefront-web"],
+  "contracts_crossed": ["orders-v1"],
+  "confidence": "high",
+  "unresolved": [],
+  "rationale": "The task modifies refund handling in payment-service, which consumes orders-v1 from order-service and is invoked from the storefront checkout flow.",
+  "flow": "checkout-flow"
+}

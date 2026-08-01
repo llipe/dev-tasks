@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "checkout-flow",
+  "domain": "payments",
+  "aliases": ["checkout", "order-to-payment"],
+  "owner": "payments-team",
+  "criticality": "tier-1",
+  "steps": [
+    {
+      "component": "storefront-web",
+      "role": "initiator",
+      "trigger": "user submits cart"
+    },
+    {
+      "component": "order-service",
+      "role": "producer",
+      "via": "orders-v1"
+    },
+    {
+      "component": "payment-service",
+      "role": "consumer",
+      "via": "orders-v1"
+    }
+  ],
+  "sla": {
+    "p99_latency_ms": 2000
+  }
+}

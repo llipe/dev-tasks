@@ -1,0 +1,62 @@
+{
+  "$id": "scope-output.schema.json",
+  "$comment": "JSON Schema draft 2020-12, validated via ajv's Ajv2020 class in core/catalog/validate-component.ts.",
+  "title": "Scope Output",
+  "description": "The schema-validated JSON returned by the single LLM scoping call in dt init. Spec: specification-multi-repo-context.md section 8.2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "primary",
+    "secondary",
+    "contracts_crossed",
+    "confidence",
+    "unresolved",
+    "rationale"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Schema evolution marker for this artifact type.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "primary": {
+      "type": "array",
+      "description": "Components that need a code change. 1 to 6 items.",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "secondary": {
+      "type": "array",
+      "description": "Components needed to understand context only. Up to 8 items.",
+      "maxItems": 8,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "contracts_crossed": {
+      "type": "array",
+      "description": "Contract ids that are changed by or depended upon in this task.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "unresolved": {
+      "type": "array",
+      "description": "Capabilities the model could not map to a candidate.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "rationale": {
+      "type": "string",
+      "maxLength": 600
+    },
+    "flow": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional flow id this scope belongs to."
+    }
+  }
+}

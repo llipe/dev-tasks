@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "checkout-flow",
+  "domain": "payments",
+  "owner": "payments-team",
+  "criticality": "tier-1",
+  "steps": [{ "component": "payment-service", "role": "consumer" }],
+  "unexpectedTopLevelField": "should be rejected"
+}
