@@ -185,6 +185,33 @@ if (args.command === "extract") {
       concurrency,
     });
     process.exit(exitCode);
+  } else if (subcommand === "validate") {
+    const { runCatalogValidate } = await import("#adapters/cli/catalog-validate.js");
+    // Parse --strict, --catalog-dir, --index from remaining positional/flags
+    let strict = false;
+    let catalogDir: string | undefined;
+    let indexPath: string | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--strict") {
+        strict = true;
+      } else if (p === "--catalog-dir" && args.positional[i + 1]) {
+        catalogDir = args.positional[++i];
+      } else if (p.startsWith("--catalog-dir=")) {
+        catalogDir = p.slice("--catalog-dir=".length);
+      } else if (p === "--index" && args.positional[i + 1]) {
+        indexPath = args.positional[++i];
+      } else if (p.startsWith("--index=")) {
+        indexPath = p.slice("--index=".length);
+      }
+    }
+    const exitCode = runCatalogValidate({
+      json: args.flags.json,
+      strict,
+      catalogDir,
+      indexPath,
+    });
+    process.exit(exitCode);
   } else if (!subcommand) {
     process.stderr.write("Usage: dt catalog <subcommand>\n\n");
     process.stderr.write("Subcommands:\n");
