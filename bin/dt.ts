@@ -212,12 +212,34 @@ if (args.command === "extract") {
       indexPath,
     });
     process.exit(exitCode);
+  } else if (
+    subcommand === "resolve" ||
+    subcommand === "get" ||
+    subcommand === "deps" ||
+    subcommand === "consumers" ||
+    subcommand === "flow" ||
+    subcommand === "closure" ||
+    subcommand === "coverage"
+  ) {
+    const { runCatalogQuery } = await import("#adapters/cli/catalog-query.js");
+    const exitCode = runCatalogQuery({
+      subcommand,
+      positional: args.positional.slice(1),
+      json: args.flags.json,
+    });
+    process.exit(exitCode);
   } else if (!subcommand) {
     process.stderr.write("Usage: dt catalog <subcommand>\n\n");
     process.stderr.write("Subcommands:\n");
     process.stderr.write("  build       Build the catalog index from registry\n");
     process.stderr.write("  validate    Validate catalog referential integrity\n");
     process.stderr.write("  resolve     Resolve text to components\n");
+    process.stderr.write("  get         Get a component by id\n");
+    process.stderr.write("  deps        List dependencies of a component\n");
+    process.stderr.write("  consumers   List consumers of a contract\n");
+    process.stderr.write("  flow        Show flow with participants\n");
+    process.stderr.write("  closure     Compute transitive dependency closure\n");
+    process.stderr.write("  coverage    Report extraction quality\n");
     process.stderr.write("  scaffold    Generate meta-repo scaffold\n");
     process.exit(ExitCode.InvalidUsage);
   } else {

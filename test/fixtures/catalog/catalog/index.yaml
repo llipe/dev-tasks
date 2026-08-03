@@ -756,7 +756,7 @@ domains:
 errors:
   - error: component.json not found at /Users/felipemallea/Documents/Documentos - M-FMALLEAS/Dev/dev-tasks/test/fixtures/catalog/repos/broken-repo/component.json
     repo: ./repos/broken-repo
-    timestamp: 2026-08-03T15:11:09.233Z
+    timestamp: 2026-08-03T20:00:10.113Z
 extraction_quality:
   per_component:
     - component_id: admin-frontend
@@ -884,7 +884,11 @@ extraction_quality:
     low: 9
     medium: 7
 flows:
-  - description: End-to-end checkout process from cart to payment confirmation.
+  - aliases:
+      - purchase
+      - buy
+      - compra
+    description: End-to-end checkout process from cart to payment confirmation.
     id: checkout-flow
     name: Checkout Flow
     participants:
@@ -893,7 +897,11 @@ flows:
       - payment-service
       - inventory-service
       - notification-service
-  - description: New user signup and welcome email flow.
+  - aliases:
+      - signup
+      - registro
+      - onboarding
+    description: New user signup and welcome email flow.
     id: user-registration
     name: User Registration
     participants:
@@ -901,5 +909,5 @@ flows:
       - auth-service
       - notification-service
       - email-worker
-generated_at: 2026-08-03T15:11:09.233Z
+generated_at: 2026-08-03T20:00:10.113Z
 generator: dev-tasks@0.6.7

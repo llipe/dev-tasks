@@ -1,6 +1,10 @@
 id: user-registration
 name: User Registration
 description: New user signup and welcome email flow.
+aliases:
+  - signup
+  - registro
+  - onboarding
 participants:
   - user-service
   - auth-service

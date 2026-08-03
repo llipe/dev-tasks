@@ -1,6 +1,10 @@
 id: checkout-flow
 name: Checkout Flow
 description: End-to-end checkout process from cart to payment confirmation.
+aliases:
+  - purchase
+  - buy
+  - compra
 participants:
   - cart-service
   - order-service
