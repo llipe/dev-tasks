@@ -84,6 +84,7 @@ export interface FlowEntry {
   id: string;
   name: string;
   description?: string;
+  aliases?: string[];
   participants: string[];
 }
 

@@ -361,6 +361,7 @@ export function aggregateFlows(catalogDir: string): FlowEntry[] {
           id: parsed.id,
           name: typeof parsed.name === "string" ? parsed.name : parsed.id,
           description: typeof parsed.description === "string" ? parsed.description : undefined,
+          aliases: Array.isArray(parsed.aliases) ? (parsed.aliases as string[]) : undefined,
           participants: Array.isArray(parsed.participants) ? (parsed.participants as string[]) : [],
         });
       }
