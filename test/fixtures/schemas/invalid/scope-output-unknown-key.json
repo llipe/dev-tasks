@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "primary": ["payment-service"],
+  "secondary": [],
+  "contracts_crossed": [],
+  "confidence": "high",
+  "unresolved": [],
+  "rationale": "Has an unexpected top-level key.",
+  "unexpectedTopLevelField": "should be rejected"
+}

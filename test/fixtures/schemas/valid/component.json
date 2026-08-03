@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "payment-service",
+  "name": "payment-service",
+  "description": "Handles payment authorization, capture, and refunds.",
+  "repo": "https://github.com/checkout-platform/payment-service",
+  "type": "service",
+  "domain": "payments",
+  "subdomain": "checkout",
+  "owner": "payments-team",
+  "criticality": "tier-1",
+  "lifecycle": "production",
+  "stack": ["node", "typescript"],
+  "runtime": {
+    "framework": "fastify"
+  },
+  "aliases": ["payments", "pay-svc"],
+  "provides": [
+    {
+      "id": "payments-v2",
+      "kind": "openapi",
+      "path": "contracts/openapi/payments-v2.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    },
+    {
+      "id": "payment-completed",
+      "kind": "asyncapi",
+      "path": "contracts/asyncapi/events.yaml",
+      "source": "partial",
+      "topic_confidence": "high",
+      "payload_confidence": "medium"
+    }
+  ],
+  "consumes": [
+    {
+      "contract": "orders-v1",
+      "criticality": "hard",
+      "source": "introspected"
+    }
+  ],
+  "datastores": ["postgres"],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": ["src/"],
+    "root": "."
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+    "detector": {
+      "stack": ["node", "typescript"],
+      "type_hint": "service"
+    },
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "manual", "confidence": "high" },
+      "aliases": { "source": "inferred", "confidence": "medium", "confirmed_by": "jane.doe" }
+    },
+    "field_hashes": {
+      "name": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b85",
+      "owner": "5f70bf18a086007016e948b04aed3b82103a36bea41755148132d92d52d0c2b"
+    }
+  }
+}

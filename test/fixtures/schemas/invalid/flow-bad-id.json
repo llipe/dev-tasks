@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "Checkout_Flow",
+  "domain": "payments",
+  "owner": "payments-team",
+  "criticality": "tier-1",
+  "steps": [{ "component": "payment-service", "role": "consumer" }]
+}

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "primary": ["payment-service"],
+  "secondary": [],
+  "contracts_crossed": [],
+  "confidence": "very-high",
+  "unresolved": [],
+  "rationale": "Wrong enum value for confidence."
+}

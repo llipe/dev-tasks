@@ -93,10 +93,18 @@ cat component.json           # manifest with _provenance metadata
 cat extraction_report.json   # coverage, confidence, unresolved items
 ```
 
+### Validate a manifest (offline, no network access)
+
+```bash
+dt validate-component component.json          # exit 0 valid, exit 4 invalid
+dt validate-component component.json --json   # structured error list
+```
+
 ### Typical workflow
 
 ```bash
 dt extract all --interactive
+dt validate-component component.json
 git add component.json contracts/ docs/schema.md extraction_report.json
 git commit -m "feat: add component manifest via dt extract"
 ```

@@ -152,6 +152,14 @@ if (args.command === "extract") {
     process.stderr.write(`Subcommand 'extract ${subcommand}' is not yet implemented.\n`);
     process.exit(ExitCode.GeneralError);
   }
+} else if (args.command === "validate-component") {
+  const { runValidateComponent } = await import("#adapters/cli/validate-component.js");
+  const path = args.positional[0];
+  const exitCode = runValidateComponent({
+    json: args.flags.json,
+    path,
+  });
+  process.exit(exitCode);
 } else {
   process.stderr.write(`Command '${args.command}' is not yet implemented.\n`);
   process.exit(ExitCode.GeneralError);
