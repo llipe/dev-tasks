@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "admin-frontend",
+  "name": "Admin Frontend",
+  "description": "Internal admin dashboard for operations and support.",
+  "repo": "https://github.com/acme/admin-frontend",
+  "type": "frontend",
+  "domain": "platform",
+  "owner": "frontend-team",
+  "criticality": "tier-3",
+  "lifecycle": "production",
+  "stack": [
+    "typescript",
+    "react",
+    "next"
+  ],
+  "aliases": [
+    "admin",
+    "admin-ui",
+    "backoffice"
+  ],
+  "provides": [],
+  "consumes": [
+    {
+      "contract": "gateway-v1",
+      "criticality": "hard",
+      "source": "introspected"
+    }
+  ],
+  "datastores": [],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": [
+      "src/"
+    ],
+    "root": "."
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "mmm333mmm333mmm333mmm333mmm333mmm333mmm3",
+    "fields": {
+      "name": {
+        "source": "introspected",
+        "confidence": "high"
+      },
+      "owner": {
+        "source": "manual",
+        "confidence": "high"
+      },
+      "aliases": {
+        "source": "manual",
+        "confidence": "high"
+      }
+    },
+    "field_hashes": {
+      "name": "hash25",
+      "owner": "hash26"
+    }
+  }
+}

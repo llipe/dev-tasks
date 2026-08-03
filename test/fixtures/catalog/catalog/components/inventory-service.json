@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "inventory-service",
+  "name": "Inventory Service",
+  "description": "Real-time stock tracking and reservation.",
+  "repo": "https://github.com/acme/inventory-service",
+  "type": "service",
+  "domain": "logistics",
+  "owner": "logistics-team",
+  "criticality": "tier-1",
+  "lifecycle": "production",
+  "stack": [
+    "go"
+  ],
+  "aliases": [
+    "inventory",
+    "stock"
+  ],
+  "provides": [
+    {
+      "id": "inventory-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    },
+    {
+      "id": "stock-updated",
+      "kind": "asyncapi",
+      "path": "contracts/events.yaml",
+      "source": "generated",
+      "topic_confidence": "high",
+      "payload_confidence": "high"
+    }
+  ],
+  "consumes": [
+    {
+      "contract": "warehouse-v1",
+      "criticality": "hard",
+      "source": "introspected"
+    }
+  ],
+  "datastores": [
+    "postgres",
+    "redis"
+  ],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": [
+      "cmd/",
+      "internal/"
+    ],
+    "root": "."
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "eee555eee555eee555eee555eee555eee555eee5",
+    "fields": {
+      "name": {
+        "source": "introspected",
+        "confidence": "high"
+      },
+      "owner": {
+        "source": "manual",
+        "confidence": "high"
+      },
+      "aliases": {
+        "source": "inferred",
+        "confidence": "medium"
+      }
+    },
+    "field_hashes": {
+      "name": "hash9",
+      "owner": "hash10"
+    }
+  }
+}

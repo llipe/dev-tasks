@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "pricing-service",
+  "name": "Pricing Service",
+  "description": "Dynamic pricing engine with discount and promotion rules.",
+  "repo": "https://github.com/acme/pricing-service",
+  "type": "service",
+  "domain": "catalog",
+  "owner": "catalog-team",
+  "criticality": "tier-2",
+  "lifecycle": "production",
+  "stack": [
+    "python",
+    "fastapi"
+  ],
+  "aliases": [
+    "pricing",
+    "prices"
+  ],
+  "provides": [
+    {
+      "id": "pricing-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    }
+  ],
+  "consumes": [],
+  "datastores": [
+    "postgres",
+    "redis"
+  ],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": [
+      "app/"
+    ],
+    "root": "."
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "ooo555ooo555ooo555ooo555ooo555ooo555ooo5",
+    "fields": {
+      "name": {
+        "source": "introspected",
+        "confidence": "high"
+      },
+      "owner": {
+        "source": "manual",
+        "confidence": "high"
+      },
+      "aliases": {
+        "source": "inferred",
+        "confidence": "low"
+      }
+    },
+    "field_hashes": {
+      "name": "hash29",
+      "owner": "hash30"
+    }
+  }
+}

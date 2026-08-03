@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "shipping-service",
+  "name": "Shipping Service",
+  "description": "Calculates rates, generates labels, tracks parcels.",
+  "repo": "https://github.com/acme/shipping-service",
+  "type": "service",
+  "domain": "logistics",
+  "owner": "logistics-team",
+  "criticality": "tier-2",
+  "lifecycle": "production",
+  "stack": [
+    "python",
+    "fastapi"
+  ],
+  "aliases": [
+    "shipping",
+    "ship"
+  ],
+  "provides": [
+    {
+      "id": "shipping-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    },
+    {
+      "id": "shipment-dispatched",
+      "kind": "asyncapi",
+      "path": "contracts/events.yaml",
+      "source": "partial",
+      "topic_confidence": "high",
+      "payload_confidence": "low"
+    }
+  ],
+  "consumes": [
+    {
+      "contract": "orders-v1",
+      "criticality": "hard",
+      "source": "introspected"
+    },
+    {
+      "contract": "inventory-v1",
+      "criticality": "soft",
+      "source": "inferred"
+    }
+  ],
+  "datastores": [
+    "postgres"
+  ],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": [
+      "app/"
+    ],
+    "root": "."
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "fff666fff666fff666fff666fff666fff666fff6",
+    "fields": {
+      "name": {
+        "source": "introspected",
+        "confidence": "high"
+      },
+      "owner": {
+        "source": "manual",
+        "confidence": "high"
+      },
+      "aliases": {
+        "source": "inferred",
+        "confidence": "low"
+      }
+    },
+    "field_hashes": {
+      "name": "hash11",
+      "owner": "hash12"
+    }
+  }
+}

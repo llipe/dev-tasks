@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "payment-service",
+  "name": "Payment Service",
+  "description": "Handles payment authorization, capture, and refunds.",
+  "repo": "https://github.com/acme/payment-service",
+  "type": "service",
+  "domain": "payments",
+  "subdomain": "checkout",
+  "owner": "payments-team",
+  "criticality": "tier-1",
+  "lifecycle": "production",
+  "stack": [
+    "node",
+    "typescript"
+  ],
+  "aliases": [
+    "payments",
+    "pay-svc"
+  ],
+  "provides": [
+    {
+      "id": "payments-v2",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    },
+    {
+      "id": "payment-completed",
+      "kind": "asyncapi",
+      "path": "contracts/events.yaml",
+      "source": "partial",
+      "topic_confidence": "high",
+      "payload_confidence": "medium"
+    }
+  ],
+  "consumes": [
+    {
+      "contract": "orders-v1",
+      "criticality": "hard",
+      "source": "introspected"
+    },
+    {
+      "contract": "users-v1",
+      "criticality": "soft",
+      "source": "inferred"
+    }
+  ],
+  "datastores": [
+    "postgres"
+  ],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": [
+      "src/"
+    ],
+    "root": "."
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "aaa111aaa111aaa111aaa111aaa111aaa111aaa1",
+    "fields": {
+      "name": {
+        "source": "introspected",
+        "confidence": "high"
+      },
+      "owner": {
+        "source": "manual",
+        "confidence": "high"
+      },
+      "aliases": {
+        "source": "manual",
+        "confidence": "high"
+      }
+    },
+    "field_hashes": {
+      "name": "hash1",
+      "owner": "hash2"
+    }
+  }
+}

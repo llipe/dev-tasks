@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "auth-service",
+  "name": "Auth Service",
+  "description": "Authentication and token issuance (OAuth2, JWT).",
+  "repo": "https://github.com/acme/auth-service",
+  "type": "service",
+  "domain": "identity",
+  "owner": "platform-team",
+  "criticality": "tier-1",
+  "lifecycle": "production",
+  "stack": [
+    "node",
+    "typescript"
+  ],
+  "aliases": [
+    "auth",
+    "login"
+  ],
+  "provides": [
+    {
+      "id": "auth-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    }
+  ],
+  "consumes": [
+    {
+      "contract": "users-v1",
+      "criticality": "hard",
+      "source": "introspected"
+    }
+  ],
+  "datastores": [
+    "postgres",
+    "redis"
+  ],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": [
+      "src/"
+    ],
+    "root": "."
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "kkk111kkk111kkk111kkk111kkk111kkk111kkk1",
+    "fields": {
+      "name": {
+        "source": "introspected",
+        "confidence": "high"
+      },
+      "owner": {
+        "source": "manual",
+        "confidence": "high"
+      },
+      "aliases": {
+        "source": "manual",
+        "confidence": "high"
+      }
+    },
+    "field_hashes": {
+      "name": "hash21",
+      "owner": "hash22"
+    }
+  }
+}

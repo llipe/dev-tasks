@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "cart-service",
+  "name": "Cart Service",
+  "description": "Shopping cart management with session persistence.",
+  "repo": "https://github.com/acme/cart-service",
+  "type": "service",
+  "domain": "orders",
+  "owner": "orders-team",
+  "criticality": "tier-2",
+  "lifecycle": "production",
+  "stack": [
+    "node",
+    "typescript"
+  ],
+  "aliases": [
+    "cart",
+    "basket"
+  ],
+  "provides": [
+    {
+      "id": "cart-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    }
+  ],
+  "consumes": [
+    {
+      "contract": "inventory-v1",
+      "criticality": "soft",
+      "source": "inferred"
+    },
+    {
+      "contract": "pricing-v1",
+      "criticality": "hard",
+      "source": "introspected"
+    }
+  ],
+  "datastores": [
+    "redis"
+  ],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": [
+      "src/"
+    ],
+    "root": "."
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "ggg777ggg777ggg777ggg777ggg777ggg777ggg7",
+    "fields": {
+      "name": {
+        "source": "introspected",
+        "confidence": "high"
+      },
+      "owner": {
+        "source": "manual",
+        "confidence": "high"
+      },
+      "aliases": {
+        "source": "manual",
+        "confidence": "high"
+      }
+    },
+    "field_hashes": {
+      "name": "hash13",
+      "owner": "hash14"
+    }
+  }
+}

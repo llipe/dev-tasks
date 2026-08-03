@@ -1,0 +1,905 @@
+components:
+  - aliases:
+      - admin
+      - admin-ui
+      - backoffice
+    consumes:
+      - contract: gateway-v1
+        criticality: hard
+        source: introspected
+    criticality: tier-3
+    datastores: []
+    description: Internal admin dashboard for operations and support.
+    domain: platform
+    id: admin-frontend
+    lifecycle: production
+    name: Admin Frontend
+    origin_sha: mmm333mmm333mmm333mmm333mmm333mmm333mmm3
+    owner: frontend-team
+    provides: []
+    repo: https://github.com/acme/admin-frontend
+    stack:
+      - typescript
+      - react
+      - next
+    type: frontend
+  - aliases:
+      - analytics
+      - bi-worker
+    consumes:
+      - contract: order-placed
+        criticality: soft
+        source: inferred
+      - contract: payment-completed
+        criticality: soft
+        source: inferred
+      - contract: user-registered
+        criticality: soft
+        source: inferred
+    criticality: tier-3
+    datastores:
+      - clickhouse
+    description: Processes event streams for business intelligence dashboards.
+    domain: analytics
+    id: analytics-worker
+    lifecycle: production
+    name: Analytics Worker
+    origin_sha: hhh888hhh888hhh888hhh888hhh888hhh888hhh8
+    owner: data-team
+    provides: []
+    repo: https://github.com/acme/analytics-worker
+    stack:
+      - python
+      - spark
+    type: worker
+  - aliases:
+      - auth
+      - login
+    consumes:
+      - contract: users-v1
+        criticality: hard
+        source: introspected
+    criticality: tier-1
+    datastores:
+      - postgres
+      - redis
+    description: Authentication and token issuance (OAuth2, JWT).
+    domain: identity
+    id: auth-service
+    lifecycle: production
+    name: Auth Service
+    origin_sha: kkk111kkk111kkk111kkk111kkk111kkk111kkk1
+    owner: platform-team
+    provides:
+      - confidence: high
+        id: auth-v1
+        kind: openapi
+        source: introspected
+    repo: https://github.com/acme/auth-service
+    stack:
+      - node
+      - typescript
+    type: service
+  - aliases:
+      - cart
+      - basket
+    consumes:
+      - contract: inventory-v1
+        criticality: soft
+        source: inferred
+      - contract: pricing-v1
+        criticality: hard
+        source: introspected
+    criticality: tier-2
+    datastores:
+      - redis
+    description: Shopping cart management with session persistence.
+    domain: orders
+    id: cart-service
+    lifecycle: production
+    name: Cart Service
+    origin_sha: ggg777ggg777ggg777ggg777ggg777ggg777ggg7
+    owner: orders-team
+    provides:
+      - confidence: high
+        id: cart-v1
+        kind: openapi
+        source: introspected
+    repo: https://github.com/acme/cart-service
+    stack:
+      - node
+      - typescript
+    type: service
+  - aliases:
+      - products
+      - product-catalog
+    consumes:
+      - contract: pricing-v1
+        criticality: soft
+        source: inferred
+    criticality: tier-1
+    datastores:
+      - postgres
+    description: Product catalog CRUD and category management.
+    domain: catalog
+    id: catalog-service
+    lifecycle: production
+    name: Catalog Service
+    origin_sha: nnn444nnn444nnn444nnn444nnn444nnn444nnn4
+    owner: catalog-team
+    provides:
+      - confidence: high
+        id: catalog-v1
+        kind: openapi
+        source: introspected
+      - id: product-updated
+        kind: asyncapi
+        payload_confidence: high
+        source: generated
+        topic_confidence: high
+    repo: https://github.com/acme/catalog-service
+    stack:
+      - node
+      - typescript
+    type: service
+  - aliases:
+      - config
+      - shared-config
+    consumes: []
+    criticality: tier-2
+    datastores: []
+    description: Shared configuration management library for all services.
+    domain: platform
+    id: config-lib
+    lifecycle: production
+    name: Config Library
+    origin_sha: ttt000ttt000ttt000ttt000ttt000ttt000ttt0
+    owner: platform-team
+    provides: []
+    repo: https://github.com/acme/config-lib
+    stack:
+      - node
+      - typescript
+    type: lib
+  - aliases:
+      - email
+      - mailer
+    consumes:
+      - contract: notifications-v1
+        criticality: hard
+        source: introspected
+      - contract: users-v1
+        criticality: soft
+        source: inferred
+    criticality: tier-2
+    datastores:
+      - sqs
+    description: Renders and sends transactional emails via queue.
+    domain: communications
+    id: email-worker
+    lifecycle: production
+    name: Email Worker
+    origin_sha: iii999iii999iii999iii999iii999iii999iii9
+    owner: platform-team
+    provides: []
+    repo: https://github.com/acme/email-worker
+    stack:
+      - node
+      - typescript
+    type: worker
+  - aliases:
+      - gateway
+      - bff
+      - api-gateway
+    consumes:
+      - contract: auth-v1
+        criticality: hard
+        source: introspected
+      - contract: orders-v1
+        criticality: hard
+        source: introspected
+      - contract: users-v1
+        criticality: hard
+        source: introspected
+      - contract: cart-v1
+        criticality: hard
+        source: introspected
+      - contract: search-v1
+        criticality: soft
+        source: inferred
+    criticality: tier-1
+    datastores: []
+    description: Backend-for-frontend API gateway aggregating downstream services.
+    domain: platform
+    id: gateway-bff
+    lifecycle: production
+    name: Gateway BFF
+    origin_sha: lll222lll222lll222lll222lll222lll222lll2
+    owner: platform-team
+    provides:
+      - confidence: high
+        id: gateway-v1
+        kind: openapi
+        source: introspected
+    repo: https://github.com/acme/gateway-bff
+    stack:
+      - node
+      - typescript
+      - express
+    type: bff
+  - aliases:
+      - inventory
+      - stock
+    consumes:
+      - contract: warehouse-v1
+        criticality: hard
+        source: introspected
+    criticality: tier-1
+    datastores:
+      - postgres
+      - redis
+    description: Real-time stock tracking and reservation.
+    domain: logistics
+    id: inventory-service
+    lifecycle: production
+    name: Inventory Service
+    origin_sha: eee555eee555eee555eee555eee555eee555eee5
+    owner: logistics-team
+    provides:
+      - confidence: high
+        id: inventory-v1
+        kind: openapi
+        source: introspected
+      - id: stock-updated
+        kind: asyncapi
+        payload_confidence: high
+        source: generated
+        topic_confidence: high
+    repo: https://github.com/acme/inventory-service
+    stack:
+      - go
+    type: service
+  - aliases:
+      - notifications
+      - notify
+    consumes:
+      - contract: users-v1
+        criticality: soft
+        source: inferred
+      - contract: order-placed
+        criticality: soft
+        source: inferred
+    criticality: tier-2
+    datastores:
+      - redis
+    description: Routes notifications across email, SMS, and push channels.
+    domain: communications
+    id: notification-service
+    lifecycle: production
+    name: Notification Service
+    origin_sha: ddd444ddd444ddd444ddd444ddd444ddd444ddd4
+    owner: platform-team
+    provides:
+      - confidence: high
+        id: notifications-v1
+        kind: openapi
+        source: introspected
+    repo: https://github.com/acme/notification-service
+    stack:
+      - node
+      - typescript
+    type: service
+  - aliases:
+      - orders
+      - order-svc
+    consumes:
+      - contract: payments-v2
+        criticality: hard
+        source: introspected
+      - contract: inventory-v1
+        criticality: hard
+        source: introspected
+      - contract: users-v1
+        criticality: soft
+        source: inferred
+    criticality: tier-1
+    datastores:
+      - postgres
+      - redis
+    description: Manages order lifecycle from creation to fulfillment.
+    domain: orders
+    id: order-service
+    lifecycle: production
+    name: Order Service
+    origin_sha: bbb222bbb222bbb222bbb222bbb222bbb222bbb2
+    owner: orders-team
+    provides:
+      - confidence: high
+        id: orders-v1
+        kind: openapi
+        source: introspected
+      - id: order-placed
+        kind: asyncapi
+        payload_confidence: high
+        source: generated
+        topic_confidence: high
+    repo: https://github.com/acme/order-service
+    stack:
+      - java
+      - spring-boot
+    type: service
+  - aliases:
+      - payments
+      - pay-svc
+    consumes:
+      - contract: orders-v1
+        criticality: hard
+        source: introspected
+      - contract: users-v1
+        criticality: soft
+        source: inferred
+    criticality: tier-1
+    datastores:
+      - postgres
+    description: Handles payment authorization, capture, and refunds.
+    domain: payments
+    id: payment-service
+    lifecycle: production
+    name: Payment Service
+    origin_sha: aaa111aaa111aaa111aaa111aaa111aaa111aaa1
+    owner: payments-team
+    provides:
+      - confidence: high
+        id: payments-v2
+        kind: openapi
+        source: introspected
+      - id: payment-completed
+        kind: asyncapi
+        payload_confidence: medium
+        source: partial
+        topic_confidence: high
+    repo: https://github.com/acme/payment-service
+    stack:
+      - node
+      - typescript
+    subdomain: checkout
+    type: service
+  - aliases:
+      - pricing
+      - prices
+    consumes: []
+    criticality: tier-2
+    datastores:
+      - postgres
+      - redis
+    description: Dynamic pricing engine with discount and promotion rules.
+    domain: catalog
+    id: pricing-service
+    lifecycle: production
+    name: Pricing Service
+    origin_sha: ooo555ooo555ooo555ooo555ooo555ooo555ooo5
+    owner: catalog-team
+    provides:
+      - confidence: high
+        id: pricing-v1
+        kind: openapi
+        source: introspected
+    repo: https://github.com/acme/pricing-service
+    stack:
+      - python
+      - fastapi
+    type: service
+  - aliases:
+      - reco
+      - recommendations
+    consumes:
+      - contract: catalog-v1
+        criticality: hard
+        source: introspected
+      - contract: reviews-v1
+        criticality: soft
+        source: inferred
+    criticality: tier-3
+    datastores:
+      - redis
+      - s3
+    description: ML-powered product recommendations.
+    domain: catalog
+    id: recommendation-service
+    lifecycle: beta
+    name: Recommendation Service
+    origin_sha: qqq777qqq777qqq777qqq777qqq777qqq777qqq7
+    owner: data-team
+    provides:
+      - confidence: medium
+        id: recommendations-v1
+        kind: openapi
+        source: inferred
+    repo: https://github.com/acme/recommendation-service
+    stack:
+      - python
+      - flask
+    type: service
+  - aliases:
+      - reports
+      - reporting
+    consumes:
+      - contract: orders-v1
+        criticality: soft
+        source: inferred
+      - contract: payments-v2
+        criticality: soft
+        source: inferred
+    criticality: tier-3
+    datastores:
+      - postgres
+      - s3
+    description: Scheduled job generating operational and financial reports.
+    domain: analytics
+    id: reporting-job
+    lifecycle: production
+    name: Reporting Job
+    origin_sha: sss999sss999sss999sss999sss999sss999sss9
+    owner: data-team
+    provides: []
+    repo: https://github.com/acme/reporting-job
+    stack:
+      - python
+    type: job
+  - aliases:
+      - reviews
+      - ratings
+    consumes:
+      - contract: users-v1
+        criticality: soft
+        source: inferred
+      - contract: catalog-v1
+        criticality: soft
+        source: inferred
+    criticality: tier-3
+    datastores:
+      - mongodb
+    description: Product review and rating management.
+    domain: catalog
+    id: review-service
+    lifecycle: production
+    name: Review Service
+    origin_sha: ppp666ppp666ppp666ppp666ppp666ppp666ppp6
+    owner: catalog-team
+    provides:
+      - confidence: high
+        id: reviews-v1
+        kind: openapi
+        source: introspected
+    repo: https://github.com/acme/review-service
+    stack:
+      - node
+      - typescript
+    type: service
+  - aliases:
+      - search
+      - product-search
+    consumes:
+      - contract: catalog-v1
+        criticality: hard
+        source: introspected
+      - contract: stock-updated
+        criticality: soft
+        source: inferred
+    criticality: tier-2
+    datastores:
+      - elasticsearch
+    description: Full-text search over product catalog using Elasticsearch.
+    domain: catalog
+    id: search-service
+    lifecycle: production
+    name: Search Service
+    origin_sha: jjj000jjj000jjj000jjj000jjj000jjj000jjj0
+    owner: catalog-team
+    provides:
+      - confidence: high
+        id: search-v1
+        kind: openapi
+        source: introspected
+    repo: https://github.com/acme/search-service
+    stack:
+      - java
+      - spring-boot
+    type: service
+  - aliases:
+      - shipping
+      - ship
+    consumes:
+      - contract: orders-v1
+        criticality: hard
+        source: introspected
+      - contract: inventory-v1
+        criticality: soft
+        source: inferred
+    criticality: tier-2
+    datastores:
+      - postgres
+    description: Calculates rates, generates labels, tracks parcels.
+    domain: logistics
+    id: shipping-service
+    lifecycle: production
+    name: Shipping Service
+    origin_sha: fff666fff666fff666fff666fff666fff666fff6
+    owner: logistics-team
+    provides:
+      - confidence: high
+        id: shipping-v1
+        kind: openapi
+        source: introspected
+      - id: shipment-dispatched
+        kind: asyncapi
+        payload_confidence: low
+        source: partial
+        topic_confidence: high
+    repo: https://github.com/acme/shipping-service
+    stack:
+      - python
+      - fastapi
+    type: service
+  - aliases:
+      - users
+      - user-svc
+      - identity
+    consumes: []
+    criticality: tier-1
+    datastores:
+      - postgres
+    description: User registration, profile, and identity management.
+    domain: identity
+    id: user-service
+    lifecycle: production
+    name: User Service
+    origin_sha: ccc333ccc333ccc333ccc333ccc333ccc333ccc3
+    owner: platform-team
+    provides:
+      - confidence: high
+        id: users-v1
+        kind: openapi
+        source: introspected
+      - id: user-registered
+        kind: asyncapi
+        payload_confidence: medium
+        source: generated
+        topic_confidence: high
+    repo: https://github.com/acme/user-service
+    stack:
+      - node
+      - typescript
+    type: service
+  - aliases:
+      - warehouse
+      - wms
+    consumes:
+      - contract: shipping-v1
+        criticality: soft
+        source: inferred
+    criticality: tier-2
+    datastores:
+      - postgres
+    description: Warehouse management and picking optimization.
+    domain: logistics
+    id: warehouse-service
+    lifecycle: production
+    name: Warehouse Service
+    origin_sha: rrr888rrr888rrr888rrr888rrr888rrr888rrr8
+    owner: logistics-team
+    provides:
+      - confidence: high
+        id: warehouse-v1
+        kind: openapi
+        source: introspected
+    repo: https://github.com/acme/warehouse-service
+    stack:
+      - go
+    type: service
+contracts:
+  auth-v1:
+    consumers:
+      - gateway-bff
+    kind: openapi
+    provider: auth-service
+  cart-v1:
+    consumers:
+      - gateway-bff
+    kind: openapi
+    provider: cart-service
+  catalog-v1:
+    consumers:
+      - recommendation-service
+      - review-service
+      - search-service
+    kind: openapi
+    provider: catalog-service
+  gateway-v1:
+    consumers:
+      - admin-frontend
+    kind: openapi
+    provider: gateway-bff
+  inventory-v1:
+    consumers:
+      - cart-service
+      - order-service
+      - shipping-service
+    kind: openapi
+    provider: inventory-service
+  notifications-v1:
+    consumers:
+      - email-worker
+    kind: openapi
+    provider: notification-service
+  order-placed:
+    consumers:
+      - analytics-worker
+      - notification-service
+    kind: asyncapi
+    provider: order-service
+  orders-v1:
+    consumers:
+      - gateway-bff
+      - payment-service
+      - reporting-job
+      - shipping-service
+    kind: openapi
+    provider: order-service
+  payment-completed:
+    consumers:
+      - analytics-worker
+    kind: asyncapi
+    provider: payment-service
+  payments-v2:
+    consumers:
+      - order-service
+      - reporting-job
+    kind: openapi
+    provider: payment-service
+  pricing-v1:
+    consumers:
+      - cart-service
+      - catalog-service
+    kind: openapi
+    provider: pricing-service
+  product-updated:
+    consumers: []
+    kind: asyncapi
+    provider: catalog-service
+  recommendations-v1:
+    consumers: []
+    kind: openapi
+    provider: recommendation-service
+  reviews-v1:
+    consumers:
+      - recommendation-service
+    kind: openapi
+    provider: review-service
+  search-v1:
+    consumers:
+      - gateway-bff
+    kind: openapi
+    provider: search-service
+  shipment-dispatched:
+    consumers: []
+    kind: asyncapi
+    provider: shipping-service
+  shipping-v1:
+    consumers:
+      - warehouse-service
+    kind: openapi
+    provider: shipping-service
+  stock-updated:
+    consumers:
+      - search-service
+    kind: asyncapi
+    provider: inventory-service
+  user-registered:
+    consumers:
+      - analytics-worker
+    kind: asyncapi
+    provider: user-service
+  users-v1:
+    consumers:
+      - auth-service
+      - email-worker
+      - gateway-bff
+      - notification-service
+      - order-service
+      - payment-service
+      - review-service
+    kind: openapi
+    provider: user-service
+  warehouse-v1:
+    consumers:
+      - inventory-service
+    kind: openapi
+    provider: warehouse-service
+domains:
+  - components:
+      - analytics-worker
+      - reporting-job
+    name: analytics
+  - components:
+      - catalog-service
+      - pricing-service
+      - recommendation-service
+      - review-service
+      - search-service
+    name: catalog
+  - components:
+      - email-worker
+      - notification-service
+    name: communications
+  - components:
+      - auth-service
+      - user-service
+    name: identity
+  - components:
+      - inventory-service
+      - shipping-service
+      - warehouse-service
+    name: logistics
+  - components:
+      - cart-service
+      - order-service
+    name: orders
+  - components:
+      - payment-service
+    name: payments
+  - components:
+      - admin-frontend
+      - config-lib
+      - gateway-bff
+    name: platform
+errors:
+  - error: component.json not found at /Users/felipemallea/Documents/Documentos - M-FMALLEAS/Dev/dev-tasks/test/fixtures/catalog/repos/broken-repo/component.json
+    repo: ./repos/broken-repo
+    timestamp: 2026-08-03T15:11:09.233Z
+extraction_quality:
+  per_component:
+    - component_id: admin-frontend
+      counts:
+        high: 3
+        low: 0
+        medium: 0
+      unresolved: 0
+    - component_id: analytics-worker
+      counts:
+        high: 1
+        low: 2
+        medium: 0
+      unresolved: 0
+    - component_id: auth-service
+      counts:
+        high: 3
+        low: 0
+        medium: 0
+      unresolved: 0
+    - component_id: cart-service
+      counts:
+        high: 3
+        low: 0
+        medium: 0
+      unresolved: 0
+    - component_id: catalog-service
+      counts:
+        high: 2
+        low: 0
+        medium: 1
+      unresolved: 0
+    - component_id: config-lib
+      counts:
+        high: 3
+        low: 0
+        medium: 0
+      unresolved: 0
+    - component_id: email-worker
+      counts:
+        high: 2
+        low: 0
+        medium: 1
+      unresolved: 0
+    - component_id: gateway-bff
+      counts:
+        high: 3
+        low: 0
+        medium: 0
+      unresolved: 0
+    - component_id: inventory-service
+      counts:
+        high: 2
+        low: 0
+        medium: 1
+      unresolved: 0
+    - component_id: notification-service
+      counts:
+        high: 1
+        low: 1
+        medium: 1
+      unresolved: 0
+    - component_id: order-service
+      counts:
+        high: 2
+        low: 0
+        medium: 1
+      unresolved: 0
+    - component_id: payment-service
+      counts:
+        high: 3
+        low: 0
+        medium: 0
+      unresolved: 0
+    - component_id: pricing-service
+      counts:
+        high: 2
+        low: 1
+        medium: 0
+      unresolved: 0
+    - component_id: recommendation-service
+      counts:
+        high: 1
+        low: 2
+        medium: 0
+      unresolved: 0
+    - component_id: reporting-job
+      counts:
+        high: 1
+        low: 2
+        medium: 0
+      unresolved: 0
+    - component_id: review-service
+      counts:
+        high: 2
+        low: 0
+        medium: 1
+      unresolved: 0
+    - component_id: search-service
+      counts:
+        high: 2
+        low: 0
+        medium: 1
+      unresolved: 0
+    - component_id: shipping-service
+      counts:
+        high: 2
+        low: 1
+        medium: 0
+      unresolved: 0
+    - component_id: user-service
+      counts:
+        high: 3
+        low: 0
+        medium: 0
+      unresolved: 0
+    - component_id: warehouse-service
+      counts:
+        high: 3
+        low: 0
+        medium: 0
+      unresolved: 0
+  total:
+    high: 44
+    low: 9
+    medium: 7
+flows:
+  - description: End-to-end checkout process from cart to payment confirmation.
+    id: checkout-flow
+    name: Checkout Flow
+    participants:
+      - cart-service
+      - order-service
+      - payment-service
+      - inventory-service
+      - notification-service
+  - description: New user signup and welcome email flow.
+    id: user-registration
+    name: User Registration
+    participants:
+      - user-service
+      - auth-service
+      - notification-service
+      - email-worker
+generated_at: 2026-08-03T15:11:09.233Z
+generator: dev-tasks@0.6.7

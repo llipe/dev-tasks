@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "recommendation-service",
+  "name": "Recommendation Service",
+  "description": "ML-powered product recommendations.",
+  "repo": "https://github.com/acme/recommendation-service",
+  "type": "service",
+  "domain": "catalog",
+  "owner": "data-team",
+  "criticality": "tier-3",
+  "lifecycle": "beta",
+  "stack": [
+    "python",
+    "flask"
+  ],
+  "aliases": [
+    "reco",
+    "recommendations"
+  ],
+  "provides": [
+    {
+      "id": "recommendations-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "inferred",
+      "confidence": "medium"
+    }
+  ],
+  "consumes": [
+    {
+      "contract": "catalog-v1",
+      "criticality": "hard",
+      "source": "introspected"
+    },
+    {
+      "contract": "reviews-v1",
+      "criticality": "soft",
+      "source": "inferred"
+    }
+  ],
+  "datastores": [
+    "redis",
+    "s3"
+  ],
+  "docs": {
+    "architecture": "docs/architecture.md",
+    "schema": "docs/schema.md"
+  },
+  "paths": {
+    "source": [
+      "app/"
+    ],
+    "root": "."
+  },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "qqq777qqq777qqq777qqq777qqq777qqq777qqq7",
+    "fields": {
+      "name": {
+        "source": "introspected",
+        "confidence": "high"
+      },
+      "owner": {
+        "source": "inferred",
+        "confidence": "low"
+      },
+      "aliases": {
+        "source": "inferred",
+        "confidence": "low"
+      }
+    },
+    "field_hashes": {
+      "name": "hash33",
+      "owner": "hash34"
+    }
+  }
+}
