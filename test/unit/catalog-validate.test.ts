@@ -788,3 +788,205 @@ describe("catalogValidate — full orchestrator", () => {
     expect(report.warningCount).toBeGreaterThan(0);
   });
 });
+
+/* ─── Edge-Case Tests (sub-task 3.20) ──────────────────────────────── */
+
+describe("Edge case: cycle with allowed_cycles", () => {
+  it("three-node cycle is detected", () => {
+    const index = makeIndex({
+      components: [
+        makeComponent("svc-a", {
+          provides: [{ id: "api-a", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-c", criticality: "hard" }],
+        }),
+        makeComponent("svc-b", {
+          provides: [{ id: "api-b", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-a", criticality: "hard" }],
+        }),
+        makeComponent("svc-c", {
+          provides: [{ id: "api-c", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-b", criticality: "hard" }],
+        }),
+      ] as CatalogIndex["components"],
+    });
+    const result = checkV12(index, { strict: false });
+    expect(result.passed).toBe(false);
+    expect(result.severity).toBe("warning");
+    expect(result.violations).toHaveLength(1);
+    expect(result.violations[0].message).toContain("cycle");
+  });
+
+  it("three-node cycle allowed via allowedCycles passes", () => {
+    const index = makeIndex({
+      components: [
+        makeComponent("svc-a", {
+          provides: [{ id: "api-a", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-c", criticality: "hard" }],
+        }),
+        makeComponent("svc-b", {
+          provides: [{ id: "api-b", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-a", criticality: "hard" }],
+        }),
+        makeComponent("svc-c", {
+          provides: [{ id: "api-c", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-b", criticality: "hard" }],
+        }),
+      ] as CatalogIndex["components"],
+    });
+    const result = checkV12(index, {
+      strict: false,
+      allowedCycles: [["svc-a", "svc-b", "svc-c"]],
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it("partial allowed_cycles does not suppress an unmatched cycle", () => {
+    const index = makeIndex({
+      components: [
+        makeComponent("svc-a", {
+          provides: [{ id: "api-a", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-b", criticality: "hard" }],
+        }),
+        makeComponent("svc-b", {
+          provides: [{ id: "api-b", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-a", criticality: "hard" }],
+        }),
+      ] as CatalogIndex["components"],
+    });
+    // Allow a different cycle (svc-x, svc-y) which doesn't match
+    const result = checkV12(index, {
+      strict: false,
+      allowedCycles: [["svc-x", "svc-y"]],
+    });
+    expect(result.passed).toBe(false);
+    expect(result.violations).toHaveLength(1);
+  });
+});
+
+describe("Edge case: deprecated with active consumers (V16)", () => {
+  it("decommissioned component with consumers triggers warning", () => {
+    const index = makeIndex({
+      components: [
+        makeComponent("old-svc", {
+          lifecycle: "decommissioned",
+          provides: [{ id: "old-api", kind: "openapi", source: "introspected" }],
+        }),
+        makeComponent("consumer-a", {
+          consumes: [{ contract: "old-api", criticality: "hard" }],
+        }),
+        makeComponent("consumer-b", {
+          consumes: [{ contract: "old-api", criticality: "soft" }],
+        }),
+      ] as CatalogIndex["components"],
+    });
+    const result = checkV16(index, DEFAULT_OPTS);
+    expect(result.passed).toBe(false);
+    expect(result.severity).toBe("warning");
+    expect(result.violations).toHaveLength(2);
+    expect(result.violations[0].message).toContain("decommissioned");
+  });
+
+  it("beta lifecycle with consumers does not trigger V16", () => {
+    const index = makeIndex({
+      components: [
+        makeComponent("beta-svc", {
+          lifecycle: "beta",
+          provides: [{ id: "beta-api", kind: "openapi", source: "introspected" }],
+        }),
+        makeComponent("consumer", {
+          consumes: [{ contract: "beta-api", criticality: "soft" }],
+        }),
+      ] as CatalogIndex["components"],
+    });
+    const result = checkV16(index, DEFAULT_OPTS);
+    expect(result.passed).toBe(true);
+  });
+});
+
+describe("Edge case: contract with no consumers (V13)", () => {
+  it("multiple orphan contracts reported individually", () => {
+    const index = makeIndex({
+      components: [
+        makeComponent("svc-a", {
+          provides: [
+            { id: "orphan-1", kind: "openapi", source: "introspected" },
+            { id: "orphan-2", kind: "asyncapi", source: "generated" },
+          ],
+        }),
+      ] as CatalogIndex["components"],
+    });
+    const result = checkV13(index, DEFAULT_OPTS);
+    expect(result.passed).toBe(false);
+    expect(result.violations).toHaveLength(2);
+    expect(result.violations[0].message).toContain("orphan-1");
+    expect(result.violations[1].message).toContain("orphan-2");
+  });
+
+  it("component with no provides does not trigger V13", () => {
+    const index = makeIndex({
+      components: [makeComponent("no-provides")] as CatalogIndex["components"],
+    });
+    const result = checkV13(index, DEFAULT_OPTS);
+    expect(result.passed).toBe(true);
+  });
+});
+
+describe("Edge case: --strict promotes V12 to error in aggregation", () => {
+  it("cycle under strict causes overall report failure", () => {
+    const index = makeIndex({
+      components: [
+        makeComponent("svc-a", {
+          domain: "platform",
+          provides: [{ id: "api-a", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-b", criticality: "hard" }],
+        }),
+        makeComponent("svc-b", {
+          domain: "platform",
+          provides: [{ id: "api-b", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-a", criticality: "hard" }],
+        }),
+      ] as CatalogIndex["components"],
+      domains: [{ name: "platform", components: ["svc-a", "svc-b"] }],
+      extraction_quality: {
+        total: { high: 6, medium: 0, low: 0 },
+        per_component: [
+          { component_id: "svc-a", counts: { high: 3, medium: 0, low: 0 }, unresolved: 0 },
+          { component_id: "svc-b", counts: { high: 3, medium: 0, low: 0 }, unresolved: 0 },
+        ],
+      },
+    });
+    const report = catalogValidate(index, { strict: true });
+    expect(report.passed).toBe(false);
+    expect(report.errorCount).toBeGreaterThan(0);
+    const v12 = report.checks.find((c) => c.check === "V12");
+    expect(v12?.severity).toBe("error");
+  });
+
+  it("cycle under non-strict does NOT cause overall report failure", () => {
+    const index = makeIndex({
+      components: [
+        makeComponent("svc-a", {
+          domain: "platform",
+          provides: [{ id: "api-a", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-b", criticality: "hard" }],
+        }),
+        makeComponent("svc-b", {
+          domain: "platform",
+          provides: [{ id: "api-b", kind: "openapi", source: "introspected" }],
+          consumes: [{ contract: "api-a", criticality: "hard" }],
+        }),
+      ] as CatalogIndex["components"],
+      domains: [{ name: "platform", components: ["svc-a", "svc-b"] }],
+      extraction_quality: {
+        total: { high: 6, medium: 0, low: 0 },
+        per_component: [
+          { component_id: "svc-a", counts: { high: 3, medium: 0, low: 0 }, unresolved: 0 },
+          { component_id: "svc-b", counts: { high: 3, medium: 0, low: 0 }, unresolved: 0 },
+        ],
+      },
+    });
+    const report = catalogValidate(index, { strict: false });
+    expect(report.passed).toBe(true);
+    expect(report.warningCount).toBeGreaterThan(0);
+  });
+});
