@@ -27,6 +27,7 @@ Thumbs.db
 !/docs/technical-guidelines.md
 !/docs/workflow-chains.md
 !/docs/agents-md-guidelines.md
+!/docs/artifact-formats.md
 !/docs/requirements/
 
 # Test fixture generated outputs (created by catalog build tests)

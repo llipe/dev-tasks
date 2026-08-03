@@ -109,6 +109,10 @@ git add component.json contracts/ docs/schema.md extraction_report.json
 git commit -m "feat: add component manifest via dt extract"
 ```
 
+### Artifact formats
+
+For which artifacts are JSON vs YAML, and which are generated vs hand-written, see [`docs/artifact-formats.md`](docs/artifact-formats.md). Generated artifacts (`catalog/index.yaml`, `catalog/components/`) are never hand-edited.
+
 ### Global options
 
 | Flag                 | Description                  |
