@@ -1,0 +1,58 @@
+# Bitbucket Pipelines: Catalog Scheduled Rebuild
+# Runs on a schedule to rebuild and validate the catalog, committing changes if any.
+#
+# Prerequisites:
+#   - Node.js >= 20 must be available in the base image.
+#     The default atlassian/default-image:4 includes Node 20+.
+#     If using a custom image, ensure Node >= 20 is installed.
+#   - @llipe/dev-tasks (installed via npx at runtime)
+#
+# Schedule configuration:
+#   Bitbucket schedules are configured in Repository Settings > Pipelines > Schedules.
+#   Create a schedule targeting the 'scheduled' pipeline below (recommended: hourly).
+#
+# Alert mechanism: non-zero exit causes the pipeline step to fail,
+# triggering Bitbucket's native notification system (email, Slack integration, etc.).
+
+image: atlassian/default-image:4
+
+definitions:
+  steps:
+    - step: &rebuild-catalog
+        name: Rebuild and validate catalog
+        caches:
+          - node
+        script:
+          # Verify Node.js availability and version
+          - node --version
+          - |
+            NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]')
+            if [ "$NODE_MAJOR" -lt 20 ]; then
+              echo "ERROR: Node.js >= 20 required (found v$(node --version))"
+              exit 1
+            fi
+          # Build the catalog from the registry
+          - npx @llipe/dev-tasks dt catalog build --registry registry.yaml
+          # Validate referential integrity
+          - npx @llipe/dev-tasks dt catalog validate --strict
+          # Commit if catalog changed (bot identity, no review)
+          - |
+            git config user.name "catalog-bot"
+            git config user.email "catalog-bot@noreply.bitbucket.org"
+            if git diff --quiet catalog/; then
+              echo "No catalog changes detected — skipping commit."
+            else
+              git add catalog/
+              git commit -m "chore: rebuild catalog [skip ci]"
+              git push
+            fi
+
+pipelines:
+  custom:
+    catalog-rebuild:
+      - step: *rebuild-catalog
+
+  # This pipeline name is referenced by Bitbucket Schedules
+  branches:
+    main:
+      - step: *rebuild-catalog
