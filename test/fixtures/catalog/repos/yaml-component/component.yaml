@@ -1,0 +1,39 @@
+schemaVersion: "1.0.0"
+id: yaml-component
+name: YAML Component
+description: A component defined in YAML format to test dual-format support.
+repo: https://github.com/acme/yaml-component
+type: lib
+domain: platform
+owner: platform-team
+criticality: tier-3
+lifecycle: production
+stack:
+  - node
+  - typescript
+aliases:
+  - yaml-lib
+provides: []
+consumes: []
+datastores: []
+docs:
+  architecture: docs/architecture.md
+  schema: docs/schema.md
+paths:
+  source:
+    - src/
+  root: "."
+_provenance:
+  extracted_at: "2026-07-28T12:00:00Z"
+  extractor: "0.6.7"
+  repo_sha: yaml111yaml111yaml111yaml111yaml111yaml1
+  fields:
+    name:
+      source: introspected
+      confidence: high
+    owner:
+      source: manual
+      confidence: high
+  field_hashes:
+    name: hashyaml1
+    owner: hashyaml2

@@ -167,19 +167,35 @@ function fetchSingleManifest(entry: RegistryEntry, registryDir: string): Fetched
   // Resolve repo path relative to the registry file directory
   const repoPath = resolve(registryDir, entry.repo);
   const subPath = entry.path ?? ".";
-  const componentJsonPath = join(repoPath, subPath, "component.json");
 
-  if (!existsSync(componentJsonPath)) {
-    throw new Error(`component.json not found at ${componentJsonPath}`);
+  // Support both component.json and component.yaml
+  const jsonPath = join(repoPath, subPath, "component.json");
+  const yamlPath = join(repoPath, subPath, "component.yaml");
+
+  let manifestPath: string;
+  let format: "json" | "yaml";
+
+  if (existsSync(jsonPath)) {
+    manifestPath = jsonPath;
+    format = "json";
+  } else if (existsSync(yamlPath)) {
+    manifestPath = yamlPath;
+    format = "yaml";
+  } else {
+    throw new Error(`component.json/component.yaml not found at ${join(repoPath, subPath)}`);
   }
 
-  const raw = readFileSync(componentJsonPath, "utf-8");
+  const raw = readFileSync(manifestPath, "utf-8");
   let manifest: RawComponentManifest;
   try {
-    manifest = JSON.parse(raw) as RawComponentManifest;
+    if (format === "yaml") {
+      manifest = yamlParse(raw) as RawComponentManifest;
+    } else {
+      manifest = JSON.parse(raw) as RawComponentManifest;
+    }
   } catch (err) {
     throw new Error(
-      `Invalid JSON in component.json: ${err instanceof Error ? err.message : String(err)}`,
+      `Invalid ${format.toUpperCase()} in ${format === "yaml" ? "component.yaml" : "component.json"}: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 

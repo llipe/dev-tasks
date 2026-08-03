@@ -302,4 +302,20 @@ describe("catalogBuild — full integration (unit-level)", () => {
     expect(result.errors).toEqual([]);
     expect(result.written).toBe(true);
   });
+
+  it("supports component.yaml (YAML format) alongside component.json", async () => {
+    const result = await catalogBuild({
+      registryPath: join(FIXTURES_DIR, "registry-mixed-formats.yaml"),
+      catalogDir: join(tmpDir, "catalog"),
+    });
+
+    expect(result.errors).toEqual([]);
+    expect(result.index.components.length).toBe(2);
+
+    const yamlComp = result.index.components.find((c) => c.id === "yaml-component");
+    expect(yamlComp).toBeDefined();
+    expect(yamlComp?.name).toBe("YAML Component");
+    expect(yamlComp?.domain).toBe("platform");
+    expect(yamlComp?.origin_sha).toBe("yaml111yaml111yaml111yaml111yaml111yaml1");
+  });
 });
