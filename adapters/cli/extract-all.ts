@@ -21,7 +21,7 @@ import {
   getMissingRequiredFields,
   type ExtractionInputs,
   type ConfirmationResult,
-  type ComponentYaml,
+  type ComponentManifest,
 } from "#core/extract/component.js";
 import { promptNonDerivableFields } from "#core/extract/prompt.js";
 import {
@@ -45,7 +45,7 @@ export interface ExtractAllOptions {
 }
 
 export interface ExtractAllOutput {
-  component: ComponentYaml | null;
+  component: ComponentManifest | null;
   report: ExtractionReport | null;
   conflicts: string[];
   missing_required: string[];
@@ -374,16 +374,16 @@ function extractTopicNames(
   return topics;
 }
 
-function readExistingComponent(filePath: string): ComponentYaml | null {
+function readExistingComponent(filePath: string): ComponentManifest | null {
   try {
     const content = readFileSync(filePath, "utf-8");
-    return JSON.parse(content) as ComponentYaml;
+    return JSON.parse(content) as ComponentManifest;
   } catch {
     return null;
   }
 }
 
-function computeFieldHashesFromRaw(component: ComponentYaml): Record<string, string> {
+function computeFieldHashesFromRaw(component: ComponentManifest): Record<string, string> {
   const hashes: Record<string, string> = {};
   for (const [key, value] of Object.entries(component)) {
     if (key === "_provenance") continue;

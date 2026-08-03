@@ -1,0 +1,43 @@
+entries:
+  - id: payment-service
+    repo: ./repos/payment-service
+  - id: order-service
+    repo: ./repos/order-service
+  - id: user-service
+    repo: ./repos/user-service
+  - id: notification-service
+    repo: ./repos/notification-service
+  - id: inventory-service
+    repo: ./repos/inventory-service
+  - id: shipping-service
+    repo: ./repos/shipping-service
+  - id: cart-service
+    repo: ./repos/cart-service
+  - id: analytics-worker
+    repo: ./repos/analytics-worker
+  - id: email-worker
+    repo: ./repos/email-worker
+  - id: search-service
+    repo: ./repos/search-service
+  - id: auth-service
+    repo: ./repos/auth-service
+  - id: gateway-bff
+    repo: ./repos/gateway-bff
+  - id: admin-frontend
+    repo: ./repos/admin-frontend
+  - id: catalog-service
+    repo: ./repos/catalog-service
+  - id: pricing-service
+    repo: ./repos/pricing-service
+  - id: review-service
+    repo: ./repos/review-service
+  - id: recommendation-service
+    repo: ./repos/recommendation-service
+  - id: warehouse-service
+    repo: ./repos/warehouse-service
+  - id: reporting-job
+    repo: ./repos/reporting-job
+  - id: config-lib
+    repo: ./repos/config-lib
+  - id: broken-repo
+    repo: ./repos/broken-repo

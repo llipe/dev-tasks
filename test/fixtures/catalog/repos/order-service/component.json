@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "order-service",
+  "name": "Order Service",
+  "description": "Manages order lifecycle from creation to fulfillment.",
+  "repo": "https://github.com/acme/order-service",
+  "type": "service",
+  "domain": "orders",
+  "owner": "orders-team",
+  "criticality": "tier-1",
+  "lifecycle": "production",
+  "stack": ["java", "spring-boot"],
+  "aliases": ["orders", "order-svc"],
+  "provides": [
+    {
+      "id": "orders-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    },
+    {
+      "id": "order-placed",
+      "kind": "asyncapi",
+      "path": "contracts/events.yaml",
+      "source": "generated",
+      "topic_confidence": "high",
+      "payload_confidence": "high"
+    }
+  ],
+  "consumes": [
+    { "contract": "payments-v2", "criticality": "hard", "source": "introspected" },
+    { "contract": "inventory-v1", "criticality": "hard", "source": "introspected" },
+    { "contract": "users-v1", "criticality": "soft", "source": "inferred" }
+  ],
+  "datastores": ["postgres", "redis"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/main/java/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "bbb222bbb222bbb222bbb222bbb222bbb222bbb2",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "manual", "confidence": "high" },
+      "aliases": { "source": "inferred", "confidence": "medium" }
+    },
+    "field_hashes": { "name": "hash3", "owner": "hash4" }
+  }
+}

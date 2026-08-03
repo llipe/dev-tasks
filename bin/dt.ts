@@ -160,6 +160,43 @@ if (args.command === "extract") {
     path,
   });
   process.exit(exitCode);
+} else if (args.command === "catalog") {
+  const subcommand = args.positional[0];
+  if (subcommand === "build") {
+    const { runCatalogBuild } = await import("#adapters/cli/catalog-build.js");
+    // Parse --registry and --concurrency from remaining positional/flags
+    let registry: string | undefined;
+    let concurrency: number | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--registry" && args.positional[i + 1]) {
+        registry = args.positional[++i];
+      } else if (p === "--concurrency" && args.positional[i + 1]) {
+        concurrency = parseInt(args.positional[++i], 10);
+      } else if (p.startsWith("--registry=")) {
+        registry = p.slice("--registry=".length);
+      } else if (p.startsWith("--concurrency=")) {
+        concurrency = parseInt(p.slice("--concurrency=".length), 10);
+      }
+    }
+    const exitCode = await runCatalogBuild({
+      json: args.flags.json,
+      registry,
+      concurrency,
+    });
+    process.exit(exitCode);
+  } else if (!subcommand) {
+    process.stderr.write("Usage: dt catalog <subcommand>\n\n");
+    process.stderr.write("Subcommands:\n");
+    process.stderr.write("  build       Build the catalog index from registry\n");
+    process.stderr.write("  validate    Validate catalog referential integrity\n");
+    process.stderr.write("  resolve     Resolve text to components\n");
+    process.stderr.write("  scaffold    Generate meta-repo scaffold\n");
+    process.exit(ExitCode.InvalidUsage);
+  } else {
+    process.stderr.write(`Subcommand 'catalog ${subcommand}' is not yet implemented.\n`);
+    process.exit(ExitCode.GeneralError);
+  }
 } else {
   process.stderr.write(`Command '${args.command}' is not yet implemented.\n`);
   process.exit(ExitCode.GeneralError);

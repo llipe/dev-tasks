@@ -27,7 +27,12 @@ Thumbs.db
 !/docs/technical-guidelines.md
 !/docs/workflow-chains.md
 !/docs/agents-md-guidelines.md
+!/docs/artifact-formats.md
 !/docs/requirements/
+
+# Test fixture generated outputs (created by catalog build tests)
+test/fixtures/catalog/catalog/components/
+test/fixtures/catalog/catalog/index.yaml
 
 # Ignore log files
 *.log

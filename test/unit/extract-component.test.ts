@@ -19,7 +19,7 @@ import {
   type InferenceResult,
   type PromptedValues,
   type ConfirmationResult,
-  type ComponentYaml,
+  type ComponentManifest,
 } from "#core/extract/component.js";
 import { hashContent } from "#core/distribution/hash.js";
 
@@ -269,7 +269,7 @@ describe("core/extract/component — applyPrompted()", () => {
 
 describe("core/extract/component — computeFieldHashes()", () => {
   it("computes SHA-256 hash for each non-empty field", () => {
-    const component: Partial<ComponentYaml> = {
+    const component: Partial<ComponentManifest> = {
       name: "my-service",
       stack: ["node"],
       type: "api",
@@ -285,7 +285,7 @@ describe("core/extract/component — computeFieldHashes()", () => {
     const component = {
       name: "my-service",
       _provenance: { extracted_at: "now" },
-    } as unknown as Partial<ComponentYaml>;
+    } as unknown as Partial<ComponentManifest>;
     const hashes = computeFieldHashes(component);
 
     expect(hashes._provenance).toBeUndefined();
@@ -293,7 +293,7 @@ describe("core/extract/component — computeFieldHashes()", () => {
   });
 
   it("skips undefined and empty string values", () => {
-    const component: Partial<ComponentYaml> = {
+    const component: Partial<ComponentManifest> = {
       name: "svc",
       description: "",
       owner: undefined as unknown as string,
@@ -306,7 +306,7 @@ describe("core/extract/component — computeFieldHashes()", () => {
   });
 
   it("produces deterministic hashes for same input", () => {
-    const component: Partial<ComponentYaml> = { name: "test", stack: ["a", "b"] };
+    const component: Partial<ComponentManifest> = { name: "test", stack: ["a", "b"] };
     const hashes1 = computeFieldHashes(component);
     const hashes2 = computeFieldHashes(component);
     expect(hashes1).toEqual(hashes2);
@@ -469,7 +469,7 @@ describe("core/extract/component — getMissingRequiredFields()", () => {
 });
 
 describe("core/extract/component — deriveComponent() full pipeline", () => {
-  it("assembles a complete ComponentYaml with all fields", () => {
+  it("assembles a complete ComponentManifest with all fields", () => {
     const component = deriveComponent({
       inputs: makeInputs(),
       inference: makeInference(),

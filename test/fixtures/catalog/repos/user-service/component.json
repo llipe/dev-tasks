@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "user-service",
+  "name": "User Service",
+  "description": "User registration, profile, and identity management.",
+  "repo": "https://github.com/acme/user-service",
+  "type": "service",
+  "domain": "identity",
+  "owner": "platform-team",
+  "criticality": "tier-1",
+  "lifecycle": "production",
+  "stack": ["node", "typescript"],
+  "aliases": ["users", "user-svc", "identity"],
+  "provides": [
+    {
+      "id": "users-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    },
+    {
+      "id": "user-registered",
+      "kind": "asyncapi",
+      "path": "contracts/events.yaml",
+      "source": "generated",
+      "topic_confidence": "high",
+      "payload_confidence": "medium"
+    }
+  ],
+  "consumes": [],
+  "datastores": ["postgres"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "ccc333ccc333ccc333ccc333ccc333ccc333ccc3",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "manual", "confidence": "high" },
+      "aliases": { "source": "manual", "confidence": "high" }
+    },
+    "field_hashes": { "name": "hash5", "owner": "hash6" }
+  }
+}

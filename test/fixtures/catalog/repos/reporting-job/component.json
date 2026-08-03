@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "reporting-job",
+  "name": "Reporting Job",
+  "description": "Scheduled job generating operational and financial reports.",
+  "repo": "https://github.com/acme/reporting-job",
+  "type": "job",
+  "domain": "analytics",
+  "owner": "data-team",
+  "criticality": "tier-3",
+  "lifecycle": "production",
+  "stack": ["python"],
+  "aliases": ["reports", "reporting"],
+  "provides": [],
+  "consumes": [
+    { "contract": "orders-v1", "criticality": "soft", "source": "inferred" },
+    { "contract": "payments-v2", "criticality": "soft", "source": "inferred" }
+  ],
+  "datastores": ["postgres", "s3"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "sss999sss999sss999sss999sss999sss999sss9",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "inferred", "confidence": "low" },
+      "aliases": { "source": "inferred", "confidence": "low" }
+    },
+    "field_hashes": { "name": "hash37", "owner": "hash38" }
+  }
+}

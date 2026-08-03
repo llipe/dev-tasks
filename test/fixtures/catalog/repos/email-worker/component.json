@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "email-worker",
+  "name": "Email Worker",
+  "description": "Renders and sends transactional emails via queue.",
+  "repo": "https://github.com/acme/email-worker",
+  "type": "worker",
+  "domain": "communications",
+  "owner": "platform-team",
+  "criticality": "tier-2",
+  "lifecycle": "production",
+  "stack": ["node", "typescript"],
+  "aliases": ["email", "mailer"],
+  "provides": [],
+  "consumes": [
+    { "contract": "notifications-v1", "criticality": "hard", "source": "introspected" },
+    { "contract": "users-v1", "criticality": "soft", "source": "inferred" }
+  ],
+  "datastores": ["sqs"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "iii999iii999iii999iii999iii999iii999iii9",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "manual", "confidence": "high" },
+      "aliases": { "source": "inferred", "confidence": "medium" }
+    },
+    "field_hashes": { "name": "hash17", "owner": "hash18" }
+  }
+}

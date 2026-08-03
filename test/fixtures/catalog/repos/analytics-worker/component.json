@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "analytics-worker",
+  "name": "Analytics Worker",
+  "description": "Processes event streams for business intelligence dashboards.",
+  "repo": "https://github.com/acme/analytics-worker",
+  "type": "worker",
+  "domain": "analytics",
+  "owner": "data-team",
+  "criticality": "tier-3",
+  "lifecycle": "production",
+  "stack": ["python", "spark"],
+  "aliases": ["analytics", "bi-worker"],
+  "provides": [],
+  "consumes": [
+    { "contract": "order-placed", "criticality": "soft", "source": "inferred" },
+    { "contract": "payment-completed", "criticality": "soft", "source": "inferred" },
+    { "contract": "user-registered", "criticality": "soft", "source": "inferred" }
+  ],
+  "datastores": ["clickhouse"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "hhh888hhh888hhh888hhh888hhh888hhh888hhh8",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "inferred", "confidence": "low" },
+      "aliases": { "source": "inferred", "confidence": "low" }
+    },
+    "field_hashes": { "name": "hash15", "owner": "hash16" }
+  }
+}
