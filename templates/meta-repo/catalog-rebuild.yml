@@ -1,0 +1,56 @@
+# GitHub Actions workflow: Catalog Scheduled Rebuild
+# Runs hourly to rebuild and validate the catalog, committing changes if any.
+#
+# Prerequisites:
+#   - Node.js >= 20
+#   - @llipe/dev-tasks installed (via npx)
+#
+# Alert mechanism: non-zero exit causes the workflow to fail,
+# triggering GitHub's native notification system.
+
+name: Catalog Rebuild
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: "0 * * * *"
+  repository_dispatch:
+    types: [catalog-rebuild]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build catalog
+        run: npx @llipe/dev-tasks dt catalog build --registry registry.yaml
+
+      - name: Validate catalog
+        run: npx @llipe/dev-tasks dt catalog validate --strict
+
+      - name: Commit changes if catalog updated
+        run: |
+          git config user.name "catalog-bot"
+          git config user.email "catalog-bot@users.noreply.github.com"
+          if git diff --quiet catalog/; then
+            echo "No catalog changes detected — skipping commit."
+          else
+            git add catalog/
+            git commit -m "chore: rebuild catalog [skip ci]"
+            git push
+          fi

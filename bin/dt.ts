@@ -212,6 +212,23 @@ if (args.command === "extract") {
       indexPath,
     });
     process.exit(exitCode);
+  } else if (subcommand === "scaffold") {
+    const { runCatalogScaffold } = await import("#adapters/cli/catalog-scaffold.js");
+    let out: string | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--out" && args.positional[i + 1]) {
+        out = args.positional[++i];
+      } else if (p.startsWith("--out=")) {
+        out = p.slice("--out=".length);
+      }
+    }
+    const exitCode = runCatalogScaffold({
+      json: args.flags.json,
+      out,
+      force: args.flags.force,
+    });
+    process.exit(exitCode);
   } else if (
     subcommand === "resolve" ||
     subcommand === "get" ||
