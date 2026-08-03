@@ -15,7 +15,7 @@ import {
   type ExtractionInputs,
   type ConfirmationResult,
   type PromptedValues,
-  type ComponentYaml,
+  type ComponentManifest,
 } from "#core/extract/component.js";
 import { buildExtractionReport, type ReportInputs } from "#core/extract/report.js";
 import { hashContent } from "#core/distribution/hash.js";
@@ -177,7 +177,7 @@ describe("Component extraction integration — component-derivation fixture", ()
     const hashes2 = computeFieldHashes(component1); // same inputs → same output
 
     // Read from disk and compute current hashes
-    const existing = JSON.parse(readFileSync(componentPath, "utf-8")) as ComponentYaml;
+    const existing = JSON.parse(readFileSync(componentPath, "utf-8")) as ComponentManifest;
     const existingHashes: Record<string, string> = {};
     for (const [key, value] of Object.entries(existing)) {
       if (key === "_provenance") continue;

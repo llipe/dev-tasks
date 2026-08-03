@@ -65,8 +65,11 @@ export interface ConsumesEntry {
 
 /**
  * The component.json data structure.
+ *
+ * Named for the artifact it models (`component.json`), which is the canonical
+ * per-repo manifest format per PRD RF-20 and spec §4.5/§5.2.
  */
-export interface ComponentYaml {
+export interface ComponentManifest {
   name: string;
   stack: string[];
   type: string;
@@ -186,7 +189,7 @@ export interface ConfirmationResult {
 /**
  * Derive all derivable fields from extraction inputs.
  */
-export function deriveFields(inputs: ExtractionInputs): Partial<ComponentYaml> {
+export function deriveFields(inputs: ExtractionInputs): Partial<ComponentManifest> {
   const { detection, schemaResult, openApiResult, asyncApiResult, repoName } = inputs;
 
   const stack = detection?.stack ?? [];
@@ -208,7 +211,7 @@ export function deriveFields(inputs: ExtractionInputs): Partial<ComponentYaml> {
   const paths = ["src/"];
 
   // Derive docs references
-  const docs: ComponentYaml["docs"] = {};
+  const docs: ComponentManifest["docs"] = {};
   if (schemaResult?.filePath) docs.schema = schemaResult.filePath;
   if (openApiResult?.filePath) docs.openapi = openApiResult.filePath;
   if (asyncApiResult?.filePath) docs.asyncapi = asyncApiResult.filePath;
@@ -239,10 +242,10 @@ export function deriveFields(inputs: ExtractionInputs): Partial<ComponentYaml> {
  * Apply inferable fields (only if confirmed by human).
  */
 export function applyInference(
-  partial: Partial<ComponentYaml>,
+  partial: Partial<ComponentManifest>,
   inference: InferenceResult | null,
   confirmed: ConfirmationResult,
-): Partial<ComponentYaml> {
+): Partial<ComponentManifest> {
   if (!inference) return partial;
 
   const result = { ...partial };
@@ -273,9 +276,9 @@ export function applyInference(
  * Apply prompted values for non-derivable fields.
  */
 export function applyPrompted(
-  partial: Partial<ComponentYaml>,
+  partial: Partial<ComponentManifest>,
   prompted: PromptedValues,
-): Partial<ComponentYaml> {
+): Partial<ComponentManifest> {
   return {
     ...partial,
     owner: prompted.owner,
@@ -288,7 +291,7 @@ export function applyPrompted(
 /**
  * Compute SHA-256 hash for each field value (serialized as JSON).
  */
-export function computeFieldHashes(component: Partial<ComponentYaml>): Record<string, string> {
+export function computeFieldHashes(component: Partial<ComponentManifest>): Record<string, string> {
   const hashes: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(component)) {
@@ -305,7 +308,7 @@ export function computeFieldHashes(component: Partial<ComponentYaml>): Record<st
  */
 export function assembleProvenance(
   inputs: ExtractionInputs,
-  component: Partial<ComponentYaml>,
+  component: Partial<ComponentManifest>,
   inference: InferenceResult | null,
   confirmed: ConfirmationResult,
   prompted: PromptedValues,
@@ -323,7 +326,7 @@ export function assembleProvenance(
     "docs",
     "consumes",
   ]) {
-    if (component[key as keyof ComponentYaml] !== undefined) {
+    if (component[key as keyof ComponentManifest] !== undefined) {
       fields[key] = { source: "detected", confidence: "high" };
     }
   }
@@ -364,7 +367,7 @@ export function assembleProvenance(
 /**
  * Full component derivation pipeline.
  */
-export function deriveComponent(options: DeriveComponentOptions): ComponentYaml {
+export function deriveComponent(options: DeriveComponentOptions): ComponentManifest {
   const { inputs, inference, prompted, confirmed } = options;
 
   // Step 1: Derive fields from extraction
@@ -449,7 +452,7 @@ export function reconcileComponent(
  * Check if any required fields are missing (empty string).
  * Required fields: owner, domain, criticality, lifecycle.
  */
-export function getMissingRequiredFields(component: ComponentYaml): string[] {
+export function getMissingRequiredFields(component: ComponentManifest): string[] {
   const required = ["owner", "domain", "criticality", "lifecycle"] as const;
   const missing: string[] = [];
 

@@ -13,7 +13,7 @@ import {
   getMissingRequiredFields,
   type ExtractionInputs,
   type ConfirmationResult,
-  type ComponentYaml,
+  type ComponentManifest,
 } from "#core/extract/component.js";
 import { promptNonDerivableFields } from "#core/extract/prompt.js";
 import { hashContent } from "#core/distribution/hash.js";
@@ -29,7 +29,7 @@ export interface ExtractComponentOptions {
 }
 
 export interface ExtractComponentOutput {
-  component: ComponentYaml | null;
+  component: ComponentManifest | null;
   conflicts: string[];
   missing_required: string[];
   written: boolean;
@@ -198,16 +198,16 @@ function readAsyncApiResult(rootDir: string): ExtractionInputs["asyncApiResult"]
   return { topics: [], filePath: "docs/asyncapi.yaml" };
 }
 
-function readExistingComponent(filePath: string): ComponentYaml | null {
+function readExistingComponent(filePath: string): ComponentManifest | null {
   try {
     const content = readFileSync(filePath, "utf-8");
-    return JSON.parse(content) as ComponentYaml;
+    return JSON.parse(content) as ComponentManifest;
   } catch {
     return null;
   }
 }
 
-function computeFieldHashesFromRaw(component: ComponentYaml): Record<string, string> {
+function computeFieldHashesFromRaw(component: ComponentManifest): Record<string, string> {
   const hashes: Record<string, string> = {};
   for (const [key, value] of Object.entries(component)) {
     if (key === "_provenance") continue;
@@ -217,7 +217,7 @@ function computeFieldHashesFromRaw(component: ComponentYaml): Record<string, str
   return hashes;
 }
 
-function serializeComponent(component: ComponentYaml): string {
+function serializeComponent(component: ComponentManifest): string {
   return JSON.stringify(component, null, 2) + "\n";
 }
 

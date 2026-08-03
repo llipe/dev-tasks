@@ -74,7 +74,7 @@ describe("dt catalog build — integration", () => {
     expect(exitCode).toBe(3);
     const output = JSON.parse(stdout);
     expect(output.errors_count).toBe(1);
-    expect(output.errors[0].error).toContain("component.json/component.yaml not found");
+    expect(output.errors[0].error).toContain("component.json not found");
   });
 
   it("generates correct index structure with contracts and domains", async () => {

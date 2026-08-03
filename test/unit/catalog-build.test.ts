@@ -303,19 +303,28 @@ describe("catalogBuild — full integration (unit-level)", () => {
     expect(result.written).toBe(true);
   });
 
-  it("supports component.yaml (YAML format) alongside component.json", async () => {
+  it("rejects a repo whose manifest is not component.json", async () => {
+    // component.json is the only accepted manifest format (PRD RF-20).
+    // A repo carrying component.yaml instead must be reported as an error,
+    // not silently accepted.
+    const repoDir = join(tmpDir, "repos", "yaml-only");
+    mkdirSync(repoDir, { recursive: true });
+    writeFileSync(join(repoDir, "component.yaml"), "id: yaml-only\nname: YAML Only\n", "utf-8");
+
+    const registryPath = join(tmpDir, "registry.yaml");
+    writeFileSync(
+      registryPath,
+      "entries:\n  - id: yaml-only\n    repo: ./repos/yaml-only\n",
+      "utf-8",
+    );
+
     const result = await catalogBuild({
-      registryPath: join(FIXTURES_DIR, "registry-mixed-formats.yaml"),
+      registryPath,
       catalogDir: join(tmpDir, "catalog"),
     });
 
-    expect(result.errors).toEqual([]);
-    expect(result.index.components.length).toBe(2);
-
-    const yamlComp = result.index.components.find((c) => c.id === "yaml-component");
-    expect(yamlComp).toBeDefined();
-    expect(yamlComp?.name).toBe("YAML Component");
-    expect(yamlComp?.domain).toBe("platform");
-    expect(yamlComp?.origin_sha).toBe("yaml111yaml111yaml111yaml111yaml111yaml1");
+    expect(result.index.components).toEqual([]);
+    expect(result.errors.length).toBe(1);
+    expect(result.errors[0].error).toContain("component.json not found");
   });
 });

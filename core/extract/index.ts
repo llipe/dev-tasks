@@ -39,7 +39,7 @@ export {
 } from "./component.js";
 
 export type {
-  ComponentYaml,
+  ComponentManifest,
   ProvenanceBlock,
   FieldProvenance,
   FieldSource,
