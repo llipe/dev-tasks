@@ -1,0 +1,9 @@
+id: checkout-flow
+name: Checkout Flow
+description: End-to-end checkout process from cart to payment confirmation.
+participants:
+  - cart-service
+  - order-service
+  - payment-service
+  - inventory-service
+  - notification-service

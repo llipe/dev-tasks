@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "review-service",
+  "name": "Review Service",
+  "description": "Product review and rating management.",
+  "repo": "https://github.com/acme/review-service",
+  "type": "service",
+  "domain": "catalog",
+  "owner": "catalog-team",
+  "criticality": "tier-3",
+  "lifecycle": "production",
+  "stack": ["node", "typescript"],
+  "aliases": ["reviews", "ratings"],
+  "provides": [
+    {
+      "id": "reviews-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    }
+  ],
+  "consumes": [
+    { "contract": "users-v1", "criticality": "soft", "source": "inferred" },
+    { "contract": "catalog-v1", "criticality": "soft", "source": "inferred" }
+  ],
+  "datastores": ["mongodb"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "ppp666ppp666ppp666ppp666ppp666ppp666ppp6",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "manual", "confidence": "high" },
+      "aliases": { "source": "inferred", "confidence": "medium" }
+    },
+    "field_hashes": { "name": "hash31", "owner": "hash32" }
+  }
+}

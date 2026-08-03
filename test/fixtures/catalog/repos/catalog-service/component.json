@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "catalog-service",
+  "name": "Catalog Service",
+  "description": "Product catalog CRUD and category management.",
+  "repo": "https://github.com/acme/catalog-service",
+  "type": "service",
+  "domain": "catalog",
+  "owner": "catalog-team",
+  "criticality": "tier-1",
+  "lifecycle": "production",
+  "stack": ["node", "typescript"],
+  "aliases": ["products", "product-catalog"],
+  "provides": [
+    {
+      "id": "catalog-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    },
+    {
+      "id": "product-updated",
+      "kind": "asyncapi",
+      "path": "contracts/events.yaml",
+      "source": "generated",
+      "topic_confidence": "high",
+      "payload_confidence": "high"
+    }
+  ],
+  "consumes": [{ "contract": "pricing-v1", "criticality": "soft", "source": "inferred" }],
+  "datastores": ["postgres"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "nnn444nnn444nnn444nnn444nnn444nnn444nnn4",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "manual", "confidence": "high" },
+      "aliases": { "source": "inferred", "confidence": "medium" }
+    },
+    "field_hashes": { "name": "hash27", "owner": "hash28" }
+  }
+}

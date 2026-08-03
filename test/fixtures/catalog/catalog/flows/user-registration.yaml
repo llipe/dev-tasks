@@ -1,0 +1,8 @@
+id: user-registration
+name: User Registration
+description: New user signup and welcome email flow.
+participants:
+  - user-service
+  - auth-service
+  - notification-service
+  - email-worker

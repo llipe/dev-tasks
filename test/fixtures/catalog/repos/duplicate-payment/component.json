@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "payment-service",
+  "name": "Duplicate Payment Service",
+  "description": "This is a duplicate that should cause an error.",
+  "repo": "https://github.com/acme/duplicate-payment",
+  "type": "service",
+  "domain": "payments",
+  "owner": "other-team",
+  "criticality": "tier-2",
+  "lifecycle": "production",
+  "stack": ["node"],
+  "aliases": [],
+  "provides": [],
+  "consumes": [],
+  "datastores": [],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "dup111dup111dup111dup111dup111dup111dup1",
+    "fields": { "name": { "source": "introspected", "confidence": "high" } },
+    "field_hashes": { "name": "hashdup" }
+  }
+}

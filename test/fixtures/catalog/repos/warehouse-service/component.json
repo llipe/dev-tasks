@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "warehouse-service",
+  "name": "Warehouse Service",
+  "description": "Warehouse management and picking optimization.",
+  "repo": "https://github.com/acme/warehouse-service",
+  "type": "service",
+  "domain": "logistics",
+  "owner": "logistics-team",
+  "criticality": "tier-2",
+  "lifecycle": "production",
+  "stack": ["go"],
+  "aliases": ["warehouse", "wms"],
+  "provides": [
+    {
+      "id": "warehouse-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    }
+  ],
+  "consumes": [{ "contract": "shipping-v1", "criticality": "soft", "source": "inferred" }],
+  "datastores": ["postgres"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["cmd/", "internal/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "rrr888rrr888rrr888rrr888rrr888rrr888rrr8",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "manual", "confidence": "high" },
+      "aliases": { "source": "manual", "confidence": "high" }
+    },
+    "field_hashes": { "name": "hash35", "owner": "hash36" }
+  }
+}

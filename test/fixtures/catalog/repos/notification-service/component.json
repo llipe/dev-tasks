@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "notification-service",
+  "name": "Notification Service",
+  "description": "Routes notifications across email, SMS, and push channels.",
+  "repo": "https://github.com/acme/notification-service",
+  "type": "service",
+  "domain": "communications",
+  "owner": "platform-team",
+  "criticality": "tier-2",
+  "lifecycle": "production",
+  "stack": ["node", "typescript"],
+  "aliases": ["notifications", "notify"],
+  "provides": [
+    {
+      "id": "notifications-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    }
+  ],
+  "consumes": [
+    { "contract": "users-v1", "criticality": "soft", "source": "inferred" },
+    { "contract": "order-placed", "criticality": "soft", "source": "inferred" }
+  ],
+  "datastores": ["redis"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "ddd444ddd444ddd444ddd444ddd444ddd444ddd4",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "manual", "confidence": "medium" },
+      "aliases": { "source": "inferred", "confidence": "low" }
+    },
+    "field_hashes": { "name": "hash7", "owner": "hash8" }
+  }
+}

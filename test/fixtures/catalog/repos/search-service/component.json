@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "search-service",
+  "name": "Search Service",
+  "description": "Full-text search over product catalog using Elasticsearch.",
+  "repo": "https://github.com/acme/search-service",
+  "type": "service",
+  "domain": "catalog",
+  "owner": "catalog-team",
+  "criticality": "tier-2",
+  "lifecycle": "production",
+  "stack": ["java", "spring-boot"],
+  "aliases": ["search", "product-search"],
+  "provides": [
+    {
+      "id": "search-v1",
+      "kind": "openapi",
+      "path": "contracts/openapi.yaml",
+      "source": "introspected",
+      "confidence": "high"
+    }
+  ],
+  "consumes": [
+    { "contract": "catalog-v1", "criticality": "hard", "source": "introspected" },
+    { "contract": "stock-updated", "criticality": "soft", "source": "inferred" }
+  ],
+  "datastores": ["elasticsearch"],
+  "docs": { "architecture": "docs/architecture.md", "schema": "docs/schema.md" },
+  "paths": { "source": ["src/main/java/"], "root": "." },
+  "_provenance": {
+    "extracted_at": "2026-07-28T12:00:00Z",
+    "extractor": "0.6.7",
+    "repo_sha": "jjj000jjj000jjj000jjj000jjj000jjj000jjj0",
+    "fields": {
+      "name": { "source": "introspected", "confidence": "high" },
+      "owner": { "source": "manual", "confidence": "high" },
+      "aliases": { "source": "inferred", "confidence": "medium" }
+    },
+    "field_hashes": { "name": "hash19", "owner": "hash20" }
+  }
+}
