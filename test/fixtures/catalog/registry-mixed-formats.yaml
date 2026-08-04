@@ -1,0 +1,5 @@
+entries:
+  - id: payment-service
+    repo: ./repos/payment-service
+  - id: yaml-component
+    repo: ./repos/yaml-component
