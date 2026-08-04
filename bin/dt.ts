@@ -263,6 +263,69 @@ if (args.command === "extract") {
     process.stderr.write(`Subcommand 'catalog ${subcommand}' is not yet implemented.\n`);
     process.exit(ExitCode.GeneralError);
   }
+} else if (args.command === "ctx") {
+  const subcommand = args.positional[0];
+  if (subcommand === "fetch") {
+    const { runCtxFetch } = await import("#adapters/cli/ctx-fetch.js");
+    // Parse --repos, --refresh, --concurrency from remaining positional/flags
+    let repos: string | undefined;
+    let refresh = false;
+    let concurrency: number | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--repos" && args.positional[i + 1]) {
+        repos = args.positional[++i];
+      } else if (p.startsWith("--repos=")) {
+        repos = p.slice("--repos=".length);
+      } else if (p === "--refresh") {
+        refresh = true;
+      } else if (p === "--concurrency" && args.positional[i + 1]) {
+        concurrency = parseInt(args.positional[++i], 10);
+      } else if (p.startsWith("--concurrency=")) {
+        concurrency = parseInt(p.slice("--concurrency=".length), 10);
+      }
+    }
+    const exitCode = await runCtxFetch({
+      json: args.flags.json,
+      repos,
+      metaRepo: args.flags.metaRepo,
+      refresh,
+      concurrency,
+    });
+    process.exit(exitCode);
+  } else if (subcommand === "gc") {
+    const { runCtxGC } = await import("#adapters/cli/ctx-fetch.js");
+    let maxSize: string | undefined;
+    let maxAge: string | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--max-size" && args.positional[i + 1]) {
+        maxSize = args.positional[++i];
+      } else if (p.startsWith("--max-size=")) {
+        maxSize = p.slice("--max-size=".length);
+      } else if (p === "--max-age" && args.positional[i + 1]) {
+        maxAge = args.positional[++i];
+      } else if (p.startsWith("--max-age=")) {
+        maxAge = p.slice("--max-age=".length);
+      }
+    }
+    const exitCode = runCtxGC({
+      json: args.flags.json,
+      maxSize,
+      maxAge,
+    });
+    process.exit(exitCode);
+  } else if (!subcommand) {
+    process.stderr.write("Usage: dt ctx <subcommand>\n\n");
+    process.stderr.write("Subcommands:\n");
+    process.stderr.write("  fetch     Sparse-clone repos and cache by SHA\n");
+    process.stderr.write("  gc        Run cache garbage collection\n");
+    process.stderr.write("  assemble  Build layered context bundle\n");
+    process.exit(ExitCode.InvalidUsage);
+  } else {
+    process.stderr.write(`Subcommand 'ctx ${subcommand}' is not yet implemented.\n`);
+    process.exit(ExitCode.GeneralError);
+  }
 } else {
   process.stderr.write(`Command '${args.command}' is not yet implemented.\n`);
   process.exit(ExitCode.GeneralError);
