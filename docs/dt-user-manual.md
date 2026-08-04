@@ -42,6 +42,9 @@ Its core purpose: turn a repository into a machine-readable `component.json` man
 ├── core/context/          Multi-repo context generation (S-015+)
 │   ├── fetch.ts           Sparse-clone git fetch via execa
 │   ├── cache.ts           SHA-keyed immutable cache + LRU GC
+│   ├── tokens.ts          Token counting utility (cl100k_base approx)
+│   ├── assemble.ts        Layered budgeted bundle assembler
+│   ├── layers/            Per-layer renderers (index, flow, arch, docs, contracts)
 │   └── index.ts           Module barrel exports
 └── core/distribution/     Install, update, manifest, doctor
 ```
@@ -72,6 +75,7 @@ dt catalog coverage         # Report extraction quality
 dt catalog scaffold         # Generate meta-repo directory layout
 dt ctx fetch               # Sparse-clone repos and cache by SHA
 dt ctx gc                  # Run cache garbage collection
+dt ctx assemble            # Build layered, budgeted context bundle
 ```
 
 All commands accept `--json` for machine-readable output.
@@ -625,6 +629,101 @@ After eviction, empty parent directories are cleaned up.
 
 ---
 
+## `dt ctx assemble` — Layered, Budgeted, Deterministic Bundle
+
+### What it does
+
+Builds a context bundle — a set of Markdown files in a fixed order, capped to a token budget, with recorded truncation and per-file SHA-256 hashes. The bundle is byte-for-byte reproducible given the same inputs.
+
+```bash
+dt ctx assemble --scope scope.json --out ./bundle --meta-repo ./my-meta-repo
+dt ctx assemble --scope scope.json --out ./bundle --budget 40000 --json
+```
+
+### How it works internally
+
+1. **Load scope** — reads a `scope.json` file (matching the `scope-output.schema.json` format) that specifies primary components, secondary components, contracts crossed, and optional flow.
+
+2. **Load meta-repo content** — reads `catalog/index.yaml`, `architecture.md`, `conventions.md`, per-component docs from cache or catalog directories, and flow definitions.
+
+3. **Render layers in fixed order** — each layer has a numeric priority (lower = higher priority) and a truncable/non-truncable flag:
+
+   | Layer | File | Priority | Truncable | Content |
+   |-------|------|----------|-----------|---------|
+   | 00-index | `00-index.md` | 0 | No | Catalog index summary for scoped components |
+   | 01-flow | `01-flow.md` | 1 | No | Flow definition with participants |
+   | 02-conventions-delta | `02-conventions-delta.md` | 2 | No | Conventions relevant to scope domains |
+   | 03-architecture | `03-architecture.md` | 3 | Yes | Architecture document |
+   | 04-primary-* | `04-primary-<id>.md` | 4+ | Yes | Full docs per primary component |
+   | 05-secondary-* | `05-secondary-<id>.md` | varies | Yes | Summary only (id, description, provides/consumes) |
+   | 06-contracts | `06-contracts.md` | last | Yes | Boundary contracts with confidence badges |
+
+4. **Budget enforcement** — default 60,000 tokens (configurable via `--budget`):
+   - If non-truncable layers alone exceed the budget → **exit 6** with a clear error message.
+   - If total exceeds budget → truncate layers in **reverse priority order** (highest priority number first). Each truncation is recorded in the manifest's `truncated[]` array.
+
+5. **Deterministic output** — no in-file timestamps, fixed file order, per-file SHA-256 hash in the bundle manifest (`bundle.json`).
+
+### Token counting
+
+Uses a cl100k_base approximation: ~4 characters per token for prose, ~3.5 for code-heavy content (detected by special character density). Truncation respects line boundaries when possible.
+
+### Secondary component rendering
+
+Secondary components are rendered as **summaries only** — id, description, provides list, consumes list. Full documentation is omitted to conserve token budget. This is by design: secondaries provide context for understanding the primary components, not implementation detail.
+
+### Boundary contract rendering
+
+Contracts include a visible **confidence badge** — `[HIGH]`, `[MEDIUM]`, or `[LOW]` — derived from the provider component's `provides[].confidence` field. This makes confidence visible in the assembled context without requiring consumers to look it up separately.
+
+### Bundle manifest (`bundle.json`)
+
+Written to the output directory alongside the layer files:
+
+```json
+{
+  "files": [
+    { "filename": "00-index.md", "layerId": "00-index", "sha256": "abc...", "tokens": 450 },
+    { "filename": "01-flow.md", "layerId": "01-flow", "sha256": "def...", "tokens": 180 }
+  ],
+  "truncated": [
+    { "layerId": "03-architecture", "originalTokens": 12000, "truncatedTo": 5000 }
+  ],
+  "totalTokens": 45000,
+  "budget": 60000
+}
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--scope <path>` | Required. Path to the scope JSON file |
+| `--out <dir>` | Required. Output directory for the bundle |
+| `--meta-repo <path>` | Path to the meta-repo (default: current directory) |
+| `--budget <n>` | Total token budget (default: 60000) |
+| `--cache-path <path>` | Override cache path for component content lookup |
+| `--json` | Machine-readable manifest output |
+
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success — bundle assembled within budget |
+| 2 | Usage error — missing required flags |
+| 5 | Not found — scope file or meta-repo content missing |
+| 6 | Budget exceeded — non-truncable layers alone exceed the budget |
+| 9 | Validation error — scope file cannot be parsed |
+
+### Determinism guarantee
+
+Running `dt ctx assemble` twice with the same inputs produces **identical output**: same files, same content, same SHA-256 hashes. This is achieved by:
+- Fixed rendering order (no randomization, no file-system-order dependency)
+- No timestamps in generated content
+- Deterministic truncation (same budget + same content = same cut point)
+
+---
+
 ## `dt extract all` — Full Pipeline
 
 Orchestrates the complete extraction in order:
@@ -804,7 +903,7 @@ git commit -m "feat: add component manifest via dt extract"
 | Phase 0 | Distribution (`dev-tasks install/update/doctor`) | Done |
 | Phase 1 | Extraction (`dt extract *`) | Done |
 | Phase 2 | Catalog — cross-repo aggregation + validation | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped) |
-| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly | In progress (`dt ctx fetch/gc` shipped; `dt ctx assemble` + `dt init` planned) |
+| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly | In progress (`dt ctx fetch/gc/assemble` shipped; `dt init` planned) |
 | Phase 4 | Scoping — LLM-assisted component selection per task | Planned |
 | Phase 5 | Verify — contract diff + impact analysis | Planned |
 | Phase 6 | MCP adapter — expose as agent tools | Planned |
