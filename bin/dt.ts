@@ -361,6 +361,56 @@ if (args.command === "extract") {
     process.stderr.write(`Subcommand 'ctx ${subcommand}' is not yet implemented.\n`);
     process.exit(ExitCode.GeneralError);
   }
+} else if (args.command === "init") {
+  const { runInit } = await import("#adapters/cli/init.js");
+  // Parse --components, --max-index-age, --no-llm, --out, --budget, --concurrency
+  let components: string | undefined;
+  let maxIndexAge: number | undefined;
+  let noLlm = false;
+  let out: string | undefined;
+  let budget: number | undefined;
+  let concurrency: number | undefined;
+  for (const p of args.positional) {
+    if (p === "--no-llm") {
+      noLlm = true;
+    } else if (p.startsWith("--components=")) {
+      components = p.slice("--components=".length);
+    } else if (p.startsWith("--max-index-age=")) {
+      maxIndexAge = parseInt(p.slice("--max-index-age=".length), 10);
+    } else if (p.startsWith("--out=")) {
+      out = p.slice("--out=".length);
+    } else if (p.startsWith("--budget=")) {
+      budget = parseInt(p.slice("--budget=".length), 10);
+    } else if (p.startsWith("--concurrency=")) {
+      concurrency = parseInt(p.slice("--concurrency=".length), 10);
+    }
+  }
+  // Handle --key value style
+  for (let i = 0; i < args.positional.length; i++) {
+    const p = args.positional[i];
+    if (p === "--components" && args.positional[i + 1]) {
+      components = args.positional[++i];
+    } else if (p === "--max-index-age" && args.positional[i + 1]) {
+      maxIndexAge = parseInt(args.positional[++i], 10);
+    } else if (p === "--out" && args.positional[i + 1]) {
+      out = args.positional[++i];
+    } else if (p === "--budget" && args.positional[i + 1]) {
+      budget = parseInt(args.positional[++i], 10);
+    } else if (p === "--concurrency" && args.positional[i + 1]) {
+      concurrency = parseInt(args.positional[++i], 10);
+    }
+  }
+  const exitCode = await runInit({
+    json: args.flags.json,
+    components,
+    metaRepo: args.flags.metaRepo,
+    maxIndexAge,
+    noLlm,
+    out,
+    budget,
+    concurrency,
+  });
+  process.exit(exitCode);
 } else {
   process.stderr.write(`Command '${args.command}' is not yet implemented.\n`);
   process.exit(ExitCode.GeneralError);
