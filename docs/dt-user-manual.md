@@ -40,6 +40,8 @@ Its core purpose: turn a repository into a machine-readable `component.json` man
 │   ├── coverage.ts        Extraction quality aggregation
 │   └── scaffold.ts        Meta-repo scaffold generator
 ├── core/context/          Multi-repo context generation (S-015+)
+│   ├── init.ts            Manual-scope init orchestration (pin → freshness → assemble → lock)
+│   ├── session-lock.ts    session.lock.json data model and read/write
 │   ├── fetch.ts           Sparse-clone git fetch via execa
 │   ├── cache.ts           SHA-keyed immutable cache + LRU GC
 │   ├── tokens.ts          Token counting utility (cl100k_base approx)
@@ -76,6 +78,7 @@ dt catalog scaffold         # Generate meta-repo directory layout
 dt ctx fetch               # Sparse-clone repos and cache by SHA
 dt ctx gc                  # Run cache garbage collection
 dt ctx assemble            # Build layered, budgeted context bundle
+dt init                    # Initialize a context session (pin, freshness, assemble, lock)
 ```
 
 All commands accept `--json` for machine-readable output.
@@ -724,6 +727,141 @@ Running `dt ctx assemble` twice with the same inputs produces **identical output
 
 ---
 
+## `dt init` — Manual-Scope Context Session Initialization
+
+### What it does
+
+Orchestrates the complete context init pipeline in one command: pins the meta-repo to a SHA, checks catalog freshness, validates requested components, sparse-fetches their repos, assembles a budgeted context bundle, and emits a `session.lock.json` that captures everything needed to reproduce the exact same bundle later.
+
+This is the **deterministic init path** — no LLM is involved. Scope is explicitly provided via `--components`.
+
+```bash
+dt init --components auth-service,payment-service --meta-repo ./my-meta-repo
+dt init --components auth-service --meta-repo ./meta --max-index-age 120 --out ./context
+dt init --components auth-service --meta-repo ./meta --json
+dt init --no-llm --components auth-service --meta-repo ./meta  # explicit no-LLM marker
+```
+
+### How it works internally
+
+The init orchestration executes these steps in strict sequence:
+
+1. **Pin meta-repo** — resolves the meta-repo directory to a git SHA (`git rev-parse HEAD`). This SHA is fixed for the entire session, ensuring reproducibility even if the meta-repo is updated during work.
+
+2. **Check index freshness** — reads the `generated_at` timestamp from `catalog/index.yaml` and computes its age in minutes. If the age exceeds `--max-index-age` (default: 240 minutes = 4 hours), the command aborts with exit 9. This prevents sessions built on stale catalog data.
+
+3. **Validate components** — checks that every component ID in `--components` exists in the catalog index. If any ID is unknown, aborts with exit 12 listing the unrecognized IDs.
+
+4. **Fetch component repos** — uses the `ctx fetch` infrastructure (S-015) to sparse-clone each component's repository content into the SHA cache. Respects the same cache, concurrency, and timeout rules as `dt ctx fetch`.
+
+5. **Assemble bundle** — invokes the layered bundle assembler (S-016). For manual scope, all specified components are treated as primary (no secondary distinction without LLM ranking). Contracts crossed by the component set are automatically included.
+
+6. **Emit session lock** — writes `session.lock.json` to the output directory with full reproducibility metadata.
+
+### Session lock structure (`session.lock.json`)
+
+```json
+{
+  "task_hash": "sha256-of-sorted-component-list",
+  "meta_repo_sha": "abc123def456789...",
+  "index_age_minutes": 42,
+  "scope": {
+    "components": ["auth-service", "payment-service"],
+    "source": "manual"
+  },
+  "repo_shas": {
+    "auth-service": "abc123...",
+    "payment-service": "def456..."
+  },
+  "bundle": [
+    { "filename": "00-index.md", "sha256": "...", "tokens": 450 },
+    { "filename": "04-primary-auth-service.md", "sha256": "...", "tokens": 1200 }
+  ],
+  "total_tokens": 3500,
+  "created_at": "2024-07-28T10:00:00.000Z"
+}
+```
+
+Key fields:
+- **`task_hash`**: SHA-256 of the sorted component list (deterministic regardless of input order)
+- **`meta_repo_sha`**: Exact git commit the session is pinned to
+- **`index_age_minutes`**: How old the index was at init time (for auditability)
+- **`scope.source`**: Always `"manual"` for `--components`; future LLM scoping will produce `"llm"`
+- **`repo_shas`**: Per-component pinned SHAs from the catalog index
+- **`bundle`**: Per-file SHA-256 and token counts — enables byte-for-byte reproducibility verification
+
+### Reproducibility guarantee
+
+Running `dt init --components X --meta-repo Y` twice produces **identical output** if the meta-repo hasn't changed. The session lock captures all inputs (component list, meta-repo SHA, per-repo SHAs) and all outputs (per-file SHA-256), so reproducibility can be verified by comparing lock files.
+
+### The `--no-llm` flag
+
+The `--no-llm` flag explicitly opts out of LLM-based scoping. When specified:
+- `--components` **must** be provided (the scope must come from somewhere)
+- Without `--components` → exit 2 with a clear error
+
+This flag exists for forward compatibility: when LLM scoping (Phase 4) is implemented, `dt init` without `--no-llm` will use the LLM to select components from a task description. The `--no-llm` flag ensures the deterministic path remains available.
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--components <ids>` | Required. Comma-separated component IDs to include in scope |
+| `--meta-repo <path>` | Path to the meta-repo (default: current directory) |
+| `--max-index-age <n>` | Max allowed index age in minutes (default: 240) |
+| `--no-llm` | Explicit no-LLM marker (requires `--components`) |
+| `--out <dir>` | Output directory for bundle + lock (default: `.dt-context`) |
+| `--budget <n>` | Total token budget for the bundle (default: 60000) |
+| `--concurrency <n>` | Max parallel fetch operations (default: 8) |
+| `--json` | Machine-readable output |
+
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success — bundle assembled, session lock emitted |
+| 2 | Invalid usage — `--no-llm` without `--components`, or missing `--components` entirely |
+| 6 | Budget exceeded — non-truncable layers alone exceed the budget |
+| 9 | Stale index — catalog index age exceeds `--max-index-age` |
+| 12 | Unknown component — one or more component IDs not found in the catalog |
+
+### JSON output (success)
+
+```json
+{
+  "success": true,
+  "meta_repo_sha": "abc123def456789...",
+  "index_age_minutes": 42,
+  "scope": { "components": ["auth-service"], "source": "manual" },
+  "bundle_files": 6,
+  "total_tokens": 3500,
+  "budget": 60000,
+  "lock_file": "/path/to/.dt-context/session.lock.json",
+  "repo_shas": { "auth-service": "abc123..." }
+}
+```
+
+### JSON output (error — stale index)
+
+```json
+{
+  "error": "Catalog index is stale: 300 minutes old (max allowed: 240 minutes)",
+  "age_minutes": 300,
+  "max_minutes": 240
+}
+```
+
+### JSON output (error — unknown component)
+
+```json
+{
+  "error": "Unknown component(s): foo-service, bar-service",
+  "unknown_components": ["foo-service", "bar-service"]
+}
+```
+
+---
+
 ## `dt extract all` — Full Pipeline
 
 Orchestrates the complete extraction in order:
@@ -903,7 +1041,7 @@ git commit -m "feat: add component manifest via dt extract"
 | Phase 0 | Distribution (`dev-tasks install/update/doctor`) | Done |
 | Phase 1 | Extraction (`dt extract *`) | Done |
 | Phase 2 | Catalog — cross-repo aggregation + validation | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped) |
-| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly | In progress (`dt ctx fetch/gc/assemble` shipped; `dt init` planned) |
+| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly + session init | Done (`dt ctx fetch/gc/assemble` + `dt init --components` shipped) |
 | Phase 4 | Scoping — LLM-assisted component selection per task | Planned |
 | Phase 5 | Verify — contract diff + impact analysis | Planned |
 | Phase 6 | MCP adapter — expose as agent tools | Planned |
