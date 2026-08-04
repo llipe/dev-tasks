@@ -31,7 +31,18 @@ Its core purpose: turn a repository into a machine-readable `component.json` man
 │   └── render/            Output renderers (schema.md Markdown + Mermaid)
 ├── core/reconcile.ts      Hash-based reconciliation engine
 ├── core/catalog/          Catalog artifact schemas + local validation (S-010+)
-│   └── validate-component.ts  Offline JSON Schema (2020-12) validator via ajv
+│   ├── validate-component.ts  Offline JSON Schema (2020-12) validator via ajv
+│   ├── build.ts           Catalog build orchestrator (registry → index)
+│   ├── validate.ts        Referential integrity checks V01-V19
+│   ├── graph.ts           Dependency graph utilities
+│   ├── resolve.ts         Lexical weighted scorer for text→component
+│   ├── queries.ts         Graph reads (get, deps, consumers, flow, closure)
+│   ├── coverage.ts        Extraction quality aggregation
+│   └── scaffold.ts        Meta-repo scaffold generator
+├── core/context/          Multi-repo context generation (S-015+)
+│   ├── fetch.ts           Sparse-clone git fetch via execa
+│   ├── cache.ts           SHA-keyed immutable cache + LRU GC
+│   └── index.ts           Module barrel exports
 └── core/distribution/     Install, update, manifest, doctor
 ```
 
@@ -59,6 +70,8 @@ dt catalog flow             # Show flow with participants
 dt catalog closure          # Compute transitive dependency closure
 dt catalog coverage         # Report extraction quality
 dt catalog scaffold         # Generate meta-repo directory layout
+dt ctx fetch               # Sparse-clone repos and cache by SHA
+dt ctx gc                  # Run cache garbage collection
 ```
 
 All commands accept `--json` for machine-readable output.
@@ -478,6 +491,140 @@ The `[skip ci]` marker prevents the commit from triggering another rebuild loop.
 
 ---
 
+## `dt ctx fetch` — Sparse Clone and SHA Cache
+
+### What it does
+
+Fetches only the context-relevant content (`component.json`, `docs/`, `contracts/`) from component repositories using a sparse-clone strategy, and caches the result immutably by SHA. Subsequent fetches of the same SHA are instant cache hits — no network calls.
+
+```bash
+dt ctx fetch --repos auth-service,payment-service --meta-repo ./my-meta-repo
+dt ctx fetch --repos auth-service --meta-repo ./my-meta-repo --refresh --json
+dt ctx fetch --repos auth-service --meta-repo ./my-meta-repo --concurrency 4
+```
+
+### How it works internally
+
+For each target repository:
+
+1. **Cache check** — looks for `~/.dev-tasks/cache/<host>/<org>/<repo>/<sha>/` with a `.complete` marker file. If present, returns immediately (cache hit).
+
+2. **Sparse clone sequence** (on cache miss):
+   ```bash
+   git clone --filter=blob:none --no-checkout --depth 1 <url> <tmp-dir>
+   git -C <tmp-dir> sparse-checkout set component.json docs contracts
+   git -C <tmp-dir> checkout <sha>
+   ```
+
+3. **Cache write** — copies the sparse content (excluding `.git/`) into the cache directory and writes a `.complete` marker file. Once marked, the entry is treated as immutable.
+
+4. **Cleanup** — removes the temporary clone directory regardless of success or failure. On failure, also removes any partial cache entry.
+
+### Target resolution
+
+Targets are resolved from the meta-repo's `catalog/index.yaml` (preferred, contains `origin_sha` per component) or `registry.yaml` (fallback, requires explicit SHA). The CLI accepts a comma-separated list of component IDs.
+
+### Concurrency and timeout
+
+- Default concurrency: **8 repos in parallel** (configurable with `--concurrency`)
+- Default timeout: **60 seconds per repo**
+- Fetch operations are batched — when a batch completes, the next batch starts
+
+### Cache layout
+
+```text
+~/.dev-tasks/cache/
+├── github.com/
+│   ├── acme/
+│   │   ├── auth-service/
+│   │   │   └── abc123def456/     ← SHA directory (immutable)
+│   │   │       ├── .complete     ← marker file (presence = valid entry)
+│   │   │       ├── component.json
+│   │   │       ├── docs/
+│   │   │       └── contracts/
+│   │   └── payment-service/
+│   │       └── ...
+│   └── other-org/
+│       └── ...
+└── gitlab.com/
+    └── ...
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--repos <ids>` | Required. Comma-separated component IDs to fetch |
+| `--meta-repo <path>` | Required. Path to the meta-repo (contains registry/index) |
+| `--refresh` | Bypass cache — re-fetch even if SHA directory exists |
+| `--concurrency <n>` | Max parallel fetches (default: 8) |
+| `--json` | Machine-readable output with per-repo cache hit/miss details |
+
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | All repos fetched successfully |
+| 2 | Usage error — missing required flags |
+| 5 | Fetch failure — one or more repos unreachable/timed out (per-repo errors in output) |
+
+### JSON output
+
+```json
+{
+  "success": true,
+  "fetched": 3,
+  "cache_hits": 2,
+  "cache_misses": 1,
+  "errors": [],
+  "entries": [
+    { "id": "auth-service", "cache_hit": true, "path": "/Users/.../.dev-tasks/cache/..." },
+    { "id": "payment-service", "cache_hit": true, "path": "..." },
+    { "id": "order-service", "cache_hit": false, "path": "..." }
+  ]
+}
+```
+
+---
+
+## `dt ctx gc` — Cache Garbage Collection
+
+### What it does
+
+Evicts stale or oversized cache entries using LRU (Least Recently Used) policy.
+
+```bash
+dt ctx gc                          # defaults: 5GB max, 30-day max age
+dt ctx gc --max-size 2GB           # evict if total exceeds 2GB
+dt ctx gc --max-age 7d             # evict entries older than 7 days
+dt ctx gc --max-size 1GB --max-age 14d --json
+```
+
+### Eviction strategy
+
+Two-phase eviction:
+
+1. **Age eviction** — entries with last-access time older than `--max-age` (default: 30 days) are removed first.
+2. **Size eviction** — remaining entries sorted by last-access time (oldest first); entries are evicted until total size is within `--max-size` (default: 5 GB).
+
+After eviction, empty parent directories are cleaned up.
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--max-size <size>` | Max total cache size (e.g., `5GB`, `500MB`). Default: 5GB |
+| `--max-age <age>` | Max entry age (e.g., `30d`, `24h`, `60m`). Default: 30d |
+| `--json` | Machine-readable output |
+
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | GC completed (may have evicted 0 entries if cache is healthy) |
+
+---
+
 ## `dt extract all` — Full Pipeline
 
 Orchestrates the complete extraction in order:
@@ -645,6 +792,8 @@ git commit -m "feat: add component manifest via dt extract"
 - **Zod limited to basic `z.object` patterns** — complex compositions (unions, intersections, lazy schemas) are not fully supported
 - **Only kafkajs patterns** — other Kafka clients (confluent-kafka, rhea/AMQP, bullmq) not detected
 - **YAML parsing is minimal** — the built-in YAML parser handles basic structures; complex YAML features (anchors, merge keys) may not parse correctly
+- **Git >= 2.37 required for ctx fetch** — sparse-checkout in cone mode requires modern git; use `dev-tasks doctor` to verify
+- **rsync required for ctx fetch** — the cache write step uses `rsync` to copy sparse content; available by default on macOS and most Linux distributions
 
 ---
 
@@ -654,8 +803,8 @@ git commit -m "feat: add component manifest via dt extract"
 |-------|-----------|--------|
 | Phase 0 | Distribution (`dev-tasks install/update/doctor`) | Done |
 | Phase 1 | Extraction (`dt extract *`) | Done |
-| Phase 2 | Catalog — cross-repo aggregation + validation | In progress (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped) |
-| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly | Planned |
+| Phase 2 | Catalog — cross-repo aggregation + validation | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped) |
+| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly | In progress (`dt ctx fetch/gc` shipped; `dt ctx assemble` + `dt init` planned) |
 | Phase 4 | Scoping — LLM-assisted component selection per task | Planned |
 | Phase 5 | Verify — contract diff + impact analysis | Planned |
 | Phase 6 | MCP adapter — expose as agent tools | Planned |
