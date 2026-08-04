@@ -315,6 +315,41 @@ if (args.command === "extract") {
       maxAge,
     });
     process.exit(exitCode);
+  } else if (subcommand === "assemble") {
+    const { runCtxAssemble } = await import("#adapters/cli/ctx-assemble.js");
+    let scope: string | undefined;
+    let out: string | undefined;
+    let budget: number | undefined;
+    let cachePath: string | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--scope" && args.positional[i + 1]) {
+        scope = args.positional[++i];
+      } else if (p.startsWith("--scope=")) {
+        scope = p.slice("--scope=".length);
+      } else if (p === "--out" && args.positional[i + 1]) {
+        out = args.positional[++i];
+      } else if (p.startsWith("--out=")) {
+        out = p.slice("--out=".length);
+      } else if (p === "--budget" && args.positional[i + 1]) {
+        budget = parseInt(args.positional[++i], 10);
+      } else if (p.startsWith("--budget=")) {
+        budget = parseInt(p.slice("--budget=".length), 10);
+      } else if (p === "--cache-path" && args.positional[i + 1]) {
+        cachePath = args.positional[++i];
+      } else if (p.startsWith("--cache-path=")) {
+        cachePath = p.slice("--cache-path=".length);
+      }
+    }
+    const exitCode = runCtxAssemble({
+      json: args.flags.json,
+      scope,
+      out,
+      budget,
+      metaRepo: args.flags.metaRepo,
+      cachePath,
+    });
+    process.exit(exitCode);
   } else if (!subcommand) {
     process.stderr.write("Usage: dt ctx <subcommand>\n\n");
     process.stderr.write("Subcommands:\n");
