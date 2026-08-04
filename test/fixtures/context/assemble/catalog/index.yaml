@@ -1,0 +1,145 @@
+generated_at: "2024-01-15T10:00:00Z"
+generator: "dt@0.6.7"
+components:
+  - id: auth-service
+    name: Auth Service
+    description: Handles authentication and authorization
+    repo: https://github.com/acme/auth-service.git
+    type: service
+    domain: identity
+    owner: team-security
+    criticality: critical
+    lifecycle: active
+    stack:
+      - typescript
+      - express
+    aliases:
+      - auth
+      - login
+    provides:
+      - id: auth-api
+        kind: rest
+        source: manual
+        confidence: high
+      - id: auth-events
+        kind: async
+        source: inferred
+        confidence: medium
+    consumes:
+      - contract: user-api
+        criticality: high
+    datastores:
+      - auth-db
+    origin_sha: abc123
+  - id: user-service
+    name: User Service
+    description: Manages user profiles and accounts
+    repo: https://github.com/acme/user-service.git
+    type: service
+    domain: identity
+    owner: team-platform
+    criticality: high
+    lifecycle: active
+    stack:
+      - typescript
+      - nestjs
+    aliases:
+      - users
+      - profiles
+    provides:
+      - id: user-api
+        kind: rest
+        source: manual
+        confidence: high
+    consumes: []
+    datastores:
+      - user-db
+    origin_sha: def456
+  - id: notification-service
+    name: Notification Service
+    description: Sends notifications via email and push
+    repo: https://github.com/acme/notification-service.git
+    type: service
+    domain: messaging
+    owner: team-platform
+    criticality: medium
+    lifecycle: active
+    stack:
+      - python
+      - fastapi
+    aliases:
+      - notifier
+    provides:
+      - id: notification-api
+        kind: rest
+        source: inferred
+        confidence: low
+    consumes:
+      - contract: auth-events
+        criticality: medium
+    datastores: []
+    origin_sha: ghi789
+contracts:
+  auth-api:
+    provider: auth-service
+    kind: rest
+    consumers:
+      - user-service
+  auth-events:
+    provider: auth-service
+    kind: async
+    consumers:
+      - notification-service
+  user-api:
+    provider: user-service
+    kind: rest
+    consumers:
+      - auth-service
+  notification-api:
+    provider: notification-service
+    kind: rest
+    consumers: []
+domains:
+  - name: identity
+    components:
+      - auth-service
+      - user-service
+  - name: messaging
+    components:
+      - notification-service
+flows:
+  - id: user-login
+    name: User Login Flow
+    description: End-to-end user authentication flow
+    aliases:
+      - login-flow
+      - signin
+    participants:
+      - auth-service
+      - user-service
+      - notification-service
+extraction_quality:
+  total:
+    high: 10
+    medium: 5
+    low: 2
+  per_component:
+    - component_id: auth-service
+      counts:
+        high: 5
+        medium: 2
+        low: 1
+      unresolved: 0
+    - component_id: user-service
+      counts:
+        high: 3
+        medium: 2
+        low: 0
+      unresolved: 0
+    - component_id: notification-service
+      counts:
+        high: 2
+        medium: 1
+        low: 1
+      unresolved: 1
+errors: []

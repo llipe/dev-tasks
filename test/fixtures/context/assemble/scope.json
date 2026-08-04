@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "primary": ["auth-service", "user-service"],
+  "secondary": ["notification-service"],
+  "contracts_crossed": ["auth-api", "user-api"],
+  "confidence": "high",
+  "unresolved": [],
+  "rationale": "Login flow modifications require auth and user services.",
+  "flow": "user-login"
+}
