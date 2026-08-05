@@ -411,6 +411,22 @@ if (args.command === "extract") {
     concurrency,
   });
   process.exit(exitCode);
+} else if (args.command === "scope") {
+  // The scope command requires an LLM provider.
+  // Parse --task and --candidates to check usage, but actual execution needs a provider.
+  // Future: load provider from config/environment.
+  const _scopeImport = await import("#adapters/cli/scope.js");
+  void _scopeImport; // loaded to verify import works
+  const msg = "LLM provider not configured. Set DT_LLM_PROVIDER or pass --provider.";
+  if (args.flags.json) {
+    process.stdout.write(JSON.stringify({ error: msg }, null, 2) + "\n");
+  } else {
+    process.stderr.write(`Error: ${msg}\n`);
+    process.stderr.write(
+      'Usage: dt scope --task "<text>" --candidates <path> [--out <dir>] [--json]\n',
+    );
+  }
+  process.exit(ExitCode.ConfigurationError);
 } else {
   process.stderr.write(`Command '${args.command}' is not yet implemented.\n`);
   process.exit(ExitCode.GeneralError);

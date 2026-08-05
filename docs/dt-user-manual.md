@@ -48,6 +48,13 @@ Its core purpose: turn a repository into a machine-readable `component.json` man
 │   ├── assemble.ts        Layered budgeted bundle assembler
 │   ├── layers/            Per-layer renderers (index, flow, arch, docs, contracts)
 │   └── index.ts           Module barrel exports
+├── core/scope/            LLM-assisted scoping with schema validation (S-018+)
+│   ├── scoping.ts         Orchestrator (prompt → LLM → validate → repair retry)
+│   ├── prompt.ts          System prompt template + input assembler
+│   ├── validate.ts        Schema validation (ajv 2020-12) + post-schema id check
+│   ├── calibration.ts     Per-session calibration data recording
+│   ├── types.ts           Shared types (ScopeOutput, LlmScopeProvider, etc.)
+│   └── index.ts           Module barrel exports
 └── core/distribution/     Install, update, manifest, doctor
 ```
 
@@ -79,6 +86,7 @@ dt ctx fetch               # Sparse-clone repos and cache by SHA
 dt ctx gc                  # Run cache garbage collection
 dt ctx assemble            # Build layered, budgeted context bundle
 dt init                    # Initialize a context session (pin, freshness, assemble, lock)
+dt scope                   # LLM-assisted scoping (task → components, with repair retry)
 ```
 
 All commands accept `--json` for machine-readable output.
@@ -862,6 +870,159 @@ This flag exists for forward compatibility: when LLM scoping (Phase 4) is implem
 
 ---
 
+## `dt scope` — LLM-Assisted Component Scoping
+
+### What it does
+
+Given a task description and a set of candidate components (from `dt catalog resolve`), asks an LLM to select which components are affected. The response is schema-validated against `scope-output.schema.json`, and invented component IDs are rejected. If the first LLM response fails validation, a single repair retry is attempted with error context. A second failure exits with code 10.
+
+```bash
+dt scope --task "Add rate limiting to auth" --candidates resolve-output.json --meta-repo ./meta
+dt scope --task "Add rate limiting" --candidates candidates.json --meta-repo ./meta --json
+dt scope --task "Fix bug" --candidates c.json --meta-repo ./meta --skip-calibration
+```
+
+### How it works internally
+
+1. **Build constrained input** — assembles a scoping input containing *only* `task`, `candidates`, `flows`, and `domains`. The full catalog is never sent to the LLM. Candidates come from the `dt catalog resolve` step. Flows and domains are filtered to only those containing candidate components.
+
+2. **System prompt** — instructs the LLM to:
+   - Only choose from the provided candidates list (never invent IDs)
+   - Set confidence to `"low"` when ambiguous
+   - List any capability it cannot map to a candidate in `unresolved`
+   - Classify components as primary (need code change) or secondary (context only)
+   - Return raw JSON (no markdown wrapping)
+
+3. **LLM call** — sends the system prompt + serialized input to the configured LLM provider.
+
+4. **Parse and validate** — three-step validation:
+   - **JSON parsing** — strips markdown fences if present, parses JSON
+   - **Schema validation** — validates against `scope-output.schema.json` (enforces: `primary` 1–6 unique items, `secondary` ≤8, `rationale` ≤600 chars, valid `confidence` enum, `schemaVersion` semver, no additional properties)
+   - **Post-schema ID validation** — checks that every component ID in `primary` and `secondary` exists in either the candidates list or the full catalog index. Any "invented" ID triggers failure.
+
+5. **Repair retry** — on first validation failure:
+   - Sends a repair prompt containing the specific validation errors back to the LLM
+   - Validates the second response identically
+   - Second failure → returns failure result (caller exits 10)
+
+6. **Calibration recording** — on success, records a calibration entry to `.dev-tasks/calibration/` containing: proposed scope (primary/secondary IDs), confidence, unresolved items, timestamp, and task text hash. This data enables later precision/recall analysis.
+
+### Scope output structure
+
+The LLM must return a JSON object conforming to this schema:
+
+```json
+{
+  "schemaVersion": "1.0.0",
+  "primary": ["auth-service"],
+  "secondary": ["user-service"],
+  "contracts_crossed": ["auth-api"],
+  "confidence": "high",
+  "unresolved": [],
+  "rationale": "Auth service handles the login flow directly.",
+  "flow": "login-flow"
+}
+```
+
+| Field | Type | Required | Constraints |
+|-------|------|----------|-------------|
+| `schemaVersion` | string | Yes | Semver pattern `^[0-9]+\.[0-9]+\.[0-9]+$` |
+| `primary` | string[] | Yes | 1–6 unique items, non-empty strings |
+| `secondary` | string[] | Yes | 0–8 unique items |
+| `contracts_crossed` | string[] | Yes | Contract IDs touched by the task |
+| `confidence` | enum | Yes | `"high"`, `"medium"`, or `"low"` |
+| `unresolved` | string[] | Yes | Capabilities not mappable to candidates |
+| `rationale` | string | Yes | Max 600 characters |
+| `flow` | string | No | Optional flow ID |
+
+### LLM provider abstraction
+
+The scoping call is mediated through an `LlmScopeProvider` interface:
+
+```typescript
+interface LlmScopeProvider {
+  scopeCall(systemPrompt: string, userInput: string): Promise<string>;
+}
+```
+
+This enables mock providers for testing and supports any LLM backend that can return raw text.
+
+### Calibration data
+
+Each successful scoping session writes a calibration record:
+
+```json
+{
+  "timestamp": "2026-07-28T10:00:00.000Z",
+  "taskTextHash": "a1b2c3d4e5f67890",
+  "primary": ["auth-service"],
+  "secondary": ["user-service"],
+  "confidence": "high",
+  "unresolved": []
+}
+```
+
+Filenames use the pattern `<timestamp-millis>-<task-hash>.json`. The calibration directory can be analyzed to evaluate scoping accuracy over time.
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--task "<text>"` | Required. The task description |
+| `--candidates <path>` | Required. Path to the resolve output JSON (array of `ResolveCandidate`) |
+| `--meta-repo <path>` | Path to the meta-repo (default: current directory) |
+| `--out <dir>` | Output directory for calibration data (default: current directory) |
+| `--skip-calibration` | Skip writing calibration data |
+| `--json` | Machine-readable output |
+
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success — scope determined and validated |
+| 2 | Invalid usage — missing required flags |
+| 5 | Not found — candidates file or catalog index not found |
+| 10 | Invalid scope — validation failed after repair retry |
+| 11 | No candidates — resolve output is empty |
+
+### JSON output (success)
+
+```json
+{
+  "success": true,
+  "scope": {
+    "schemaVersion": "1.0.0",
+    "primary": ["auth-service"],
+    "secondary": ["user-service"],
+    "contracts_crossed": ["auth-api"],
+    "confidence": "high",
+    "unresolved": [],
+    "rationale": "Auth service handles the login flow directly."
+  },
+  "repair_attempted": false,
+  "calibration_path": "/path/to/.dev-tasks/calibration/1722160800000-a1b2c3d4.json"
+}
+```
+
+### JSON output (failure)
+
+```json
+{
+  "error": "Invalid scope after retry",
+  "errors": ["Invented component id \"fake-service\" is not in candidates or index"],
+  "repair_attempted": true
+}
+```
+
+### What it does NOT do
+
+- Does not expand scope via graph closure (that's the job of `dt scope gate`, planned in S-019)
+- Does not run gate rules (G1–G7) — those are a separate post-scoping step
+- Does not fetch or assemble context — it's purely a selection step
+- Does not require real LLM connectivity for testing — the provider interface enables full unit/integration testing with mocks
+
+---
+
 ## `dt extract all` — Full Pipeline
 
 Orchestrates the complete extraction in order:
@@ -1042,6 +1203,6 @@ git commit -m "feat: add component manifest via dt extract"
 | Phase 1 | Extraction (`dt extract *`) | Done |
 | Phase 2 | Catalog — cross-repo aggregation + validation | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped) |
 | Phase 3 | Context — sparse-fetch + budget-aware bundle assembly + session init | Done (`dt ctx fetch/gc/assemble` + `dt init --components` shipped) |
-| Phase 4 | Scoping — LLM-assisted component selection per task | Planned |
+| Phase 4 | Scoping — LLM-assisted component selection per task | In Progress (`dt scope` shipped; closure + gate planned) |
 | Phase 5 | Verify — contract diff + impact analysis | Planned |
 | Phase 6 | MCP adapter — expose as agent tools | Planned |
