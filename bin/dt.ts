@@ -363,9 +363,12 @@ if (args.command === "extract") {
   }
 } else if (args.command === "init") {
   const { runInit } = await import("#adapters/cli/init.js");
-  // Parse --components, --max-index-age, --no-llm, --out, --budget, --concurrency
+  // Parse --task, --components, --max-index-age, --max-components, --flow, --no-llm, --out, --budget, --concurrency
+  let task: string | undefined;
   let components: string | undefined;
   let maxIndexAge: number | undefined;
+  let maxComponents: number | undefined;
+  let flow: string | undefined;
   let noLlm = false;
   let out: string | undefined;
   let budget: number | undefined;
@@ -373,10 +376,16 @@ if (args.command === "extract") {
   for (const p of args.positional) {
     if (p === "--no-llm") {
       noLlm = true;
+    } else if (p.startsWith("--task=")) {
+      task = p.slice("--task=".length);
     } else if (p.startsWith("--components=")) {
       components = p.slice("--components=".length);
     } else if (p.startsWith("--max-index-age=")) {
       maxIndexAge = parseInt(p.slice("--max-index-age=".length), 10);
+    } else if (p.startsWith("--max-components=")) {
+      maxComponents = parseInt(p.slice("--max-components=".length), 10);
+    } else if (p.startsWith("--flow=")) {
+      flow = p.slice("--flow=".length);
     } else if (p.startsWith("--out=")) {
       out = p.slice("--out=".length);
     } else if (p.startsWith("--budget=")) {
@@ -388,10 +397,16 @@ if (args.command === "extract") {
   // Handle --key value style
   for (let i = 0; i < args.positional.length; i++) {
     const p = args.positional[i];
-    if (p === "--components" && args.positional[i + 1]) {
+    if (p === "--task" && args.positional[i + 1]) {
+      task = args.positional[++i];
+    } else if (p === "--components" && args.positional[i + 1]) {
       components = args.positional[++i];
     } else if (p === "--max-index-age" && args.positional[i + 1]) {
       maxIndexAge = parseInt(args.positional[++i], 10);
+    } else if (p === "--max-components" && args.positional[i + 1]) {
+      maxComponents = parseInt(args.positional[++i], 10);
+    } else if (p === "--flow" && args.positional[i + 1]) {
+      flow = args.positional[++i];
     } else if (p === "--out" && args.positional[i + 1]) {
       out = args.positional[++i];
     } else if (p === "--budget" && args.positional[i + 1]) {
@@ -402,9 +417,12 @@ if (args.command === "extract") {
   }
   const exitCode = await runInit({
     json: args.flags.json,
+    task,
     components,
     metaRepo: args.flags.metaRepo,
     maxIndexAge,
+    maxComponents,
+    flow,
     noLlm,
     out,
     budget,
