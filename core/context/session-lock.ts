@@ -5,7 +5,7 @@
  * - task_hash: SHA-256 of the task text or component list
  * - meta_repo_sha: pinned meta-repo commit SHA
  * - index_age_minutes: age of the catalog index at init time
- * - scope: component ids and source ("manual" or "llm")
+ * - scope: component ids, primary/secondary split, source, confidence, review_flags
  * - repo_shas: per-repo pinned SHAs used during fetch
  * - bundle: file paths, per-file SHA-256, and token counts
  *
@@ -20,9 +20,17 @@ import type { BundleManifest, BundleFileEntry } from "./assemble.js";
 
 /* ─── Types ───────────────────────────────────────────────────────────── */
 
+/** A review flag surfaced by the gate (G5-G7). */
+export interface ReviewFlag {
+  rule: string;
+  message: string;
+}
+
 export interface SessionLock {
   /** SHA-256 hash of the task text or component list that produced this session */
   task_hash: string;
+  /** Original task text (when --task was used) */
+  task_text?: string;
   /** Pinned meta-repo git SHA */
   meta_repo_sha: string;
   /** Age of the catalog index (in minutes) at the time of init */
@@ -37,13 +45,25 @@ export interface SessionLock {
   total_tokens: number;
   /** Timestamp of session creation (ISO 8601) */
   created_at: string;
+  /** Review flags from the gate (G5-G7 soft warnings). Empty array if none. */
+  review_flags: ReviewFlag[];
 }
 
 export interface SessionScope {
-  /** Component ids in scope */
+  /** Component ids in scope (all = primary + secondary, for backward compat) */
   components: string[];
-  /** Source of scope: "manual" (from --components) or "llm" */
+  /** Source of scope: "manual" (from --components) or "llm" (from --task) */
   source: "manual" | "llm";
+  /** Primary components (need code changes). Present when source = "llm". */
+  primary?: string[];
+  /** Secondary components (context only). Present when source = "llm". */
+  secondary?: string[];
+  /** Contracts crossed by the scope boundary. */
+  contracts_crossed?: string[];
+  /** Scoping confidence from the LLM. Present when source = "llm". */
+  confidence?: "high" | "medium" | "low";
+  /** Flow id if the scope was flow-guided. */
+  flow?: string;
 }
 
 export interface SessionBundleEntry {
@@ -67,16 +87,47 @@ export function computeTaskHash(components: string[]): string {
 }
 
 /**
- * Build a SessionLock from the assembled bundle and session metadata.
+ * Compute task hash from task text (LLM scope).
+ * Deterministic: SHA-256 of the raw task text.
  */
-export function buildSessionLock(params: {
+export function computeTaskHashFromText(taskText: string): string {
+  return createHash("sha256").update(taskText, "utf-8").digest("hex");
+}
+
+/**
+ * Parameters for building a session lock from the manual-scope pipeline.
+ */
+export interface BuildSessionLockParams {
   components: string[];
   source: "manual" | "llm";
   metaRepoSha: string;
   indexAgeMinutes: number;
   repoShas: Record<string, string>;
   bundleManifest: BundleManifest;
-}): SessionLock {
+}
+
+/**
+ * Extended parameters for building a session lock from the --task pipeline.
+ */
+export interface BuildSessionLockWithTaskParams extends BuildSessionLockParams {
+  taskText: string;
+  primary: string[];
+  secondary: string[];
+  contractsCrossed: string[];
+  confidence: "high" | "medium" | "low";
+  flow?: string;
+  reviewFlags: ReviewFlag[];
+}
+
+/**
+ * Build a SessionLock from the assembled bundle and session metadata.
+ * Supports both manual scope (backward compat) and LLM scope (extended fields).
+ */
+export function buildSessionLock(params: BuildSessionLockParams): SessionLock;
+export function buildSessionLock(params: BuildSessionLockWithTaskParams): SessionLock;
+export function buildSessionLock(
+  params: BuildSessionLockParams | BuildSessionLockWithTaskParams,
+): SessionLock {
   const { components, source, metaRepoSha, indexAgeMinutes, repoShas, bundleManifest } = params;
 
   const bundle: SessionBundleEntry[] = bundleManifest.files.map((f: BundleFileEntry) => ({
@@ -85,18 +136,39 @@ export function buildSessionLock(params: {
     tokens: f.tokens,
   }));
 
+  const isTaskParams = "taskText" in params;
+
+  const taskHash = isTaskParams
+    ? computeTaskHashFromText(params.taskText)
+    : computeTaskHash(components);
+
+  const scope: SessionScope = {
+    components: [...components].sort(),
+    source,
+  };
+
+  // Add LLM-specific scope fields when available
+  if (isTaskParams) {
+    scope.primary = params.primary;
+    scope.secondary = params.secondary;
+    scope.contracts_crossed = params.contractsCrossed;
+    scope.confidence = params.confidence;
+    if (params.flow) {
+      scope.flow = params.flow;
+    }
+  }
+
   return {
-    task_hash: computeTaskHash(components),
+    task_hash: taskHash,
+    task_text: isTaskParams ? params.taskText : undefined,
     meta_repo_sha: metaRepoSha,
     index_age_minutes: indexAgeMinutes,
-    scope: {
-      components: [...components].sort(),
-      source,
-    },
+    scope,
     repo_shas: repoShas,
     bundle,
     total_tokens: bundleManifest.totalTokens,
     created_at: new Date().toISOString(),
+    review_flags: isTaskParams ? params.reviewFlags : [],
   };
 }
 

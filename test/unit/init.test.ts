@@ -398,6 +398,7 @@ describe("writeSessionLock / readSessionLock", () => {
       bundle: [{ filename: "00-index.md", sha256: "hash1", tokens: 100 }],
       total_tokens: 100,
       created_at: "2024-01-15T10:00:00.000Z",
+      review_flags: [],
     };
 
     const path = writeSessionLock(tmpDir, lock);
@@ -418,6 +419,7 @@ describe("writeSessionLock / readSessionLock", () => {
       bundle: [],
       total_tokens: 0,
       created_at: "2024-01-01T00:00:00.000Z",
+      review_flags: [],
     };
 
     writeSessionLock(tmpDir, lock);
