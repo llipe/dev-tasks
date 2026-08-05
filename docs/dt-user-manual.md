@@ -1016,10 +1016,131 @@ Filenames use the pattern `<timestamp-millis>-<task-hash>.json`. The calibration
 
 ### What it does NOT do
 
-- Does not expand scope via graph closure (that's the job of `dt scope gate`, planned in S-019)
-- Does not run gate rules (G1–G7) — those are a separate post-scoping step
+- Does not expand scope via graph closure — use `dt scope gate` for that (see below)
+- Does not run gate rules (G1–G7) — those are in `dt scope gate`
 - Does not fetch or assemble context — it's purely a selection step
 - Does not require real LLM connectivity for testing — the provider interface enables full unit/integration testing with mocks
+
+---
+
+## `dt scope gate` — Graph Closure Expansion and Gate Rules
+
+### What it does
+
+Takes a scope output (from `dt scope`) and:
+1. Expands it via graph closure — adding consumers of crossed contracts and flow neighbors to `secondary`
+2. Runs gate rules G1-G7 to validate the expanded scope
+3. If G1 triggers (too many components), generates a partition proposal with producer-before-consumer ordering
+
+This ensures over-broad or ambiguous scopes are caught before tokens are spent on context assembly.
+
+```bash
+dt scope gate --scope scope.json --meta-repo ./meta
+dt scope gate --scope scope.json --meta-repo ./meta --max-components 6 --json
+```
+
+### How it works internally
+
+#### Step 1: Graph closure expansion
+
+Starting from the LLM scope output:
+
+1. **Add contract consumers** — for each contract in `contracts_crossed`, add its consumers (from the catalog's inverted consumer index) to `secondary`. Also add the provider if not already in scope.
+2. **Add flow neighbors** — if the scope specifies a `flow`, add all flow participants not already in scope to `secondary`.
+3. **Deduplicate** — if a component appears in both `primary` (from LLM) and would be added by closure, primary wins. No duplicates in secondary.
+4. **Source tagging** — every component is tagged with its source: `"llm"` (selected by the LLM) or `"closure"` (added by graph expansion).
+
+#### Step 2: Gate rules
+
+Gates are classified as **abort** (G1-G4, exit 7) or **review** (G5-G7, continue with flags):
+
+| Rule | Condition | Action |
+|------|-----------|--------|
+| G1 | Total components > `--max-components` (default 4) | **Abort** with partition proposal |
+| G2 | `confidence: low` | **Abort** — task is too ambiguous |
+| G3 | Non-empty `unresolved` list | **Abort** — unmapped capabilities |
+| G4 | Component in scope has no catalog entry | **Abort** — incomplete catalog |
+| G5 | LLM primary is isolated from graph | **Review flag** — verify inclusion |
+| G6 | Scope spans >2 domains | **Review flag** — coordination risk |
+| G7 | Boundary contract has `payload_confidence: low` | **Review flag** — false positive risk |
+
+Abort gates are evaluated in order (G1 first). The first abort stops evaluation. Review gates accumulate independently.
+
+#### Step 3: Partition proposal (G1 only)
+
+When G1 aborts, a partition proposal is generated:
+
+1. **Group by domain** — components are grouped by their domain field
+2. **Score producers** — components are scored by how many in-scope components consume their contracts
+3. **Order** — domains with higher aggregate producer scores come first; within each domain, higher-scoring producers come first
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--scope <path>` | Required. Path to the scope JSON file (output from `dt scope`) |
+| `--meta-repo <path>` | Path to the meta-repo (default: current directory) |
+| `--max-components <n>` | Maximum total components before G1 abort (default: 4) |
+| `--json` | Machine-readable output |
+
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | All gates passed |
+| 2 | Invalid usage — missing required flags |
+| 5 | Not found — scope file or catalog index not found |
+| 7 | Gate abort — G1/G2/G3/G4 triggered (distinct from error) |
+
+### JSON output (success)
+
+```json
+{
+  "passed": true,
+  "closure": {
+    "primary": ["auth-service"],
+    "secondary": ["user-service", "billing-service"],
+    "source_map": {
+      "auth-service": "llm",
+      "user-service": "closure",
+      "billing-service": "closure"
+    }
+  },
+  "review_flags": [
+    { "rule": "G6", "message": "Scope spans 3 domains..." }
+  ]
+}
+```
+
+### JSON output (G1 abort with partition proposal)
+
+```json
+{
+  "passed": false,
+  "abort_reason": "Total components (5) exceeds maximum (4). Consider splitting the task.",
+  "abort_rule": "G1",
+  "review_flags": [],
+  "closure": {
+    "primary": ["auth-service", "user-service"],
+    "secondary": ["billing-service", "notif-service", "email-service"],
+    "source_map": { ... }
+  },
+  "partition_proposal": {
+    "partitions": [
+      { "label": "identity: auth-service, user-service", "components": ["auth-service", "user-service"], "domain": "identity", "order": 0 },
+      { "label": "payments: billing-service", "components": ["billing-service"], "domain": "payments", "order": 1 }
+    ],
+    "rationale": "Scope spans 3 domains with 5 total components. Suggested split: implement each domain group as a separate task, starting with producer domains."
+  }
+}
+```
+
+### Design decisions
+
+- **Exit 7 is not an error** — it's a system decision. The scope is valid but too broad for a single context session.
+- **G5 uses graph isolation** — a component is flagged if it has no contract or flow relationship with any other scope member. This catches LLM hallucinations that passed id validation but are semantically irrelevant.
+- **G7 prevents false positives** — low-payload contracts lack reliable schema information, so breaking-change detection (Phase 6) would produce unreliable results.
+- **Partition ordering is producer-first** — this ensures that when tasks are split, the provider implements its contract changes before consumers adapt to them.
 
 ---
 
@@ -1203,6 +1324,6 @@ git commit -m "feat: add component manifest via dt extract"
 | Phase 1 | Extraction (`dt extract *`) | Done |
 | Phase 2 | Catalog — cross-repo aggregation + validation | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped) |
 | Phase 3 | Context — sparse-fetch + budget-aware bundle assembly + session init | Done (`dt ctx fetch/gc/assemble` + `dt init --components` shipped) |
-| Phase 4 | Scoping — LLM-assisted component selection per task | In Progress (`dt scope` shipped; closure + gate planned) |
+| Phase 4 | Scoping — LLM-assisted component selection per task | In Progress (`dt scope` + `dt scope gate` shipped; full `dt init --task` planned) |
 | Phase 5 | Verify — contract diff + impact analysis | Planned |
 | Phase 6 | MCP adapter — expose as agent tools | Planned |

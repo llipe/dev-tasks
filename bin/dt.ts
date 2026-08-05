@@ -412,7 +412,33 @@ if (args.command === "extract") {
   });
   process.exit(exitCode);
 } else if (args.command === "scope") {
-  // The scope command requires an LLM provider.
+  const subcommand = args.positional[0];
+  if (subcommand === "gate") {
+    const { runScopeGate } = await import("#adapters/cli/scope-gate.js");
+    // Parse --scope, --max-components from remaining positional/flags
+    let scopePath: string | undefined;
+    let maxComponents: number | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--scope" && args.positional[i + 1]) {
+        scopePath = args.positional[++i];
+      } else if (p.startsWith("--scope=")) {
+        scopePath = p.slice("--scope=".length);
+      } else if (p === "--max-components" && args.positional[i + 1]) {
+        maxComponents = parseInt(args.positional[++i], 10);
+      } else if (p.startsWith("--max-components=")) {
+        maxComponents = parseInt(p.slice("--max-components=".length), 10);
+      }
+    }
+    const exitCode = runScopeGate({
+      json: args.flags.json,
+      scope: scopePath,
+      metaRepo: args.flags.metaRepo,
+      maxComponents,
+    });
+    process.exit(exitCode);
+  }
+  // The scope command (without subcommand) requires an LLM provider.
   // Parse --task and --candidates to check usage, but actual execution needs a provider.
   // Future: load provider from config/environment.
   const _scopeImport = await import("#adapters/cli/scope.js");
@@ -425,6 +451,7 @@ if (args.command === "extract") {
     process.stderr.write(
       'Usage: dt scope --task "<text>" --candidates <path> [--out <dir>] [--json]\n',
     );
+    process.stderr.write("       dt scope gate --scope <path> [--max-components 4] [--json]\n");
   }
   process.exit(ExitCode.ConfigurationError);
 } else {
