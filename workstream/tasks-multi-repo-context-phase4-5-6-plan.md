@@ -198,26 +198,26 @@
   - [x] 7.15 Verify Acceptance Criterion: runs on component-repo PRs when contracts/ changed
   - [x] 7.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
-- [ ] 8.0 Implement Story S-025 - https://github.com/llipe/dev-tasks/issues/61: dt verify impact and dt verify drift
+- [x] 8.0 Implement Story S-025 - https://github.com/llipe/dev-tasks/issues/61: dt verify impact and dt verify drift
 
   > Impact lists affected consumers with criticality. Drift flags stale docs as a prioritization signal. Both support --json.
 
-  - [ ] 8.1 Implement `core/verify/impact.ts` — `impact --contract <id>`: read the inverted consumer index from the catalog; return list of consumers with each consumer's `criticality` field
-  - [ ] 8.2 Implement `--emit-tasks` option: when enabled, produce per-consumer derived task descriptions via the tracker provider interface; emit as structured output
-  - [ ] 8.3 Implement `core/providers/tracker.ts` — tracker provider interface stub: define `createTask(component_id, contract_id, change_summary): TaskRef`; implement a no-op/mock provider that logs but does nothing; document that the real implementation comes from the Platform Providers spec
-  - [ ] 8.4 Implement graceful degradation for `--emit-tasks`: when the tracker provider is unavailable (no config, no connection), skip task emission with a warning; do not fail
-  - [ ] 8.5 Implement `core/verify/drift.ts` — `drift [--id <component-id>] [--threshold <days>]`: compute a docs/code recency heuristic:
-    - [ ] 8.5.1 For each component, compare last-modified date of `paths.source` files vs. `docs.root` files via `git log --format=%at -1 <path>`
-    - [ ] 8.5.2 Compute the gap in days; report as a prioritization signal ("likely stale" if gap > threshold)
-    - [ ] 8.5.3 Emphasize in output that drift is a heuristic, not a proof
-  - [ ] 8.6 Wire `dt verify impact --contract <id> [--emit-tasks] [--json]` CLI command
-  - [ ] 8.7 Wire `dt verify drift [--id <component-id>] [--threshold 30] [--json]` CLI command
-  - [ ] 8.8 Write unit tests: consumer lookup from inverted index + criticality extraction; drift heuristic computation (mock git log dates); tracker provider interface mock
-  - [ ] 8.9 Write integration tests: impact over a fixture catalog → expected consumer list with criticality; `--emit-tasks` with mock provider → task descriptions emitted; drift over fixture → expected staleness report
-  - [ ] 8.10 Write edge-case tests: contract with no consumers → empty list; provider unavailable → graceful skip with warning; threshold boundary (exactly at/above threshold); component with no docs path → skip drift for that component
-  - [ ] 8.11 Verify Acceptance Criterion: impact lists consumers with criticality
-  - [ ] 8.12 Verify Acceptance Criterion: --emit-tasks produces per-consumer derived tasks
-  - [ ] 8.13 Verify Acceptance Criterion: drift computes recency heuristic, reports as signal not proof
-  - [ ] 8.14 Verify Acceptance Criterion: both support --json
-  - [ ] 8.15 Verify Acceptance Criterion: --emit-tasks degrades gracefully when provider unavailable
-  - [ ] 8.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+  - [x] 8.1 Implement `core/verify/impact.ts` — `impact --contract <id>`: read the inverted consumer index from the catalog; return list of consumers with each consumer's `criticality` field
+  - [x] 8.2 Implement `--emit-tasks` option: when enabled, produce per-consumer derived task descriptions via the tracker provider interface; emit as structured output
+  - [x] 8.3 Implement `core/providers/tracker.ts` — tracker provider interface stub: define `createTask(component_id, contract_id, change_summary): TaskRef`; implement a no-op/mock provider that logs but does nothing; document that the real implementation comes from the Platform Providers spec
+  - [x] 8.4 Implement graceful degradation for `--emit-tasks`: when the tracker provider is unavailable (no config, no connection), skip task emission with a warning; do not fail
+  - [x] 8.5 Implement `core/verify/drift.ts` — `drift [--id <component-id>] [--threshold <days>]`: compute a docs/code recency heuristic:
+    - [x] 8.5.1 For each component, compare last-modified date of `paths.source` files vs. `docs.root` files via `git log --format=%at -1 <path>`
+    - [x] 8.5.2 Compute the gap in days; report as a prioritization signal ("likely stale" if gap > threshold)
+    - [x] 8.5.3 Emphasize in output that drift is a heuristic, not a proof
+  - [x] 8.6 Wire `dt verify impact --contract <id> [--emit-tasks] [--json]` CLI command
+  - [x] 8.7 Wire `dt verify drift [--id <component-id>] [--threshold 30] [--json]` CLI command
+  - [x] 8.8 Write unit tests: consumer lookup from inverted index + criticality extraction; drift heuristic computation (mock git log dates); tracker provider interface mock
+  - [x] 8.9 Write integration tests: impact over a fixture catalog → expected consumer list with criticality; `--emit-tasks` with mock provider → task descriptions emitted; drift over fixture → expected staleness report
+  - [x] 8.10 Write edge-case tests: contract with no consumers → empty list; provider unavailable → graceful skip with warning; threshold boundary (exactly at/above threshold); component with no docs path → skip drift for that component
+  - [x] 8.11 Verify Acceptance Criterion: impact lists consumers with criticality
+  - [x] 8.12 Verify Acceptance Criterion: --emit-tasks produces per-consumer derived tasks
+  - [x] 8.13 Verify Acceptance Criterion: drift computes recency heuristic, reports as signal not proof
+  - [x] 8.14 Verify Acceptance Criterion: both support --json
+  - [x] 8.15 Verify Acceptance Criterion: --emit-tasks degrades gracefully when provider unavailable
+  - [x] 8.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
