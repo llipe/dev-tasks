@@ -59,5 +59,13 @@ developer/planner: implement (feature + tests from test plan)
 ## Project Initialization
 
 ```text
-product-engineer (init mode): activity-init → product-context.md + technical-guidelines.md
+product-engineer (init mode): activity-init
+                                  ↓
+                    detect mode: component.json? → multi-repo
+                                /docs?           → mono-repo
+                                neither?         → greenfield
+                                  ↓
+    multi-repo:   dt init --task --json → bundle → interview → product-context.md + technical-guidelines.md
+    mono-repo:    interview → product-context.md + technical-guidelines.md
+    greenfield:   dt extract detect → dt extract all --interactive → interview → product-context.md + technical-guidelines.md
 ```
