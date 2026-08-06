@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-08-06
+
+### Added
+
+- feat: implement dt verify impact and dt verify drift
+- feat(verify): mark S-024 contract-diff story complete
+- feat(verify): implement dt verify contract-diff (OpenAPI + AsyncAPI breaking-change detection)
+- feat(agents): add cross-repo partitioning with contract-as-interface (RF-63)
+- feat(agents): add architecture-change task type with meta-repo write authority
+- feat(init-skill): rewrite with mono/multi/greenfield mode detection
+- feat: implement full dt init --task orchestration pipeline (S-020)
+- feat(scope): add graph closure expansion, gate rules G1-G7, and partition proposal
+- feat(scope): implement LLM scoping step with schema validation and repair retry
+- feat: implement dt init --components (S-017)
+- feat(ctx): implement dt ctx assemble — layered budgeted deterministic bundle
+- feat(ctx): implement sparse-clone fetch with SHA-keyed cache and LRU GC
+- feat: implement meta-repo scaffold and CI rebuild templates
+- feat(catalog): implement catalog query and routing commands (S-013) Implements dt catalog resolve, get, deps, consumers, flow, closure, and coverage subcommands with full --json support. - core/catalog/resolve.ts: text normalization (lowercase, de-accent, light es/en stemming, stopword removal) and weighted lexical scorer (exact id 100, alias 80, flow alias 75, domain 60, alias-token 40, name/desc 25) - core/catalog/queries.ts: graph reads (get, deps with depth/direction, consumers, flow, closure with include-consumers/max cap) - core/catalog/coverage.ts: extraction quality aggregation per component - adapters/cli/catalog-query.ts: CLI handler for all query subcommands - FlowEntry model extended with optional aliases field - Flow fixture files updated with aliases for routing tests Refs #46
+- feat(catalog): implement dt catalog validate with V01-V19 checks Implements referential integrity and structural validation checks per spec §6.2. Errors (V01-V11, V14-V15, V19) abort with exit 4; warnings (V12-V13, V16-V18) do not. Under --strict, V12 cycle warnings become errors. Supports allowed_cycles config. Closes #45
+- feat(catalog): support component.yaml in addition to component.json Build now looks for component.json first, then falls back to component.yaml. This matches the spec's mention of component.yaml while preserving backward compat with JSON format.
+- feat(catalog): implement dt catalog build — aggregate manifests and generate index Implements Story S-011 (#43): - Define CatalogIndex types in core/catalog/index-model.ts - Implement registry parsing, manifest fetching, and mirroring - Build inverted consumer index from provides/consumes - Tally extraction quality from provenance fields - Aggregate domains and flows from manifests and catalog/flows/ - Generate deterministic catalog/index.yaml (sorted keys, stable order) - Implement idempotent write (skip when nothing changed) - Handle single repo failure: record in errors[], exit 3 - Detect duplicate component IDs across repos - Wire dt catalog build --registry <path> [--concurrency] [--json] CLI - Add 20-component fixture registry with diverse scenarios - Add yaml@2.7.1 dependency for YAML serialization Closes #43
+- feat(catalog): add JSON Schemas and dt validate-component Adds component.schema.json, flow.schema.json, and scope-output.schema.json (JSON Schema draft 2020-12) plus a local validate-component module using ajv's Ajv2020 class. Wires dt validate-component <path> with human and --json output, exit 0/4. No network access required. Refs #42
+
+### Fixed
+
+- fix(deps): resolve audit vulnerabilities in brace-expansion and fast-uri
+- fix(deps): upgrade yaml to 2.8.3 to resolve GHSA-48c2-rrv3-qjmp
+
+### Changed
+
+- docs: fix markdown table alignment in skill documentation
+- test: add integration tests for dt verify contract-diff
+- docs: mark S-025 story (dt verify impact and drift) complete
+- Merge pull request #117 from llipe:issue/61-dt-verify-impact-drift
+- Merge pull request #116 from llipe:issue/60-dt-verify-contract-diff
+- doc: prd for knowledge transfer
+- Merge pull request #115 from llipe:issue/57-cross-repo-partitioning
+- Merge pull request #114 from llipe:issue/59-architecture-change-task-type
+- Merge pull request #113 from llipe:issue/56-init-skill-mode-detection
+- docs: update workflow-chains and AGENTS.md for init mode detection
+- Merge pull request #112 from llipe:issue/54-full-dt-init-orchestration
+- docs: update dt user manual with --task pipeline documentation (S-020)
+- chore: start issue #54 — full dt init orchestration (S-020)
+- Merge pull request #111 from llipe:issue/55-scope-gate-closure
+- docs: add dt scope gate documentation to user manual
+- Merge pull request #109 from llipe:issue/52-llm-scoping-step
+- docs: add dt scope command and calibration records to user manual
+- Merge pull request #107 from llipe:issue/51-dt-init-components
+- docs: add dt init --components to user manual
+- Merge pull request #106 from llipe:issue/49-ctx-assemble
+- docs: add dt ctx assemble section to user manual
+- Merge pull request #105 from llipe:issue/48-ctx-fetch-sparse-cache
+- docs: add dt ctx fetch and dt ctx gc to user manual
+- test(fixtures): add mixed-format registry fixture for catalog tests
+- docs: add dt catalog scaffold and CI rebuild to user manual
+- Merge pull request #104 from llipe:issue/47-meta-repo-scaffold-ci-rebuild
+- test: add edge-case tests for catalog scaffold
+- Merge pull request #99 from llipe:story/S-013-catalog-query-routing
+- Merge pull request #98 from llipe:issue/45-catalog-validate
+- test(catalog): add edge-case tests for V12 cycles and V13/V16 warnings
+- test(fixtures): add comprehensive component catalog test fixtures
+- Merge pull request #97 from llipe:story/S-011-catalog-build
+- docs: add artifact format and authorship reference
+- revert(catalog): drop component.yaml fallback, standardize on component.json
+- Merge pull request #96 from llipe:issue/42-json-schemas-validate-component
+- docs: document dt validate-component in README
+- chore(workstream): archive completed npm install distribution task
+
 ## [0.6.7] - 2026-07-31
 
 ### Changed
