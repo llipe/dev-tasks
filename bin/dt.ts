@@ -472,6 +472,42 @@ if (args.command === "extract") {
     process.stderr.write("       dt scope gate --scope <path> [--max-components 4] [--json]\n");
   }
   process.exit(ExitCode.ConfigurationError);
+} else if (args.command === "verify") {
+  const subcommand = args.positional[0];
+  if (subcommand === "contract-diff") {
+    const { runVerifyContractDiff } = await import("#adapters/cli/verify-contract-diff.js");
+    // Parse --base and --head from remaining positional args
+    let basePath: string | undefined;
+    let headPath: string | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--base" && args.positional[i + 1]) {
+        basePath = args.positional[++i];
+      } else if (p.startsWith("--base=")) {
+        basePath = p.slice("--base=".length);
+      } else if (p === "--head" && args.positional[i + 1]) {
+        headPath = args.positional[++i];
+      } else if (p.startsWith("--head=")) {
+        headPath = p.slice("--head=".length);
+      }
+    }
+    const exitCode = runVerifyContractDiff({
+      basePath,
+      headPath,
+      json: args.flags.json,
+    });
+    process.exit(exitCode);
+  } else if (!subcommand) {
+    process.stderr.write("Usage: dt verify <subcommand>\n\n");
+    process.stderr.write("Subcommands:\n");
+    process.stderr.write(
+      "  contract-diff  Detect breaking changes in OpenAPI/AsyncAPI contracts\n",
+    );
+    process.exit(ExitCode.InvalidUsage);
+  } else {
+    process.stderr.write(`Subcommand 'verify ${subcommand}' is not yet implemented.\n`);
+    process.exit(ExitCode.GeneralError);
+  }
 } else {
   process.stderr.write(`Command '${args.command}' is not yet implemented.\n`);
   process.exit(ExitCode.GeneralError);

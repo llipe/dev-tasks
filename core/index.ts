@@ -14,3 +14,4 @@ export * as extract from "./extract/index.js";
 export * as context from "./context/index.js";
 export * as scope from "./scope/index.js";
 export * as providers from "./providers/index.js";
+export * as verify from "./verify/index.js";
