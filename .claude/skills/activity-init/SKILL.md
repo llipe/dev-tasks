@@ -57,14 +57,14 @@ When `component.json` is present at the repo root, the skill **MUST** delegate a
 1. **Invoke `dt init --task "<user's task/product description>" --json`**.
 2. **Handle exit codes:**
 
-   | Exit Code | Meaning                        | Action                                                                                                                                                     |
-   | --------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `0`       | Success — bundle emitted       | Load bundle files in numeric order. Present `review_flags` (if any) to the user before proceeding to planning. Continue to the interview for product context and technical guidelines using the bundle as input. |
-   | `7`       | Gate abort — partition proposal | Present the partition proposal to the user. Explain that the scope is too broad and needs to be split. **Stop** — do not proceed to planning.               |
-   | `9`       | Stale catalog index            | Inform the user that the catalog index is stale and needs to be rebuilt (e.g., `dt catalog build`). **Stop** — do not proceed.                             |
-   | `10`      | Invalid scope after LLM retry  | Inform the user that automatic scoping failed. Suggest running with `--components` for manual scope. **Stop.**                                             |
-   | `11`      | No candidates found            | Inform the user that no components matched the task description. Suggest refining the task text or using `--components`. **Stop.**                          |
-   | `6`       | Budget overflow                | Inform the user that the scoped context exceeds the token budget. Suggest narrowing scope with `--max-components` or `--budget`. **Stop.**                 |
+   | Exit Code | Meaning                         | Action                                                                                                                                                                                                           |
+   | --------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `0`       | Success — bundle emitted        | Load bundle files in numeric order. Present `review_flags` (if any) to the user before proceeding to planning. Continue to the interview for product context and technical guidelines using the bundle as input. |
+   | `7`       | Gate abort — partition proposal | Present the partition proposal to the user. Explain that the scope is too broad and needs to be split. **Stop** — do not proceed to planning.                                                                    |
+   | `9`       | Stale catalog index             | Inform the user that the catalog index is stale and needs to be rebuilt (e.g., `dt catalog build`). **Stop** — do not proceed.                                                                                   |
+   | `10`      | Invalid scope after LLM retry   | Inform the user that automatic scoping failed. Suggest running with `--components` for manual scope. **Stop.**                                                                                                   |
+   | `11`      | No candidates found             | Inform the user that no components matched the task description. Suggest refining the task text or using `--components`. **Stop.**                                                                               |
+   | `6`       | Budget overflow                 | Inform the user that the scoped context exceeds the token budget. Suggest narrowing scope with `--max-components` or `--budget`. **Stop.**                                                                       |
 
 3. **On success (exit 0):**
    - Load the assembled bundle files in numeric order (they form the context).

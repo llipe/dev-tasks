@@ -76,10 +76,10 @@ flowchart TB
 
 ## Affected Repositories
 
-| Repository              | Role / Impact                                                                                                                                                                                                                                                                     |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `llipe/dev-tasks`       | Sole primary component. Adds the `activity-pr-knowledge-transfer` skill in all three distribution trees, the `dt changemap` command and its schema, an expanded PR body contract in `github-ops`, invocation wiring in `developer`/`planner`/`verifier` and the `implement` instruction, bundle manifest entries, tests, and documentation. |
-| Consumer repositories   | Receive the expanded PR body contract and skill on install/update. No consumer code changes required; language-specific extraction fidelity varies by stack.                                                                                                                       |
+| Repository            | Role / Impact                                                                                                                                                                                                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `llipe/dev-tasks`     | Sole primary component. Adds the `activity-pr-knowledge-transfer` skill in all three distribution trees, the `dt changemap` command and its schema, an expanded PR body contract in `github-ops`, invocation wiring in `developer`/`planner`/`verifier` and the `implement` instruction, bundle manifest entries, tests, and documentation. |
+| Consumer repositories | Receive the expanded PR body contract and skill on install/update. No consumer code changes required; language-specific extraction fidelity varies by stack.                                                                                                                                                                                |
 
 Scope contains exactly one `primary` component, so no cross-repo partitioning applies (`AGENTS.md` § Cross-Repo Partitioning). No meta-repo files are in scope, so the `architecture-change` task type is not required.
 
@@ -121,22 +121,22 @@ Scope contains exactly one `primary` component, so no cross-repo partitioning ap
 1. `github-ops` **MUST** own the expanded PR body contract, and it **MUST** remain the single source of truth mirrored identically across `.github/`, `.claude/`, and `.kiro/` trees.
 2. The full-tier PR body **MUST** contain the following sections in this order:
 
-   | Section                              | Content                                                                                                                                     |
-   | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `## What`                            | Summary of the change in reviewer-facing terms.                                                                                             |
-   | `## Why`                             | Business or product intent, the problem it solves, and the tracker reference (`Closes #<n>` / `Refs #<n>` / `Refs <sha>`).                   |
-   | `## How It Works`                    | Prose walkthrough of the mechanism: entry point, data and control flow, where decisions are made, what state changes.                       |
-   | `## Business Logic`                  | The rules and policies encoded by the change, stated as rules rather than code paraphrase, including the conditions under which each applies. |
+   | Section                              | Content                                                                                                                                                                  |
+   | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | `## What`                            | Summary of the change in reviewer-facing terms.                                                                                                                          |
+   | `## Why`                             | Business or product intent, the problem it solves, and the tracker reference (`Closes #<n>` / `Refs #<n>` / `Refs <sha>`).                                               |
+   | `## How It Works`                    | Prose walkthrough of the mechanism: entry point, data and control flow, where decisions are made, what state changes.                                                    |
+   | `## Business Logic`                  | The rules and policies encoded by the change, stated as rules rather than code paraphrase, including the conditions under which each applies.                            |
    | `## Change Map`                      | Files grouped by role (behavior, contract, config, test, generated/incidental), each with a one-line purpose; key methods, functions, and variables named and explained. |
-   | `## Behavior & Contracts`            | Endpoints, events, CLI commands, exit codes, and public interfaces changed, with before → after behavior, inputs, outputs, and error paths.  |
-   | `## Invariants & Failure Modes`      | Assumptions the change depends on, and what breaks (and how it surfaces) when they do not hold.                                              |
-   | `## Design Decisions & Alternatives` | Chosen approach with rationale, and alternatives considered with reasons for rejection.                                                      |
-   | `## Reviewer Guide`                  | Ordered "start here" pointers, the highest-risk areas, and what deserves the most scrutiny.                                                  |
-   | `## Domain Terms`                    | New or changed vocabulary, with definitions. Omitted only when no term changed.                                                              |
-   | `## Testing`                         | How the change was validated, including acceptance-criterion outcomes where available.                                                      |
-   | `## Docs & Knowledge Impact`         | Documentation updated or required, and memo entries written or proposed.                                                                     |
-   | `## Checklist`                       | Existing checklist items.                                                                                                                   |
-   | `## Attribution`                     | Existing `Assisted-by:` line.                                                                                                               |
+   | `## Behavior & Contracts`            | Endpoints, events, CLI commands, exit codes, and public interfaces changed, with before → after behavior, inputs, outputs, and error paths.                              |
+   | `## Invariants & Failure Modes`      | Assumptions the change depends on, and what breaks (and how it surfaces) when they do not hold.                                                                          |
+   | `## Design Decisions & Alternatives` | Chosen approach with rationale, and alternatives considered with reasons for rejection.                                                                                  |
+   | `## Reviewer Guide`                  | Ordered "start here" pointers, the highest-risk areas, and what deserves the most scrutiny.                                                                              |
+   | `## Domain Terms`                    | New or changed vocabulary, with definitions. Omitted only when no term changed.                                                                                          |
+   | `## Testing`                         | How the change was validated, including acceptance-criterion outcomes where available.                                                                                   |
+   | `## Docs & Knowledge Impact`         | Documentation updated or required, and memo entries written or proposed.                                                                                                 |
+   | `## Checklist`                       | Existing checklist items.                                                                                                                                                |
+   | `## Attribution`                     | Existing `Assisted-by:` line.                                                                                                                                            |
 
 3. Every section **MUST** be written for a human reader in plain prose or short lists. Restating the diff, pasting code blocks in place of explanation, or emitting section headings with placeholder text **MUST NOT** be accepted as a completed section.
 4. Sections **MUST NOT** contain secret values. Environment variables, credentials, and tokens **MUST** be referenced by key name only.
@@ -147,11 +147,11 @@ Scope contains exactly one `primary` component, so no cross-repo partitioning ap
 
 7. Every PR **MUST** be classified into exactly one tier before body generation:
 
-   | Tier         | Applies to                                                                                                        | Required sections                                                                                      |
-   | ------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-   | **Full**     | Behavioral changes touching contracts, endpoints, data model, auth/permissions, or migrations; or any multi-story consolidated PR. | All sections in FR-2.                                                                                  |
-   | **Standard** | Behavioral changes confined to a module with no contract, schema, or permission impact.                            | All except `Domain Terms` and `Invariants & Failure Modes`, which become **RECOMMENDED**.               |
-   | **Short**    | Docs-only, formatting, dependency bumps, CI config, and other non-behavioral changes.                             | `What`, `Why`, `Change Map` (file list only), `Testing`, `Checklist`, `Attribution`.                    |
+   | Tier         | Applies to                                                                                                                         | Required sections                                                                         |
+   | ------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+   | **Full**     | Behavioral changes touching contracts, endpoints, data model, auth/permissions, or migrations; or any multi-story consolidated PR. | All sections in FR-2.                                                                     |
+   | **Standard** | Behavioral changes confined to a module with no contract, schema, or permission impact.                                            | All except `Domain Terms` and `Invariants & Failure Modes`, which become **RECOMMENDED**. |
+   | **Short**    | Docs-only, formatting, dependency bumps, CI config, and other non-behavioral changes.                                              | `What`, `Why`, `Change Map` (file list only), `Testing`, `Checklist`, `Attribution`.      |
 
 8. Tier classification **MUST** be derived from the change map (contract/schema/permission/migration signals, file roles, and change breadth), **MUST** be stated explicitly in the PR body or PR metadata, and the rationale **MUST** be recorded.
 9. A human **MAY** override the tier upward or downward; an override **MUST** be recorded with its reason. An agent **MUST NOT** downgrade a tier to avoid producing required sections.
