@@ -58,7 +58,7 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 
 | Skill                             | Directory                               | Purpose                                                                                                                           | Primary Consumer   |
 | --------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **activity-init**                 | `skills/activity-init/`                 | Establish product context and technical guidelines                                                                                | `product-engineer` |
+| **activity-init**                 | `skills/activity-init/`                 | Establish product context and technical guidelines (mono/multi-repo/greenfield mode detection)                                    | `product-engineer` |
 | **activity-refine**               | `skills/activity-refine/`               | Clarify scope — issue refinement or full PRD creation                                                                             | `product-engineer` |
 | **activity-generate-spec**        | `skills/activity-generate-spec/`        | Transform PRD into technical specification                                                                                        | `product-engineer` |
 | **activity-generate-stories**     | `skills/activity-generate-stories/`     | Break spec into user stories with coverage validation                                                                             | `product-engineer` |
