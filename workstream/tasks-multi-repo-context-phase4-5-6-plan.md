@@ -52,7 +52,7 @@
   - [x] 1.16 Verify Acceptance Criterion: calibration data recorded per session
   - [x] 1.17 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
-- [ ] 2.0 Implement Story S-019 - https://github.com/llipe/dev-tasks/issues/55: Graph closure and dt scope gate with partition proposal
+- [x] 2.0 Implement Story S-019 - https://github.com/llipe/dev-tasks/issues/55: Graph closure and dt scope gate with partition proposal
 
   > Scope expanded by graph closure, gated (G1-G7). Over-broad or ambiguous scopes abort with a partition proposal.
 
@@ -127,7 +127,7 @@
   - [x] 4.16 Verify Acceptance Criterion: all three platform trees updated consistently
   - [x] 4.17 Run Tests: `pnpm run validate`; parity check script
 
-- [ ] 5.0 Implement Story S-022 - https://github.com/llipe/dev-tasks/issues/59: architecture-change task type with meta-repo write authority
+- [x] 5.0 Implement Story S-022 - https://github.com/llipe/dev-tasks/issues/59: architecture-change task type with meta-repo write authority
 
   > The only mode allowing meta-repo writes. Requires ADR and human approval. Agents cannot write to the meta-repo outside this task type.
 
@@ -148,7 +148,7 @@
   - [x] 5.15 Verify Acceptance Criterion: documented consistently across three trees
   - [x] 5.16 Run Tests: `pnpm run validate`; parity check
 
-- [ ] 6.0 Implement Story S-023 - https://github.com/llipe/dev-tasks/issues/57: Cross-repo partitioning into per-repo sub-tasks
+- [x] 6.0 Implement Story S-023 - https://github.com/llipe/dev-tasks/issues/57: Cross-repo partitioning into per-repo sub-tasks
 
   > Multi-primary features are partitioned into per-repo sub-tasks. Boundary contract is the interface; producer before consumers.
 
