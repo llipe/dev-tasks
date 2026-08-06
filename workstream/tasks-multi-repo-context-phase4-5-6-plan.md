@@ -171,32 +171,32 @@
 
 ### Phase 6 — Verification and Outer Loop
 
-- [ ] 7.0 Implement Story S-024 - https://github.com/llipe/dev-tasks/issues/60: dt verify contract-diff (OpenAPI + AsyncAPI breaking-change detection)
+- [x] 7.0 Implement Story S-024 - https://github.com/llipe/dev-tasks/issues/60: dt verify contract-diff (OpenAPI + AsyncAPI breaking-change detection)
 
   > Deterministic breaking-change detection. No LLM. Skips low-payload contracts to avoid false positives.
 
-  - [ ] 7.1 Integrate `oasdiff` for OpenAPI breaking-change detection: wrap the binary (or use its Node bindings if available); accept base and head spec paths; return structured diff with breaking/non-breaking classification
-  - [ ] 7.2 Implement `core/verify/asyncapi-diff.ts` — custom AsyncAPI comparator with breaking-change classes:
-    - [ ] 7.2.1 Removed channel → breaking
-    - [ ] 7.2.2 New required field in payload → breaking
-    - [ ] 7.2.3 Changed field type → breaking
-    - [ ] 7.2.4 Narrowed enum (values removed) → breaking
-    - [ ] 7.2.5 Widened enum (values added) → non-breaking
-    - [ ] 7.2.6 New optional field → non-breaking
-  - [ ] 7.3 Implement low-payload exclusion: contracts with `payload_confidence: low` are excluded from breaking-change evaluation entirely (no false positives from uncertain payloads)
-  - [ ] 7.4 Implement `core/verify/contract-diff.ts` — orchestrator: detect contract type (OpenAPI/AsyncAPI), load base/head versions, delegate to oasdiff or custom comparator, aggregate results
-  - [ ] 7.5 Implement exit code logic: detected breaking change → exit 8; no breaking changes → exit 0
-  - [ ] 7.6 Wire `dt verify contract-diff --base <path> --head <path> [--json]` CLI command
-  - [ ] 7.7 Author CI template step: trigger on component-repo PRs when `contracts/` directory has changes
-  - [ ] 7.8 Write unit tests: AsyncAPI comparator per breaking-change class; low-payload skip; oasdiff wrapper with fixture specs
-  - [ ] 7.9 Write integration tests: OpenAPI base/head fixtures (breaking change → exit 8; non-breaking → exit 0); AsyncAPI likewise; mixed (one breaking, one not)
-  - [ ] 7.10 Write edge-case tests: additive-only change → non-breaking; enum widened vs. narrowed; low-payload contract change → skipped entirely; malformed spec → clear error (not exit 8)
-  - [ ] 7.11 Verify Acceptance Criterion: OpenAPI uses oasdiff; AsyncAPI uses custom comparator
-  - [ ] 7.12 Verify Acceptance Criterion: no LLM used
-  - [ ] 7.13 Verify Acceptance Criterion: payload_confidence: low excluded
-  - [ ] 7.14 Verify Acceptance Criterion: breaking change → exit 8
-  - [ ] 7.15 Verify Acceptance Criterion: runs on component-repo PRs when contracts/ changed
-  - [ ] 7.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
+  - [x] 7.1 Integrate `oasdiff` for OpenAPI breaking-change detection: wrap the binary (or use its Node bindings if available); accept base and head spec paths; return structured diff with breaking/non-breaking classification
+  - [x] 7.2 Implement `core/verify/asyncapi-diff.ts` — custom AsyncAPI comparator with breaking-change classes:
+    - [x] 7.2.1 Removed channel → breaking
+    - [x] 7.2.2 New required field in payload → breaking
+    - [x] 7.2.3 Changed field type → breaking
+    - [x] 7.2.4 Narrowed enum (values removed) → breaking
+    - [x] 7.2.5 Widened enum (values added) → non-breaking
+    - [x] 7.2.6 New optional field → non-breaking
+  - [x] 7.3 Implement low-payload exclusion: contracts with `payload_confidence: low` are excluded from breaking-change evaluation entirely (no false positives from uncertain payloads)
+  - [x] 7.4 Implement `core/verify/contract-diff.ts` — orchestrator: detect contract type (OpenAPI/AsyncAPI), load base/head versions, delegate to oasdiff or custom comparator, aggregate results
+  - [x] 7.5 Implement exit code logic: detected breaking change → exit 8; no breaking changes → exit 0
+  - [x] 7.6 Wire `dt verify contract-diff --base <path> --head <path> [--json]` CLI command
+  - [x] 7.7 Author CI template step: trigger on component-repo PRs when `contracts/` directory has changes
+  - [x] 7.8 Write unit tests: AsyncAPI comparator per breaking-change class; low-payload skip; oasdiff wrapper with fixture specs
+  - [x] 7.9 Write integration tests: OpenAPI base/head fixtures (breaking change → exit 8; non-breaking → exit 0); AsyncAPI likewise; mixed (one breaking, one not)
+  - [x] 7.10 Write edge-case tests: additive-only change → non-breaking; enum widened vs. narrowed; low-payload contract change → skipped entirely; malformed spec → clear error (not exit 8)
+  - [x] 7.11 Verify Acceptance Criterion: OpenAPI uses oasdiff; AsyncAPI uses custom comparator
+  - [x] 7.12 Verify Acceptance Criterion: no LLM used
+  - [x] 7.13 Verify Acceptance Criterion: payload_confidence: low excluded
+  - [x] 7.14 Verify Acceptance Criterion: breaking change → exit 8
+  - [x] 7.15 Verify Acceptance Criterion: runs on component-repo PRs when contracts/ changed
+  - [x] 7.16 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 8.0 Implement Story S-025 - https://github.com/llipe/dev-tasks/issues/61: dt verify impact and dt verify drift
 
