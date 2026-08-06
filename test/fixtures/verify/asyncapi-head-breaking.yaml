@@ -1,0 +1,42 @@
+asyncapi: "2.6.0"
+info:
+  title: Order Events
+  version: "2.0.0"
+channels:
+  orders/created:
+    x-payload-confidence: high
+    publish:
+      message:
+        payload:
+          type: object
+          required:
+            - order_id
+            - customer_id
+            - total_amount
+          properties:
+            order_id:
+              type: string
+            customer_id:
+              type: integer
+            status:
+              type: string
+              enum: [pending, confirmed]
+            total_amount:
+              type: number
+  orders/tracking:
+    x-payload-confidence: low
+    publish:
+      message:
+        payload:
+          type: object
+          required:
+            - order_id
+            - location
+            - carrier
+          properties:
+            order_id:
+              type: string
+            location:
+              type: string
+            carrier:
+              type: string

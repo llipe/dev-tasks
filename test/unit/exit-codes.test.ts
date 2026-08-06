@@ -2,17 +2,34 @@ import { describe, it, expect } from "vitest";
 import { ExitCode } from "#core/exit-codes.js";
 
 describe("exit-codes", () => {
-  it("exports all 15 exit codes (0-14)", () => {
+  it("exports 15 distinct exit code values (0-14)", () => {
     const values = Object.values(ExitCode).filter((v) => typeof v === "number");
-    expect(values).toHaveLength(15);
-    expect(Math.min(...values)).toBe(0);
-    expect(Math.max(...values)).toBe(14);
+    const unique = new Set(values);
+    // 15 distinct values covering 0-14
+    expect(unique.size).toBe(15);
+    expect(Math.min(...unique)).toBe(0);
+    expect(Math.max(...unique)).toBe(14);
   });
 
   it("has correct named values per spec §6.7", () => {
     expect(ExitCode.Success).toBe(0);
     expect(ExitCode.GeneralError).toBe(1);
     expect(ExitCode.InvalidUsage).toBe(2);
+    expect(ExitCode.PartialCatalogBuild).toBe(3);
+    expect(ExitCode.CatalogValidationErrors).toBe(4);
+    expect(ExitCode.FetchFailure).toBe(5);
+    expect(ExitCode.InsufficientBudget).toBe(6);
+    expect(ExitCode.GateAborted).toBe(7);
+    expect(ExitCode.BreakingChange).toBe(8);
+    expect(ExitCode.StaleIndex).toBe(9);
+    expect(ExitCode.InvalidScoping).toBe(10);
+    expect(ExitCode.NoCandidates).toBe(11);
+    expect(ExitCode.UnknownComponent).toBe(12);
+    expect(ExitCode.IncompleteExtraction).toBe(13);
+    expect(ExitCode.ReconciliationConflict).toBe(14);
+  });
+
+  it("preserves legacy aliases for backward compatibility", () => {
     expect(ExitCode.NetworkError).toBe(3);
     expect(ExitCode.AuthError).toBe(4);
     expect(ExitCode.NotFound).toBe(5);
@@ -24,12 +41,13 @@ describe("exit-codes", () => {
     expect(ExitCode.DependencyError).toBe(11);
     expect(ExitCode.PermissionDenied).toBe(12);
     expect(ExitCode.MissingRequiredField).toBe(13);
-    expect(ExitCode.ReconciliationConflict).toBe(14);
   });
 
-  it("each code is unique", () => {
+  it("each distinct value maps to the correct range", () => {
     const values = Object.values(ExitCode).filter((v) => typeof v === "number");
-    const unique = new Set(values);
-    expect(unique.size).toBe(values.length);
+    for (const v of values) {
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(14);
+    }
   });
 });
