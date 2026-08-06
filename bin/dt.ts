@@ -497,12 +497,76 @@ if (args.command === "extract") {
       json: args.flags.json,
     });
     process.exit(exitCode);
+  } else if (subcommand === "impact") {
+    const { runVerifyImpact } = await import("#adapters/cli/verify-impact.js");
+    // Parse --contract, --emit-tasks, --index from remaining positional args
+    let contractId: string | undefined;
+    let emitTasks = false;
+    let indexPath: string | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--contract" && args.positional[i + 1]) {
+        contractId = args.positional[++i];
+      } else if (p.startsWith("--contract=")) {
+        contractId = p.slice("--contract=".length);
+      } else if (p === "--emit-tasks") {
+        emitTasks = true;
+      } else if (p === "--index" && args.positional[i + 1]) {
+        indexPath = args.positional[++i];
+      } else if (p.startsWith("--index=")) {
+        indexPath = p.slice("--index=".length);
+      }
+    }
+    const exitCode = await runVerifyImpact({
+      contractId,
+      emitTasks,
+      json: args.flags.json,
+      indexPath,
+    });
+    process.exit(exitCode);
+  } else if (subcommand === "drift") {
+    const { runVerifyDrift } = await import("#adapters/cli/verify-drift.js");
+    // Parse --id, --threshold, --index, --repo-root from remaining positional args
+    let id: string | undefined;
+    let threshold: number | undefined;
+    let indexPath: string | undefined;
+    let repoRoot: string | undefined;
+    for (let i = 1; i < args.positional.length; i++) {
+      const p = args.positional[i];
+      if (p === "--id" && args.positional[i + 1]) {
+        id = args.positional[++i];
+      } else if (p.startsWith("--id=")) {
+        id = p.slice("--id=".length);
+      } else if (p === "--threshold" && args.positional[i + 1]) {
+        threshold = parseInt(args.positional[++i], 10);
+      } else if (p.startsWith("--threshold=")) {
+        threshold = parseInt(p.slice("--threshold=".length), 10);
+      } else if (p === "--index" && args.positional[i + 1]) {
+        indexPath = args.positional[++i];
+      } else if (p.startsWith("--index=")) {
+        indexPath = p.slice("--index=".length);
+      } else if (p === "--repo-root" && args.positional[i + 1]) {
+        repoRoot = args.positional[++i];
+      } else if (p.startsWith("--repo-root=")) {
+        repoRoot = p.slice("--repo-root=".length);
+      }
+    }
+    const exitCode = runVerifyDrift({
+      id,
+      threshold,
+      json: args.flags.json,
+      indexPath,
+      repoRoot,
+    });
+    process.exit(exitCode);
   } else if (!subcommand) {
     process.stderr.write("Usage: dt verify <subcommand>\n\n");
     process.stderr.write("Subcommands:\n");
     process.stderr.write(
       "  contract-diff  Detect breaking changes in OpenAPI/AsyncAPI contracts\n",
     );
+    process.stderr.write("  impact         List consumers affected by a contract change\n");
+    process.stderr.write("  drift          Compute docs/code drift heuristic per component\n");
     process.exit(ExitCode.InvalidUsage);
   } else {
     process.stderr.write(`Subcommand 'verify ${subcommand}' is not yet implemented.\n`);
