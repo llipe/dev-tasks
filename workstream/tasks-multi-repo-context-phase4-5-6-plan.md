@@ -152,22 +152,22 @@
 
   > Multi-primary features are partitioned into per-repo sub-tasks. Boundary contract is the interface; producer before consumers.
 
-  - [ ] 6.1 Document the partitioning procedure in agent contracts: when scope contains >1 `primary` component, the agent MUST produce one sub-task per repo, scoped exclusively to that repo
-  - [ ] 6.2 Document contract-as-interface: each sub-task uses the boundary contract (with a target version) as its interface; acceptance criteria reference the contract, not the foreign repo's implementation
-  - [ ] 6.3 Document ordering rule: sub-tasks MUST be ordered producer-before-consumers (provider implements first, consumer adapts second)
-  - [ ] 6.4 Document low-payload elevation guard: a boundary contract with `payload_confidence: low` MUST be raised to `medium` (via extraction re-run or manual confirmation) before it can serve as an acceptance boundary
-  - [ ] 6.5 Consume the partition proposal shape from S-019 (`core/scope/partition.ts`): the agent references the automated proposal when available
-  - [ ] 6.6 Update `product-engineer` agent files across all three trees with the partitioning behavior
-  - [ ] 6.7 Update `developer`/`planner` agent files to recognize per-repo sub-task scope and contract-based acceptance
-  - [ ] 6.8 Write structural validation: parity check across three trees
-  - [ ] 6.9 Write dry-run tests: two-primary scope → ordered per-repo sub-tasks referencing boundary contracts; single primary → no partition
-  - [ ] 6.10 Write edge-case tests: low-payload boundary → blocked until raised; circular producer/consumer (both produce and consume from each other) → clear ordering strategy
-  - [ ] 6.11 Verify Acceptance Criterion: >1 primary → one sub-task per repo
-  - [ ] 6.12 Verify Acceptance Criterion: sub-tasks use boundary contract as interface
-  - [ ] 6.13 Verify Acceptance Criterion: producer-before-consumers ordering
-  - [ ] 6.14 Verify Acceptance Criterion: low-payload boundary must be raised before use
-  - [ ] 6.15 Verify Acceptance Criterion: documented consistently across three trees
-  - [ ] 6.16 Run Tests: `pnpm run validate`; parity check
+  - [x] 6.1 Document the partitioning procedure in agent contracts: when scope contains >1 `primary` component, the agent MUST produce one sub-task per repo, scoped exclusively to that repo
+  - [x] 6.2 Document contract-as-interface: each sub-task uses the boundary contract (with a target version) as its interface; acceptance criteria reference the contract, not the foreign repo's implementation
+  - [x] 6.3 Document ordering rule: sub-tasks MUST be ordered producer-before-consumers (provider implements first, consumer adapts second)
+  - [x] 6.4 Document low-payload elevation guard: a boundary contract with `payload_confidence: low` MUST be raised to `medium` (via extraction re-run or manual confirmation) before it can serve as an acceptance boundary
+  - [x] 6.5 Consume the partition proposal shape from S-019 (`core/scope/partition.ts`): the agent references the automated proposal when available
+  - [x] 6.6 Update `product-engineer` agent files across all three trees with the partitioning behavior
+  - [x] 6.7 Update `developer`/`planner` agent files to recognize per-repo sub-task scope and contract-based acceptance
+  - [x] 6.8 Write structural validation: parity check across three trees
+  - [x] 6.9 Write dry-run tests: two-primary scope → ordered per-repo sub-tasks referencing boundary contracts; single primary → no partition
+  - [x] 6.10 Write edge-case tests: low-payload boundary → blocked until raised; circular producer/consumer (both produce and consume from each other) → clear ordering strategy
+  - [x] 6.11 Verify Acceptance Criterion: >1 primary → one sub-task per repo
+  - [x] 6.12 Verify Acceptance Criterion: sub-tasks use boundary contract as interface
+  - [x] 6.13 Verify Acceptance Criterion: producer-before-consumers ordering
+  - [x] 6.14 Verify Acceptance Criterion: low-payload boundary must be raised before use
+  - [x] 6.15 Verify Acceptance Criterion: documented consistently across three trees
+  - [x] 6.16 Run Tests: `pnpm run validate`; parity check
 
 ### Phase 6 — Verification and Outer Loop
 
