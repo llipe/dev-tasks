@@ -173,4 +173,45 @@ This applies to all agents (`product-engineer`, `developer`, `planner`, `houseke
 
 ---
 
+## Cross-Repo Partitioning (RF-63)
+
+When a scoping step (via `dt init --task` or manual multi-repo planning) identifies more than one `primary` component, the feature spans multiple repositories. In this case, the agent **MUST** partition the work into per-repo sub-tasks rather than treating it as a single monolithic task.
+
+### Partitioning Procedure
+
+1. **Detection:** If `scope.primary` contains >1 component, the feature is cross-repo and **MUST** be partitioned.
+2. **One sub-task per repo:** Each `primary` component becomes its own sub-task, scoped exclusively to that component's repository.
+3. **Partition proposal consumption:** When a partition proposal is available from `dt scope gate` (G1 abort, exit 7), the agent **SHOULD** use it as the basis for the partition. When no automated proposal is available, the agent **MUST** apply the same rules manually.
+
+### Contract-as-Interface
+
+- Each sub-task uses the **boundary contract** (with a target version) as its interface.
+- Acceptance criteria for each sub-task **MUST** reference the contract definition (OpenAPI spec, AsyncAPI channel, or schema), **not** the foreign repo's internal implementation.
+- A sub-task is complete when it satisfies its contract obligations — it does not depend on or verify the other repo's implementation details.
+
+### Ordering Rule
+
+Sub-tasks **MUST** be ordered **producer-before-consumers**:
+
+- The provider (producer) implements its contract first.
+- Consumer sub-tasks implement adaptation to the contract after the provider sub-task is complete.
+- This ensures the contract exists in its target form before consumers adapt to it.
+
+### Low-Payload Elevation Guard
+
+A boundary contract with `payload_confidence: low` **MUST** be raised to at least `medium` confidence before it can serve as an acceptance boundary. This is achieved by:
+
+- Re-running extraction (`dt extract`) with improved source hints, OR
+- Manual confirmation of the payload shape by a human reviewer.
+
+Until the boundary contract reaches `medium` or higher confidence, the agent **MUST NOT** use it as an acceptance interface and **MUST** block the sub-task that depends on it with a clear message:
+
+> "Boundary contract `<contract-id>` has `payload_confidence: low`. Re-run extraction or manually confirm the payload shape before using it as an acceptance boundary."
+
+### Single-Primary — No Partition
+
+When `scope.primary` contains exactly 1 component, no partitioning is needed. The feature is single-repo and proceeds with normal task planning.
+
+---
+
 For workflow chains and sequencing diagrams, see [`docs/workflow-chains.md`](docs/workflow-chains.md).
