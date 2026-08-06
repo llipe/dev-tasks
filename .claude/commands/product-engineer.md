@@ -154,13 +154,17 @@ This agent invokes the following **skills** for each activity. You **MUST** load
 
 Follow the `activity-init` skill:
 
-1. Receive initial brief from user.
-2. Ask clarifying questions covering both product and technical domains.
-3. Generate `product-context.md` and `technical-guidelines.md` in `/docs/`.
-4. If `/DESIGN.md` is missing and the project has UI scope, create a baseline `/DESIGN.md` aligned with current product direction.
-5. Present generated documents for user review.
-6. Iterate based on feedback.
-7. Save finalized versions.
+1. **Detect repository mode** (RF-60): check for `component.json` (multi-repo), `/docs` (mono-repo), or neither (undocumented/greenfield). If both exist, multi-repo wins.
+2. **Route by mode:**
+   - **Multi-repo:** Invoke `dt init --task "<description>" --json`. Handle exit codes (0=success, 7=partition proposal stop, 9=stale catalog stop). On success, load bundle in numeric order and present `review_flags` before continuing.
+   - **Mono-repo:** Proceed with the standard interview (current flow unchanged).
+   - **Undocumented/greenfield:** Run `dt extract detect` → `dt extract all --interactive` → present extraction report → then conduct the interview.
+3. Ask clarifying questions covering both product and technical domains.
+4. Generate `product-context.md` and `technical-guidelines.md` in `/docs/`.
+5. If `/DESIGN.md` is missing and the project has UI scope, create a baseline `/DESIGN.md` aligned with current product direction.
+6. Present generated documents for user review.
+7. Iterate based on feedback.
+8. Save finalized versions.
 
 ### Feature Mode
 

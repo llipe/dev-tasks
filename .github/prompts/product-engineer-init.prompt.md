@@ -8,7 +8,13 @@ Run the `product-engineer` agent to establish foundation documents for this proj
 - **Project/product description:**
   > <Describe the product, project, or technology stack>
 
-The agent will invoke the `activity-init` skill to create:
+The agent will invoke the `activity-init` skill which first **detects the repository mode**:
+
+- **Multi-repo** (`component.json` present): delegates context resolution to `dt init --task --json`
+- **Mono-repo** (`/docs` present, no `component.json`): standard interview flow
+- **Undocumented/greenfield** (neither): runs `dt extract detect` → `dt extract all --interactive` → interview
+
+Then creates:
 
 - `docs/product-context.md` — Product context and strategic goals
 - `docs/technical-guidelines.md` — Technical standards and patterns
