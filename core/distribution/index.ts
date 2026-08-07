@@ -10,7 +10,9 @@ export { runUpdate } from "./update.js";
 export type { UpdateOptions, UpdateResult, UpdateFileResult } from "./update.js";
 export { createBackupDir, backupFile } from "./backup.js";
 export type { BackupResult } from "./backup.js";
-export { writePin, readPin } from "./pin.js";
+export { writePin, readPin, removePin } from "./pin.js";
+export { fetchPackageVersion } from "./fetch-package.js";
+export type { FetchPackageResult } from "./fetch-package.js";
 export { getStatus } from "./status.js";
 export type { StatusResult } from "./status.js";
 export {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * dev-tasks CLI — bootstrap binary.
- * Commands: install, update, status, pin, doctor
+ * Commands: install, update, status, pin, unpin, doctor
  */
 
 import { readFileSync } from "node:fs";
@@ -11,12 +11,12 @@ import { ExitCode } from "#core/exit-codes.js";
 import { installFiles } from "#core/distribution/install.js";
 import { isValidProfile, VALID_PROFILES, type Profile } from "#core/distribution/profiles.js";
 import { runUpdate } from "#core/distribution/update.js";
-import { writePin } from "#core/distribution/pin.js";
+import { writePin, removePin } from "#core/distribution/pin.js";
 import { getStatus } from "#core/distribution/status.js";
 import { runDoctor } from "#core/distribution/doctor.js";
 import { runMigration } from "#core/distribution/migrate.js";
 
-const COMMANDS = ["install", "update", "status", "pin", "doctor", "migrate"] as const;
+const COMMANDS = ["install", "update", "status", "pin", "unpin", "doctor", "migrate"] as const;
 
 function getVersion(): string {
   // Walk up from bin/ (source) or dist/bin/ (compiled) to find package.json
@@ -54,14 +54,15 @@ function printUsage(): void {
 
 Commands:
   install    Install dev-tasks agent toolkit into the target repository
-  update     Update installed files (hash-based reconciliation)
+  update     Update installed files (respects pin; fetches from registry if pinned)
   status     Show installed vs. pinned vs. latest versions
   pin        Pin to a specific version
+  unpin      Remove the version pin
   doctor     Check environment prerequisites
   migrate    Migrate from legacy dev-tasks.sh installation
 
 Options:
-  --profile <p>  Platform profile: copilot, claude, kiro, both, all (default: both)
+  --profile <p>  Platform profile: copilot, claude, kiro, both, all (default: all)
   --version      Print version
   --json         Output as JSON
   --pin <ver>    Pin to a specific version (used with install)
@@ -104,7 +105,7 @@ async function main(): Promise<void> {
   switch (args.command) {
     case "install": {
       // Validate --profile flag
-      const profileValue = args.flags.profile ?? "both";
+      const profileValue = args.flags.profile ?? "all";
       if (!isValidProfile(profileValue)) {
         process.stderr.write(
           `Invalid profile: "${profileValue}"\nValid profiles: ${VALID_PROFILES.join(", ")}\n`,
@@ -169,6 +170,23 @@ async function main(): Promise<void> {
       break;
     }
 
+    case "unpin": {
+      const removed = await removePin(targetDir);
+      if (args.flags.json) {
+        process.stdout.write(
+          JSON.stringify({ command: "unpin", removed }, null, 2) + "\n",
+        );
+      } else {
+        if (removed) {
+          process.stdout.write("Version pin removed.\n");
+        } else {
+          process.stdout.write("No version pin found.\n");
+        }
+      }
+      process.exit(ExitCode.Success);
+      break;
+    }
+
     case "status": {
       const result = await getStatus(targetDir, currentVersion);
       if (args.flags.json) {
@@ -218,6 +236,8 @@ async function main(): Promise<void> {
           JSON.stringify(
             {
               command: "update",
+              resolvedVersion: result.resolvedVersion,
+              fetched: result.fetched,
               conflicts: result.conflicts.map((c) => ({
                 path: c.path,
                 action: c.action,
@@ -245,6 +265,11 @@ async function main(): Promise<void> {
         );
       } else {
         // Human-readable output
+        if (result.fetched) {
+          process.stdout.write(
+            `Pinned to ${result.resolvedVersion} (fetched from registry).\n\n`,
+          );
+        }
         if (
           result.installed.length === 0 &&
           result.updated.length === 0 &&

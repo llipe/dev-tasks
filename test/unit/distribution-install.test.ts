@@ -106,8 +106,8 @@ describe("core/distribution/install — installFiles()", () => {
     });
   });
 
-  describe("profile: both (default)", () => {
-    it("installs copilot + claude when no profile specified", async () => {
+  describe("profile: all (default)", () => {
+    it("installs copilot + claude + kiro when no profile specified", async () => {
       createFile(sourceDir, ".github/agents/developer.agent.md", "# GH Dev");
       createFile(sourceDir, ".claude/agents/developer.md", "# Claude Dev");
       createFile(sourceDir, ".kiro/agents/developer.md", "# Kiro Dev");
@@ -117,14 +117,13 @@ describe("core/distribution/install — installFiles()", () => {
         targetDir,
         version: "0.1.0",
         pin: "0.1.0",
-        // profile defaults to 'both'
+        // profile defaults to 'all'
       });
 
       expect(existsSync(join(targetDir, ".github/agents/developer.agent.md"))).toBe(true);
       expect(existsSync(join(targetDir, ".claude/agents/developer.md"))).toBe(true);
-      // Kiro should NOT be installed in 'both' mode
-      expect(existsSync(join(targetDir, ".kiro/agents/developer.md"))).toBe(false);
-      expect(result.platforms).toEqual(["copilot", "claude"]);
+      expect(existsSync(join(targetDir, ".kiro/agents/developer.md"))).toBe(true);
+      expect(result.platforms).toEqual(["copilot", "claude", "kiro"]);
     });
   });
 
@@ -239,6 +238,106 @@ describe("core/distribution/install — installFiles()", () => {
       const manifestRaw = readFileSync(join(targetDir, ".dev-tasks", "manifest.json"), "utf-8");
       const manifest = JSON.parse(manifestRaw) as Manifest;
       expect(manifest.files).toHaveLength(3);
+    });
+  });
+
+  describe("manifest merging", () => {
+    it("preserves files from other profiles when installing a new profile", async () => {
+      createFile(sourceDir, ".github/agents/dev.agent.md", "# GH Dev");
+      createFile(sourceDir, ".claude/agents/dev.md", "# Claude Dev");
+      createFile(sourceDir, ".kiro/agents/dev.md", "# Kiro Dev");
+
+      // First install copilot + claude
+      await installFiles({
+        sourceDir,
+        targetDir,
+        version: "0.1.0",
+        pin: "0.1.0",
+        profile: "both",
+      });
+
+      let manifestRaw = readFileSync(join(targetDir, ".dev-tasks", "manifest.json"), "utf-8");
+      let manifest = JSON.parse(manifestRaw) as Manifest;
+      expect(manifest.files).toHaveLength(2);
+      expect(manifest.files.map((f) => f.profile).sort()).toEqual(["claude", "copilot"]);
+
+      // Then install kiro — should preserve copilot + claude entries
+      await installFiles({
+        sourceDir,
+        targetDir,
+        version: "0.1.0",
+        pin: "0.1.0",
+        profile: "kiro",
+      });
+
+      manifestRaw = readFileSync(join(targetDir, ".dev-tasks", "manifest.json"), "utf-8");
+      manifest = JSON.parse(manifestRaw) as Manifest;
+      expect(manifest.files).toHaveLength(3);
+      expect(manifest.files.map((f) => f.profile).sort()).toEqual(["claude", "copilot", "kiro"]);
+    });
+
+    it("replaces files from the same profile on re-install", async () => {
+      createFile(sourceDir, ".github/agents/dev.agent.md", "# GH Dev v1");
+
+      await installFiles({
+        sourceDir,
+        targetDir,
+        version: "0.1.0",
+        pin: "0.1.0",
+        profile: "copilot",
+      });
+
+      // Update the source file
+      createFile(sourceDir, ".github/agents/dev.agent.md", "# GH Dev v2");
+
+      await installFiles({
+        sourceDir,
+        targetDir,
+        version: "0.2.0",
+        pin: "0.2.0",
+        profile: "copilot",
+      });
+
+      const manifestRaw = readFileSync(join(targetDir, ".dev-tasks", "manifest.json"), "utf-8");
+      const manifest = JSON.parse(manifestRaw) as Manifest;
+      // Should still only have 1 entry (replaced, not duplicated)
+      expect(manifest.files).toHaveLength(1);
+      expect(manifest.files[0].profile).toBe("copilot");
+      expect(manifest.version).toBe("0.2.0");
+    });
+
+    it("preserves extraction data from existing manifest", async () => {
+      createFile(sourceDir, ".github/agents/dev.agent.md", "# GH Dev");
+
+      // Install copilot first
+      await installFiles({
+        sourceDir,
+        targetDir,
+        version: "0.1.0",
+        pin: "0.1.0",
+        profile: "copilot",
+      });
+
+      // Manually add extraction data to manifest
+      const manifestPath = join(targetDir, ".dev-tasks", "manifest.json");
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as Manifest;
+      manifest.extraction = { component: "test-service" };
+      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+
+      // Install kiro — should preserve extraction
+      createFile(sourceDir, ".kiro/agents/dev.md", "# Kiro Dev");
+      await installFiles({
+        sourceDir,
+        targetDir,
+        version: "0.1.0",
+        pin: "0.1.0",
+        profile: "kiro",
+      });
+
+      const updatedRaw = readFileSync(manifestPath, "utf-8");
+      const updated = JSON.parse(updatedRaw) as Manifest;
+      expect(updated.extraction).toEqual({ component: "test-service" });
+      expect(updated.files).toHaveLength(2);
     });
   });
 });

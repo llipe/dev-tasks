@@ -3,7 +3,7 @@
  * The pin file controls which package version subsequent runs use.
  */
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 
 const PIN_DIR = ".dev-tasks";
@@ -34,6 +34,22 @@ export async function readPin(repoRoot: string): Promise<string | null> {
   } catch (err: unknown) {
     if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {
       return null;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Remove the pin file (.dev-tasks/version).
+ * Returns true if the pin was removed, false if no pin existed.
+ */
+export async function removePin(repoRoot: string): Promise<boolean> {
+  try {
+    await rm(pinPath(repoRoot));
+    return true;
+  } catch (err: unknown) {
+    if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {
+      return false;
     }
     throw err;
   }

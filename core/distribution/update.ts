@@ -2,14 +2,19 @@
  * Update command logic — reconcile all managed files against the package.
  * Uses the generic reconcile engine from core/reconcile.ts.
  * Works across all platform profiles (copilot, claude, kiro).
+ *
+ * When a pin is set and differs from the local package version, fetches the
+ * pinned version from npm and reconciles against that instead.
  */
 
 import { readFile, writeFile, mkdir, access } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { hashFile } from "./hash.js";
 import { readManifest, writeManifest, type Manifest } from "./manifest.js";
+import { readPin } from "./pin.js";
 import { reconcile, type ReconcileAction } from "../reconcile.js";
 import { createBackupDir, backupFile } from "./backup.js";
+import { fetchPackageVersion } from "./fetch-package.js";
 
 export interface UpdateFileResult {
   path: string;
@@ -26,6 +31,10 @@ export interface UpdateResult {
   installed: UpdateFileResult[];
   skipped: UpdateFileResult[];
   backupDir: string | null;
+  /** The version that files were reconciled against */
+  resolvedVersion: string;
+  /** Whether a remote fetch was performed (pin differs from local) */
+  fetched: boolean;
 }
 
 export interface UpdateOptions {
@@ -54,10 +63,13 @@ async function fileExists(path: string): Promise<boolean> {
 /**
  * Run the update reconciliation for all managed files in the manifest.
  *
+ * If a pin is set (via .dev-tasks/version) and differs from the local package
+ * version, fetches the pinned version from npm and reconciles against it.
+ *
  * For each managed file:
  * 1. Compute localHash from the installed file (null if missing)
  * 2. Read originHash from the manifest
- * 3. Compute packageHash from the package source
+ * 3. Compute packageHash from the package source (local or fetched)
  * 4. Call reconcile() to determine the action
  * 5. Execute the action (install/overwrite/skip or report conflict)
  */
@@ -72,8 +84,55 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
       installed: [],
       skipped: [],
       backupDir: null,
+      resolvedVersion: version,
+      fetched: false,
     };
   }
+
+  // Determine the effective source: use pinned version if it differs from local
+  const pinnedVersion = await readPin(targetDir);
+  let effectiveSourceDir = sourceDir;
+  let effectiveVersion = version;
+  let fetched = false;
+  let cleanup: (() => Promise<void>) | null = null;
+
+  if (pinnedVersion && pinnedVersion !== version) {
+    const fetchResult = await fetchPackageVersion(pinnedVersion);
+    effectiveSourceDir = fetchResult.packageDir;
+    effectiveVersion = pinnedVersion;
+    fetched = true;
+    cleanup = fetchResult.cleanup;
+  }
+
+  try {
+    const result = await runReconciliation({
+      targetDir,
+      sourceDir: effectiveSourceDir,
+      force,
+      version: effectiveVersion,
+      manifest,
+    });
+    return { ...result, resolvedVersion: effectiveVersion, fetched };
+  } finally {
+    if (cleanup) {
+      await cleanup();
+    }
+  }
+}
+
+interface ReconcileInput {
+  targetDir: string;
+  sourceDir: string;
+  force: boolean;
+  version: string;
+  manifest: Manifest;
+}
+
+/**
+ * Core reconciliation logic — extracted to allow cleanup of temp dirs in the caller.
+ */
+async function runReconciliation(input: ReconcileInput): Promise<Omit<UpdateResult, "resolvedVersion" | "fetched">> {
+  const { targetDir, sourceDir, force, version, manifest } = input;
 
   const conflicts: UpdateFileResult[] = [];
   const updated: UpdateFileResult[] = [];

@@ -234,9 +234,18 @@ export function detectOpenApiStrategy(
     "swagger.yaml",
     "swagger.yml",
     "swagger.json",
+    "api/openapi.yaml",
+    "api/openapi.yml",
+    "api/openapi.json",
     "docs/openapi.yaml",
     "docs/openapi.yml",
     "docs/openapi.json",
+    "docs/api/openapi.yaml",
+    "docs/api/openapi.yml",
+    "docs/api/openapi.json",
+    "spec/openapi.yaml",
+    "spec/openapi.yml",
+    "spec/openapi.json",
   ];
   for (const file of openapiFiles) {
     if (existsSync(join(rootDir, file))) {

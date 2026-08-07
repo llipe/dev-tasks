@@ -6,7 +6,7 @@
 import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { hashContent } from "./hash.js";
-import { writeManifest, type Manifest, type ManagedFileEntry } from "./manifest.js";
+import { readManifest, writeManifest, type Manifest, type ManagedFileEntry } from "./manifest.js";
 import {
   resolveProfile,
   PROFILE_PATHS,
@@ -24,7 +24,7 @@ export interface InstallOptions {
   version: string;
   /** Version to pin (defaults to version if not provided) */
   pin: string;
-  /** Profile to install (default: 'both' = copilot + claude) */
+  /** Profile to install (default: 'all' = copilot + claude + kiro) */
   profile?: Profile;
 }
 
@@ -102,7 +102,7 @@ async function collectManagedPathFiles(
  * computes sha256 per file, and writes the manifest.
  */
 export async function installFiles(options: InstallOptions): Promise<InstallResult> {
-  const { sourceDir, targetDir, version, pin, profile = "both" } = options;
+  const { sourceDir, targetDir, version, pin, profile = "all" } = options;
   const platforms = resolveProfile(profile);
   const managedFiles: ManagedFileEntry[] = [];
 
@@ -145,6 +145,15 @@ export async function installFiles(options: InstallOptions): Promise<InstallResu
     files: managedFiles,
     extraction: {},
   };
+
+  // Merge with existing manifest: preserve files from profiles not being installed
+  const existing = await readManifest(targetDir);
+  if (existing) {
+    const installedProfileSet = new Set<string>(platforms);
+    const preservedFiles = existing.files.filter((f) => !installedProfileSet.has(f.profile));
+    manifest.files = [...preservedFiles, ...managedFiles];
+    manifest.extraction = existing.extraction;
+  }
 
   await writeManifest(targetDir, manifest);
 

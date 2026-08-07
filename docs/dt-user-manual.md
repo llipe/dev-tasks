@@ -4,7 +4,7 @@ This document explains everything `dt` does, the techniques it uses internally, 
 
 ## Overview
 
-`dt` is one of two binaries shipped in the `@llipe.com/dev-tasks` npm package. While `dev-tasks` handles bootstrap and distribution (install, update, pin), `dt` is the runtime tool that extracts structured metadata from your repository's source code and configuration files.
+`dt` is one of two binaries shipped in the `@llipe.com/dev-tasks` npm package. While `dev-tasks` handles bootstrap and distribution (install, update, pin, unpin — see [`dev-tasks-user-manual.md`](dev-tasks-user-manual.md)), `dt` is the runtime tool that extracts structured metadata from your repository's source code and configuration files.
 
 Its core purpose: turn a repository into a machine-readable `component.json` manifest and an `extraction_report.json` quality summary — without running your application, without requiring credentials, and without inventing data.
 

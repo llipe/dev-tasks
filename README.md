@@ -26,7 +26,7 @@ cd your-project
 dev-tasks install
 ```
 
-This installs agent definitions, skills, instructions, and prompts into your project for the AI platforms you use. By default it installs for Copilot + Claude Code (`--profile both`).
+This installs agent definitions, skills, instructions, and prompts into your project for the AI platforms you use. By default it installs for all platforms (`--profile all`).
 
 **Choose your platform profile:**
 
@@ -34,7 +34,7 @@ This installs agent definitions, skills, instructions, and prompts into your pro
 dev-tasks install --profile copilot       # .github/ only
 dev-tasks install --profile claude        # .claude/ only
 dev-tasks install --profile kiro          # .kiro/ only
-dev-tasks install --profile all           # all platforms
+dev-tasks install --profile both          # copilot + claude only
 ```
 
 ### 3. Initialize your project context
@@ -113,6 +113,11 @@ git commit -m "feat: add component manifest via dt extract"
 
 For which artifacts are JSON vs YAML, and which are generated vs hand-written, see [`docs/artifact-formats.md`](docs/artifact-formats.md). Generated artifacts (`catalog/index.yaml`, `catalog/components/`) are never hand-edited.
 
+### CLI documentation
+
+- **`dev-tasks` (bootstrap/distribution):** [`docs/dev-tasks-user-manual.md`](docs/dev-tasks-user-manual.md) — install, update, pin/unpin, profiles, manifest merging, reconciliation
+- **`dt` (extraction/catalog/context):** [`docs/dt-user-manual.md`](docs/dt-user-manual.md) — extract, catalog, context, scope
+
 ### Global options
 
 | Flag                 | Description                  |
@@ -140,8 +145,19 @@ dev-tasks install [--pin <version>]   # Install skill files + write manifest
 dev-tasks update [--force]            # Reconcile with hash-based conflict detection
 dev-tasks status                      # Compare installed/pinned/latest versions
 dev-tasks pin <version>               # Pin to a specific version
+dev-tasks unpin                       # Remove the version pin
 dev-tasks doctor                      # Check Node ≥20, git ≥2.37, cache writable
 dev-tasks migrate                     # Migrate from legacy shell-script install
+```
+
+### Version Pinning
+
+Pin locks your project to a specific version. When pinned, `update` fetches the pinned version from the npm registry and reconciles against it — even if your locally installed package is newer:
+
+```bash
+dev-tasks pin 0.5.0    # Lock to 0.5.0
+dev-tasks update       # Fetches 0.5.0 from registry and reconciles against it
+dev-tasks unpin        # Remove the pin (update will use the local package version)
 ```
 
 ### Options (install / update)

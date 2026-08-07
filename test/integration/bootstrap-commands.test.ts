@@ -71,7 +71,7 @@ describe("dev-tasks bootstrap commands (integration)", () => {
       }
     });
 
-    it("default profile (both) installs copilot + claude but not kiro", () => {
+    it("default profile (all) installs copilot + claude + kiro", () => {
       const result = run(["install", "--json"], { cwd: tmpDir });
       expect(result.exitCode).toBe(0);
 
@@ -79,10 +79,7 @@ describe("dev-tasks bootstrap commands (integration)", () => {
         platforms: string[];
         files: Array<{ profile: string }>;
       };
-      expect(output.platforms).toEqual(["copilot", "claude"]);
-      for (const file of output.files) {
-        expect(["copilot", "claude"]).toContain(file.profile);
-      }
+      expect(output.platforms).toEqual(["copilot", "claude", "kiro"]);
     });
 
     it("--profile kiro installs only kiro files", () => {
@@ -130,7 +127,7 @@ describe("dev-tasks bootstrap commands (integration)", () => {
       expect(output.version).toBe(PKG_VERSION);
       expect(typeof output.installed).toBe("number");
       expect(Array.isArray(output.files)).toBe(true);
-      expect(output.profile).toBe("both");
+      expect(output.profile).toBe("all");
     });
 
     it("supports --pin flag to set a specific pinned version", () => {
