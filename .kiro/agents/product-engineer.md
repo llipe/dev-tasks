@@ -9,11 +9,6 @@ resources:
   - file://.kiro/steering/plan.md
   - file://.kiro/steering/implement.md
   - skill://.kiro/skills/**/SKILL.md
-permissions:
-  - allow: write
-    paths: ["workstream/**", "docs/**", ".kiro/**"]
-  - deny: write
-    paths: ["src/**", "core/**", "adapters/**", "bin/**", "scripts/**", "test/**"]
 ---
 
 # System Prompt — product-engineer

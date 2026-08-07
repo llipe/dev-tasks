@@ -5,11 +5,6 @@ resources:
   - file://AGENTS.md
   - file://docs/technical-guidelines.md
   - skill://.kiro/skills/**/SKILL.md
-permissions:
-  - allow: write
-    paths: ["workstream/**", "docs/**"]
-  - deny: write
-    paths: ["src/**", "core/**", "adapters/**", "bin/**", "scripts/**"]
 ---
 
 # System Prompt - verifier
