@@ -28,9 +28,13 @@ export async function fetchPackageVersion(version: string): Promise<FetchPackage
 
   try {
     // Use npm pack to download the tarball for the specific version
-    const packResult = await execa("npm", ["pack", `${PACKAGE_NAME}@${version}`, "--pack-destination", tmpDir], {
-      cwd: tmpDir,
-    });
+    const packResult = await execa(
+      "npm",
+      ["pack", `${PACKAGE_NAME}@${version}`, "--pack-destination", tmpDir],
+      {
+        cwd: tmpDir,
+      },
+    );
 
     // npm pack outputs the filename to stdout
     const tarballName = packResult.stdout.trim().split("\n").pop()!;

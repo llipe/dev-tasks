@@ -173,9 +173,7 @@ async function main(): Promise<void> {
     case "unpin": {
       const removed = await removePin(targetDir);
       if (args.flags.json) {
-        process.stdout.write(
-          JSON.stringify({ command: "unpin", removed }, null, 2) + "\n",
-        );
+        process.stdout.write(JSON.stringify({ command: "unpin", removed }, null, 2) + "\n");
       } else {
         if (removed) {
           process.stdout.write("Version pin removed.\n");
@@ -266,9 +264,7 @@ async function main(): Promise<void> {
       } else {
         // Human-readable output
         if (result.fetched) {
-          process.stdout.write(
-            `Pinned to ${result.resolvedVersion} (fetched from registry).\n\n`,
-          );
+          process.stdout.write(`Pinned to ${result.resolvedVersion} (fetched from registry).\n\n`);
         }
         if (
           result.installed.length === 0 &&

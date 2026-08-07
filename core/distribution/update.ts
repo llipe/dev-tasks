@@ -131,7 +131,9 @@ interface ReconcileInput {
 /**
  * Core reconciliation logic — extracted to allow cleanup of temp dirs in the caller.
  */
-async function runReconciliation(input: ReconcileInput): Promise<Omit<UpdateResult, "resolvedVersion" | "fetched">> {
+async function runReconciliation(
+  input: ReconcileInput,
+): Promise<Omit<UpdateResult, "resolvedVersion" | "fetched">> {
   const { targetDir, sourceDir, force, version, manifest } = input;
 
   const conflicts: UpdateFileResult[] = [];
