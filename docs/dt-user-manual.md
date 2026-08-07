@@ -163,6 +163,7 @@ Produces a `docs/schema.md` containing your database tables, columns with types,
 ### Rendering
 
 The `schema-md.ts` renderer produces:
+
 - An ER diagram in Mermaid syntax (tables, columns with PK/FK markers, relationships)
 - Per-table Markdown tables showing: column name, type, nullable, key indicator, default value
 - Relation listing with source/target fields
@@ -182,13 +183,14 @@ The `schema-md.ts` renderer produces:
 
 ## User
 
-| Column | Type | Nullable | Key | Default |
-|--------|------|----------|-----|---------|
-| id     | Int  | NO       | PK  | autoincrement() |
-| email  | String | NO     | UQ  |         |
-| name   | String | YES    |     |         |
+| Column | Type   | Nullable | Key | Default         |
+| ------ | ------ | -------- | --- | --------------- |
+| id     | Int    | NO       | PK  | autoincrement() |
+| email  | String | NO       | UQ  |                 |
+| name   | String | YES      |     |                 |
 
 **Relations:**
+
 - `posts`: one-to-many (id → Post.authorId)
 ```
 
@@ -204,10 +206,10 @@ Produces an OpenAPI 3.1 specification from your repository, using the best avail
 
 Controlled by `--strategy auto|1|3` (default: `auto`, which picks based on detection):
 
-| Strategy | Trigger | Technique | Source | Confidence |
-|----------|---------|-----------|--------|------------|
-| Route 1 | On-disk spec exists | Copy + normalize | `introspected` | `high` |
-| Route 3 | No spec, known framework | TypeScript AST | `inferred` | `medium` or `low` |
+| Strategy | Trigger                  | Technique        | Source         | Confidence        |
+| -------- | ------------------------ | ---------------- | -------------- | ----------------- |
+| Route 1  | On-disk spec exists      | Copy + normalize | `introspected` | `high`            |
+| Route 3  | No spec, known framework | TypeScript AST   | `inferred`     | `medium` or `low` |
 
 ### Route 1 — Copy and normalize
 
@@ -226,13 +228,16 @@ This is the most technically interesting part. It uses the **TypeScript Compiler
 3. **Visit AST nodes** looking for route registrations:
 
    **Express/Fastify/Hono patterns:**
+
    ```typescript
-   app.get("/users/:id", handler)
-   router.post("/items", handler)
+   app.get("/users/:id", handler);
+   router.post("/items", handler);
    ```
+
    Detected by: `CallExpression` → `PropertyAccessExpression` where the method name is `get|post|put|patch|delete|head|options`
 
    **NestJS patterns:**
+
    ```typescript
    @Controller("users")
    class UsersController {
@@ -240,11 +245,13 @@ This is the most technically interesting part. It uses the **TypeScript Compiler
      findOne(@Param("id") id: string) { ... }
    }
    ```
+
    Detected by: class decorators (`@Controller`) and method decorators (`@Get`, `@Post`, etc.)
 
 4. **Path composition** — composes router prefixes with route paths (e.g., `/api` + `/users/:id` = `/api/users/:id`)
 
 5. **Parameter extraction:**
+
    - Path params from the route pattern (`:id` → path param)
    - Query/body params from handler type signature via the **type checker**:
      - Express `Request<Params, ResBody, ReqBody, ReqQuery>` generics
@@ -285,37 +292,41 @@ Uses the **TypeScript Compiler API** to find kafkajs usage patterns:
 3. **AST pattern matching** — visits all `CallExpression` nodes looking for:
 
    **Producer patterns:**
+
    ```typescript
    producer.send({ topic: "orders.created", messages: [...] })
    producer.sendBatch({ topicMessages: [{ topic: "...", messages: [...] }] })
    ```
+
    Detected by: `PropertyAccessExpression.name === "send"` or `"sendBatch"`, confirmed by the presence of `topic` + `messages` properties in the argument object.
 
    **Consumer patterns:**
+
    ```typescript
-   consumer.subscribe({ topic: "orders.created" })
-   consumer.subscribe({ topics: ["orders.created", "orders.updated"] })
+   consumer.subscribe({ topic: "orders.created" });
+   consumer.subscribe({ topics: ["orders.created", "orders.updated"] });
    ```
+
    Detected by: `PropertyAccessExpression.name === "subscribe"` with a `topic` or `topics` property.
 
 4. **Topic resolution with confidence:**
 
-   | Expression type | Technique | `topic_confidence` |
-   |-----------------|-----------|-------------------|
-   | String literal `"orders.created"` | Direct read | `high` |
-   | Constant/enum `Topics.ORDERS` | Follow symbol via type checker → find initializer | `high` |
-   | Template literal `` `${prefix}.orders` `` | Extract pattern + variable names | `medium` |
-   | Unresolvable expression | Report snippet in `unresolved[]` | `low` |
+   | Expression type                           | Technique                                         | `topic_confidence` |
+   | ----------------------------------------- | ------------------------------------------------- | ------------------ |
+   | String literal `"orders.created"`         | Direct read                                       | `high`             |
+   | Constant/enum `Topics.ORDERS`             | Follow symbol via type checker → find initializer | `high`             |
+   | Template literal `` `${prefix}.orders` `` | Extract pattern + variable names                  | `medium`           |
+   | Unresolvable expression                   | Report snippet in `unresolved[]`                  | `low`              |
 
    For constants and enums, the type checker follows the symbol through imports and aliases to find the string literal initializer.
 
 5. **Payload classification** (separate `payload_confidence`):
 
-   | Payload type | Technique | `payload_confidence` |
-   |--------------|-----------|---------------------|
-   | Typed generic `producer.send<OrderEvent>({...})` | Derive schema from the type | `medium` |
-   | Inline object literal | LLM infers shape | `low` |
-   | Opaque (`Buffer`, `JSON.stringify(variable)`) | Mark unresolved | `low` |
+   | Payload type                                     | Technique                   | `payload_confidence` |
+   | ------------------------------------------------ | --------------------------- | -------------------- |
+   | Typed generic `producer.send<OrderEvent>({...})` | Derive schema from the type | `medium`             |
+   | Inline object literal                            | LLM infers shape            | `low`                |
+   | Opaque (`Buffer`, `JSON.stringify(variable)`)    | Mark unresolved             | `low`                |
 
 ### Why two confidence fields?
 
@@ -333,11 +344,11 @@ Combines all prior extraction results into a single `component.json` with full p
 
 Fields are classified by how they're populated:
 
-| Category | Fields | How populated |
-|----------|--------|---------------|
-| **Derivable** | `name`, `stack`, `type`, `provides`, `datastores`, `paths`, `docs`, `consumes` | Directly from detection + extraction results |
-| **Inferable** | `description`, `aliases`, `subdomain`, `consumes[].criticality` | LLM suggestion, but requires human confirmation |
-| **Non-derivable** | `owner`, `domain`, `criticality`, `lifecycle` | Interactive prompt only — never invented |
+| Category          | Fields                                                                         | How populated                                   |
+| ----------------- | ------------------------------------------------------------------------------ | ----------------------------------------------- |
+| **Derivable**     | `name`, `stack`, `type`, `provides`, `datastores`, `paths`, `docs`, `consumes` | Directly from detection + extraction results    |
+| **Inferable**     | `description`, `aliases`, `subdomain`, `consumes[].criticality`                | LLM suggestion, but requires human confirmation |
+| **Non-derivable** | `owner`, `domain`, `criticality`, `lifecycle`                                  | Interactive prompt only — never invented        |
 
 ### The `--interactive` flag
 
@@ -374,12 +385,12 @@ Every field in `component.json` carries metadata:
 
 When you re-run `dt extract component` on a repo that already has a `component.json`, the **reconciliation engine** (shared with `dev-tasks update`) decides what to do per field:
 
-| Local hash | Origin hash | Package hash | Action |
-|------------|-------------|--------------|--------|
-| null (absent) | — | — | **install** — write the field |
-| == package | — | — | **skip** — already up to date |
-| == origin | != package | — | **overwrite** — you didn't edit it, upstream changed |
-| != origin | != package | — | **conflict** — you edited it, can't auto-update |
+| Local hash    | Origin hash | Package hash | Action                                               |
+| ------------- | ----------- | ------------ | ---------------------------------------------------- |
+| null (absent) | —           | —            | **install** — write the field                        |
+| == package    | —           | —            | **skip** — already up to date                        |
+| == origin     | != package  | —            | **overwrite** — you didn't edit it, upstream changed |
+| != origin     | != package  | —            | **conflict** — you edited it, can't auto-update      |
 
 This means: if you manually edit a field in `component.json`, re-running extraction will not silently overwrite your edit. It reports a conflict instead.
 
@@ -404,6 +415,7 @@ dt validate-component component.json --json
 4. Returns a structured result: `{ valid: boolean, errors: [{ path, message, keyword, params }] }`.
 
 The schema enforces, among other things:
+
 - `id` matches `^[a-z][a-z0-9-]{2,49}$`
 - `additionalProperties: false` at every object level (unknown top-level or nested keys are rejected)
 - manual fields (e.g. `owner`) are required and non-empty
@@ -413,12 +425,12 @@ Cross-catalog checks — contract resolution (`consumes[].contract` → an exist
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Valid — manifest conforms to the schema |
-| 2 | Usage error — no `<path>` argument given |
-| 4 | Invalid — one or more schema violations (see `errors[]` in `--json` output) |
-| 5 | File not found at the given path |
+| Code | Meaning                                                                     |
+| ---- | --------------------------------------------------------------------------- |
+| 0    | Valid — manifest conforms to the schema                                     |
+| 2    | Usage error — no `<path>` argument given                                    |
+| 4    | Invalid — one or more schema violations (see `errors[]` in `--json` output) |
+| 5    | File not found at the given path                                            |
 
 ### Reused by
 
@@ -464,9 +476,9 @@ dt catalog scaffold --json                 # machine-readable output
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success — scaffold generated |
+| Code | Meaning                      |
+| ---- | ---------------------------- |
+| 0    | Success — scaffold generated |
 
 ---
 
@@ -529,6 +541,7 @@ For each target repository:
 1. **Cache check** — looks for `~/.dev-tasks/cache/<host>/<org>/<repo>/<sha>/` with a `.complete` marker file. If present, returns immediately (cache hit).
 
 2. **Sparse clone sequence** (on cache miss):
+
    ```bash
    git clone --filter=blob:none --no-checkout --depth 1 <url> <tmp-dir>
    git -C <tmp-dir> sparse-checkout set component.json docs contracts
@@ -571,21 +584,21 @@ Targets are resolved from the meta-repo's `catalog/index.yaml` (preferred, conta
 
 ### Flags
 
-| Flag | Description |
-|------|-------------|
-| `--repos <ids>` | Required. Comma-separated component IDs to fetch |
-| `--meta-repo <path>` | Required. Path to the meta-repo (contains registry/index) |
-| `--refresh` | Bypass cache — re-fetch even if SHA directory exists |
-| `--concurrency <n>` | Max parallel fetches (default: 8) |
-| `--json` | Machine-readable output with per-repo cache hit/miss details |
+| Flag                 | Description                                                  |
+| -------------------- | ------------------------------------------------------------ |
+| `--repos <ids>`      | Required. Comma-separated component IDs to fetch             |
+| `--meta-repo <path>` | Required. Path to the meta-repo (contains registry/index)    |
+| `--refresh`          | Bypass cache — re-fetch even if SHA directory exists         |
+| `--concurrency <n>`  | Max parallel fetches (default: 8)                            |
+| `--json`             | Machine-readable output with per-repo cache hit/miss details |
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | All repos fetched successfully |
-| 2 | Usage error — missing required flags |
-| 5 | Fetch failure — one or more repos unreachable/timed out (per-repo errors in output) |
+| Code | Meaning                                                                             |
+| ---- | ----------------------------------------------------------------------------------- |
+| 0    | All repos fetched successfully                                                      |
+| 2    | Usage error — missing required flags                                                |
+| 5    | Fetch failure — one or more repos unreachable/timed out (per-repo errors in output) |
 
 ### JSON output
 
@@ -630,17 +643,17 @@ After eviction, empty parent directories are cleaned up.
 
 ### Flags
 
-| Flag | Description |
-|------|-------------|
+| Flag                | Description                                               |
+| ------------------- | --------------------------------------------------------- |
 | `--max-size <size>` | Max total cache size (e.g., `5GB`, `500MB`). Default: 5GB |
-| `--max-age <age>` | Max entry age (e.g., `30d`, `24h`, `60m`). Default: 30d |
-| `--json` | Machine-readable output |
+| `--max-age <age>`   | Max entry age (e.g., `30d`, `24h`, `60m`). Default: 30d   |
+| `--json`            | Machine-readable output                                   |
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | GC completed (may have evicted 0 entries if cache is healthy) |
+| Code | Meaning                                                       |
+| ---- | ------------------------------------------------------------- |
+| 0    | GC completed (may have evicted 0 entries if cache is healthy) |
 
 ---
 
@@ -663,17 +676,18 @@ dt ctx assemble --scope scope.json --out ./bundle --budget 40000 --json
 
 3. **Render layers in fixed order** — each layer has a numeric priority (lower = higher priority) and a truncable/non-truncable flag:
 
-   | Layer | File | Priority | Truncable | Content |
-   |-------|------|----------|-----------|---------|
-   | 00-index | `00-index.md` | 0 | No | Catalog index summary for scoped components |
-   | 01-flow | `01-flow.md` | 1 | No | Flow definition with participants |
-   | 02-conventions-delta | `02-conventions-delta.md` | 2 | No | Conventions relevant to scope domains |
-   | 03-architecture | `03-architecture.md` | 3 | Yes | Architecture document |
-   | 04-primary-* | `04-primary-<id>.md` | 4+ | Yes | Full docs per primary component |
-   | 05-secondary-* | `05-secondary-<id>.md` | varies | Yes | Summary only (id, description, provides/consumes) |
-   | 06-contracts | `06-contracts.md` | last | Yes | Boundary contracts with confidence badges |
+   | Layer                | File                      | Priority | Truncable | Content                                           |
+   | -------------------- | ------------------------- | -------- | --------- | ------------------------------------------------- |
+   | 00-index             | `00-index.md`             | 0        | No        | Catalog index summary for scoped components       |
+   | 01-flow              | `01-flow.md`              | 1        | No        | Flow definition with participants                 |
+   | 02-conventions-delta | `02-conventions-delta.md` | 2        | No        | Conventions relevant to scope domains             |
+   | 03-architecture      | `03-architecture.md`      | 3        | Yes       | Architecture document                             |
+   | 04-primary-\*        | `04-primary-<id>.md`      | 4+       | Yes       | Full docs per primary component                   |
+   | 05-secondary-\*      | `05-secondary-<id>.md`    | varies   | Yes       | Summary only (id, description, provides/consumes) |
+   | 06-contracts         | `06-contracts.md`         | last     | Yes       | Boundary contracts with confidence badges         |
 
 4. **Budget enforcement** — default 60,000 tokens (configurable via `--budget`):
+
    - If non-truncable layers alone exceed the budget → **exit 6** with a clear error message.
    - If total exceeds budget → truncate layers in **reverse priority order** (highest priority number first). Each truncation is recorded in the manifest's `truncated[]` array.
 
@@ -701,9 +715,7 @@ Written to the output directory alongside the layer files:
     { "filename": "00-index.md", "layerId": "00-index", "sha256": "abc...", "tokens": 450 },
     { "filename": "01-flow.md", "layerId": "01-flow", "sha256": "def...", "tokens": 180 }
   ],
-  "truncated": [
-    { "layerId": "03-architecture", "originalTokens": 12000, "truncatedTo": 5000 }
-  ],
+  "truncated": [{ "layerId": "03-architecture", "originalTokens": 12000, "truncatedTo": 5000 }],
   "totalTokens": 45000,
   "budget": 60000
 }
@@ -711,28 +723,29 @@ Written to the output directory alongside the layer files:
 
 ### Flags
 
-| Flag | Description |
-|------|-------------|
-| `--scope <path>` | Required. Path to the scope JSON file |
-| `--out <dir>` | Required. Output directory for the bundle |
-| `--meta-repo <path>` | Path to the meta-repo (default: current directory) |
-| `--budget <n>` | Total token budget (default: 60000) |
-| `--cache-path <path>` | Override cache path for component content lookup |
-| `--json` | Machine-readable manifest output |
+| Flag                  | Description                                        |
+| --------------------- | -------------------------------------------------- |
+| `--scope <path>`      | Required. Path to the scope JSON file              |
+| `--out <dir>`         | Required. Output directory for the bundle          |
+| `--meta-repo <path>`  | Path to the meta-repo (default: current directory) |
+| `--budget <n>`        | Total token budget (default: 60000)                |
+| `--cache-path <path>` | Override cache path for component content lookup   |
+| `--json`              | Machine-readable manifest output                   |
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success — bundle assembled within budget |
-| 2 | Usage error — missing required flags |
-| 5 | Not found — scope file or meta-repo content missing |
-| 6 | Budget exceeded — non-truncable layers alone exceed the budget |
-| 9 | Validation error — scope file cannot be parsed |
+| Code | Meaning                                                        |
+| ---- | -------------------------------------------------------------- |
+| 0    | Success — bundle assembled within budget                       |
+| 2    | Usage error — missing required flags                           |
+| 5    | Not found — scope file or meta-repo content missing            |
+| 6    | Budget exceeded — non-truncable layers alone exceed the budget |
+| 9    | Validation error — scope file cannot be parsed                 |
 
 ### Determinism guarantee
 
 Running `dt ctx assemble` twice with the same inputs produces **identical output**: same files, same content, same SHA-256 hashes. This is achieved by:
+
 - Fixed rendering order (no randomization, no file-system-order dependency)
 - No timestamps in generated content
 - Deterministic truncation (same budget + same content = same cut point)
@@ -784,7 +797,7 @@ The task-scope pipeline follows spec §8.4 pseudocode:
 
 1. **Pin meta-repo** — same as manual mode.
 
-2. **Check index freshness** — same as manual mode. Aborts with exit 9 if stale. This is checked *before* any LLM call.
+2. **Check index freshness** — same as manual mode. Aborts with exit 9 if stale. This is checked _before_ any LLM call.
 
 3. **Lexical candidates** — runs `catalogResolve(index, taskText)` to find components matching the task description via weighted lexical scoring (exact id, alias, domain, flow, name/description signals). Returns top 12 candidates. If no candidates match → exit 11.
 
@@ -795,6 +808,7 @@ The task-scope pipeline follows spec §8.4 pseudocode:
 6. **Validate scope IDs** — checks all expanded scope IDs exist in the catalog index → exit 12 if any are unknown.
 
 7. **Gate rules** — runs G1-G7 against the expanded scope:
+
    - **Abort gates (G1-G4):** total components > `--max-components` (G1), confidence low (G2), unresolved non-empty (G3), component missing from catalog (G4) → exit 7
    - **Review gates (G5-G7):** isolated primary (G5), >2 domains crossed (G6), low payload confidence boundary (G7) → continue with `review_flags`
 
@@ -807,6 +821,7 @@ The task-scope pipeline follows spec §8.4 pseudocode:
 ### Session lock structure (`session.lock.json`)
 
 **Manual scope:**
+
 ```json
 {
   "task_hash": "sha256-of-sorted-component-list",
@@ -817,9 +832,7 @@ The task-scope pipeline follows spec §8.4 pseudocode:
     "source": "manual"
   },
   "repo_shas": { "auth-service": "abc123...", "payment-service": "def456..." },
-  "bundle": [
-    { "filename": "00-index.md", "sha256": "...", "tokens": 450 }
-  ],
+  "bundle": [{ "filename": "00-index.md", "sha256": "...", "tokens": 450 }],
   "total_tokens": 3500,
   "created_at": "2024-07-28T10:00:00.000Z",
   "review_flags": []
@@ -827,6 +840,7 @@ The task-scope pipeline follows spec §8.4 pseudocode:
 ```
 
 **Task scope:**
+
 ```json
 {
   "task_hash": "sha256-of-task-text",
@@ -843,14 +857,10 @@ The task-scope pipeline follows spec §8.4 pseudocode:
     "flow": "login-flow"
   },
   "repo_shas": { "auth-service": "abc123...", "user-service": "def456..." },
-  "bundle": [
-    { "filename": "00-index.md", "sha256": "...", "tokens": 450 }
-  ],
+  "bundle": [{ "filename": "00-index.md", "sha256": "...", "tokens": 450 }],
   "total_tokens": 5200,
   "created_at": "2024-07-28T10:00:00.000Z",
-  "review_flags": [
-    { "rule": "G6", "message": "Scope spans 3 domains..." }
-  ]
+  "review_flags": [{ "rule": "G6", "message": "Scope spans 3 domains..." }]
 }
 ```
 
@@ -864,32 +874,32 @@ Explicitly opts out of LLM-based scoping. Requires `--components` (exit 2 withou
 
 ### Flags
 
-| Flag | Description |
-|------|-------------|
-| `--task "<text>"` | Task description for LLM-scoped init (mutually exclusive with `--components`) |
-| `--components <ids>` | Comma-separated component IDs for manual scope |
-| `--meta-repo <path>` | Path to the meta-repo (default: current directory) |
-| `--max-index-age <n>` | Max allowed index age in minutes (default: 240) |
-| `--max-components <n>` | Max total components before gate G1 aborts (default: 4, task mode only) |
-| `--flow <id>` | Flow ID to guide scope expansion (task mode only) |
-| `--no-llm` | Explicit no-LLM marker (requires `--components`) |
-| `--out <dir>` | Output directory for bundle + lock (default: `.dt-context`) |
-| `--budget <n>` | Total token budget for the bundle (default: 60000) |
-| `--concurrency <n>` | Max parallel fetch operations (default: 8) |
-| `--json` | Machine-readable output |
+| Flag                   | Description                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `--task "<text>"`      | Task description for LLM-scoped init (mutually exclusive with `--components`) |
+| `--components <ids>`   | Comma-separated component IDs for manual scope                                |
+| `--meta-repo <path>`   | Path to the meta-repo (default: current directory)                            |
+| `--max-index-age <n>`  | Max allowed index age in minutes (default: 240)                               |
+| `--max-components <n>` | Max total components before gate G1 aborts (default: 4, task mode only)       |
+| `--flow <id>`          | Flow ID to guide scope expansion (task mode only)                             |
+| `--no-llm`             | Explicit no-LLM marker (requires `--components`)                              |
+| `--out <dir>`          | Output directory for bundle + lock (default: `.dt-context`)                   |
+| `--budget <n>`         | Total token budget for the bundle (default: 60000)                            |
+| `--concurrency <n>`    | Max parallel fetch operations (default: 8)                                    |
+| `--json`               | Machine-readable output                                                       |
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success — bundle assembled, session lock emitted |
-| 2 | Invalid usage — `--no-llm` without `--components`, or neither `--task` nor `--components` provided |
-| 6 | Budget exceeded — non-truncable layers alone exceed the budget |
-| 7 | Gate abort — G1-G4 triggered (system decision, task mode only) |
-| 9 | Stale index — catalog index age exceeds `--max-index-age` |
-| 10 | Invalid scope — LLM output failed validation after repair retry (task mode only) |
-| 11 | No candidates — lexical resolve found no matching components (task mode only) |
-| 12 | Unknown component — component IDs not found in the catalog |
+| Code | Meaning                                                                                            |
+| ---- | -------------------------------------------------------------------------------------------------- |
+| 0    | Success — bundle assembled, session lock emitted                                                   |
+| 2    | Invalid usage — `--no-llm` without `--components`, or neither `--task` nor `--components` provided |
+| 6    | Budget exceeded — non-truncable layers alone exceed the budget                                     |
+| 7    | Gate abort — G1-G4 triggered (system decision, task mode only)                                     |
+| 9    | Stale index — catalog index age exceeds `--max-index-age`                                          |
+| 10   | Invalid scope — LLM output failed validation after repair retry (task mode only)                   |
+| 11   | No candidates — lexical resolve found no matching components (task mode only)                      |
+| 12   | Unknown component — component IDs not found in the catalog                                         |
 
 ### JSON output — task mode (success)
 
@@ -915,9 +925,7 @@ Explicitly opts out of LLM-based scoping. Requires `--components` (exit 2 withou
     "confidence": "high",
     "flow": "login-flow"
   },
-  "review_flags": [
-    { "rule": "G6", "message": "Scope spans 3 domains..." }
-  ]
+  "review_flags": [{ "rule": "G6", "message": "Scope spans 3 domains..." }]
 }
 ```
 
@@ -963,9 +971,10 @@ dt scope --task "Fix bug" --candidates c.json --meta-repo ./meta --skip-calibrat
 
 ### How it works internally
 
-1. **Build constrained input** — assembles a scoping input containing *only* `task`, `candidates`, `flows`, and `domains`. The full catalog is never sent to the LLM. Candidates come from the `dt catalog resolve` step. Flows and domains are filtered to only those containing candidate components.
+1. **Build constrained input** — assembles a scoping input containing _only_ `task`, `candidates`, `flows`, and `domains`. The full catalog is never sent to the LLM. Candidates come from the `dt catalog resolve` step. Flows and domains are filtered to only those containing candidate components.
 
 2. **System prompt** — instructs the LLM to:
+
    - Only choose from the provided candidates list (never invent IDs)
    - Set confidence to `"low"` when ambiguous
    - List any capability it cannot map to a candidate in `unresolved`
@@ -975,11 +984,13 @@ dt scope --task "Fix bug" --candidates c.json --meta-repo ./meta --skip-calibrat
 3. **LLM call** — sends the system prompt + serialized input to the configured LLM provider.
 
 4. **Parse and validate** — three-step validation:
+
    - **JSON parsing** — strips markdown fences if present, parses JSON
    - **Schema validation** — validates against `scope-output.schema.json` (enforces: `primary` 1–6 unique items, `secondary` ≤8, `rationale` ≤600 chars, valid `confidence` enum, `schemaVersion` semver, no additional properties)
    - **Post-schema ID validation** — checks that every component ID in `primary` and `secondary` exists in either the candidates list or the full catalog index. Any "invented" ID triggers failure.
 
 5. **Repair retry** — on first validation failure:
+
    - Sends a repair prompt containing the specific validation errors back to the LLM
    - Validates the second response identically
    - Second failure → returns failure result (caller exits 10)
@@ -1003,16 +1014,16 @@ The LLM must return a JSON object conforming to this schema:
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `schemaVersion` | string | Yes | Semver pattern `^[0-9]+\.[0-9]+\.[0-9]+$` |
-| `primary` | string[] | Yes | 1–6 unique items, non-empty strings |
-| `secondary` | string[] | Yes | 0–8 unique items |
-| `contracts_crossed` | string[] | Yes | Contract IDs touched by the task |
-| `confidence` | enum | Yes | `"high"`, `"medium"`, or `"low"` |
-| `unresolved` | string[] | Yes | Capabilities not mappable to candidates |
-| `rationale` | string | Yes | Max 600 characters |
-| `flow` | string | No | Optional flow ID |
+| Field               | Type     | Required | Constraints                               |
+| ------------------- | -------- | -------- | ----------------------------------------- |
+| `schemaVersion`     | string   | Yes      | Semver pattern `^[0-9]+\.[0-9]+\.[0-9]+$` |
+| `primary`           | string[] | Yes      | 1–6 unique items, non-empty strings       |
+| `secondary`         | string[] | Yes      | 0–8 unique items                          |
+| `contracts_crossed` | string[] | Yes      | Contract IDs touched by the task          |
+| `confidence`        | enum     | Yes      | `"high"`, `"medium"`, or `"low"`          |
+| `unresolved`        | string[] | Yes      | Capabilities not mappable to candidates   |
+| `rationale`         | string   | Yes      | Max 600 characters                        |
+| `flow`              | string   | No       | Optional flow ID                          |
 
 ### LLM provider abstraction
 
@@ -1045,24 +1056,24 @@ Filenames use the pattern `<timestamp-millis>-<task-hash>.json`. The calibration
 
 ### Flags
 
-| Flag | Description |
-|------|-------------|
-| `--task "<text>"` | Required. The task description |
+| Flag                  | Description                                                             |
+| --------------------- | ----------------------------------------------------------------------- |
+| `--task "<text>"`     | Required. The task description                                          |
 | `--candidates <path>` | Required. Path to the resolve output JSON (array of `ResolveCandidate`) |
-| `--meta-repo <path>` | Path to the meta-repo (default: current directory) |
-| `--out <dir>` | Output directory for calibration data (default: current directory) |
-| `--skip-calibration` | Skip writing calibration data |
-| `--json` | Machine-readable output |
+| `--meta-repo <path>`  | Path to the meta-repo (default: current directory)                      |
+| `--out <dir>`         | Output directory for calibration data (default: current directory)      |
+| `--skip-calibration`  | Skip writing calibration data                                           |
+| `--json`              | Machine-readable output                                                 |
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success — scope determined and validated |
-| 2 | Invalid usage — missing required flags |
-| 5 | Not found — candidates file or catalog index not found |
-| 10 | Invalid scope — validation failed after repair retry |
-| 11 | No candidates — resolve output is empty |
+| Code | Meaning                                                |
+| ---- | ------------------------------------------------------ |
+| 0    | Success — scope determined and validated               |
+| 2    | Invalid usage — missing required flags                 |
+| 5    | Not found — candidates file or catalog index not found |
+| 10   | Invalid scope — validation failed after repair retry   |
+| 11   | No candidates — resolve output is empty                |
 
 ### JSON output (success)
 
@@ -1107,6 +1118,7 @@ Filenames use the pattern `<timestamp-millis>-<task-hash>.json`. The calibration
 ### What it does
 
 Takes a scope output (from `dt scope`) and:
+
 1. Expands it via graph closure — adding consumers of crossed contracts and flow neighbors to `secondary`
 2. Runs gate rules G1-G7 to validate the expanded scope
 3. If G1 triggers (too many components), generates a partition proposal with producer-before-consumer ordering
@@ -1133,15 +1145,15 @@ Starting from the LLM scope output:
 
 Gates are classified as **abort** (G1-G4, exit 7) or **review** (G5-G7, continue with flags):
 
-| Rule | Condition | Action |
-|------|-----------|--------|
-| G1 | Total components > `--max-components` (default 4) | **Abort** with partition proposal |
-| G2 | `confidence: low` | **Abort** — task is too ambiguous |
-| G3 | Non-empty `unresolved` list | **Abort** — unmapped capabilities |
-| G4 | Component in scope has no catalog entry | **Abort** — incomplete catalog |
-| G5 | LLM primary is isolated from graph | **Review flag** — verify inclusion |
-| G6 | Scope spans >2 domains | **Review flag** — coordination risk |
-| G7 | Boundary contract has `payload_confidence: low` | **Review flag** — false positive risk |
+| Rule | Condition                                         | Action                                |
+| ---- | ------------------------------------------------- | ------------------------------------- |
+| G1   | Total components > `--max-components` (default 4) | **Abort** with partition proposal     |
+| G2   | `confidence: low`                                 | **Abort** — task is too ambiguous     |
+| G3   | Non-empty `unresolved` list                       | **Abort** — unmapped capabilities     |
+| G4   | Component in scope has no catalog entry           | **Abort** — incomplete catalog        |
+| G5   | LLM primary is isolated from graph                | **Review flag** — verify inclusion    |
+| G6   | Scope spans >2 domains                            | **Review flag** — coordination risk   |
+| G7   | Boundary contract has `payload_confidence: low`   | **Review flag** — false positive risk |
 
 Abort gates are evaluated in order (G1 first). The first abort stops evaluation. Review gates accumulate independently.
 
@@ -1155,21 +1167,21 @@ When G1 aborts, a partition proposal is generated:
 
 ### Flags
 
-| Flag | Description |
-|------|-------------|
-| `--scope <path>` | Required. Path to the scope JSON file (output from `dt scope`) |
-| `--meta-repo <path>` | Path to the meta-repo (default: current directory) |
-| `--max-components <n>` | Maximum total components before G1 abort (default: 4) |
-| `--json` | Machine-readable output |
+| Flag                   | Description                                                    |
+| ---------------------- | -------------------------------------------------------------- |
+| `--scope <path>`       | Required. Path to the scope JSON file (output from `dt scope`) |
+| `--meta-repo <path>`   | Path to the meta-repo (default: current directory)             |
+| `--max-components <n>` | Maximum total components before G1 abort (default: 4)          |
+| `--json`               | Machine-readable output                                        |
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | All gates passed |
-| 2 | Invalid usage — missing required flags |
-| 5 | Not found — scope file or catalog index not found |
-| 7 | Gate abort — G1/G2/G3/G4 triggered (distinct from error) |
+| Code | Meaning                                                  |
+| ---- | -------------------------------------------------------- |
+| 0    | All gates passed                                         |
+| 2    | Invalid usage — missing required flags                   |
+| 5    | Not found — scope file or catalog index not found        |
+| 7    | Gate abort — G1/G2/G3/G4 triggered (distinct from error) |
 
 ### JSON output (success)
 
@@ -1185,9 +1197,7 @@ When G1 aborts, a partition proposal is generated:
       "billing-service": "closure"
     }
   },
-  "review_flags": [
-    { "rule": "G6", "message": "Scope spans 3 domains..." }
-  ]
+  "review_flags": [{ "rule": "G6", "message": "Scope spans 3 domains..." }]
 }
 ```
 
@@ -1233,11 +1243,11 @@ detect → schema → openapi → asyncapi → component → extraction_report.j
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | OK — all stages completed |
-| 13 | Incomplete: required fields unresolved (non-derivable fields empty) |
-| 14 | Reconciliation conflict (you edited a field that extraction wants to update) |
+| Code | Meaning                                                                      |
+| ---- | ---------------------------------------------------------------------------- |
+| 0    | OK — all stages completed                                                    |
+| 13   | Incomplete: required fields unresolved (non-derivable fields empty)          |
+| 14   | Reconciliation conflict (you edited a field that extraction wants to update) |
 
 ### `extraction_report.json`
 
@@ -1257,7 +1267,12 @@ Aggregates quality metrics from all stages:
   },
   "confidence_counts": { "high": 10, "medium": 5, "low": 3 },
   "unresolved": [
-    { "stage": "openapi", "type": "dynamic_route", "location": "src/api/routes.ts:42", "reason": "..." }
+    {
+      "stage": "openapi",
+      "type": "dynamic_route",
+      "location": "src/api/routes.ts:42",
+      "reason": "..."
+    }
   ],
   "requires_human": [
     { "field": "owner", "reason": "Non-derivable field", "category": "non-derivable" }
@@ -1274,6 +1289,7 @@ The companion binary handles distribution and lifecycle:
 ### `dev-tasks install`
 
 Copies skill/agent/steering files from the npm package into your repo. Writes `.dev-tasks/manifest.json` tracking each file with:
+
 - `sha256`: current hash of the installed file
 - `origin_sha256`: hash as shipped (for later reconciliation)
 - `profile`: which platform profile it belongs to (copilot, claude, kiro)
@@ -1281,6 +1297,7 @@ Copies skill/agent/steering files from the npm package into your repo. Writes `.
 ### `dev-tasks update`
 
 Reconciles installed files against the new package version using the four-branch algorithm:
+
 - **Install**: file is new in the package, doesn't exist locally
 - **Overwrite**: file unchanged locally (hash matches origin), new version in package
 - **Skip**: file already matches the new package version
@@ -1291,6 +1308,7 @@ With `--force`: backs up conflicting files to `.dev-tasks/backup/<timestamp>/` t
 ### `dev-tasks doctor`
 
 Validates your environment:
+
 - Node.js >= 20
 - git >= 2.37 (needed for sparse-checkout support)
 - Cache directory (`~/.cache/dev-tasks`) is writable
@@ -1326,6 +1344,7 @@ interface ExtractionProvider {
 ```
 
 Capabilities declared:
+
 - `openapi_native` — can copy an existing spec (route 1)
 - `openapi_ast` — can discover routes via AST (route 3)
 - `orm_ast` — can parse ORM definitions
@@ -1397,12 +1416,12 @@ git commit -m "feat: add component manifest via dt extract"
 
 ## What's Coming Next
 
-| Phase | Capability | Status |
-|-------|-----------|--------|
-| Phase 0 | Distribution (`dev-tasks install/update/doctor`) | Done |
-| Phase 1 | Extraction (`dt extract *`) | Done |
-| Phase 2 | Catalog — cross-repo aggregation + validation | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped) |
-| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly + session init | Done (`dt ctx fetch/gc/assemble` + `dt init --components` shipped) |
-| Phase 4 | Scoping — LLM-assisted component selection per task | Done (`dt scope` + `dt scope gate` + `dt init --task` shipped) |
-| Phase 5 | Verify — contract diff + impact analysis | Planned |
-| Phase 6 | MCP adapter — expose as agent tools | Planned |
+| Phase   | Capability                                                           | Status                                                                             |
+| ------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Phase 0 | Distribution (`dev-tasks install/update/doctor`)                     | Done                                                                               |
+| Phase 1 | Extraction (`dt extract *`)                                          | Done                                                                               |
+| Phase 2 | Catalog — cross-repo aggregation + validation                        | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped) |
+| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly + session init | Done (`dt ctx fetch/gc/assemble` + `dt init --components` shipped)                 |
+| Phase 4 | Scoping — LLM-assisted component selection per task                  | Done (`dt scope` + `dt scope gate` + `dt init --task` shipped)                     |
+| Phase 5 | Verify — contract diff + impact analysis                             | Planned                                                                            |
+| Phase 6 | MCP adapter — expose as agent tools                                  | Planned                                                                            |

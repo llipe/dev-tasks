@@ -28,13 +28,13 @@ All commands accept `--json` for machine-readable output.
 
 Agent toolkit files are organized by AI platform:
 
-| Profile | Directories Managed |
-|---------|-------------------|
+| Profile   | Directories Managed                                                               |
+| --------- | --------------------------------------------------------------------------------- |
 | `copilot` | `.github/agents/`, `.github/skills/`, `.github/instructions/`, `.github/prompts/` |
-| `claude` | `.claude/agents/`, `.claude/skills/`, `.claude/commands/`, `.claude/hooks/` |
-| `kiro` | `.kiro/agents/`, `.kiro/skills/`, `.kiro/steering/`, `.kiro/hooks/` |
-| `both` | `copilot` + `claude` |
-| `all` | `copilot` + `claude` + `kiro` (default) |
+| `claude`  | `.claude/agents/`, `.claude/skills/`, `.claude/commands/`, `.claude/hooks/`       |
+| `kiro`    | `.kiro/agents/`, `.kiro/skills/`, `.kiro/steering/`, `.kiro/hooks/`               |
+| `both`    | `copilot` + `claude`                                                              |
+| `all`     | `copilot` + `claude` + `kiro` (default)                                           |
 
 ### Manifest
 
@@ -58,6 +58,7 @@ Every installation writes `.dev-tasks/manifest.json` — the source of truth for
 ```
 
 Key fields per file entry:
+
 - `sha256` — current hash of the file as installed
 - `origin_sha256` — hash as originally shipped (used for conflict detection during updates)
 - `profile` — which platform this file belongs to
@@ -78,10 +79,12 @@ When you install a profile, only entries for that profile are replaced in the ma
 A pin locks the project to a specific version of the toolkit. The pin is stored in `.dev-tasks/version` (a plain text file containing the version string).
 
 When pinned:
+
 - `dev-tasks update` fetches the pinned version from the npm registry and reconciles against it — even if the locally installed package is newer
 - `dev-tasks status` compares the installed version against the pin (not against the latest)
 
 When unpinned:
+
 - `dev-tasks update` reconciles against the locally installed package version
 - `dev-tasks status` compares against the latest available version
 
@@ -117,11 +120,11 @@ dev-tasks install --json                   # Machine-readable output
 
 #### Flags
 
-| Flag | Description |
-|------|-------------|
-| `--profile <p>` | Platform profile to install (default: `all`) |
-| `--pin <ver>` | Also write this version to `.dev-tasks/version` |
-| `--json` | Output JSON result |
+| Flag            | Description                                     |
+| --------------- | ----------------------------------------------- |
+| `--profile <p>` | Platform profile to install (default: `all`)    |
+| `--pin <ver>`   | Also write this version to `.dev-tasks/version` |
+| `--json`        | Output JSON result                              |
 
 ---
 
@@ -139,20 +142,20 @@ dev-tasks update --json       # Machine-readable output
 
 For each file in the manifest, three hashes are compared:
 
-| Hash | Source | Meaning |
-|------|--------|---------|
-| `localHash` | File on disk in consumer repo | What's currently there |
-| `originHash` | `origin_sha256` in manifest | What was there at last install/update |
-| `packageHash` | File in the package source | What the target version ships |
+| Hash          | Source                        | Meaning                               |
+| ------------- | ----------------------------- | ------------------------------------- |
+| `localHash`   | File on disk in consumer repo | What's currently there                |
+| `originHash`  | `origin_sha256` in manifest   | What was there at last install/update |
+| `packageHash` | File in the package source    | What the target version ships         |
 
 Decision tree:
 
-| Condition | Action | Meaning |
-|-----------|--------|---------|
-| `localHash` is null | **install** | File was deleted locally — re-copy from package |
-| `localHash == packageHash` | **skip** | Already up to date |
-| `localHash == originHash` AND `packageHash` differs | **overwrite** | User hasn't edited; safe to update |
-| `localHash != originHash` AND `localHash != packageHash` | **conflict** | User edited AND package changed — cannot auto-resolve |
+| Condition                                                | Action        | Meaning                                               |
+| -------------------------------------------------------- | ------------- | ----------------------------------------------------- |
+| `localHash` is null                                      | **install**   | File was deleted locally — re-copy from package       |
+| `localHash == packageHash`                               | **skip**      | Already up to date                                    |
+| `localHash == originHash` AND `packageHash` differs      | **overwrite** | User hasn't edited; safe to update                    |
+| `localHash != originHash` AND `localHash != packageHash` | **conflict**  | User edited AND package changed — cannot auto-resolve |
 
 #### Pin-aware fetching
 
@@ -188,10 +191,10 @@ When conflicts are detected (user edited a file AND the package changed it):
 
 #### Flags
 
-| Flag | Description |
-|------|-------------|
-| `--force` | Backup conflicting files and overwrite |
-| `--json` | Output JSON result including `resolvedVersion` and `fetched` fields |
+| Flag      | Description                                                         |
+| --------- | ------------------------------------------------------------------- |
+| `--force` | Backup conflicting files and overwrite                              |
+| `--json`  | Output JSON result including `resolvedVersion` and `fetched` fields |
 
 #### JSON output includes
 
@@ -277,12 +280,12 @@ dev-tasks doctor --json  # Machine-readable output
 
 #### Checks performed
 
-| Check | Requirement |
-|-------|-------------|
-| Node.js version | >= 20 |
-| Git version | >= 2.37 |
-| Cache directory | `~/.dev-tasks/cache/` is writable |
-| Version skew | Installed version matches pinned version (if pinned) |
+| Check           | Requirement                                          |
+| --------------- | ---------------------------------------------------- |
+| Node.js version | >= 20                                                |
+| Git version     | >= 2.37                                              |
+| Cache directory | `~/.dev-tasks/cache/` is writable                    |
+| Version skew    | Installed version matches pinned version (if pinned) |
 
 ---
 
@@ -301,12 +304,12 @@ Detects legacy `.dev-tasks/skills/` layout, maps files to native platform paths,
 
 ## Exit Codes
 
-| Code | Constant | Meaning |
-|------|----------|---------|
-| 0 | `Success` | Command completed successfully |
-| 2 | `InvalidUsage` | Invalid arguments or flags |
-| 3 | `ReconciliationConflict` | Update detected conflicts (use `--force` to override) |
-| 4 | `DependencyError` | Doctor check failed |
+| Code | Constant                 | Meaning                                               |
+| ---- | ------------------------ | ----------------------------------------------------- |
+| 0    | `Success`                | Command completed successfully                        |
+| 2    | `InvalidUsage`           | Invalid arguments or flags                            |
+| 3    | `ReconciliationConflict` | Update detected conflicts (use `--force` to override) |
+| 4    | `DependencyError`        | Doctor check failed                                   |
 
 ---
 
