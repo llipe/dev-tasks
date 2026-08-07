@@ -128,7 +128,7 @@ permissions:                    # (Optional) Fine-grained access control
 | `description`   | Yes      | Human-readable purpose. Used by the runtime for agent selection and routing.                  |
 | `tools`         | Yes      | Tag-based tool categories: `read`, `write`, `shell`, `web`. Use `["*"]` for unrestricted.    |
 | `resources`     | No       | Context files auto-loaded via `file://` (project files) and `skill://` (skill definitions).  |
-| `permissions`   | No       | Inline permission rules for fine-grained access control (allow/deny by path glob).           |
+| `permissions`   | No       | Inline permission rules for fine-grained access control (allow/deny by path glob). **Note:** Not yet supported by the Kiro runtime as of v1.0 — presence causes agents to fail to load. |
 | `model`         | No       | Model selection override (omit to use the runtime default).                                  |
 | `mcpServers`    | No       | Embedded MCP server configurations for tool extensions.                                      |
 | `allowedTools`  | No       | Tools that execute without prompting (pre-approved).                                         |
