@@ -100,6 +100,58 @@ See individual agent files for invocation modes and entry points. Reference: Cop
 
 ---
 
+## Agent File Format (Kiro Custom Agents)
+
+Agent files in `.kiro/agents/` use YAML frontmatter followed by a markdown body containing the system prompt. The frontmatter conforms to the [official Kiro custom agent configuration reference](https://kiro.dev/docs/cli/custom-agents/configuration-reference/).
+
+### Frontmatter Schema
+
+```yaml
+---
+description: "<human-readable agent description>"
+tools: [<tool-tags>]           # Allowed: read, write, shell, web
+resources:                      # Context files auto-loaded into the agent
+  - file://<relative-path>     # Project files (e.g., file://AGENTS.md)
+  - skill://<glob-pattern>     # Skill definitions (e.g., skill://.kiro/skills/**/SKILL.md)
+permissions:                    # (Optional) Fine-grained access control
+  - allow: <action>
+    paths: ["<glob>"]
+  - deny: <action>
+    paths: ["<glob>"]
+---
+```
+
+### Field Reference
+
+| Field           | Required | Description                                                                                  |
+| --------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `description`   | Yes      | Human-readable purpose. Used by the runtime for agent selection and routing.                  |
+| `tools`         | Yes      | Tag-based tool categories: `read`, `write`, `shell`, `web`. Use `["*"]` for unrestricted.    |
+| `resources`     | No       | Context files auto-loaded via `file://` (project files) and `skill://` (skill definitions).  |
+| `permissions`   | No       | Inline permission rules for fine-grained access control (allow/deny by path glob). **Note:** Not yet supported by the Kiro runtime as of v1.0 — presence causes agents to fail to load. |
+| `model`         | No       | Model selection override (omit to use the runtime default).                                  |
+| `mcpServers`    | No       | Embedded MCP server configurations for tool extensions.                                      |
+| `allowedTools`  | No       | Tools that execute without prompting (pre-approved).                                         |
+
+### Tool Categories
+
+| Tag     | Grants Access To                                      |
+| ------- | ----------------------------------------------------- |
+| `read`  | File reading, search, code navigation                 |
+| `write` | File creation, editing, deletion                      |
+| `shell` | Terminal command execution                             |
+| `web`   | Web browsing and HTTP requests                        |
+
+> **Note:** `subagent` is not an official tool category. Subagent delegation is a runtime capability, not a tool permission.
+
+### References
+
+- [Kiro Custom Agent Configuration Reference](https://kiro.dev/docs/cli/custom-agents/configuration-reference/)
+- [Kiro CLI v3 Agent Config](https://kiro.dev/docs/cli/v3/agent-config/)
+- [Sample Multi-Agent Repository](https://github.com/aws-samples/sample-kiro-cli-multiagent-development)
+
+---
+
 ## General Agent Guidelines
 
 All AI coding agents working in this repository **MUST**:

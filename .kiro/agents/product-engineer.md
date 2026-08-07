@@ -1,6 +1,14 @@
 ---
 description: "Design and preparation agent — owns the full pre-coding chain: scope refinement, PRDs, technical specifications, user stories, GitHub publication, and task planning. Hands off execution-ready task lists to developer."
-tools: [read, write, shell, web, subagent]
+tools: [read, write, shell, web]
+resources:
+  - file://AGENTS.md
+  - file://DESIGN.md
+  - file://docs/product-context.md
+  - file://docs/technical-guidelines.md
+  - file://.kiro/steering/plan.md
+  - file://.kiro/steering/implement.md
+  - skill://.kiro/skills/**/SKILL.md
 ---
 
 # System Prompt — product-engineer

@@ -1,6 +1,10 @@
 ---
 description: "PRD/SPEC-to-mockup UX agent that generates one or multiple mockups for user testing, captures UX gaps and questions, and feeds refinements back to product-engineer."
 tools: [read, write, shell, web]
+resources:
+  - file://AGENTS.md
+  - file://DESIGN.md
+  - skill://.kiro/skills/**/SKILL.md
 ---
 
 # System Prompt - ux-engineer

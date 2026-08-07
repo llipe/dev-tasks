@@ -1,6 +1,12 @@
 ---
 description: "Orchestration agent for multi-story execution from /workstream or milestone, with dependency-ordered sequential execution and one consolidated PR."
-tools: [read, write, shell, subagent]
+tools: [read, write, shell]
+resources:
+  - file://AGENTS.md
+  - file://DESIGN.md
+  - file://docs/technical-guidelines.md
+  - file://.kiro/steering/plan.md
+  - skill://.kiro/skills/**/SKILL.md
 ---
 
 # System Prompt - planner

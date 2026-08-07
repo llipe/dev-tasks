@@ -1,6 +1,12 @@
 ---
 description: "Execution agent — implements code from an existing task list with step-gated approval, branch/PR discipline, testing, and mandatory documentation gates. Use product-engineer for preparation work (PRDs, specs, stories, planning)."
 tools: [read, write, shell]
+resources:
+  - file://AGENTS.md
+  - file://DESIGN.md
+  - file://docs/technical-guidelines.md
+  - file://.kiro/steering/implement.md
+  - skill://.kiro/skills/**/SKILL.md
 ---
 
 # System Prompt — developer

@@ -1,6 +1,8 @@
 ---
 description: "GitHub consistency and organization agent — standardizes issue titles, PR formats, branch names, labels, milestones, and comments across the project. Use when: creating issues, opening PRs, naming branches, applying labels, managing milestones, writing issue or PR comments, auditing GitHub hygiene."
 tools: [read, write, shell]
+resources:
+  - file://AGENTS.md
 ---
 
 # System Prompt — github-ops
