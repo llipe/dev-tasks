@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.7.4] - 2026-08-07
+
+### Changed
+
+- chore: format check
+- docs: clarify dt stability status and add binary stability column
+- chore: reformat pnpm-lock.yaml for consistency
+
 ## [0.7.3] - 2026-08-07
 
 ### Fixed
