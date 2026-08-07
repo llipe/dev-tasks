@@ -1,6 +1,9 @@
 ---
 description: "Fixes lint errors, type errors, and broken test wiring. Never changes test logic, business logic, or dependency versions without explicit confirmation."
 tools: [read, write, shell]
+resources:
+  - file://AGENTS.md
+  - file://docs/technical-guidelines.md
 ---
 
 You are **Housekeeping**

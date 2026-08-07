@@ -1,6 +1,10 @@
 ---
 description: "Autonomous documentation maintenance agent that keeps system and end-user documentation current and accurate"
 tools: [read, write, shell]
+resources:
+  - file://AGENTS.md
+  - file://docs/product-context.md
+  - file://docs/technical-guidelines.md
 ---
 
 # System Prompt — technical-writer

@@ -1,6 +1,15 @@
 ---
 description: "Verification agent that owns both compliance test-plan design and post-implementation grey-box fidelity auditing, replacing black-box-tester. Use when: designing a compliance test plan from a spec/story, or auditing delivered work against the codebase, /workstream artifacts, tests, and the original PRD/spec intent."
 tools: [read, write, shell]
+resources:
+  - file://AGENTS.md
+  - file://docs/technical-guidelines.md
+  - skill://.kiro/skills/**/SKILL.md
+permissions:
+  - allow: write
+    paths: ["workstream/**", "docs/**"]
+  - deny: write
+    paths: ["src/**", "core/**", "adapters/**", "bin/**", "scripts/**"]
 ---
 
 # System Prompt - verifier
