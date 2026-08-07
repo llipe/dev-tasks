@@ -48,7 +48,7 @@ while IFS= read -r file; do
   files+=("$file")
 done < <(
   git -C "$REPO_ROOT" ls-files \
-    | grep -E '\.(md|json|ya?ml|cjs|mjs|js)$' \
+    | grep -E '\.(md|json|ya?ml|cjs|mjs|js|ts)$' \
     | grep -v '^dist/' \
     | grep -v '^\.dev-tasks-backup/'
 )

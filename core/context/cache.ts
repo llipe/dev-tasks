@@ -4,7 +4,7 @@
  * Cache layout: <baseDir>/<host>/<org>/<repo>/<sha>/
  * Each entry is immutable once the `.complete` marker exists.
  *
- * LRU GC evicts by last-access time when total exceeds budget.
+ * LRU GC evicts by mtime (set via touchCacheEntry) when total exceeds budget.
  *
  * Spec: §6.3 RF-36.
  */
@@ -189,7 +189,7 @@ function collectCacheEntries(baseDir: string): CacheEntry[] {
       entries.push({
         path: dir,
         sizeBytes,
-        lastAccessTime: stat.atimeMs,
+        lastAccessTime: stat.mtimeMs,
       });
       return;
     }
