@@ -14,10 +14,12 @@ pnpm add -g @llipe.com/dev-tasks
 
 This gives you two binaries:
 
-| Binary      | Purpose                                                 |
-| ----------- | ------------------------------------------------------- |
-| `dev-tasks` | Bootstrap: install agent files, update, status, migrate |
-| `dt`        | Runtime: extract repo metadata, build context           |
+| Binary      | Stability    | Purpose                                                 |
+| ----------- | ------------ | ------------------------------------------------------- |
+| `dev-tasks` | **Stable**   | Bootstrap: install agent files, update, status, migrate |
+| `dt`        | **Unstable** | Runtime: extract repo metadata, build context           |
+
+> **⚠️ `dt` is unstable** — recommended for testing purposes only. The extraction pipeline, manifest format, and CLI surface may change without notice between releases. The rest of dev-tasks (agents, skills, instructions, `dev-tasks` CLI) is available for use.
 
 ### 2. Install agent workflow files into your repo
 
@@ -66,7 +68,9 @@ dev-tasks status            # compare installed vs latest version
 
 ---
 
-## Using `dt` for Multi-Repo Context
+## Using `dt` for Multi-Repo Context _(Unstable — testing only)_
+
+> **⚠️ Unstable:** The `dt` command is under active development and recommended for testing purposes only. APIs, flags, output formats, and exit codes may change between releases.
 
 `dt` extracts repository metadata (schema, OpenAPI, AsyncAPI), derives a `component.json` manifest with provenance and confidence tracking, and builds cross-repo context for agent sessions.
 
