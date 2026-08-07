@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.7.1] - 2026-08-07
+
+### Added
+
+- feat(distribution): add version pinning and unpin command with registry fetch
+
+### Changed
+
+- docs: fix markdown table alignment in dev-tasks and dt user manuals
+
 ## [0.7.0] - 2026-08-06
 
 ### Added
