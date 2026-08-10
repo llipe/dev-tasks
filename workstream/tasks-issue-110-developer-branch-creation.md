@@ -13,12 +13,12 @@
 
 ## Tasks
 
-- [ ] 1.0 Fix missing `subagent` tool in developer agent (AC-1, AC-6)
+- [x] 1.0 Fix missing `subagent` tool in developer agent (AC-1, AC-6)
 
-  - [ ] 1.1 Edit `.kiro/agents/developer.md` frontmatter: change `tools: [read, write, shell]` to `tools: [read, write, shell, subagent]`
-  - [ ] 1.2 Verify `.claude/agents/developer.md` already supports subagent delegation (Claude Code uses native subagent routing — confirm no tool-list change needed)
-  - [ ] 1.3 Verify `.github/agents/developer.agent.md` already supports subagent delegation (Copilot uses native agent references — confirm no change needed)
-  - [ ] 1.4 Verify Acceptance Criterion: `developer` agent can invoke `github-ops`, `verifier`, and `technical-writer` as sub-agents
+  - [x] 1.1 Edit `.kiro/agents/developer.md` frontmatter: change `tools: [read, write, shell]` to `tools: [read, write, shell, subagent]`
+  - [x] 1.2 Verify `.claude/agents/developer.md` already supports subagent delegation (Claude Code uses native subagent routing — confirm no tool-list change needed)
+  - [x] 1.3 Verify `.github/agents/developer.agent.md` already supports subagent delegation (Copilot uses native agent references — confirm no change needed)
+  - [x] 1.4 Verify Acceptance Criterion: `developer` agent can invoke `github-ops`, `verifier`, and `technical-writer` as sub-agents
 
 - [ ] 2.0 Fix `fileMatchPattern` to cover zero-depth task files (AC-2)
 
