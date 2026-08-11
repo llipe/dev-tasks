@@ -1,6 +1,10 @@
 ---
 inclusion: fileMatch
 fileMatchPattern: "workstream/**/tasks-*.md"
+# NOTE: Per glob convention, ** matches zero or more path segments.
+# This pattern covers both workstream/tasks-*.md and workstream/sub/tasks-*.md.
+# If Kiro's glob does not match zero segments, this pattern must be duplicated
+# or changed to an array (pending Kiro runtime support confirmation).
 ---
 
 # Activity: Implement Task List

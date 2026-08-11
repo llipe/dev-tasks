@@ -20,12 +20,12 @@
   - [x] 1.3 Verify `.github/agents/developer.agent.md` already supports subagent delegation (Copilot uses native agent references — confirm no change needed)
   - [x] 1.4 Verify Acceptance Criterion: `developer` agent can invoke `github-ops`, `verifier`, and `technical-writer` as sub-agents
 
-- [ ] 2.0 Fix `fileMatchPattern` to cover zero-depth task files (AC-2)
+- [x] 2.0 Fix `fileMatchPattern` to cover zero-depth task files (AC-2)
 
-  - [ ] 2.1 Edit `.kiro/steering/implement.md` frontmatter: change `fileMatchPattern: "workstream/**/tasks-*.md"` to `fileMatchPattern: "workstream/**/tasks-*.md"` (verify current glob works for zero-depth) OR change to array `["workstream/tasks-*.md", "workstream/**/tasks-*.md"]` if Kiro supports it
-  - [ ] 2.2 If array is not supported by Kiro runtime, document the limitation and keep the single `**` pattern (which per standard glob semantics matches zero segments)
-  - [ ] 2.3 Update `.github/instructions/implement.instructions.md` `applyTo` pattern for consistency (currently `"workstream/**/tasks-*.md"` — verify it behaves correctly for GitHub Copilot)
-  - [ ] 2.4 Verify Acceptance Criterion: steering loads when `workstream/tasks-issue-X.md` (zero-depth) is referenced in a Kiro session
+  - [x] 2.1 Edit `.kiro/steering/implement.md` frontmatter: change `fileMatchPattern: "workstream/**/tasks-*.md"` to `fileMatchPattern: "workstream/**/tasks-*.md"` (verify current glob works for zero-depth) OR change to array `["workstream/tasks-*.md", "workstream/**/tasks-*.md"]` if Kiro supports it
+  - [x] 2.2 If array is not supported by Kiro runtime, document the limitation and keep the single `**` pattern (which per standard glob semantics matches zero segments)
+  - [x] 2.3 Update `.github/instructions/implement.instructions.md` `applyTo` pattern for consistency (currently `"workstream/**/tasks-*.md"` — verify it behaves correctly for GitHub Copilot)
+  - [x] 2.4 Verify Acceptance Criterion: steering loads when `workstream/tasks-issue-X.md` (zero-depth) is referenced in a Kiro session
 
 - [ ] 3.0 Harden branch creation gate in agent prompts (AC-3, AC-6)
 
