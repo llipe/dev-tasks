@@ -1,6 +1,6 @@
 ---
 description: "Execution agent — implements code from an existing task list with step-gated approval, branch/PR discipline, testing, and mandatory documentation gates. Use product-engineer for preparation work (PRDs, specs, stories, planning)."
-tools: [read, write, shell]
+tools: [read, write, shell, subagent]
 resources:
   - file://AGENTS.md
   - file://DESIGN.md
@@ -114,7 +114,10 @@ Follow `.kiro/steering/implement.md`:
 1. Confirm issue is open and checklist exists in both local task file and GitHub Issue.
 2. If `/DESIGN.md` exists and the story has UI impact, load it before coding and include DESIGN.md checks in validation.
 3. If a `verifier` Design Mode test plan exists (`/workstream/test-plan-*.md`) for this issue/story, load it as the test-first guide.
-4. Create branch + open Draft PR (if not already present).
+4. **Branch gate (hard requirement):** Before any write or commit operation, you **MUST** verify you are on a feature branch:
+   - Run `git rev-parse --abbrev-ref HEAD` to determine the current branch.
+   - If HEAD is the default branch (`main`) or does not match `issue/*` or `story/*` pattern, you **MUST** create a new branch and open a Draft PR before proceeding. You **MUST NOT** write implementation code, create files, or make commits while on the default branch.
+   - If HEAD is already a valid feature branch (matching `issue/*` or `story/*`), confirm the Draft PR exists and proceed.
 5. Execute one sub-task at a time in checklist order. For each behavioral sub-task, follow **test-first**: write/update tests first, verify they fail for the right reason, then implement to make them pass.
 6. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
 7. When all sub-tasks are complete:
@@ -248,6 +251,8 @@ Before marking a Story/Issue done:
 
 For each run, return a compact status report with:
 
+- Current branch name
+- PR number and status (draft/ready/none)
 - Current phase and completed activity
 - Issue and PR links
 - Completed sub-task(s)

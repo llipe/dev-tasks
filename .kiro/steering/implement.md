@@ -1,6 +1,10 @@
 ---
 inclusion: fileMatch
 fileMatchPattern: "workstream/**/tasks-*.md"
+# NOTE: Per glob convention, ** matches zero or more path segments.
+# This pattern covers both workstream/tasks-*.md and workstream/sub/tasks-*.md.
+# If Kiro's glob does not match zero segments, this pattern must be duplicated
+# or changed to an array (pending Kiro runtime support confirmation).
 ---
 
 # Activity: Implement Task List
@@ -32,7 +36,11 @@ This activity assumes:
 ## Before Starting Work
 
 1. You **MUST** confirm the GitHub Issue is open.
-2. You **MUST** create a new branch from the latest default branch by delegating branch naming and creation to `github-ops` whenever possible.
+2. **Branch gate (hard requirement):** You **MUST** verify you are on a feature branch before any implementation work:
+   - Run `git rev-parse --abbrev-ref HEAD` to determine the current branch.
+   - If HEAD is the default branch (`main`) or does not match `issue/*` or `story/*` pattern, you **MUST** create a new branch from the latest default branch by delegating branch naming and creation to `github-ops` whenever possible.
+   - You **MUST NOT** proceed with any implementation sub-task, write any code, create any files, or make any commits until a feature branch is checked out.
+   - If HEAD is already a valid feature branch (matching `issue/*` or `story/*`), proceed to step 3.
    - Branch format: `issue/<issue-number>-<short-description>` or `story/<id>-<short-description>`
 3. You **MUST** open a **draft Pull Request** by delegating to `github-ops` whenever possible.
    - Base branch is the default branch unless an orchestrating caller explicitly provides a base-branch override.
