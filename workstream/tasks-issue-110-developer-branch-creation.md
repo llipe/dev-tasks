@@ -27,13 +27,13 @@
   - [x] 2.3 Update `.github/instructions/implement.instructions.md` `applyTo` pattern for consistency (currently `"workstream/**/tasks-*.md"` — verify it behaves correctly for GitHub Copilot)
   - [x] 2.4 Verify Acceptance Criterion: steering loads when `workstream/tasks-issue-X.md` (zero-depth) is referenced in a Kiro session
 
-- [ ] 3.0 Harden branch creation gate in agent prompts (AC-3, AC-6)
+- [x] 3.0 Harden branch creation gate in agent prompts (AC-3, AC-6)
 
-  - [ ] 3.1 Edit `.kiro/agents/developer.md` Execution Flow step 4: replace `(if not already present)` with explicit branch-check logic — run `git rev-parse --abbrev-ref HEAD`, if HEAD is default branch (`main`) and does not match `issue/*` or `story/*` pattern, MUST create branch before any write/commit. If HEAD is already a valid feature branch, proceed without creating a new one.
-  - [ ] 3.2 Edit `.kiro/steering/implement.md` "Before Starting Work" section: strengthen step 2 with the same explicit branch verification language and add a blocking condition ("You MUST NOT proceed with any implementation sub-task until a feature branch is checked out")
-  - [ ] 3.3 Apply the same hardened language to `.claude/agents/developer.md` Execution Flow and `.claude/skills/implement/SKILL.md` "Before Starting Work"
-  - [ ] 3.4 Apply the same hardened language to `.github/agents/developer.agent.md` Execution Flow and `.github/instructions/implement.instructions.md` "Before Starting Work"
-  - [ ] 3.5 Verify Acceptance Criterion: branch creation is a hard gate — prompt language leaves no ambiguity that implementation is blocked while on default branch
+  - [x] 3.1 Edit `.kiro/agents/developer.md` Execution Flow step 4: replace `(if not already present)` with explicit branch-check logic — run `git rev-parse --abbrev-ref HEAD`, if HEAD is default branch (`main`) and does not match `issue/*` or `story/*` pattern, MUST create branch before any write/commit. If HEAD is already a valid feature branch, proceed without creating a new one.
+  - [x] 3.2 Edit `.kiro/steering/implement.md` "Before Starting Work" section: strengthen step 2 with the same explicit branch verification language and add a blocking condition ("You MUST NOT proceed with any implementation sub-task until a feature branch is checked out")
+  - [x] 3.3 Apply the same hardened language to `.claude/agents/developer.md` Execution Flow and `.claude/skills/implement/SKILL.md` "Before Starting Work"
+  - [x] 3.4 Apply the same hardened language to `.github/agents/developer.agent.md` Execution Flow and `.github/instructions/implement.instructions.md` "Before Starting Work"
+  - [x] 3.5 Verify Acceptance Criterion: branch creation is a hard gate — prompt language leaves no ambiguity that implementation is blocked while on default branch
 
 - [ ] 4.0 Add branch/PR to per-turn output contract (AC-4, AC-6)
 
