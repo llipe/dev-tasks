@@ -3,7 +3,7 @@
 ## Changelog
 
 | Version | Date       | Summary         | Author           |
-| ------- | ---------- | ---------------- | ---------------- |
+| ------- | ---------- | --------------- | ---------------- |
 | 1.0     | 2026-07-20 | Initial version | product-engineer |
 
 ## Source Documents
@@ -50,7 +50,7 @@ Every other capability skill in this feature (S-003, S-004, S-005) and the bound
 - [ ] The `result` field enum is exactly `pass | fail | blocked | unavailable | incomplete | approved-exception` (spec §13).
 - [ ] `docs/validation/evidence-schema.md` documents each field, the six result states, and one worked example per state.
 - [ ] `docs/validation/mutation-baseline.schema.json` exists per spec §5.3, with `schema_version`, `tool`, `scope`, `mutation_score`, `killed`, `survived`, `timeout`, `no_coverage`, `commit`, `date`, `excluded_paths`.
-- [ ] `activity-evidence-reporting` skill exists in all three trees (`.github/skills/`, `.claude/skills/`, `.kiro/skills/`) and documents: how to validate a record against the schema, the sanitization step (strip secret-shaped strings, flag suspected personal data for human review — never silent auto-redaction), the CI-artifact-first / PR-comment-fallback publication rule, and that it is the *only* skill permitted to write/validate this schema (spec §5.2).
+- [ ] `activity-evidence-reporting` skill exists in all three trees (`.github/skills/`, `.claude/skills/`, `.kiro/skills/`) and documents: how to validate a record against the schema, the sanitization step (strip secret-shaped strings, flag suspected personal data for human review — never silent auto-redaction), the CI-artifact-first / PR-comment-fallback publication rule, and that it is the _only_ skill permitted to write/validate this schema (spec §5.2).
 - [ ] The skill explicitly states: a `pass` result MUST NOT be reported when a fallback degraded required coverage — that case is `incomplete` (spec §13, PRD FR-39 through FR-42).
 - [ ] The skill states `docs/validation/` and mutation baselines are consumer-owned, created on first use, and are NOT added to `bundle-manifest.json`'s `managed_paths` (spec §4.3 note, §15).
 - [ ] `bundle-manifest.json` is **not** modified to add `docs/validation/` as a managed path (negative check — confirms the exclusion).
@@ -78,7 +78,7 @@ Every other capability skill in this feature (S-003, S-004, S-005) and the bound
 
 #### Migration Requirements
 
-Not applicable — no schema/data-model change to application data; this story only adds a JSON Schema *artifact convention*, not a database migration.
+Not applicable — no schema/data-model change to application data; this story only adds a JSON Schema _artifact convention_, not a database migration.
 
 #### Implementation Steps
 
@@ -224,7 +224,7 @@ This is the first of three capability skills. It implements the "Browser runtime
 
 - Reference spec §6 (capability contract), §9 (Chrome DevTools MCP integration/fallback), `docs/technical-guidelines.md` §"Testing Strategy" (E2E confidence criteria).
 - The skill should be explicit that it calls `activity-evidence-reporting` for all evidence output — it does not define its own result schema.
-- No installation or MCP configuration logic belongs in this skill (capability *detection* only, per PRD FR-37/38).
+- No installation or MCP configuration logic belongs in this skill (capability _detection_ only, per PRD FR-37/38).
 
 #### Testing Requirements
 
@@ -285,7 +285,7 @@ Implements the "Database/Supabase" row of the capability contract (spec §6) and
 #### Acceptance Criteria
 
 - [ ] `activity-supabase-validation` skill exists in all three trees, documents required inputs (environment classification, target project ref, migration artifact if any) and required outputs (evidence record(s), migration approval record, post-apply verification) per spec §6.
-- [ ] The skill requires classifying the target project as **non-production cloud**, **production-only**, or **local/ephemeral** *before* running any check (PRD FR-24).
+- [ ] The skill requires classifying the target project as **non-production cloud**, **production-only**, or **local/ephemeral** _before_ running any check (PRD FR-24).
 - [ ] The skill defaults Supabase MCP (or equivalent cloud tooling) to project-scoped, least-privilege, **read-only** access (PRD FR-25, spec §7, §12).
 - [ ] The skill implements the approval state machine from spec §7 (`Requested → Approved/Declined → Executed → Verified/Failed`) for every write, migration apply, destructive action, privilege change, or security-sensitive configuration change, and records `approval_reference` in the evidence record (PRD FR-26).
 - [ ] The skill requires, for every migration-bearing change: a version-controlled migration artifact, impact/rollback notes, approval evidence, and post-apply verification (PRD FR-27).
@@ -305,7 +305,7 @@ Implements the "Database/Supabase" row of the capability contract (spec §6) and
 #### Technical Notes
 
 - Reference spec §6 row 2, §7 (approval state machine), §9 (Supabase MCP/CLI integration + fallback), §12 (security), `docs/technical-guidelines.md` §"Data and Database Guidelines."
-- The skill only *documents* CLI/MCP usage patterns and the approval gate — it must not embed real credentials, project refs, or perform installation.
+- The skill only _documents_ CLI/MCP usage patterns and the approval gate — it must not embed real credentials, project refs, or perform installation.
 
 #### Testing Requirements
 
@@ -318,7 +318,7 @@ Implements the "Database/Supabase" row of the capability contract (spec §6) and
 
 #### Migration Requirements
 
-Not applicable to this story's own delivery (the story documents a migration-safety *procedure* for consumers; it does not itself introduce a schema/data-model change to `dev-tasks`).
+Not applicable to this story's own delivery (the story documents a migration-safety _procedure_ for consumers; it does not itself introduce a schema/data-model change to `dev-tasks`).
 
 #### Implementation Steps
 
@@ -452,7 +452,7 @@ This is the specification's core policy change (spec §8.2) and the most consume
 - [ ] The fidelity report's mandatory sections (spec Report Structure) are updated so the drift catalog states, per item, whether it is blocking and which resolution path applies (fix implementation / fix test / approved intent change / deferred minor / added evidence — PRD FR-48).
 - [ ] Verifier **Design Mode** now specifies, per acceptance criterion, which capability categories (browser-runtime, database/Supabase, mutation, manual, or none) are required, consistent with the capability contract table in spec §6 (PRD FR-1–FR-4, spec component inventory row 7).
 - [ ] `activity-drift-reconciliation` is extended to explicitly implement: (a) the `HumanGate` state for `Intended` drift, requiring an explicit human-confirmation gate before any PRD/spec changelog write-back (already partially true — must now be tied to the new state machine terminology); (b) the `NonBlocking` deferral state for eligible `Minor` drift, requiring a linked follow-up issue.
-- [ ] The audit gate's existing non-blocking guarantee is scoped correctly: the audit *running* and posting a summary remains mandatory and non-skippable regardless of drift (unchanged), but the *presence of blocking drift* now prevents PR readiness until resolved (this distinction must be stated explicitly to avoid ambiguity with the pre-existing "audit is non-blocking to completion" language).
+- [ ] The audit gate's existing non-blocking guarantee is scoped correctly: the audit _running_ and posting a summary remains mandatory and non-skippable regardless of drift (unchanged), but the _presence of blocking drift_ now prevents PR readiness until resolved (this distinction must be stated explicitly to avoid ambiguity with the pre-existing "audit is non-blocking to completion" language).
 
 #### Business Rules
 
@@ -766,7 +766,7 @@ This story closes out the feature by updating all registry/documentation surface
 - [ ] `bundle-manifest.json`'s `managed_paths` gains entries for the 4 new skill directories across `.github/skills`, `.claude/skills`, `.kiro/skills` patterns (consistent with existing skill-path entries), and explicitly does NOT add `docs/validation/` or `scripts/check-platform-parity.sh` (confirms S-001/S-002's exclusion decisions).
 - [ ] `AGENTS.md` and `AGENTS.md.template` gain a bullet documenting the blocking-drift policy change, replacing the current "drift findings are non-blocking" bullet with accurate conditional language.
 - [ ] `CLAUDE.md` and `CLAUDE.md.template` receive the equivalent bullet update.
-- [ ] `CHANGELOG.md` gains an entry for this release explicitly labeled as containing a **breaking change**, with the exact migration note from spec §15: *"Critical/Major unintended drift now blocks PR readiness; resolve via fix, approved intent change, or eligible minor deferral."*
+- [ ] `CHANGELOG.md` gains an entry for this release explicitly labeled as containing a **breaking change**, with the exact migration note from spec §15: _"Critical/Major unintended drift now blocks PR readiness; resolve via fix, approved intent change, or eligible minor deferral."_
 - [ ] Prompt entry points affected by new invocation inputs (`.github/prompts/developer-execute.prompt.md`, `verifier-design.prompt.md`, `verifier-audit.prompt.md`, `planner.prompt.md` and `.claude/commands/` equivalents) are updated only where their documented inputs changed (e.g., referencing capability tags or blocking status) — no unrelated content is rewritten.
 - [ ] A diff review confirms no other README/AGENTS.md/CLAUDE.md section contradicts the new blocking policy (e.g., no stale "always non-blocking" phrase survives elsewhere in these files).
 
@@ -917,32 +917,32 @@ Not applicable.
 
 ### Functional Requirement Mapping
 
-| PRD Functional Requirements | Story ID(s)        | Status     |
-| ---------------------------- | ------------------- | ---------- |
-| FR-1 – FR-4 (intent, test design, traceability) | S-006, S-007        | ✅ Covered |
-| FR-5 – FR-9 (bounded self-verification loop)     | S-008                | ✅ Covered |
-| FR-10 – FR-15 (browser validation)               | S-003, S-008         | ✅ Covered |
-| FR-16 – FR-22 (mutation testing)                 | S-005, S-006, S-008  | ✅ Covered |
-| FR-23 – FR-31 (Supabase validation)               | S-004, S-008         | ✅ Covered |
-| FR-32 – FR-38 (capability detection/flexibility) | S-001, S-003, S-004, S-005 | ✅ Covered |
+| PRD Functional Requirements                          | Story ID(s)                | Status     |
+| ---------------------------------------------------- | -------------------------- | ---------- |
+| FR-1 – FR-4 (intent, test design, traceability)      | S-006, S-007               | ✅ Covered |
+| FR-5 – FR-9 (bounded self-verification loop)         | S-008                      | ✅ Covered |
+| FR-10 – FR-15 (browser validation)                   | S-003, S-008               | ✅ Covered |
+| FR-16 – FR-22 (mutation testing)                     | S-005, S-006, S-008        | ✅ Covered |
+| FR-23 – FR-31 (Supabase validation)                  | S-004, S-008               | ✅ Covered |
+| FR-32 – FR-38 (capability detection/flexibility)     | S-001, S-003, S-004, S-005 | ✅ Covered |
 | FR-39 – FR-49 (evidence, blocking, drift resolution) | S-001, S-006, S-008, S-009 | ✅ Covered |
-| FR-50 – FR-52 (platform parity/adoption)         | S-002, S-010         | ✅ Covered |
-| FR-53 (supersede #12, #15)                        | S-011                | ✅ Covered |
+| FR-50 – FR-52 (platform parity/adoption)             | S-002, S-010               | ✅ Covered |
+| FR-53 (supersede #12, #15)                           | S-011                      | ✅ Covered |
 
 ### PRD User Story Mapping
 
-| PRD User Story | Story ID(s)        | Status     |
-| --------------- | ------------------- | ---------- |
-| 1 (per-increment validation) | S-008                | ✅ Covered |
-| 2 (E2E authoritative + live diagnosis) | S-003, S-008 | ✅ Covered |
-| 3 (evidence for reviewers) | S-001, S-008, S-009  | ✅ Covered |
-| 4 (mutation reveals weak tests, no arbitrary threshold) | S-005 | ✅ Covered |
-| 5 (safe Supabase Cloud inspection) | S-004               | ✅ Covered |
-| 6 (production-only, read-only default + per-op approval) | S-004 | ✅ Covered |
-| 7 (documented fallback / incomplete result) | S-001, S-003, S-004, S-005 | ✅ Covered |
-| 8 (critical drift blocks, explicit resolution path) | S-006, S-008 | ✅ Covered |
-| 9 (capability-independent validation outcomes) | S-001, S-006 | ✅ Covered |
-| 10 (platform parity) | S-002, S-006, S-007, S-008, S-009, S-010 | ✅ Covered |
+| PRD User Story                                           | Story ID(s)                              | Status     |
+| -------------------------------------------------------- | ---------------------------------------- | ---------- |
+| 1 (per-increment validation)                             | S-008                                    | ✅ Covered |
+| 2 (E2E authoritative + live diagnosis)                   | S-003, S-008                             | ✅ Covered |
+| 3 (evidence for reviewers)                               | S-001, S-008, S-009                      | ✅ Covered |
+| 4 (mutation reveals weak tests, no arbitrary threshold)  | S-005                                    | ✅ Covered |
+| 5 (safe Supabase Cloud inspection)                       | S-004                                    | ✅ Covered |
+| 6 (production-only, read-only default + per-op approval) | S-004                                    | ✅ Covered |
+| 7 (documented fallback / incomplete result)              | S-001, S-003, S-004, S-005               | ✅ Covered |
+| 8 (critical drift blocks, explicit resolution path)      | S-006, S-008                             | ✅ Covered |
+| 9 (capability-independent validation outcomes)           | S-001, S-006                             | ✅ Covered |
+| 10 (platform parity)                                     | S-002, S-006, S-007, S-008, S-009, S-010 | ✅ Covered |
 
 ### Non-Goals Validation
 

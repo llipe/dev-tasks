@@ -2,8 +2,8 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                         | Author           |
-| ------- | ---------- | ----------------------------------------------------------------------------------------------- | ---------------- |
+| Version | Date       | Summary                                                                                                                                                                         | Author           |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-07-28 | Initial version. 25 stories derived from `specification-multi-repo-context.md` and `prd-multi-repo-context.md`, sequenced by PRD phases 0-6, with full PRD coverage validation. | product-engineer |
 
 ## Reference Documents
@@ -285,7 +285,7 @@ Spec §15 migration path. The shim installs the package, writes a manifest marki
 
 #### Migration Requirements
 
-- This story *is* the tooling migration. Rollback: keep the archived legacy script for one version; impact documented in `CHANGELOG.md`. No data-model migration involved.
+- This story _is_ the tooling migration. Rollback: keep the archived legacy script for one version; impact documented in `CHANGELOG.md`. No data-model migration involved.
 
 #### Implementation Steps
 
@@ -476,7 +476,7 @@ Spec §8.1 OpenAPI matrix + route 3 detail (RF-03). Route 2 (isolated framework 
 #### Acceptance Criteria
 
 - [ ] Route 1: an on-disk `openapi.yaml/json` (or build-produced) is copied and normalized, `source: introspected`, confidence high.
-- [ ] Route 3: AST locates route registrations (Express/Fastify/Hono/Nest*-without-swagger), composes full paths from router prefixes, derives params/body from handler types (incl. zod) when typed, and marks responses without a schema when the return type is `any`/`unknown`.
+- [ ] Route 3: AST locates route registrations (Express/Fastify/Hono/Nest\*-without-swagger), composes full paths from router prefixes, derives params/body from handler types (incl. zod) when typed, and marks responses without a schema when the return type is `any`/`unknown`.
 - [ ] The LLM writes only `summary`/`description`/`tags`; nothing structural.
 - [ ] Output validates against the OpenAPI 3.1 JSON Schema.
 - [ ] Dynamically registered routes are reported in `extraction_report.unresolved[]`, never silently omitted.
@@ -1798,85 +1798,85 @@ Spec §6.6 (RF-51, RF-52, RF-54). `impact` reads the inverted consumer index; `d
 
 ### Requirement Mapping — Functional (RF)
 
-| PRD Requirement                         | Story ID(s)   | Status     |
-| --------------------------------------- | ------------- | ---------- |
-| RF-01 stack/framework/ORM/msg detection | S-005         | ✅ Covered |
-| RF-02 schema.md                         | S-006         | ✅ Covered |
-| RF-03 OpenAPI                           | S-007         | ✅ Covered |
-| RF-04 AsyncAPI topics/payloads          | S-008         | ✅ Covered |
-| RF-05 derive component.json             | S-009         | ✅ Covered |
-| RF-06 source + confidence               | S-009         | ✅ Covered |
-| RF-07 prompt non-derivable fields       | S-009         | ✅ Covered |
-| RF-08 aliases confirmation              | S-009         | ✅ Covered |
-| RF-09 idempotent extraction             | S-009         | ✅ Covered |
-| RF-10 no full service / prod access     | S-006, S-007  | ✅ Covered |
-| RF-11 product-context/tech-guidelines   | S-021         | ✅ Covered |
-| RF-12 pluggable extractors              | S-005         | ✅ Covered |
-| RF-20 component.json at root            | S-009, S-010  | ✅ Covered |
-| RF-21 aggregate into catalog            | S-011         | ✅ Covered |
-| RF-22 generate index.yaml               | S-011         | ✅ Covered |
-| RF-23 referential integrity             | S-012         | ✅ Covered |
-| RF-24 model flows                       | S-013, S-010  | ✅ Covered |
-| RF-25 generated_at + origin SHA         | S-011         | ✅ Covered |
-| RF-26 flag low-confidence               | S-012         | ✅ Covered |
-| RF-27 detect cycles                     | S-012         | ✅ Covered |
-| RF-28 aliases for routing               | S-013         | ✅ Covered |
-| RF-30 NL task input                     | S-020         | ✅ Covered |
-| RF-31 pin meta-repo SHA                 | S-017         | ✅ Covered |
-| RF-32 lexical candidates                | S-013, S-018  | ✅ Covered |
-| RF-33 validated LLM JSON + retry        | S-018         | ✅ Covered |
-| RF-34 graph closure                     | S-019         | ✅ Covered |
-| RF-35 abort >4 + partition              | S-019         | ✅ Covered |
-| RF-36 sparse fetch                      | S-015         | ✅ Covered |
-| RF-37 deterministic budgeted bundle     | S-016         | ✅ Covered |
-| RF-38 session.lock.json                 | S-017         | ✅ Covered |
-| RF-39 stale-index abort                 | S-017         | ✅ Covered |
-| RF-40 flag LLM-only components          | S-019         | ✅ Covered |
-| RF-41 flag low-payload contracts        | S-019, S-008  | ✅ Covered |
-| RF-50 breaking-change detection no-LLM  | S-024         | ✅ Covered |
-| RF-51 affected consumers list           | S-025         | ✅ Covered |
-| RF-52 docs/code drift                   | S-025         | ✅ Covered |
-| RF-53 extraction coverage report        | S-013, S-009  | ✅ Covered |
-| RF-54 derived tasks per consumer        | S-025         | ✅ Covered |
-| RF-60 init mode detection               | S-021         | ✅ Covered |
-| RF-61 invoke dt init in multi-repo      | S-021         | ✅ Covered |
-| RF-62 architecture-change task type     | S-022         | ✅ Covered |
-| RF-63 cross-repo sub-tasks              | S-023         | ✅ Covered |
-| RF-64 no meta-repo writes otherwise     | S-022         | ✅ Covered |
-| RF-70 one package, two binaries         | S-001         | ✅ Covered |
-| RF-71 single version/release train      | S-001         | ✅ Covered |
-| RF-72 hash-based update conflicts       | S-003         | ✅ Covered |
-| RF-73 per-repo pin                      | S-002         | ✅ Covered |
-| RF-74 dev-tasks.sh shim                 | S-004         | ✅ Covered |
-| RF-75 npx without install               | S-001, S-014  | ✅ Covered |
+| PRD Requirement                         | Story ID(s)  | Status     |
+| --------------------------------------- | ------------ | ---------- |
+| RF-01 stack/framework/ORM/msg detection | S-005        | ✅ Covered |
+| RF-02 schema.md                         | S-006        | ✅ Covered |
+| RF-03 OpenAPI                           | S-007        | ✅ Covered |
+| RF-04 AsyncAPI topics/payloads          | S-008        | ✅ Covered |
+| RF-05 derive component.json             | S-009        | ✅ Covered |
+| RF-06 source + confidence               | S-009        | ✅ Covered |
+| RF-07 prompt non-derivable fields       | S-009        | ✅ Covered |
+| RF-08 aliases confirmation              | S-009        | ✅ Covered |
+| RF-09 idempotent extraction             | S-009        | ✅ Covered |
+| RF-10 no full service / prod access     | S-006, S-007 | ✅ Covered |
+| RF-11 product-context/tech-guidelines   | S-021        | ✅ Covered |
+| RF-12 pluggable extractors              | S-005        | ✅ Covered |
+| RF-20 component.json at root            | S-009, S-010 | ✅ Covered |
+| RF-21 aggregate into catalog            | S-011        | ✅ Covered |
+| RF-22 generate index.yaml               | S-011        | ✅ Covered |
+| RF-23 referential integrity             | S-012        | ✅ Covered |
+| RF-24 model flows                       | S-013, S-010 | ✅ Covered |
+| RF-25 generated_at + origin SHA         | S-011        | ✅ Covered |
+| RF-26 flag low-confidence               | S-012        | ✅ Covered |
+| RF-27 detect cycles                     | S-012        | ✅ Covered |
+| RF-28 aliases for routing               | S-013        | ✅ Covered |
+| RF-30 NL task input                     | S-020        | ✅ Covered |
+| RF-31 pin meta-repo SHA                 | S-017        | ✅ Covered |
+| RF-32 lexical candidates                | S-013, S-018 | ✅ Covered |
+| RF-33 validated LLM JSON + retry        | S-018        | ✅ Covered |
+| RF-34 graph closure                     | S-019        | ✅ Covered |
+| RF-35 abort >4 + partition              | S-019        | ✅ Covered |
+| RF-36 sparse fetch                      | S-015        | ✅ Covered |
+| RF-37 deterministic budgeted bundle     | S-016        | ✅ Covered |
+| RF-38 session.lock.json                 | S-017        | ✅ Covered |
+| RF-39 stale-index abort                 | S-017        | ✅ Covered |
+| RF-40 flag LLM-only components          | S-019        | ✅ Covered |
+| RF-41 flag low-payload contracts        | S-019, S-008 | ✅ Covered |
+| RF-50 breaking-change detection no-LLM  | S-024        | ✅ Covered |
+| RF-51 affected consumers list           | S-025        | ✅ Covered |
+| RF-52 docs/code drift                   | S-025        | ✅ Covered |
+| RF-53 extraction coverage report        | S-013, S-009 | ✅ Covered |
+| RF-54 derived tasks per consumer        | S-025        | ✅ Covered |
+| RF-60 init mode detection               | S-021        | ✅ Covered |
+| RF-61 invoke dt init in multi-repo      | S-021        | ✅ Covered |
+| RF-62 architecture-change task type     | S-022        | ✅ Covered |
+| RF-63 cross-repo sub-tasks              | S-023        | ✅ Covered |
+| RF-64 no meta-repo writes otherwise     | S-022        | ✅ Covered |
+| RF-70 one package, two binaries         | S-001        | ✅ Covered |
+| RF-71 single version/release train      | S-001        | ✅ Covered |
+| RF-72 hash-based update conflicts       | S-003        | ✅ Covered |
+| RF-73 per-repo pin                      | S-002        | ✅ Covered |
+| RF-74 dev-tasks.sh shim                 | S-004        | ✅ Covered |
+| RF-75 npx without install               | S-001, S-014 | ✅ Covered |
 
 ### Requirement Mapping — Non-Functional (RNF)
 
-| PRD Requirement                     | Story ID(s)         | Status     |
-| ----------------------------------- | ------------------- | ---------- |
-| RNF-01 init p50 ≤15s / cold ≤90s    | S-015, S-016, S-020 | ✅ Covered |
-| RNF-02 extract ≤5 min/repo          | S-009               | ✅ Covered |
-| RNF-03 bundle ≤60k tokens           | S-016               | ✅ Covered |
-| RNF-04 `--json` everywhere          | S-001 (+ all)       | ✅ Covered |
-| RNF-05 stable exit codes            | S-001               | ✅ Covered |
-| RNF-06 reproducible bundle          | S-016, S-017        | ✅ Covered |
-| RNF-07 no server state              | S-015               | ✅ Covered |
-| RNF-08 no prod credentials          | S-006               | ✅ Covered |
-| RNF-09 core adapter-independent     | S-001               | ✅ Covered |
-| RNF-10 Node 20+ / git ≥2.37         | S-002               | ✅ Covered |
+| PRD Requirement                  | Story ID(s)         | Status     |
+| -------------------------------- | ------------------- | ---------- |
+| RNF-01 init p50 ≤15s / cold ≤90s | S-015, S-016, S-020 | ✅ Covered |
+| RNF-02 extract ≤5 min/repo       | S-009               | ✅ Covered |
+| RNF-03 bundle ≤60k tokens        | S-016               | ✅ Covered |
+| RNF-04 `--json` everywhere       | S-001 (+ all)       | ✅ Covered |
+| RNF-05 stable exit codes         | S-001               | ✅ Covered |
+| RNF-06 reproducible bundle       | S-016, S-017        | ✅ Covered |
+| RNF-07 no server state           | S-015               | ✅ Covered |
+| RNF-08 no prod credentials       | S-006               | ✅ Covered |
+| RNF-09 core adapter-independent  | S-001               | ✅ Covered |
+| RNF-10 Node 20+ / git ≥2.37      | S-002               | ✅ Covered |
 
 ### Requirement Mapping — Business Rules, Acceptance Criteria, Data
 
-| PRD Requirement                                  | Story ID(s)          | Status     |
-| ------------------------------------------------ | -------------------- | ---------- |
+| PRD Requirement                                                                                                                | Story ID(s)                              | Status     |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- | ---------- |
 | Business rules (deterministic-first, provenance, fail-loud, one-owner, payload-confidence gating, privileged meta-repo writes) | S-005, S-009, S-012, S-019, S-022, S-024 | ✅ Covered |
-| PRD Acceptance Criteria 1-4 (init/gate/stale)    | S-020, S-019, S-017  | ✅ Covered |
-| PRD Acceptance Criteria 5-8 (extract/provenance/idempotency/integrity) | S-009, S-012 | ✅ Covered |
-| PRD Acceptance Criteria 9 (breaking change)      | S-024                | ✅ Covered |
-| PRD Acceptance Criteria 10 (npx CI)              | S-001, S-014         | ✅ Covered |
-| PRD Acceptance Criteria 11 (update conflict)     | S-003                | ✅ Covered |
-| PRD Acceptance Criteria 12 (budget/truncation)   | S-016                | ✅ Covered |
-| Data: component.json/flow/index/manifest/session-lock | S-009, S-010, S-011, S-002, S-017 | ✅ Covered |
+| PRD Acceptance Criteria 1-4 (init/gate/stale)                                                                                  | S-020, S-019, S-017                      | ✅ Covered |
+| PRD Acceptance Criteria 5-8 (extract/provenance/idempotency/integrity)                                                         | S-009, S-012                             | ✅ Covered |
+| PRD Acceptance Criteria 9 (breaking change)                                                                                    | S-024                                    | ✅ Covered |
+| PRD Acceptance Criteria 10 (npx CI)                                                                                            | S-001, S-014                             | ✅ Covered |
+| PRD Acceptance Criteria 11 (update conflict)                                                                                   | S-003                                    | ✅ Covered |
+| PRD Acceptance Criteria 12 (budget/truncation)                                                                                 | S-016                                    | ✅ Covered |
+| Data: component.json/flow/index/manifest/session-lock                                                                          | S-009, S-010, S-011, S-002, S-017        | ✅ Covered |
 
 ### Non-Goals Validation
 

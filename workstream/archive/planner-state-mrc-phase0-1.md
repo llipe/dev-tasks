@@ -10,13 +10,13 @@
 
 ## Story Status
 
-| Sequence | Story ID | Issue # | Status         | PR  | Branch              |
-| -------- | -------- | ------- | -------------- | --- | ------------------- |
-| 1        | Setup    | —       | ✅ Merged      | #62 | chore/project-setup |
-| 2        | S-001    | #33     | ✅ Merged      | #63 | story/S-001-package-scaffold |
-| 3        | S-002    | #35     | ✅ Merged      | #65 | story/S-002-bootstrap-commands |
-| 4        | S-003    | #34     | ✅ Merged      | #66 | story/S-003-reconcile-update |
-| 5        | S-004    | #36     | ✅ Merged      | #67 | story/S-004-migration-shim |
+| Sequence | Story ID | Issue # | Status    | PR  | Branch                         |
+| -------- | -------- | ------- | --------- | --- | ------------------------------ |
+| 1        | Setup    | —       | ✅ Merged | #62 | chore/project-setup            |
+| 2        | S-001    | #33     | ✅ Merged | #63 | story/S-001-package-scaffold   |
+| 3        | S-002    | #35     | ✅ Merged | #65 | story/S-002-bootstrap-commands |
+| 4        | S-003    | #34     | ✅ Merged | #66 | story/S-003-reconcile-update   |
+| 5        | S-004    | #36     | ✅ Merged | #67 | story/S-004-migration-shim     |
 
 ## Current Position
 

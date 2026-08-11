@@ -7,6 +7,7 @@
 **Problem:** The planner cannot independently verify what the developer sub-agent actually did. It receives a self-reported closeout payload and treats it as ground truth.
 
 Evidence from this session:
+
 - All five PRs came back as "already merged" when planner attempted `gh pr merge`. This means either: (a) the sub-agent merged its own PR (violating merge authority), or (b) my merge command succeeded but the terminal ate the output and the follow-up query hit a cached state. I could not distinguish between these.
 - The verifier audit claims (`verifier_audit: run`, `fidelity_verdict: High`) were never independently confirmed. I never checked if `workstream/fidelity-report-S-005.md` (etc.) actually existed, or if a GitHub comment was posted.
 - Quality gate results (`test: PASS`) were self-declared. On S-006, when I manually ran `pnpm run validate` it exited 1 — yet individual gates appeared to pass. The contradiction was never resolved.
@@ -48,10 +49,12 @@ This isn't a spec ambiguity — it's a platform constraint. The spec's merge aut
 **Assessment: Partially. The structural contract is too loose.**
 
 What the developer sub-agent returns:
+
 - A human-readable summary (good for reporting to user)
 - A machine-readable closeout payload (good for planner automation)
 
 What's missing from the return:
+
 1. **No evidence of verifier invocation** — just the string `verifier_audit: run`. No path to a fidelity report file, no GitHub comment URL, no proof.
 2. **No evidence of technical-writer invocation** — just `docs_drift_status: clean`.
 3. **No git SHA of the merged commit** — planner needs this to verify integration branch HEAD matches expectations.
@@ -72,11 +75,12 @@ If planner has to `gh pr view`, `git pull`, `pnpm run validate`, check for file 
 
 ### 3.2 The verifier audit itself is a full sub-agent invocation
 
-Each verifier audit reads the codebase, the spec, the tests, and produces a multi-page report. When delegated via `developer`, it runs inside the developer's context. When planner needs to run the PRD-level rollup, it's a separate sub-agent call that needs to read the *entire integrated scope* — all 5 stories worth of code. That's the single most expensive operation in the pipeline.
+Each verifier audit reads the codebase, the spec, the tests, and produces a multi-page report. When delegated via `developer`, it runs inside the developer's context. When planner needs to run the PRD-level rollup, it's a separate sub-agent call that needs to read the _entire integrated scope_ — all 5 stories worth of code. That's the single most expensive operation in the pipeline.
 
 ### 3.3 Compound cost at Phase 5
 
 Phase 5 requires:
+
 1. Full integration test suite run
 2. Verifier rollup audit (reads full scope)
 3. Technical-writer drift pass (reads full scope)
@@ -95,16 +99,17 @@ Each step requires full codebase awareness. In aggregate, Phase 5 alone can cons
 ```markdown
 BEGIN CLOSEOUT PAYLOAD
 ...
-verifier_report_path: workstream/fidelity-report-S-005.md  # MUST exist on disk
+verifier_report_path: workstream/fidelity-report-S-005.md # MUST exist on disk
 verifier_comment_url: https://github.com/.../issues/37#issuecomment-123456
 technical_writer_report_path: workstream/docs-drift-S-005.md
-merge_sha: abc1234  # SHA of the squash commit on integration branch
+merge_sha: abc1234 # SHA of the squash commit on integration branch
 pr_merged_at: 2025-01-28T18:00:00Z
 ...
 END CLOSEOUT PAYLOAD
 ```
 
 **Planner verification then becomes 2 cheap checks:**
+
 1. `test -f workstream/fidelity-report-S-005.md` (file exists)
 2. `git log --oneline -1 integration/... | grep abc1234` (SHA matches)
 
@@ -122,7 +127,7 @@ Currently the developer spec says nothing about who merges. The planner spec say
 
 ### Fix 3: Phase 5 gates as pre-conditions to PR creation
 
-Move the rollup verifier and technical-writer invocations to a hard gate *before* `gh pr create`:
+Move the rollup verifier and technical-writer invocations to a hard gate _before_ `gh pr create`:
 
 ```
 Phase 5 sequence:
@@ -144,7 +149,7 @@ Instead of re-running all tests, define a minimal verification protocol:
 ## Post-merge spot check (per story)
 
 1. `git log --oneline -1` matches expected merge SHA → pass
-2. `test -f <verifier_report_path>` → pass  
+2. `test -f <verifier_report_path>` → pass
 3. `gh pr view <number> --json state` → MERGED
 4. Total: 3 commands, <5 seconds, deterministic
 ```
@@ -164,12 +169,15 @@ This creates a dependency that makes the comment un-skippable — you can't adva
 Options (pick one for the spec):
 
 **Option A — Remove the approval requirement for story PRs in single-account mode:**
+
 > When planner and developer operate under the same GitHub identity, the "review and approve" step is replaced by a comment noting planner verification.
 
 **Option B — Require a bot account or GitHub App token:**
+
 > For orchestrated runs, developer MUST operate with a distinct GitHub identity from planner to enable the approval gate.
 
 **Option C — Use GitHub's auto-merge with required status checks as proxy:**
+
 > Instead of explicit approval, story PRs require passing status checks. Planner verifies checks pass and then merges (bypassing the self-approval constraint).
 
 Current state: the spec requires something GitHub's API won't let the same account do. The result is planner silently bypasses it with `--admin`.
@@ -190,6 +198,7 @@ Add a handoff contract section to the planner spec:
 ## Sub-agent Handoff Boundary
 
 When developer returns a closeout payload:
+
 1. Planner MUST verify pr_status is NOT "merged" (violation if it is)
 2. Planner MUST verify base_branch matches integration branch (block if not)
 3. Planner MUST verify merge_sha is absent (developer must not merge)
@@ -201,16 +210,16 @@ When developer returns a closeout payload:
 
 ## 5. Priority Ranking
 
-| # | Fix | Impact | Effort |
-|---|-----|--------|--------|
-| 1 | Evidence-based closeout | High — eliminates trust problem | Low — spec change + 3 fields |
-| 2 | Developer MUST NOT merge | High — fixes authority violation | Low — one rule addition |
-| 3 | Phase 5 hard gates | High — prevents mandatory skip | Medium — restructure phase |
-| 4 | Lightweight spot-check | Medium — reduces verification cost | Low — define 3-command protocol |
-| 5 | Issue comment as state trigger | Medium — ensures traceability | Low — spec change |
-| 6 | Single-account approval | Medium — resolves platform gap | Low — pick an option |
-| 7 | Quiet terminal output | Low (token savings) | Low — one line in spec |
-| 8 | Merge boundary protocol | High — prevents session ambiguity | Low — spec addition |
+| #   | Fix                            | Impact                             | Effort                          |
+| --- | ------------------------------ | ---------------------------------- | ------------------------------- |
+| 1   | Evidence-based closeout        | High — eliminates trust problem    | Low — spec change + 3 fields    |
+| 2   | Developer MUST NOT merge       | High — fixes authority violation   | Low — one rule addition         |
+| 3   | Phase 5 hard gates             | High — prevents mandatory skip     | Medium — restructure phase      |
+| 4   | Lightweight spot-check         | Medium — reduces verification cost | Low — define 3-command protocol |
+| 5   | Issue comment as state trigger | Medium — ensures traceability      | Low — spec change               |
+| 6   | Single-account approval        | Medium — resolves platform gap     | Low — pick an option            |
+| 7   | Quiet terminal output          | Low (token savings)                | Low — one line in spec          |
+| 8   | Merge boundary protocol        | High — prevents session ambiguity  | Low — spec addition             |
 
 ---
 
@@ -218,4 +227,4 @@ When developer returns a closeout payload:
 
 The core structural issue is **delegation without verification infrastructure**. The planner delegates to developer, developer self-reports success, and planner has no cheap way to confirm. The spec is written as if verification is free (just check everything), but in practice it competes with the same finite context budget that the orchestration work itself needs.
 
-The fix isn't more rules — it's better *artifacts*. If the developer produces verifiable artifacts on disk (files with known paths, SHAs, URLs), planner can confirm them with file-existence checks instead of re-running entire pipelines. And if the developer is structurally prevented from performing the merge action, the planner retains actual authority rather than discovering after the fact that authority was already exercised.
+The fix isn't more rules — it's better _artifacts_. If the developer produces verifiable artifacts on disk (files with known paths, SHAs, URLs), planner can confirm them with file-existence checks instead of re-running entire pipelines. And if the developer is structurally prevented from performing the merge action, the planner retains actual authority rather than discovering after the fact that authority was already exercised.
