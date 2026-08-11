@@ -35,12 +35,12 @@
   - [x] 3.4 Apply the same hardened language to `.github/agents/developer.agent.md` Execution Flow and `.github/instructions/implement.instructions.md` "Before Starting Work"
   - [x] 3.5 Verify Acceptance Criterion: branch creation is a hard gate — prompt language leaves no ambiguity that implementation is blocked while on default branch
 
-- [ ] 4.0 Add branch/PR to per-turn output contract (AC-4, AC-6)
+- [x] 4.0 Add branch/PR to per-turn output contract (AC-4, AC-6)
 
-  - [ ] 4.1 Edit `.kiro/agents/developer.md` Output Contract "compact status report" section: add "Current branch name" and "PR number and status (draft/ready/none)" as required fields
-  - [ ] 4.2 Apply the same output contract update to `.claude/agents/developer.md`
-  - [ ] 4.3 Apply the same output contract update to `.github/agents/developer.agent.md`
-  - [ ] 4.4 Verify Acceptance Criterion: per-turn output template includes branch name and PR status
+  - [x] 4.1 Edit `.kiro/agents/developer.md` Output Contract "compact status report" section: add "Current branch name" and "PR number and status (draft/ready/none)" as required fields
+  - [x] 4.2 Apply the same output contract update to `.claude/agents/developer.md`
+  - [x] 4.3 Apply the same output contract update to `.github/agents/developer.agent.md`
+  - [x] 4.4 Verify Acceptance Criterion: per-turn output template includes branch name and PR status
 
 - [ ] 5.0 Fix git-guard hook matcher regex (AC-5)
 

@@ -234,6 +234,8 @@ Before marking a Story/Issue done:
 
 For each run, return a compact status report with:
 
+- Current branch name
+- PR number and status (draft/ready/none)
 - Current phase and completed activity
 - Issue and PR links
 - Completed sub-task(s)
