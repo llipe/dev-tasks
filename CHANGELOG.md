@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-08-11
+
+### Fixed
+
+- fix(hooks): update git-guard matcher and add branch-guard for write tools (issue #110, task 5.0)
+- fix(agent): add branch/PR to per-turn output contract (issue #110, task 4.0)
+- fix(agent): harden branch creation gate across all platforms (issue #110, task 3.0)
+- fix(agent): add subagent tool to developer agent (issue #110, task 1.0)
+- fix: remove unsupported permissions field from agent frontmatter
+
+### Changed
+
+- chore: format corrections
+- chore: doc archiving
+- Merge pull request #120 from llipe:issue/110-developer-branch-creation
+- chore(workstream): mark all tasks complete for issue #110
+- docs(steering): document fileMatchPattern glob behavior for zero-depth (issue #110, task 2.0)
+- chore(workstream): activate task list for issue #110
+- chore: docs housekeeping
+- Merge pull request #119 from llipe:issue/103-kiro-agent-format
+- chore: update catalog fixture timestamps and generator version
+- docs: note permissions field is unsupported in current Kiro runtime
+- chore: adapt .kiro/agents to official Kiro custom agent format
+
 ## [0.7.4] - 2026-08-07
 
 ### Changed
