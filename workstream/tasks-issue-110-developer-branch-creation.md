@@ -42,12 +42,12 @@
   - [x] 4.3 Apply the same output contract update to `.github/agents/developer.agent.md`
   - [x] 4.4 Verify Acceptance Criterion: per-turn output template includes branch name and PR status
 
-- [ ] 5.0 Fix git-guard hook matcher regex (AC-5)
+- [x] 5.0 Fix git-guard hook matcher regex (AC-5)
 
-  - [ ] 5.1 Edit `.kiro/hooks/git-guard.json`: change `"matcher": "shell|runCommand"` to `"matcher": "execute_bash|shell|runCommand"`
-  - [ ] 5.2 Add a second hook entry in `git-guard.json` for write tools (`fs_write|str_replace|fs_append`) that runs a script checking if HEAD is `main` and blocks with exit 2 (best-effort, same fail-open pattern as existing guard)
-  - [ ] 5.3 Create or extend `.kiro/hooks/scripts/git-guard.sh` to handle the write-tool hook case (check current branch, block if on `main`, fail-open on error or empty payload with loud warning)
-  - [ ] 5.4 Verify Acceptance Criterion: `git-guard.json` matcher regex includes `execute_bash` and write-tool hook exists
+  - [x] 5.1 Edit `.kiro/hooks/git-guard.json`: change `"matcher": "shell|runCommand"` to `"matcher": "execute_bash|shell|runCommand"`
+  - [x] 5.2 Add a second hook entry in `git-guard.json` for write tools (`fs_write|str_replace|fs_append`) that runs a script checking if HEAD is `main` and blocks with exit 2 (best-effort, same fail-open pattern as existing guard)
+  - [x] 5.3 Create or extend `.kiro/hooks/scripts/git-guard.sh` to handle the write-tool hook case (check current branch, block if on `main`, fail-open on error or empty payload with loud warning)
+  - [x] 5.4 Verify Acceptance Criterion: `git-guard.json` matcher regex includes `execute_bash` and write-tool hook exists
 
 - [ ] 6.0 Final cross-platform consistency check (AC-6)
 
