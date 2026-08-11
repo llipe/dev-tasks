@@ -49,9 +49,9 @@
   - [x] 5.3 Create or extend `.kiro/hooks/scripts/git-guard.sh` to handle the write-tool hook case (check current branch, block if on `main`, fail-open on error or empty payload with loud warning)
   - [x] 5.4 Verify Acceptance Criterion: `git-guard.json` matcher regex includes `execute_bash` and write-tool hook exists
 
-- [ ] 6.0 Final cross-platform consistency check (AC-6)
+- [x] 6.0 Final cross-platform consistency check (AC-6)
 
-  - [ ] 6.1 Diff the three developer agent files (`.kiro/`, `.claude/`, `.github/`) for execution flow, output contract, and branch gate language — confirm they express the same semantics adapted to each platform's conventions
-  - [ ] 6.2 Diff the three implement instruction files for branch gate language consistency
-  - [ ] 6.3 Document any platform-specific deviations that are intentional (e.g., Claude's native subagent vs Kiro's `tools: [subagent]`)
-  - [ ] 6.4 Verify all Acceptance Criteria are met
+  - [x] 6.1 Diff the three developer agent files (`.kiro/`, `.claude/`, `.github/`) for execution flow, output contract, and branch gate language — confirm they express the same semantics adapted to each platform's conventions
+  - [x] 6.2 Diff the three implement instruction files for branch gate language consistency
+  - [x] 6.3 Document any platform-specific deviations that are intentional (e.g., Claude's native subagent vs Kiro's `tools: [subagent]`)
+  - [x] 6.4 Verify all Acceptance Criteria are met
