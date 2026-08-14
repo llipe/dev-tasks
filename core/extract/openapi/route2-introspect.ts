@@ -192,7 +192,7 @@ function findExpressApp(moduleExports: Record<string, unknown>): Record<string, 
  */
 function isExpressApp(value: unknown): boolean {
   if (!value || typeof value !== "function") return false;
-  return getRouterStack(value as Record<string, unknown>) !== null;
+  return getRouterStack(value as unknown as Record<string, unknown>) !== null;
 }
 
 /**

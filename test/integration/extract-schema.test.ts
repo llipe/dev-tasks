@@ -128,38 +128,11 @@ describe("integration: schema extraction pipeline", () => {
   });
 
   describe("No-ORM with migrations (no-orm-migrations)", () => {
-    it("returns null without LLM provider", async () => {
+    it("returns null without --db-url (migrations alone are not enough)", async () => {
       const result = await extractSchema({
         rootDir: resolve(FIXTURES_DIR, "no-orm-migrations"),
       });
       expect(result).toBeNull();
-    });
-
-    it("uses LLM inference when LLM provider is supplied", async () => {
-      const mockLlm = {
-        async inferSchemaFromMigrations(_content: string) {
-          return {
-            tables: [{ name: "users", columns: [], relations: [], indexes: [] }],
-            enums: [],
-            source: "inferred" as const,
-            confidence: "low" as const,
-            orm: "migration_inference",
-          };
-        },
-        async describeSchema(
-          schema: import("../../core/extract/orm/types.js").SchemaExtractionResult,
-        ) {
-          return schema;
-        },
-      };
-
-      const result = await extractSchema({
-        rootDir: resolve(FIXTURES_DIR, "no-orm-migrations"),
-        llm: mockLlm,
-      });
-      expect(result).not.toBeNull();
-      expect(result!.source).toBe("inferred");
-      expect(result!.confidence).toBe("low");
     });
   });
 });

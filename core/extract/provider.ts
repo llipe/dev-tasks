@@ -89,6 +89,10 @@ export interface DetectionResult {
 export interface RepoContext {
   /** Absolute path to the repository root */
   rootDir: string;
+  /** Absolute path to the component/package being detected (equals rootDir for single-package repos) */
+  componentRoot?: string;
+  /** Absolute path to the repository checkout root (always the top-level repo) */
+  repoRoot?: string;
 }
 
 /**

@@ -3,14 +3,16 @@
  * Detects ORM from S-005 detection, delegates to the right extractor,
  * and attaches `source: introspected`.
  *
- * Fallback chain:
- * 1. ORM detected → delegate to ORM-specific extractor
- * 2. --db-url provided → use information_schema reader
- * 3. SQL migrations found → LLM inference (source: inferred, confidence: low)
- * 4. None of the above → return null
+ * Extraction strategy (ladder order):
+ * 1. ORM detected → delegate to ORM-specific extractor (declared)
+ * 2. --db-url provided → use information_schema reader (observed)
+ * 3. No schema available → return null
+ *
+ * LLM inference has been removed from the extraction pipeline.
+ * Judgment (descriptions, summaries) moves to the agent layer via handoff.
  */
 
-import { resolve, join } from "node:path";
+import { resolve } from "node:path";
 import { existsSync } from "node:fs";
 import { extractPrismaSchema } from "./orm/prisma.js";
 import { extractDrizzleSchema } from "./orm/drizzle.js";
@@ -23,51 +25,35 @@ export interface SchemaExtractOptions {
   rootDir: string;
   /** Optional database connection URL for information_schema reader */
   dbUrl?: string;
-  /** Optional LLM provider for migration inference / descriptions */
-  llm?: LlmProvider;
-}
-
-/**
- * LLM provider interface for schema inference and descriptions.
- * Consumers provide an implementation; tests use stubs.
- */
-export interface LlmProvider {
-  /** Infer schema from SQL migration content */
-  inferSchemaFromMigrations(migrationContent: string): Promise<SchemaExtractionResult>;
-  /** Generate semantic descriptions for tables */
-  describeSchema(schema: SchemaExtractionResult): Promise<SchemaExtractionResult>;
 }
 
 /**
  * Extract database schema from the repository.
  * Returns null if no schema can be determined.
+ *
+ * Extraction strategy (ladder order):
+ * 1. ORM detected → delegate to ORM-specific extractor (declared)
+ * 2. --db-url provided → use information_schema reader (observed)
+ * 3. No schema available → return null
  */
 export async function extractSchema(
   options: SchemaExtractOptions,
 ): Promise<SchemaExtractionResult | null> {
-  const { rootDir, dbUrl, llm } = options;
+  const { rootDir, dbUrl } = options;
 
-  // Step 1: Try ORM-based extraction
+  // Step 1: Try ORM-based extraction (declared)
   const ormResult = tryOrmExtraction(rootDir);
   if (ormResult) {
     return ormResult;
   }
 
-  // Step 2: Try information_schema reader (if --db-url provided)
+  // Step 2: Try information_schema reader (if --db-url provided) (observed)
   if (dbUrl) {
     const { extractFromInformationSchema } = await import("./orm/information-schema.js");
     return extractFromInformationSchema(dbUrl);
   }
 
-  // Step 3: Try LLM inference from SQL migrations
-  if (llm) {
-    const migrationContent = findMigrationContent(rootDir);
-    if (migrationContent) {
-      return llm.inferSchemaFromMigrations(migrationContent);
-    }
-  }
-
-  // Step 4: No schema available
+  // Step 3: No schema available
   return null;
 }
 
@@ -148,30 +134,6 @@ function findTypeOrmEntityDir(rootDir: string): string | null {
   for (const candidate of candidates) {
     const fullPath = resolve(rootDir, candidate);
     if (existsSync(fullPath)) {
-      return fullPath;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Find SQL migration content for LLM inference.
- */
-function findMigrationContent(rootDir: string): string | null {
-  const migrationDirs = [
-    "migrations",
-    "src/migrations",
-    "db/migrations",
-    "prisma/migrations",
-    "drizzle",
-  ];
-
-  for (const dir of migrationDirs) {
-    const fullPath = join(rootDir, dir);
-    if (existsSync(fullPath)) {
-      // Would read .sql files from the directory
-      // For now, return the dir path as indicator that migrations exist
       return fullPath;
     }
   }
