@@ -389,11 +389,12 @@ memo setup init --repo <repo-name> --org <org-name> --domain <domain>
 
 ## Known Limitations
 
-- **Route 2 (isolated framework boot) is interface-only** — only routes 1 and 3 are functional for OpenAPI extraction.
-- **LLM inference is stubbed** — no real LLM provider is wired yet.
+- **Route 2 (boot + introspect) supports Express and Express 5 only** — Fastify, Hono, and NestJS support is planned but not yet implemented.
+- **Observed DB rung requires PostgreSQL** — the `information_schema` reader works with `pg` only; MySQL/SQLite support is deferred.
 - **Only Node/TS provider** — other language stacks require additional extraction providers.
 - **Zod extraction handles basic `z.object` patterns only** — complex compositions are not fully supported.
-- **Only kafkajs patterns supported** — other messaging clients are not detected.
+- **Only kafkajs patterns supported** — other messaging clients are not detected; kafkajs inference is now low-confidence.
+- **Monorepo detection is pnpm/npm workspaces only** — custom workspace layouts require manual configuration.
 
 ---
 
