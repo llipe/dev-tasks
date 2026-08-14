@@ -153,38 +153,40 @@ export async function extractRoute2Express(
   const runner = existsSync(tsxBin) ? tsxBin : globalTsx;
 
   try {
-    const result = await new Promise<{ stdout: string; stderr: string }>((resolvePromise, reject) => {
-      const child = execFile(
-        runner,
-        [introspectScript, entryPoint],
-        {
-          cwd: rootDir,
-          timeout,
-          env: {
-            ...process.env,
-            NODE_ENV: "test",
-            // Prevent the app from actually listening
-            PORT: "0",
-            // Allow resolving deps from the nearest node_modules.
-            // In production, the target project has its own node_modules.
-            // We look upward from rootDir to find the nearest one (supports
-            // both monorepos and test fixtures under a parent project).
-            NODE_PATH: findNodeModulesPath(rootDir),
+    const result = await new Promise<{ stdout: string; stderr: string }>(
+      (resolvePromise, reject) => {
+        const child = execFile(
+          runner,
+          [introspectScript, entryPoint],
+          {
+            cwd: rootDir,
+            timeout,
+            env: {
+              ...process.env,
+              NODE_ENV: "test",
+              // Prevent the app from actually listening
+              PORT: "0",
+              // Allow resolving deps from the nearest node_modules.
+              // In production, the target project has its own node_modules.
+              // We look upward from rootDir to find the nearest one (supports
+              // both monorepos and test fixtures under a parent project).
+              NODE_PATH: findNodeModulesPath(rootDir),
+            },
+            maxBuffer: 10 * 1024 * 1024, // 10MB
           },
-          maxBuffer: 10 * 1024 * 1024, // 10MB
-        },
-        (error, stdout, stderr) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolvePromise({ stdout, stderr });
-          }
-        },
-      );
+          (error, stdout, stderr) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolvePromise({ stdout, stderr });
+            }
+          },
+        );
 
-      // Safety: kill on timeout (execFile already handles this, but double-safe)
-      child.on("error", reject);
-    });
+        // Safety: kill on timeout (execFile already handles this, but double-safe)
+        child.on("error", reject);
+      },
+    );
 
     // Parse the output
     let parsed: IntrospectResult;
@@ -262,7 +264,9 @@ function findNodeModulesPath(startDir: string): string {
 /**
  * Extract path parameters from a route pattern.
  */
-function extractPathParams(path: string): Array<{ name: string; in: "path"; required: boolean; type: string }> {
+function extractPathParams(
+  path: string,
+): Array<{ name: string; in: "path"; required: boolean; type: string }> {
   const params: Array<{ name: string; in: "path"; required: boolean; type: string }> = [];
   const matches = path.matchAll(/:([a-zA-Z_][a-zA-Z0-9_]*)/g);
   for (const match of matches) {
@@ -277,8 +281,6 @@ function extractPathParams(path: string): Array<{ name: string; in: "path"; requ
  */
 export function extractRoute2(_config: Route2Config): Promise<OpenApiExtractionResult> {
   return Promise.reject(
-    new Error(
-      "Legacy extractRoute2 is deprecated. Use extractRoute2Express() instead.",
-    ),
+    new Error("Legacy extractRoute2 is deprecated. Use extractRoute2Express() instead."),
   );
 }

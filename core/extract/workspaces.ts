@@ -102,7 +102,10 @@ function discoverNpmWorkspaces(rootDir: string): DiscoveredComponent[] {
   let globs: string[];
   if (Array.isArray(workspaces)) {
     globs = workspaces as string[];
-  } else if (typeof workspaces === "object" && Array.isArray((workspaces as Record<string, unknown>).packages)) {
+  } else if (
+    typeof workspaces === "object" &&
+    Array.isArray((workspaces as Record<string, unknown>).packages)
+  ) {
     globs = (workspaces as Record<string, unknown>).packages as string[];
   } else {
     return [];

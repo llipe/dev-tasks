@@ -91,22 +91,22 @@
   - [x] 3.1 Write failing tests first (`test/unit/extract-ladder.test.ts`): a ladder runner given three fake rungs (declared/observed/inferred) must (a) stop at the first rung returning a usable result, (b) fall through on "rung unavailable", (c) stamp every emitted field with its rung, (d) force `confidence: low` on anything produced by an inferred rung.
   - [x] 3.2 Implement the ladder runner in a new `core/extract/ladder.ts`: `runLadder<T>(rungs: Rung<T>[]): LadderResult<T>` where each rung declares `kind: "declared" | "observed" | "inferred"`; result carries the winning rung, per-field provenance, and merged `unresolved[]` from skipped/failed rungs' diagnostics.
   - [x] 3.3 Define the confidence policy as code, not convention: `declared → high`, `observed → high`, `inferred → low` (capped — an inferred rung MUST NOT emit `medium` or `high`), and expose it from `ladder.ts` so extractors cannot set confidence directly.
-  - [ ] 3.4 Extend `core/extract/report.ts` and `schemas/component.schema.json` `_provenance` so every extracted section records `rung: declared|observed|inferred` alongside the existing `source`/`confidence` fields; keep backward compatibility for readers (additive fields only).
-  - [ ] 3.5 Verify Acceptance Criterion: ladder unit tests pass; schema validation (`dt validate-component`) accepts a manifest carrying the new provenance fields.
-  - [ ] 3.6 Run Tests: `pnpm run test:unit` green.
+  - [x] 3.4 Extend `core/extract/report.ts` and `schemas/component.schema.json` `_provenance` so every extracted section records `rung: declared|observed|inferred` alongside the existing `source`/`confidence` fields; keep backward compatibility for readers (additive fields only).
+  - [x] 3.5 Verify Acceptance Criterion: ladder unit tests pass; schema validation (`dt validate-component`) accepts a manifest carrying the new provenance fields.
+  - [x] 3.6 Run Tests: `pnpm run test:unit` green.
 
-- [ ] 4.0 OpenAPI ladder: route1 (declared) → route2 (observed) → route3 (inferred, demoted)
+- [x] 4.0 OpenAPI ladder: route1 (declared) → route2 (observed) → route3 (inferred, demoted)
 
-  - [ ] 4.1 Write/extend failing tests first: (a) ladder order — when `openapi.yaml` exists on disk, route2/route3 are not attempted; (b) when no spec exists but the app boots, route2 wins with `rung: observed`; (c) when boot fails (fixture with an import-time crash), route3 output is used and every endpoint carries `confidence: low` + the boot failure reason appears in `unresolved[]`.
-  - [ ] 4.2 Productionize the spike runner from Task 1 into `core/extract/openapi/route2.ts` (replacing the stub): Express support per the spike design, plus structured failure taxonomy (`entry-not-found`, `import-failed`, `no-app-export`, `timeout`) surfaced as rung diagnostics.
+  - [x] 4.1 Write/extend failing tests first: (a) ladder order — when `openapi.yaml` exists on disk, route2/route3 are not attempted; (b) when no spec exists but the app boots, route2 wins with `rung: observed`; (c) when boot fails (fixture with an import-time crash), route3 output is used and every endpoint carries `confidence: low` + the boot failure reason appears in `unresolved[]`.
+  - [x] 4.2 Productionize the spike runner from Task 1 into `core/extract/openapi/route2.ts` (replacing the stub): Express support per the spike design, plus structured failure taxonomy (`entry-not-found`, `import-failed`, `no-app-export`, `timeout`) surfaced as rung diagnostics.
   - [ ] 4.3 Add Fastify support to route2: prefer registering an `onRoute` hook via a wrapper import when the entry exports the Fastify instance or a factory; fall back to `app.printRoutes({ commonPrefix: false })` parsing. New fixture `test/fixtures/extract/fastify-bootable/` + tests. (Hono/NestJS: explicitly out of scope — record as follow-up in 9.5.)
   - [ ] 4.4 Add a route2 secondary probe: if the booted app exposes a spec endpoint (`GET /openapi.json`, `/docs/json`, `/swagger.json` against the in-process app, not a network port), capture the full spec — this upgrades the result from route-table-only to full request/response schemas. Best-effort; failure falls back to the route table.
-  - [ ] 4.5 Rewire `core/extract/openapi/index.ts` to run the three routes through the Task 3 ladder runner; demote route3: cap all its output at `confidence: low` (removing any current `medium`/`high` grants) and always emit its misses into `unresolved[]`.
+  - [x] 4.5 Rewire `core/extract/openapi/index.ts` to run the three routes through the Task 3 ladder runner; demote route3: cap all its output at `confidence: low` (removing any current `medium`/`high` grants) and always emit its misses into `unresolved[]`.
   - [ ] 4.6 Add CLI flags in `adapters/cli/extract-openapi.ts`: `--entry <path>` (route2 entry override), `--no-boot` (skip observed rung for CI environments where booting is unsafe), `--boot-timeout <ms>` (default 10000).
-  - [ ] 4.7 Update existing route1/route3 tests and the `extract-all` integration test for the new ladder ordering and confidence caps.
-  - [ ] 4.8 Verify Acceptance Criterion: on `express-bootable`, `dt extract openapi` returns observed endpoints including the dynamic routes route3 misses; on `openapi-on-disk` fixture, route1 still wins untouched; on a non-bootable fixture, route3 fallback works and is visibly low-confidence.
-  - [ ] 4.9 Verify Acceptance Criterion: `dt extract openapi --no-boot` never spawns a child process.
-  - [ ] 4.10 Run Tests: `pnpm run test:unit` and `pnpm run test:integration` green.
+  - [x] 4.7 Update existing route1/route3 tests and the `extract-all` integration test for the new ladder ordering and confidence caps.
+  - [x] 4.8 Verify Acceptance Criterion: on `express-bootable`, `dt extract openapi` returns observed endpoints including the dynamic routes route3 misses; on `openapi-on-disk` fixture, route1 still wins untouched; on a non-bootable fixture, route3 fallback works and is visibly low-confidence.
+  - [x] 4.9 Verify Acceptance Criterion: `dt extract openapi --no-boot` never spawns a child process.
+  - [x] 4.10 Run Tests: `pnpm run test:unit` and `pnpm run test:integration` green.
 
 - [ ] 5.0 Database schema ladder: declared parsers → information_schema (observed), runnable at last
 
@@ -121,19 +121,19 @@
 
 - [ ] 6.0 AsyncAPI ladder: declared spec first, kafkajs inference demoted
 
-  - [ ] 6.1 Write failing test first: when `asyncapi.yaml`/`asyncapi.json` exists on disk (fixture `test/fixtures/extract/component-derivation/docs/asyncapi.yaml` already exists — add a root-level variant), the declared rung wins and kafkajs AST inference is not attempted.
-  - [ ] 6.2 Implement the declared rung in `core/extract/asyncapi/`: detect + copy + validate an on-disk AsyncAPI spec (mirroring route1's candidate-path approach), `rung: declared`, `confidence: high`.
+  - [x] 6.1 Write failing test first: when `asyncapi.yaml`/`asyncapi.json` exists on disk (fixture `test/fixtures/extract/component-derivation/docs/asyncapi.yaml` already exists — add a root-level variant), the declared rung wins and kafkajs AST inference is not attempted.
+  - [x] 6.2 Implement the declared rung in `core/extract/asyncapi/`: detect + copy + validate an on-disk AsyncAPI spec (mirroring route1's candidate-path approach), `rung: declared`, `confidence: high`.
   - [ ] 6.3 Route the existing kafkajs topic/payload inference through the ladder as the inferred rung: cap at `confidence: low`, always emit unresolved diagnostics for opaque payloads/string topics (the existing fixtures `kafkajs-opaque-payloads`, `kafkajs-string-topics` become the regression tests for the cap).
   - [ ] 6.4 Verify Acceptance Criterion: repo with a committed AsyncAPI spec gets it verbatim (declared); repo with only kafkajs code gets inference results that are uniformly `low` confidence.
   - [ ] 6.5 Run Tests: `pnpm run test:unit` green.
 
-- [ ] 7.0 Remove the in-CLI LLM; define the skeleton + unresolved[] agent handoff (Recommendation 3)
+- [x] 7.0 Remove the in-CLI LLM; define the skeleton + unresolved[] agent handoff (Recommendation 3)
 
-  - [ ] 7.1 Delete `loadLlmProvider()` from `adapters/cli/init.ts` (~line 455) and every `DT_LLM_PROVIDER` reference; delete `core/extract/openapi/llm-descriptions.ts` and `core/extract/orm/llm-descriptions.ts`; remove the `llm?` parameter from `core/extract/schema.ts` and the `--no-llm` flag from the CLI (it becomes meaningless). Update all affected tests — write the updated expectations first.
-  - [ ] 7.2 Mark judgment fields explicitly in `schemas/component.schema.json`: fields that deterministic extraction cannot produce (`description`, endpoint summaries, table/topic descriptions) get a `_provenance.source: "agent"` allowed value and are omitted (not empty-stringed) by `dt`. `dt validate-component` MUST accept their absence.
-  - [ ] 7.3 Make the handoff explicit in the extraction report: `core/extract/report.ts` gains a `handoff` section listing (a) every judgment field left empty, with its JSON pointer, and (b) every `unresolved[]` item, so an agent can be pointed at one machine-readable list of "what needs a mind". Test first.
-  - [ ] 7.4 Verify Acceptance Criterion: `dt extract all` completes with zero LLM configuration, never throws `"configured but not yet implemented"`, and its report's `handoff` section enumerates exactly the fields an agent must fill.
-  - [ ] 7.5 Run Tests: `pnpm run test` fully green (unit + integration).
+  - [x] 7.1 Delete `loadLlmProvider()` from `adapters/cli/init.ts` (~line 455) and every `DT_LLM_PROVIDER` reference; delete `core/extract/openapi/llm-descriptions.ts` and `core/extract/orm/llm-descriptions.ts`; remove the `llm?` parameter from `core/extract/schema.ts` and the `--no-llm` flag from the CLI (it becomes meaningless). Update all affected tests — write the updated expectations first.
+  - [x] 7.2 Mark judgment fields explicitly in `schemas/component.schema.json`: fields that deterministic extraction cannot produce (`description`, endpoint summaries, table/topic descriptions) get a `_provenance.source: "agent"` allowed value and are omitted (not empty-stringed) by `dt`. `dt validate-component` MUST accept their absence.
+  - [x] 7.3 Make the handoff explicit in the extraction report: `core/extract/report.ts` gains a `handoff` section listing (a) every judgment field left empty, with its JSON pointer, and (b) every `unresolved[]` item, so an agent can be pointed at one machine-readable list of "what needs a mind". Test first.
+  - [x] 7.4 Verify Acceptance Criterion: `dt extract all` completes with zero LLM configuration, never throws `"configured but not yet implemented"`, and its report's `handoff` section enumerates exactly the fields an agent must fill.
+  - [x] 7.5 Run Tests: `pnpm run test` fully green (unit + integration).
 
 - [ ] 8.0 Prompt layer: teach the workflow the new division of labor (all three platforms in parity)
 

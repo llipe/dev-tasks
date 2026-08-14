@@ -102,7 +102,8 @@ function extractChannelsFromDoc(doc: Record<string, unknown>): AsyncApiChannel[]
       operations.push({
         action: "send",
         topic_confidence: "high",
-        payload_confidence: ch.publish && (ch.publish as Record<string, unknown>).message ? "high" : "low",
+        payload_confidence:
+          ch.publish && (ch.publish as Record<string, unknown>).message ? "high" : "low",
         message_schema: extractMessageSchema(ch.publish as Record<string, unknown>),
       });
     }
@@ -110,7 +111,8 @@ function extractChannelsFromDoc(doc: Record<string, unknown>): AsyncApiChannel[]
       operations.push({
         action: "receive",
         topic_confidence: "high",
-        payload_confidence: ch.subscribe && (ch.subscribe as Record<string, unknown>).message ? "high" : "low",
+        payload_confidence:
+          ch.subscribe && (ch.subscribe as Record<string, unknown>).message ? "high" : "low",
         message_schema: extractMessageSchema(ch.subscribe as Record<string, unknown>),
       });
     }
@@ -133,7 +135,9 @@ function extractChannelsFromDoc(doc: Record<string, unknown>): AsyncApiChannel[]
 /**
  * Extract message schema from an operation definition.
  */
-function extractMessageSchema(operation: Record<string, unknown> | undefined): Record<string, unknown> | null {
+function extractMessageSchema(
+  operation: Record<string, unknown> | undefined,
+): Record<string, unknown> | null {
   if (!operation) return null;
   const message = operation.message as Record<string, unknown> | undefined;
   if (!message) return null;

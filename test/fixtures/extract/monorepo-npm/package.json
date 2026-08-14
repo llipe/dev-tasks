@@ -2,7 +2,9 @@
   "name": "monorepo-npm-root",
   "private": true,
   "version": "1.0.0",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "devDependencies": {
     "typescript": "^5.0.0"
   }

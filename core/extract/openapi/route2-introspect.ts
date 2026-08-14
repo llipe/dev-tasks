@@ -39,10 +39,7 @@ interface IntrospectError {
  * Walk the Express router stack recursively to extract all registered routes.
  * Supports both Express 4 and Express 5 internal structures.
  */
-function walkStack(
-  stack: Array<Record<string, unknown>>,
-  basePath: string,
-): DiscoveredRoute[] {
+function walkStack(stack: Array<Record<string, unknown>>, basePath: string): DiscoveredRoute[] {
   const routes: DiscoveredRoute[] = [];
 
   for (const layer of stack) {
@@ -72,7 +69,7 @@ function walkStack(
 
 /**
  * Extract the mount prefix from a router layer.
- * 
+ *
  * Express 4: uses layer.regexp or layer.path
  * Express 5: uses layer.match() — calling match populates layer.path
  */
@@ -120,22 +117,34 @@ function extractMountPrefix(layer: Record<string, unknown>): string {
 function generateTestPaths(): string[] {
   const paths: string[] = ["/"];
   const segments = [
-    "api", "v1", "v2", "v3", "admin", "auth", "public", "internal",
-    "health", "metrics", "webhooks", "users", "static", "assets",
+    "api",
+    "v1",
+    "v2",
+    "v3",
+    "admin",
+    "auth",
+    "public",
+    "internal",
+    "health",
+    "metrics",
+    "webhooks",
+    "users",
+    "static",
+    "assets",
   ];
-  
+
   // Single-segment paths
   for (const seg of segments) {
     paths.push(`/${seg}/test`);
   }
-  
+
   // Double-segment paths (cover /api/v1, /api/v2, etc.)
   for (const s1 of segments) {
     for (const s2 of segments) {
       paths.push(`/${s1}/${s2}/test`);
     }
   }
-  
+
   return paths;
 }
 
@@ -201,7 +210,11 @@ function isExpressApp(value: unknown): boolean {
 function getRouterStack(app: Record<string, unknown>): Array<Record<string, unknown>> | null {
   // Express 5: app.router.stack
   const router5 = app.router as Record<string, unknown> | undefined;
-  if (router5 && typeof router5 === "function" && Array.isArray((router5 as Record<string, unknown>).stack)) {
+  if (
+    router5 &&
+    typeof router5 === "function" &&
+    Array.isArray((router5 as Record<string, unknown>).stack)
+  ) {
     return (router5 as Record<string, unknown>).stack as Array<Record<string, unknown>>;
   }
   if (router5 && typeof router5 === "object" && Array.isArray(router5.stack)) {

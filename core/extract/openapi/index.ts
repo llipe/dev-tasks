@@ -23,7 +23,7 @@ export type { ValidationResult, ValidationError } from "./validate.js";
 
 // --- Ladder orchestrator ---
 
-import { runLadder, type Rung, type LadderResult } from "../ladder.js";
+import { type Rung, type LadderResult } from "../ladder.js";
 import type { OpenApiExtractionResult } from "./types.js";
 import { extractRoute1 } from "./route1.js";
 import { extractRoute2Express } from "./route2.js";
@@ -159,9 +159,7 @@ export async function extractOpenApiLadder(
       }
       allDiagnostics.push("route2 returned no endpoints or null");
     } catch (err) {
-      allDiagnostics.push(
-        `route2 failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      allDiagnostics.push(`route2 failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   } else {
     allDiagnostics.push("route2 skipped (--no-boot)");
