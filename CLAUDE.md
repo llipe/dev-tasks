@@ -71,7 +71,7 @@ Claude Code subagents **cannot spawn other subagents** — the hierarchy is flat
 
 Activity skills: `activity-init`, `activity-refine`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`, `activity-drift-reconciliation` (routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates — used by `product-engineer`). Process skills: `plan`, `implement` (the single source of truth for task-list execution rules, including the mandatory `verifier` audit gate). Operational: `git-ops`, `webapp-mockup`, `memo-cli-usage`.
 
-`plan` and `implement` were the always-loaded Copilot instructions; as skills they load on demand instead of consuming context every turn.
+`plan` and `implement` are scoped instructions on Copilot (`applyTo`) and scoped steering on Kiro (`fileMatchPattern`); as Claude skills they load on demand instead of consuming context on every matching turn.
 
 ---
 

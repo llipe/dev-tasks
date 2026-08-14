@@ -121,6 +121,8 @@ For which artifacts are JSON vs YAML, and which are generated vs hand-written, s
 
 - **`dev-tasks` (bootstrap/distribution):** [`docs/dev-tasks-user-manual.md`](docs/dev-tasks-user-manual.md) — install, update, pin/unpin, profiles, manifest merging, reconciliation
 - **`dt` (extraction/catalog/context):** [`docs/dt-user-manual.md`](docs/dt-user-manual.md) — extract, catalog, context, scope
+- **Architecture and artifacts:** [`docs/system-overview.md`](docs/system-overview.md) and [`docs/data-model.md`](docs/data-model.md)
+- **Everything else:** [`docs/README.md`](docs/README.md)
 
 ### Global options
 
@@ -132,13 +134,19 @@ For which artifacts are JSON vs YAML, and which are generated vs hand-written, s
 
 ### Exit codes
 
+Both binaries share one exit-code table. Common cases:
+
 | Code | Meaning                                           |
 | ---- | ------------------------------------------------- |
 | 0    | OK                                                |
 | 1    | Unexpected error                                  |
 | 2    | Incorrect usage                                   |
+| 7    | Gate aborted (scope gate G1–G4)                   |
+| 8    | Breaking contract change detected                 |
 | 13   | Incomplete extraction: required fields unresolved |
 | 14   | Reconciliation conflict (edited fields)           |
+
+Full table with all 15 codes: [`docs/data-model.md`](docs/data-model.md#exit-code-contract).
 
 ---
 
@@ -166,14 +174,14 @@ dev-tasks unpin        # Remove the pin (update will use the local package versi
 
 ### Options (install / update)
 
-| Option             | Description                                          |
-| ------------------ | ---------------------------------------------------- |
-| `--profile <name>` | `copilot` \| `claude` \| `kiro` \| `both` \| `all`   |
-| `--dry-run`        | Print planned changes without writing any files      |
-| `--backup`         | Backup managed files before replacing                |
-| `--yes`            | Skip confirmation prompts (useful in CI)             |
-| `--pin <version>`  | Pin to a specific release version                    |
-| `--force`          | Accept all upstream changes without conflict prompts |
+| Option             | Applies to | Description                                                         |
+| ------------------ | ---------- | ------------------------------------------------------------------- |
+| `--profile <name>` | install    | `copilot` \| `claude` \| `kiro` \| `both` \| `all` (default: `all`) |
+| `--pin <version>`  | install    | Pin to a specific release version                                   |
+| `--force`          | update     | Back up conflicting files, then overwrite them                      |
+| `--json`           | both       | Machine-readable output                                             |
+
+`update` never overwrites a locally modified managed file without `--force`; it reports the conflict and exits `14`.
 
 ---
 
@@ -195,11 +203,11 @@ This system brings structure and clarity to AI-assisted development by:
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
 | **Agent**       | Autonomous role with decision-making, phases, and handoff discipline. Owns a workflow end-to-end.                                          | Invoked by name (`@agent`)             |
 | **Skill**       | Reusable on-demand capability. Describes _procedures_ or _activities_ that any agent can invoke when needed. Not loaded unless referenced. | On demand (invoked by agent or prompt) |
-| **Instruction** | Always-loaded rule scoped via `applyTo` frontmatter. Enforced automatically for every matching context.                                    | Always (auto-applied by runtime)       |
+| **Instruction** | Rule scoped via `applyTo`/`fileMatchPattern` frontmatter. Enforced automatically whenever the agent touches a matching file.               | Auto-applied on matching context       |
 
 **Key distinctions:**
 
-- Skills save context window space — they are loaded only when invoked, unlike instructions which are always present.
+- Skills save context window space — they are loaded only when invoked, unlike instructions which load automatically for every matching file.
 - Agent files define _who_ (identity, phases, handoff rules). Skill files define _how_ (procedures, templates, steps).
 - Instructions are for cross-cutting rules that must never be forgotten (e.g., implementation discipline, planning format).
 
@@ -209,7 +217,7 @@ This system brings structure and clarity to AI-assisted development by:
 
 Agents are autonomous personas that orchestrate skills and activities.
 
-> **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). All three platforms define the same 8 agents below.
+> **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). Copilot and Kiro define all 8 agents below. On Claude Code, the two orchestrators (`planner`, `product-engineer`) run in the main thread as `/commands` so they can pause for approval gates; the other 6 are subagents.
 
 ### `product-engineer`
 
@@ -273,13 +281,22 @@ On-demand capabilities loaded only when invoked.
 
 ---
 
-## Instructions (Always-Loaded)
+## Instructions (Scoped)
 
-| Instruction                                      | Scope      | Purpose                                |
-| ------------------------------------------------ | ---------- | -------------------------------------- |
-| `plan.instructions.md`                           | `**`       | Convert stories/issues into task lists |
-| `implement.instructions.md`                      | `**`       | Execute task list with approval gates  |
-| `domain/nextjs-pages-components.instructions.md` | `**/*.tsx` | Next.js + React conventions            |
+Auto-applied whenever the agent touches a matching file. Claude Code has no scoped-instruction mechanism, so `plan` and `implement` ship there as skills.
+
+| Instruction               | Scope                      | Purpose                                |
+| ------------------------- | -------------------------- | -------------------------------------- |
+| `plan`                    | `workstream/**`            | Convert stories/issues into task lists |
+| `implement`               | `workstream/**/tasks-*.md` | Execute task list with approval gates  |
+| `nextjs-pages-components` | `**/app/**/*.tsx`          | Next.js + React conventions            |
+| `git-guard-notice`        | Always loaded (Kiro)       | Restates the three git invariants      |
+
+Copilot reads `.github/instructions/*.instructions.md`, Kiro reads `.kiro/steering/*.md`, and Claude Code reads `.claude/skills/{plan,implement}/`.
+
+### Hooks
+
+`git-guard` blocks pushes and merges to `main`, non-Conventional commit messages, and inline `gh --body`. `branch-guard` blocks write operations while on the default branch. Both are best-effort; human PR review is the actual gate.
 
 ---
 
@@ -306,68 +323,41 @@ On-demand capabilities loaded only when invoked.
 
 ## Workflow Chains
 
-Match your situation to a chain below, then invoke the first agent in the chain.
+Match your situation to a chain, then invoke the first agent in it. Full diagrams, including the UX validation loop and project initialization, are in [`docs/workflow-chains.md`](docs/workflow-chains.md).
 
-### Full Feature (PRD-Driven)
+| Situation                   | Chain                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Full feature, PRD-driven    | `product-engineer` (refine → spec → stories → publish → plan) → `developer`                                   |
+| Single GitHub Issue         | `product-engineer` (refine → plan) → `developer`                                                              |
+| Several dependent stories   | `product-engineer` (… → plan) → `planner` → `developer` per story, sequential                                 |
+| Quick fix, task list exists | `developer`                                                                                                   |
+| Test-first design           | … → plan → `verifier` (design) → `developer` → `verifier` (audit) → `product-engineer` (drift reconciliation) |
+| UX validation before build  | `product-engineer` (refine → spec) → `ux-engineer` → `product-engineer`                                       |
+| New project                 | `product-engineer` (init mode)                                                                                |
 
-```
-product-engineer: refine → generate-spec → generate-stories → publish-github → plan
-                                                                                  ↓
-developer: implement
-```
-
-### Single GitHub Issue
-
-```
-product-engineer: refine → plan
-                            ↓
-developer: implement
-```
-
-### Multi-Story Orchestration
-
-```
-product-engineer: ... → plan
-                          ↓
-planner: orchestrate → developer: implement (per story, sequential)
-```
-
-### Quick Fix
-
-```
-developer: implement
-```
-
-### Test-First Design (Verifier)
-
-```
-product-engineer: spec → stories → plan
-                                        ↓
-verifier (design mode): generate test plan
-                                        ↓
-developer: implement (tests first, then code)
-                        ↓ (mandatory)
-verifier (audit mode): fidelity audit → report
-                        ↓ (drift findings, non-blocking)
-product-engineer: drift-reconciliation
-```
+The `verifier` audit after implementation is mandatory and non-skippable before a PR is marked ready.
 
 ---
 
 ## File Organization
 
-| Directory             | Contents                                                |
-| --------------------- | ------------------------------------------------------- |
-| `/docs/`              | Foundation docs — product-context, technical-guidelines |
-| `/docs/requirements/` | PRDs produced by the refine skill                       |
-| `/workstream/`        | Active feature work — specs, stories, task lists        |
-| `bin/`                | CLI entrypoints (`dev-tasks.ts`, `dt.ts`)               |
-| `core/`               | Business logic library (extract, distribution)          |
-| `adapters/cli/`       | CLI adapter — wraps core, formats stdout/JSON           |
-| `schemas/`            | JSON Schemas for validation                             |
-| `test/`               | Unit and integration tests + fixtures                   |
-| `.github/`            | Copilot agents, skills, instructions, prompts           |
-| `.kiro/`              | Kiro agents, skills, steering, hooks                    |
+| Directory             | Contents                                                                |
+| --------------------- | ----------------------------------------------------------------------- |
+| `/docs/`              | Documentation — see [`docs/README.md`](docs/README.md) for the index    |
+| `/docs/adr/`          | Architecture decision records                                           |
+| `/docs/requirements/` | PRDs produced by the refine skill                                       |
+| `/workstream/`        | Active feature work — specs, stories, task lists, fidelity reports      |
+| `bin/`                | CLI entrypoints (`dev-tasks.ts`, `dt.ts`)                               |
+| `core/`               | Business logic — catalog, context, distribution, extract, scope, verify |
+| `adapters/cli/`       | CLI adapter — wraps core, formats stdout/JSON                           |
+| `adapters/mcp/`       | MCP adapter placeholder (not implemented)                               |
+| `schemas/`            | JSON Schemas for validation                                             |
+| `scripts/`            | Bundle build, release, and formatting scripts                           |
+| `templates/`          | Meta-repo scaffold and CI templates                                     |
+| `test/`               | Unit and integration tests + fixtures                                   |
+| `.github/`            | Copilot agents, skills, instructions, prompts; CI workflows             |
+| `.claude/`            | Claude Code agents, skills, commands, hooks                             |
+| `.kiro/`              | Kiro agents, skills, steering, hooks                                    |
 
 ---
 
