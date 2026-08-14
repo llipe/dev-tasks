@@ -63,16 +63,16 @@
 
 ## Tasks
 
-- [ ] 1.0 Spike: Route 2 (boot + introspect) for Express — go/no-go gate
+- [x] 1.0 Spike: Route 2 (boot + introspect) for Express — go/no-go gate
 
   > Note: The point of this task is to validate cheaply that runtime introspection beats AST inference before the rest of the plan is executed. Timebox: one session. If the spike fails its exit criteria, STOP and return to the user with findings — do not proceed to Task 4 unmodified.
 
-  - [ ] 1.1 Create fixture `test/fixtures/extract/express-bootable/`: a minimal Express app whose routes `route3` (AST) currently fails to fully resolve — include at least one dynamically-registered route (e.g., routes registered in a loop from a config array) and one router mounted with a variable prefix. `package.json` must have a resolvable entry point and no external service dependencies (no DB connection at import time).
-  - [ ] 1.2 Write failing test first (`test/unit/extract-openapi-route2.test.ts`): expect route2 to return all fixture endpoints with `source: "observed"`, `confidence: "high"`, including the dynamically-registered ones.
-  - [ ] 1.3 Implement a minimal runner: a child-process script that (a) resolves the app entry point from `package.json` (`main`, then common candidates `src/app.ts`, `src/index.ts`, `app.ts`, `index.ts`; overridable via `--entry`), (b) imports the module with `NODE_ENV=test` and a hard timeout (default 10s), (c) locates the Express app export (default export, named `app`, or `createApp()` factory), (d) walks `app._router.stack` recursively to enumerate method + composed path per route, (e) prints JSON to stdout. Parent process runs it via `execa` with the timeout and treats any failure (nonzero exit, timeout, unparseable output) as "rung unavailable" — never as a crash of `dt` itself.
-  - [ ] 1.4 Run the same fixture through `route3` and record the comparison in the spike notes: endpoints found, endpoints missed, LOC of the runner vs. route3's 856.
-  - [ ] 1.5 Verify Acceptance Criterion: route2 spike resolves ≥1 endpoint on the fixture that route3 reports in `unresolved[]`, in ≤ ~300 LOC of runner code.
-  - [ ] 1.6 Decision gate: record go/no-go and any design corrections (entry-point resolution strategy, timeout defaults, failure taxonomy) in a short note appended to this file under a `## Spike Findings` heading. Pause for user review before starting 2.0.
+  - [x] 1.1 Create fixture `test/fixtures/extract/express-bootable/`: a minimal Express app whose routes `route3` (AST) currently fails to fully resolve — include at least one dynamically-registered route (e.g., routes registered in a loop from a config array) and one router mounted with a variable prefix. `package.json` must have a resolvable entry point and no external service dependencies (no DB connection at import time).
+  - [x] 1.2 Write failing test first (`test/unit/extract-openapi-route2.test.ts`): expect route2 to return all fixture endpoints with `source: "observed"`, `confidence: "high"`, including the dynamically-registered ones.
+  - [x] 1.3 Implement a minimal runner: a child-process script that (a) resolves the app entry point from `package.json` (`main`, then common candidates `src/app.ts`, `src/index.ts`, `app.ts`, `index.ts`; overridable via `--entry`), (b) imports the module with `NODE_ENV=test` and a hard timeout (default 10s), (c) locates the Express app export (default export, named `app`, or `createApp()` factory), (d) walks `app._router.stack` recursively to enumerate method + composed path per route, (e) prints JSON to stdout. Parent process runs it via `execa` with the timeout and treats any failure (nonzero exit, timeout, unparseable output) as "rung unavailable" — never as a crash of `dt` itself.
+  - [x] 1.4 Run the same fixture through `route3` and record the comparison in the spike notes: endpoints found, endpoints missed, LOC of the runner vs. route3's 856.
+  - [x] 1.5 Verify Acceptance Criterion: route2 spike resolves ≥1 endpoint on the fixture that route3 reports in `unresolved[]`, in ≤ ~300 LOC of runner code.
+  - [x] 1.6 Decision gate: record go/no-go and any design corrections (entry-point resolution strategy, timeout defaults, failure taxonomy) in a short note appended to this file under a `## Spike Findings` heading. Pause for user review before starting 2.0.
 
 - [ ] 2.0 Component discovery: workspace-aware, per-package detection (Recommendation 2)
 
@@ -151,3 +151,48 @@
   - [ ] 9.5 File follow-up issues via `github-ops` for explicitly deferred scope: route2 support for Hono and NestJS; observed DB rung for MySQL/SQLite; messaging clients beyond kafkajs; optional Docker-based ephemeral-DB flow for the observed schema rung.
   - [ ] 9.6 Invoke `technical-writer` for the docs drift/stale-doc check; resolve any findings.
   - [ ] 9.7 Verify Acceptance Criterion: all parent tasks 1.0–8.0 checked, quality gates green, verifier audit posted, PR converted from Draft to Ready for Review.
+
+
+
+## Spike Findings
+
+### Decision: GO ✓
+
+Route 2 (boot + introspect) conclusively beats Route 3 (AST inference) on the express-bootable fixture.
+
+### Comparison Results
+
+| Metric | Route 3 (AST) | Route 2 (Boot) |
+|--------|---------------|----------------|
+| Total endpoints found | 6 | 10 |
+| Correctly-pathed endpoints | 3 | 10 |
+| Dynamic routes (loop-registered) | 0/4 | 4/4 |
+| Variable-prefix router routes | 3 wrong-path | 3 correct |
+| Confidence | low | high |
+| LOC | 856 | 283 (runner) + 285 (parent) = 568 total |
+
+### Key Findings
+
+1. **Route2 resolves 7 endpoints that route3 gets wrong or misses entirely:**
+   - 4 completely invisible to AST (registered via `app[route.method](route.path, handler)` in a loop)
+   - 3 found by AST but with wrong paths (router mounted with variable prefix `\`/api/${apiVersion}\``)
+
+2. **Express 5 changes:** The installed Express is v5.2.1 (not v4). Key differences:
+   - Router accessed via `app.router` (not `app._router`)
+   - Layers use `matchers[]` array instead of `regexp`
+   - Layer.path is populated after calling `layer.match()`, not stored upfront
+   - The introspection script handles both Express 4 and 5 transparently.
+
+3. **Entry-point resolution:** `package.json` `main` field works. Fallback chain: `src/app.ts`, `src/index.ts`, `src/server.ts`, `app.ts`, `index.ts`, `server.ts`.
+
+4. **Timeout and failure handling:** Tested with timeout=1ms — correctly returns null (rung unavailable). No-framework fixture correctly returns null.
+
+5. **NODE_PATH for dependency resolution:** The child process needs `NODE_PATH` set to the nearest `node_modules` directory. In production projects this is the project's own `node_modules`; for test fixtures (which don't have their own deps installed) it finds the parent project's `node_modules` by traversing up.
+
+### Design Corrections for Task 4 (Productionize)
+
+- Support Express 4 (`app._router`) AND Express 5 (`app.router`) — already implemented
+- The probe-based prefix discovery works but generates many test paths; consider capping iterations or using a more targeted strategy for deeply-nested mounts
+- Default timeout of 10s is appropriate; apps that need DB connections at import time will timeout and gracefully fall back to route3
+- Runner LOC at 283 is within the ~300 target
+- `execFile` (not `execa`) was used since it's in Node stdlib — no new dependency needed

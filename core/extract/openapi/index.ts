@@ -16,8 +16,8 @@ export type {
 
 export { extractRoute1, detectOnDiskSpec, normalizeSpec, Route1Error } from "./route1.js";
 export { extractRoute3, composePath, extractPathParams } from "./route3.js";
-export { extractRoute2 } from "./route2.js";
-export type { Route2Config, Route2Extractor } from "./route2.js";
+export { extractRoute2, extractRoute2Express } from "./route2.js";
+export type { Route2Config, Route2Extractor, Route2Options } from "./route2.js";
 export { validateOpenApi, extractionResultToDocument } from "./validate.js";
 export type { ValidationResult, ValidationError } from "./validate.js";
 export { applyLlmDescriptions } from "./llm-descriptions.js";
