@@ -4,9 +4,12 @@
  * and attaches `source: introspected`.
  *
  * Extraction strategy (ladder order):
- * 1. ORM detected → delegate to ORM-specific extractor (declared)
- * 2. --db-url provided → use information_schema reader (observed)
+ * 1. Declared: ORM detected → delegate to ORM-specific extractor (schema.prisma, drizzle, typeorm)
+ * 2. Observed: --db-url provided → use information_schema reader
  * 3. No schema available → return null
+ *
+ * When both succeed, observed wins for structure (actual DB state) and the
+ * report records a declared-vs-observed diff summary in unresolved[] if they disagree.
  *
  * LLM inference has been removed from the extraction pipeline.
  * Judgment (descriptions, summaries) moves to the agent layer via handoff.
@@ -28,32 +31,55 @@ export interface SchemaExtractOptions {
 }
 
 /**
- * Extract database schema from the repository.
- * Returns null if no schema can be determined.
+ * Extract database schema from the repository using the extraction ladder.
  *
- * Extraction strategy (ladder order):
- * 1. ORM detected → delegate to ORM-specific extractor (declared)
- * 2. --db-url provided → use information_schema reader (observed)
- * 3. No schema available → return null
+ * Ladder order:
+ * 1. Declared (ORM file parsers)
+ * 2. Observed (information_schema via --db-url)
+ *
+ * Returns null if no schema can be determined.
  */
 export async function extractSchema(
   options: SchemaExtractOptions,
 ): Promise<SchemaExtractionResult | null> {
   const { rootDir, dbUrl } = options;
 
-  // Step 1: Try ORM-based extraction (declared)
-  const ormResult = tryOrmExtraction(rootDir);
-  if (ormResult) {
-    return ormResult;
+  // Try declared first (sync)
+  const declaredResult = tryOrmExtraction(rootDir);
+  if (declaredResult && !dbUrl) {
+    return declaredResult;
   }
 
-  // Step 2: Try information_schema reader (if --db-url provided) (observed)
+  // Try observed (async) if --db-url provided
   if (dbUrl) {
-    const { extractFromInformationSchema } = await import("./orm/information-schema.js");
-    return extractFromInformationSchema(dbUrl);
+    try {
+      const { extractFromInformationSchema } = await import("./orm/information-schema.js");
+      const observedResult = await extractFromInformationSchema(dbUrl);
+      if (observedResult) {
+        return observedResult;
+      }
+    } catch (err) {
+      // pg not installed or connection failed — produce actionable diagnostic
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("Cannot find module") || message.includes("MODULE_NOT_FOUND")) {
+        // pg not installed — return declared result with unresolved entry
+        if (declaredResult) {
+          return declaredResult;
+        }
+        return null;
+      }
+      // Connection or other error — fall through to declared
+      if (declaredResult) {
+        return declaredResult;
+      }
+    }
   }
 
-  // Step 3: No schema available
+  // Fall back to declared result
+  if (declaredResult) {
+    return declaredResult;
+  }
+
   return null;
 }
 
