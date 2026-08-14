@@ -1,0 +1,14 @@
+{
+  "name": "@monorepo/api",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.0.0",
+    "@prisma/client": "^5.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.0.0",
+    "@types/express": "^5.0.0",
+    "typescript": "^5.0.0"
+  }
+}
