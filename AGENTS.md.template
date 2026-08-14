@@ -82,20 +82,18 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 
 ### Third-Party Skills
 
-| Skill | Directory | Purpose | Primary Consumer |
-|---|---|---|---|
-| **vercel-composition-patterns** | `skills/vercel-composition-patterns/` | Vercel component composition patterns | `developer`, `ux-engineer` |
-| **vercel-react-best-practices** | `skills/vercel-react-best-practices/` | Vercel React best practices | `developer`, `ux-engineer` |
+None vendored by default. Third-party skills, when added, are installed under each platform's skills directory alongside the skills above.
 
 ## Instructions (Scoped)
 
-Instructions are scoped via `applyTo`/`fileMatchPattern` and auto-applied to matching files.
+Instructions are scoped via `applyTo`/`fileMatchPattern` and auto-applied to matching files. Claude Code has no scoped-instruction mechanism, so `plan` and `implement` ship there as skills instead.
 
 | Instruction | File | Scope | Purpose |
 |---|---|---|---|
-| **plan** | `plan.instructions.md` | `workstream/**` | Convert stories or refined issues into execution-ready task lists |
-| **implement** | `implement.instructions.md` | `workstream/**/tasks-*.md` | Execute task list with step-gated approval, branching, and PR discipline |
-| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/app/**/*.tsx` | Next.js + React conventions |
+| **plan** | `plan.instructions.md` (Copilot) / `plan.md` (Kiro steering) / `skills/plan/` (Claude) | `workstream/**` | Convert stories or refined issues into execution-ready task lists |
+| **implement** | `implement.instructions.md` (Copilot) / `implement.md` (Kiro steering) / `skills/implement/` (Claude) | `workstream/**/tasks-*.md` | Execute task list with step-gated approval, branching, and PR discipline |
+| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` (Copilot) / `nextjs-pages-components.md` (Kiro steering) | `**/app/**/*.tsx` | Next.js + React conventions |
+| **git-guard-notice** | `git-guard-notice.md` (Kiro steering) | Always loaded | Restates the three git invariants: no push/merge to `main`, Conventional Commits, `--body-file` for `gh` bodies |
 
 ## Prompts
 

@@ -23,13 +23,17 @@ Thumbs.db
 # Keep foundational docs and requirements tracked
 /workstream/*.md
 /docs/*.md
+!/docs/README.md
 !/docs/product-context.md
 !/docs/technical-guidelines.md
+!/docs/system-overview.md
+!/docs/data-model.md
 !/docs/workflow-chains.md
 !/docs/agents-md-guidelines.md
 !/docs/artifact-formats.md
 !/docs/dt-user-manual.md
 !/docs/dev-tasks-user-manual.md
+!/docs/adr/
 !/docs/requirements/
 
 # Test fixture generated outputs (created by catalog build tests)
