@@ -24,3 +24,5 @@ export type { PayloadExtractionResult } from "./payloads.js";
 
 export { validateAsyncApi, extractionResultToAsyncApiDocument } from "./validate.js";
 export type { AsyncApiValidationResult, AsyncApiValidationError } from "./validate.js";
+
+export { extractAsyncApiDeclared, detectOnDiskAsyncApiSpec } from "./declared.js";
