@@ -1,5 +1,9 @@
 # Implementation Plan - Extraction Ladder Inversion (declared → observed → inferred)
 
+> **GitHub Issue:** https://github.com/llipe/dev-tasks/issues/127
+> **Branch:** `claude/dev-tasks-codebase-analysis-oxda22`
+> **PR:** https://github.com/llipe/dev-tasks/pull/125
+
 > **Note — context for the implementer:**
 > `dt extract` currently leads with *inference* (AST route discovery, hand-written ORM parsers, kafkajs pattern matching ≈ 2,750 LOC) while the *observation* paths are stubs or unrunnable (`route2.ts` is 56 lines of interface, `information-schema.ts` depends on `pg` which is not declared anywhere). Detection also assumes a single root `package.json`, so monorepos detect as "nothing". This plan implements three changes:
 >
