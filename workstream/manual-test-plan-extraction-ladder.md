@@ -34,32 +34,15 @@ pnpm link --global
 # Option B: add to PATH temporarily
 export PATH="/path/to/dev-tasks/dist/bin:$PATH"
 dt extract all --json
-
-# Option C: use npx from the dev-tasks dir
-npx --prefix /path/to/dev-tasks dt extract all --json
 ```
 
-### Running inline test scripts
+### Running test scripts
 
 > **Important:** `npx tsx -e "..."` does NOT support top-level `await` because
 > it treats `-e` inline code as CJS regardless of the project's `"type": "module"`.
-> All manual tests below use **temp script files** instead.
-
-```bash
-# Helper: run a TypeScript snippet as an ESM file via tsx
-run_ts() {
-  local file=$(mktemp /tmp/dt-test-XXXX.ts)
-  echo "$1" > "$file"
-  npx tsx "$file"
-  local code=$?
-  rm -f "$file"
-  return $code
-}
-```
-
-Paste this helper into your shell once, then use `run_ts '...'` for each test.
-
-Alternatively, write each snippet to a `.ts` file under the project root and run with `npx tsx <file>`.
+>
+> Instead, write each snippet to a `.ts` file inside the project and run with `npx tsx <file>`.
+> All tests below use this approach.
 
 ---
 
@@ -68,7 +51,7 @@ Alternatively, write each snippet to a `.ts` file under the project root and run
 ### 1A. Declared wins when on-disk spec exists
 
 ```bash
-run_ts '
+cat > /tmp/test-1a.ts << 'EOF'
 import { extractOpenApiLadder } from "./core/extract/openapi/index.js";
 import { resolve } from "path";
 
@@ -79,7 +62,8 @@ async function main() {
   console.log("Confidence:", r.ladder.confidence);
 }
 main();
-'
+EOF
+npx tsx /tmp/test-1a.ts
 ```
 
 **Expected:**
@@ -92,7 +76,7 @@ Confidence: high
 ### 1B. Observed (boot) wins when no spec on disk
 
 ```bash
-run_ts '
+cat > /tmp/test-1b.ts << 'EOF'
 import { extractOpenApiLadder } from "./core/extract/openapi/index.js";
 import { resolve } from "path";
 
@@ -105,7 +89,8 @@ async function main() {
   paths?.forEach(p => console.log(" ", p));
 }
 main();
-'
+EOF
+npx tsx /tmp/test-1b.ts
 ```
 
 **Expected:**
@@ -128,7 +113,7 @@ Endpoints: 10
 ### 1C. Inferred fallback with noBoot
 
 ```bash
-run_ts '
+cat > /tmp/test-1c.ts << 'EOF'
 import { extractOpenApiLadder } from "./core/extract/openapi/index.js";
 import { resolve } from "path";
 
@@ -140,7 +125,8 @@ async function main() {
   console.log("Diagnostics:", r.ladder.diagnostics);
 }
 main();
-'
+EOF
+npx tsx /tmp/test-1c.ts
 ```
 
 **Expected:**
@@ -158,7 +144,7 @@ Diagnostics: [ 'No on-disk OpenAPI spec found', 'route2 skipped (--no-boot)' ]
 ### 2A. Single-package repo
 
 ```bash
-run_ts '
+cat > /tmp/test-2a.ts << 'EOF'
 import { discoverComponents } from "./core/extract/workspaces.js";
 import { resolve } from "path";
 
@@ -166,7 +152,8 @@ const r = discoverComponents(resolve("test/fixtures/extract/express-typed"));
 console.log("Count:", r.length);
 console.log("Name:", r[0].name);
 console.log("Path:", r[0].path);
-'
+EOF
+npx tsx /tmp/test-2a.ts
 ```
 
 **Expected:** Count `1`, name `express-typed-app`.
@@ -174,14 +161,15 @@ console.log("Path:", r[0].path);
 ### 2B. pnpm workspace monorepo
 
 ```bash
-run_ts '
+cat > /tmp/test-2b.ts << 'EOF'
 import { discoverComponents } from "./core/extract/workspaces.js";
 import { resolve } from "path";
 
 const r = discoverComponents(resolve("test/fixtures/extract/monorepo-pnpm"));
 console.log("Count:", r.length);
 r.forEach(c => console.log(" -", c.name, "→", c.path.split("/").slice(-2).join("/")));
-'
+EOF
+npx tsx /tmp/test-2b.ts
 ```
 
 **Expected:**
@@ -196,14 +184,15 @@ Root excluded (only devDependencies, no runtime deps).
 ### 2C. npm workspaces
 
 ```bash
-run_ts '
+cat > /tmp/test-2c.ts << 'EOF'
 import { discoverComponents } from "./core/extract/workspaces.js";
 import { resolve } from "path";
 
 const r = discoverComponents(resolve("test/fixtures/extract/monorepo-npm"));
 console.log("Count:", r.length);
 r.forEach(c => console.log(" -", c.name));
-'
+EOF
+npx tsx /tmp/test-2c.ts
 ```
 
 **Expected:** Count `2`: `@monorepo-npm/backend`, `@monorepo-npm/frontend`.
@@ -229,7 +218,7 @@ pnpm run test:unit -- test/unit/extract-ladder.test.ts --reporter=verbose
 ### 4A. No entry point → null (graceful)
 
 ```bash
-run_ts '
+cat > /tmp/test-4a.ts << 'EOF'
 import { extractRoute2Express } from "./core/extract/openapi/route2.js";
 import { resolve } from "path";
 
@@ -238,15 +227,16 @@ async function main() {
   console.log("Result:", r);
 }
 main();
-'
+EOF
+npx tsx /tmp/test-4a.ts
 ```
 
-**Expected:** `null`
+**Expected:** `Result: null`
 
 ### 4B. Timeout → null (graceful)
 
 ```bash
-run_ts '
+cat > /tmp/test-4b.ts << 'EOF'
 import { extractRoute2Express } from "./core/extract/openapi/route2.js";
 import { resolve } from "path";
 
@@ -255,10 +245,11 @@ async function main() {
   console.log("Result:", r);
 }
 main();
-'
+EOF
+npx tsx /tmp/test-4b.ts
 ```
 
-**Expected:** `null`
+**Expected:** `Result: null`
 
 ---
 
@@ -269,7 +260,10 @@ main();
 ```bash
 grep -r "LlmProvider\|applyLlmDescriptions\|loadLlmProvider" core/extract/ --include="*.ts"
 # Should produce no output
+echo "Exit: $?"
 ```
+
+**Expected:** No output, exit 1 (grep found nothing).
 
 ### 5B. Deleted files don't exist
 
@@ -277,8 +271,9 @@ grep -r "LlmProvider\|applyLlmDescriptions\|loadLlmProvider" core/extract/ --inc
 ls core/extract/openapi/llm-descriptions.ts 2>&1
 ls core/extract/orm/llm-descriptions.ts 2>&1
 ls core/extract/orm/migration-inference.ts 2>&1
-# All should say "No such file or directory"
 ```
+
+**Expected:** All three lines say `No such file or directory`.
 
 ---
 
@@ -293,7 +288,7 @@ pnpm run test:unit -- test/unit/extract-schema-orchestrator.test.ts --reporter=v
 ### 6B. No ORM + no --db-url → null
 
 ```bash
-run_ts '
+cat > /tmp/test-6b.ts << 'EOF'
 import { extractSchema } from "./core/extract/schema.js";
 import { resolve } from "path";
 
@@ -302,17 +297,18 @@ async function main() {
   console.log("Result:", r);
 }
 main();
-'
+EOF
+npx tsx /tmp/test-6b.ts
 ```
 
-**Expected:** `null`
+**Expected:** `Result: null`
 
 ---
 
 ## Test 7 — AsyncAPI Declared Rung
 
 ```bash
-run_ts '
+cat > /tmp/test-7.ts << 'EOF'
 import { extractAsyncApiDeclared } from "./core/extract/asyncapi/declared.js";
 import { resolve } from "path";
 
@@ -324,7 +320,8 @@ if (r) {
   console.log("Channels:", r.channels.length);
   r.channels.forEach(ch => console.log(" -", ch.name));
 }
-'
+EOF
+npx tsx /tmp/test-7.ts
 ```
 
 **Expected:** Source `declared`, Confidence `high`, channels listed.
@@ -333,13 +330,13 @@ if (r) {
 
 ## Test 8 — Testing in Another Repo
 
-After building (`pnpm run build`) and linking or pathing:
+After building (`pnpm run build`):
 
 ```bash
-# Go to any Express/Node project
+# Go to any Express/Node project with deps installed
 cd ~/my-other-project
 
-# Run the full extraction (uses the built CLI)
+# Run the full extraction
 /path/to/dev-tasks/dist/bin/dt.js extract all --json | jq .
 
 # Or just OpenAPI extraction
