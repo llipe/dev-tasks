@@ -50,6 +50,8 @@ If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MU
 | **ux-engineer**      | `ux-engineer.agent.md`      | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer`                                                                                                                          |
 | **verifier**         | `verifier.agent.md`         | Verification agent — owns compliance test-plan design (`design` mode) and post-implementation grey-box fidelity auditing (`audit` mode) against codebase, `/workstream`, tests, and PRD/spec intent                                              |
 
+`.github/agents/` and `.kiro/agents/` carry all eight agents. `.claude/agents/` carries six by design: `planner` and `product-engineer` are orchestrators that must pause for user-approval gates, so on Claude Code they run in the main thread as `.claude/commands/` entry points rather than as subagents. See `CLAUDE.md`.
+
 ## Skills
 
 Skills are on-demand capabilities invoked by agents — **not** loaded unless explicitly referenced.
@@ -79,20 +81,27 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 
 ### Third-Party Skills
 
-| Skill                           | Directory                             | Purpose                               | Primary Consumer           |
-| ------------------------------- | ------------------------------------- | ------------------------------------- | -------------------------- |
-| **vercel-composition-patterns** | `skills/vercel-composition-patterns/` | Vercel component composition patterns | `developer`, `ux-engineer` |
-| **vercel-react-best-practices** | `skills/vercel-react-best-practices/` | Vercel React best practices           | `developer`, `ux-engineer` |
+None currently vendored. Third-party skills, when added, are installed under each platform's skills directory alongside the skills above.
 
 ## Instructions (Scoped)
 
-Instructions are scoped via `applyTo`/`fileMatchPattern` and auto-applied to matching files.
+Instructions are scoped via `applyTo`/`fileMatchPattern` and auto-applied to matching files. Claude Code has no scoped-instruction mechanism, so `plan` and `implement` ship there as skills instead.
 
-| Instruction                 | File                                             | Scope                      | Purpose                                                                  |
-| --------------------------- | ------------------------------------------------ | -------------------------- | ------------------------------------------------------------------------ |
-| **plan**                    | `plan.instructions.md`                           | `workstream/**`            | Convert stories or refined issues into execution-ready task lists        |
-| **implement**               | `implement.instructions.md`                      | `workstream/**/tasks-*.md` | Execute task list with step-gated approval, branching, and PR discipline |
-| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` | `**/app/**/*.tsx`          | Next.js + React conventions                                              |
+| Instruction                 | Copilot / Kiro file                                                                                                 | Claude equivalent           | Scope                      | Purpose                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **plan**                    | `.github/instructions/plan.instructions.md` / `.kiro/steering/plan.md`                                              | `.claude/skills/plan/`      | `workstream/**`            | Convert stories or refined issues into execution-ready task lists                                               |
+| **implement**               | `.github/instructions/implement.instructions.md` / `.kiro/steering/implement.md`                                    | `.claude/skills/implement/` | `workstream/**/tasks-*.md` | Execute task list with step-gated approval, branching, and PR discipline                                        |
+| **nextjs-pages-components** | `.github/instructions/domain/nextjs-pages-components.instructions.md` / `.kiro/steering/nextjs-pages-components.md` | —                           | `**/app/**/*.tsx`          | Next.js + React conventions                                                                                     |
+| **git-guard-notice**        | `.kiro/steering/git-guard-notice.md`                                                                                | —                           | Always loaded (Kiro)       | Restates the three git invariants: no push/merge to `main`, Conventional Commits, `--body-file` for `gh` bodies |
+
+## Hooks
+
+| Hook             | Files                                                                                          | Purpose                                                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **git-guard**    | `.kiro/hooks/git-guard.json`, `.kiro/hooks/scripts/git-guard.sh`, `.claude/hooks/git-guard.sh` | Blocks pushes/merges to `main`, non-Conventional commit messages, and inline `gh --body` |
+| **branch-guard** | `.kiro/hooks/scripts/branch-guard.sh`                                                          | Blocks write operations while on the default branch                                      |
+
+Hook enforcement is best-effort. Human PR review is the actual gate for these invariants.
 
 ## Prompts
 
@@ -266,4 +275,4 @@ When `scope.primary` contains exactly 1 component, no partitioning is needed. Th
 
 ---
 
-For workflow chains and sequencing diagrams, see [`docs/workflow-chains.md`](docs/workflow-chains.md).
+For workflow chains and sequencing diagrams, see [`docs/workflow-chains.md`](docs/workflow-chains.md). For architecture, artifacts, and invariants, see [`docs/system-overview.md`](docs/system-overview.md) and [`docs/data-model.md`](docs/data-model.md). Full documentation index: [`docs/README.md`](docs/README.md).
