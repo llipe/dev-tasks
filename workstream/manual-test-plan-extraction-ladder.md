@@ -38,11 +38,17 @@ dt extract all --json
 
 ### Running test scripts
 
-> **Important:** `npx tsx -e "..."` does NOT support top-level `await` because
-> it treats `-e` inline code as CJS regardless of the project's `"type": "module"`.
+> **Important:** 
+> 1. `npx tsx -e "..."` does NOT support top-level `await` (treats inline code as CJS).
+> 2. Test scripts must live **inside the project root** (not `/tmp/`) because they use
+>    relative imports like `./core/extract/...` which resolve from the file's location.
 >
-> Instead, write each snippet to a `.ts` file inside the project and run with `npx tsx <file>`.
-> All tests below use this approach.
+> All tests below write to a file inside the project and run from the project root.
+
+```bash
+# Always run from the dev-tasks project root
+cd ~/Documents/Documentos\ -\ M-FMALLEAS/Dev/dev-tasks
+```
 
 ---
 
@@ -51,8 +57,8 @@ dt extract all --json
 ### 1A. Declared wins when on-disk spec exists
 
 ```bash
-cat > /tmp/test-1a.ts << 'EOF'
-import { extractOpenApiLadder } from "./core/extract/openapi/index.js";
+cat > test/_manual.ts << 'EOF'
+import { extractOpenApiLadder } from "../core/extract/openapi/index.js";
 import { resolve } from "path";
 
 async function main() {
@@ -63,7 +69,7 @@ async function main() {
 }
 main();
 EOF
-npx tsx /tmp/test-1a.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:**
@@ -76,8 +82,8 @@ Confidence: high
 ### 1B. Observed (boot) wins when no spec on disk
 
 ```bash
-cat > /tmp/test-1b.ts << 'EOF'
-import { extractOpenApiLadder } from "./core/extract/openapi/index.js";
+cat > test/_manual.ts << 'EOF'
+import { extractOpenApiLadder } from "../core/extract/openapi/index.js";
 import { resolve } from "path";
 
 async function main() {
@@ -90,7 +96,7 @@ async function main() {
 }
 main();
 EOF
-npx tsx /tmp/test-1b.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:**
@@ -113,8 +119,8 @@ Endpoints: 10
 ### 1C. Inferred fallback with noBoot
 
 ```bash
-cat > /tmp/test-1c.ts << 'EOF'
-import { extractOpenApiLadder } from "./core/extract/openapi/index.js";
+cat > test/_manual.ts << 'EOF'
+import { extractOpenApiLadder } from "../core/extract/openapi/index.js";
 import { resolve } from "path";
 
 async function main() {
@@ -126,7 +132,7 @@ async function main() {
 }
 main();
 EOF
-npx tsx /tmp/test-1c.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:**
@@ -144,8 +150,8 @@ Diagnostics: [ 'No on-disk OpenAPI spec found', 'route2 skipped (--no-boot)' ]
 ### 2A. Single-package repo
 
 ```bash
-cat > /tmp/test-2a.ts << 'EOF'
-import { discoverComponents } from "./core/extract/workspaces.js";
+cat > test/_manual.ts << 'EOF'
+import { discoverComponents } from "../core/extract/workspaces.js";
 import { resolve } from "path";
 
 const r = discoverComponents(resolve("test/fixtures/extract/express-typed"));
@@ -153,7 +159,7 @@ console.log("Count:", r.length);
 console.log("Name:", r[0].name);
 console.log("Path:", r[0].path);
 EOF
-npx tsx /tmp/test-2a.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:** Count `1`, name `express-typed-app`.
@@ -161,15 +167,15 @@ npx tsx /tmp/test-2a.ts
 ### 2B. pnpm workspace monorepo
 
 ```bash
-cat > /tmp/test-2b.ts << 'EOF'
-import { discoverComponents } from "./core/extract/workspaces.js";
+cat > test/_manual.ts << 'EOF'
+import { discoverComponents } from "../core/extract/workspaces.js";
 import { resolve } from "path";
 
 const r = discoverComponents(resolve("test/fixtures/extract/monorepo-pnpm"));
 console.log("Count:", r.length);
 r.forEach(c => console.log(" -", c.name, "→", c.path.split("/").slice(-2).join("/")));
 EOF
-npx tsx /tmp/test-2b.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:**
@@ -184,15 +190,15 @@ Root excluded (only devDependencies, no runtime deps).
 ### 2C. npm workspaces
 
 ```bash
-cat > /tmp/test-2c.ts << 'EOF'
-import { discoverComponents } from "./core/extract/workspaces.js";
+cat > test/_manual.ts << 'EOF'
+import { discoverComponents } from "../core/extract/workspaces.js";
 import { resolve } from "path";
 
 const r = discoverComponents(resolve("test/fixtures/extract/monorepo-npm"));
 console.log("Count:", r.length);
 r.forEach(c => console.log(" -", c.name));
 EOF
-npx tsx /tmp/test-2c.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:** Count `2`: `@monorepo-npm/backend`, `@monorepo-npm/frontend`.
@@ -218,8 +224,8 @@ pnpm run test:unit -- test/unit/extract-ladder.test.ts --reporter=verbose
 ### 4A. No entry point → null (graceful)
 
 ```bash
-cat > /tmp/test-4a.ts << 'EOF'
-import { extractRoute2Express } from "./core/extract/openapi/route2.js";
+cat > test/_manual.ts << 'EOF'
+import { extractRoute2Express } from "../core/extract/openapi/route2.js";
 import { resolve } from "path";
 
 async function main() {
@@ -228,7 +234,7 @@ async function main() {
 }
 main();
 EOF
-npx tsx /tmp/test-4a.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:** `Result: null`
@@ -236,8 +242,8 @@ npx tsx /tmp/test-4a.ts
 ### 4B. Timeout → null (graceful)
 
 ```bash
-cat > /tmp/test-4b.ts << 'EOF'
-import { extractRoute2Express } from "./core/extract/openapi/route2.js";
+cat > test/_manual.ts << 'EOF'
+import { extractRoute2Express } from "../core/extract/openapi/route2.js";
 import { resolve } from "path";
 
 async function main() {
@@ -246,7 +252,7 @@ async function main() {
 }
 main();
 EOF
-npx tsx /tmp/test-4b.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:** `Result: null`
@@ -288,8 +294,8 @@ pnpm run test:unit -- test/unit/extract-schema-orchestrator.test.ts --reporter=v
 ### 6B. No ORM + no --db-url → null
 
 ```bash
-cat > /tmp/test-6b.ts << 'EOF'
-import { extractSchema } from "./core/extract/schema.js";
+cat > test/_manual.ts << 'EOF'
+import { extractSchema } from "../core/extract/schema.js";
 import { resolve } from "path";
 
 async function main() {
@@ -298,7 +304,7 @@ async function main() {
 }
 main();
 EOF
-npx tsx /tmp/test-6b.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:** `Result: null`
@@ -308,8 +314,8 @@ npx tsx /tmp/test-6b.ts
 ## Test 7 — AsyncAPI Declared Rung
 
 ```bash
-cat > /tmp/test-7.ts << 'EOF'
-import { extractAsyncApiDeclared } from "./core/extract/asyncapi/declared.js";
+cat > test/_manual.ts << 'EOF'
+import { extractAsyncApiDeclared } from "../core/extract/asyncapi/declared.js";
 import { resolve } from "path";
 
 const r = extractAsyncApiDeclared(resolve("test/fixtures/extract/component-derivation"));
@@ -321,7 +327,7 @@ if (r) {
   r.channels.forEach(ch => console.log(" -", ch.name));
 }
 EOF
-npx tsx /tmp/test-7.ts
+npx tsx test/_manual.ts
 ```
 
 **Expected:** Source `declared`, Confidence `high`, channels listed.

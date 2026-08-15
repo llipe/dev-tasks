@@ -45,3 +45,7 @@ test/fixtures/catalog/catalog/index.yaml
 
 # Ignore OS trash
 .Trashes
+
+
+# Manual test scratch file
+test/_manual.ts
