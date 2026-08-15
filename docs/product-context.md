@@ -55,19 +55,23 @@ The workflow must scale down to small projects and direct production environment
 
 `dev-tasks` is an actively evolving toolkit distributed as a versioned repository bundle. It currently provides product, development, planning, verification, documentation, housekeeping, GitHub operations, and UX roles; reusable activity skills; scoped instructions; installer/update scripts; and support for multiple AI coding platforms.
 
-The workflow already includes PRD-driven planning, test-first guidance, canonical quality gates, a pre-implementation verifier design mode, and a post-implementation fidelity audit. Its next maturity step is to turn validation from a mostly terminal completion phase into a bounded, evidence-producing feedback loop throughout implementation.
+The workflow includes PRD-driven planning, test-first guidance, canonical quality gates, a pre-implementation verifier design mode, and a post-implementation fidelity audit. The CLI toolkit (`dt`) implements the full multi-repo context pipeline: extraction (with a ladder pattern for confidence-ranked source selection), catalog aggregation and validation, context assembly with token budgeting, LLM-assisted scoping with gate rules, and contract verification (breaking-change detection, consumer impact analysis, and docs/code drift heuristics). The extraction pipeline is fully deterministic — no LLM is used for structural extraction.
+
+Its next maturity step is exposing the `dt` toolkit as MCP tools for agent consumption and wiring a live LLM provider for the scoping pipeline.
 
 ## Vision and Roadmap
 
 ### Near term
 
-- Establish the repository-wide product and technical constitution.
+- ~~Establish the repository-wide product and technical constitution.~~ (Done)
 - Strengthen acceptance-criterion quality and test traceability.
 - Add bounded web-runtime self-verification using deterministic E2E tests as the source of truth.
 - Add Supabase Cloud-first validation with safe local and cloud execution modes.
 - Add incremental mutation testing to evaluate test-suite effectiveness.
 - Standardize validation evidence attached to CI runs and pull requests.
 - Make blocking, retry, fallback, and drift-resolution behavior explicit.
+- Wire a live LLM provider for `dt scope`.
+- Expose `dt` commands as MCP tools for direct agent consumption.
 
 ### Medium term
 

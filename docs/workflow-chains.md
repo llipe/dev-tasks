@@ -69,3 +69,26 @@ product-engineer (init mode): activity-init
     mono-repo:    interview → product-context.md + technical-guidelines.md
     greenfield:   dt extract detect → dt extract all --interactive → interview → product-context.md + technical-guidelines.md
 ```
+
+## Contract Verification (Cross-Repo)
+
+```text
+dt verify contract-diff --base <old> --head <new>
+    ↓ (exit 8 if breaking)
+dt verify impact --contract <id>
+    ↓ (lists affected consumers)
+dt verify drift [--id <comp>]
+    ↓ (staleness report)
+developer/planner: address breaking changes or update consumers
+```
+
+## Extraction Ladder (Per Stage)
+
+```text
+dt extract all
+    ↓
+    For each stage (schema, openapi, asyncapi):
+        declared rung → (success? stop) → observed rung → (success? stop) → inferred rung
+        ↓
+    component.json derivation + extraction_report.json
+```

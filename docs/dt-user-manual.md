@@ -18,13 +18,22 @@ Its core purpose: turn a repository into a machine-readable `component.json` man
 ├── adapters/cli/          Wraps core functions, formats human/JSON output
 ├── core/extract/          Extraction business logic
 │   ├── detect.ts          Orchestrator: loads providers, first-match wins
+│   ├── ladder.ts          Generic ladder runner (declared → observed → inferred)
+│   ├── workspaces.ts      Monorepo workspace discovery (pnpm, npm/yarn)
 │   ├── provider.ts        ExtractionProvider interface + types
 │   ├── providers/         Pluggable stack-specific providers
 │   │   └── node-ts.ts     The Node/TypeScript provider (only one shipped)
-│   ├── schema.ts          Schema extraction orchestrator
-│   ├── orm/               ORM-specific extractors (Prisma, Drizzle, TypeORM)
-│   ├── openapi/           OpenAPI extraction (route 1 + route 3)
-│   ├── asyncapi/          AsyncAPI extraction (kafkajs topic inventory)
+│   ├── schema.ts          Schema extraction orchestrator (ladder: ORM → DB introspection)
+│   ├── orm/               ORM-specific extractors (Prisma, Drizzle, TypeORM, information_schema)
+│   ├── openapi/           OpenAPI extraction (ladder: route1 → route2 → route3)
+│   │   ├── route1.ts      Declared rung: on-disk spec
+│   │   ├── route2.ts      Observed rung: boot + Express router introspection
+│   │   ├── route2-introspect.ts  Child process introspection script
+│   │   └── route3.ts      Inferred rung: TypeScript AST analysis
+│   ├── asyncapi/          AsyncAPI extraction (ladder: declared → topic AST)
+│   │   ├── declared.ts    Declared rung: on-disk asyncapi.yaml
+│   │   ├── topics.ts      Observed rung: kafkajs topic inventory
+│   │   └── payloads.ts    Payload type resolution
 │   ├── component.ts       component.json derivation + provenance
 │   ├── report.ts          extraction_report.json generation
 │   ├── prompt.ts          Interactive prompt for human-only fields
@@ -59,6 +68,14 @@ Its core purpose: turn a repository into a machine-readable `component.json` man
 │   ├── calibration.ts     Per-session calibration data recording
 │   ├── types.ts           Shared types (ScopeOutput, LlmScopeProvider, etc.)
 │   └── index.ts           Module barrel exports
+├── core/verify/           Contract verification and drift detection
+│   ├── contract-diff.ts   Orchestrator: detect contract type + diff
+│   ├── openapi-diff.ts    OpenAPI breaking-change classification
+│   ├── asyncapi-diff.ts   AsyncAPI breaking-change classification
+│   ├── impact.ts          Consumer impact analysis via inverted index
+│   ├── drift.ts           Docs/code staleness heuristic
+│   ├── types.ts           Shared types
+│   └── index.ts           Module barrel exports
 └── core/distribution/     Install, update, manifest, doctor
 ```
 
@@ -91,6 +108,9 @@ dt ctx gc                  # Run cache garbage collection
 dt ctx assemble            # Build layered, budgeted context bundle
 dt init                    # Initialize a context session (manual scope or task-scoped with LLM)
 dt scope                   # LLM-assisted scoping (task → components, with repair retry)
+dt verify contract-diff    # Detect breaking changes between two contract specs
+dt verify impact           # List consumers affected by a contract change
+dt verify drift            # Compute docs/code staleness per component
 ```
 
 All commands accept `--json` for machine-readable output.
@@ -117,7 +137,7 @@ Inspects your repository to identify the tech stack: language, HTTP framework, O
 4. **OpenAPI strategy determination** — based on what's available:
    - Route 1 (introspected): an on-disk spec file exists, or `@nestjs/swagger` is present
    - Route 3 (AST inferred): the framework supports route discovery (always available for known frameworks)
-   - Route 2 (framework boot): detected but not yet implemented
+   - Route 2 (framework boot): detected when Express is the HTTP framework; boots the app in a child process and walks the router stack
 
 ### Output
 
@@ -140,7 +160,7 @@ Inspects your repository to identify the tech stack: language, HTTP framework, O
 
 - Does not run your code or install dependencies
 - Does not look inside source files for imports (that's the job of later extraction steps)
-- Does not use AI/LLM — this is fully deterministic
+- Does not use AI/LLM — this is fully deterministic (note: no step in the extraction pipeline uses LLM)
 
 ---
 
@@ -157,7 +177,7 @@ Produces a `docs/schema.md` containing your database tables, columns with types,
    - **Drizzle**: uses the **TypeScript Compiler API** to parse Drizzle table definitions (e.g., `pgTable("users", { ... })`). Extracts column names, types, constraints from the AST.
    - **TypeORM**: uses the TypeScript Compiler API to parse entity classes decorated with `@Entity`, `@Column`, `@PrimaryGeneratedColumn`, `@ManyToOne`, etc.
 2. **Database introspection** (opt-in with `--db-url`) — queries `information_schema` of a local/development database. Never runs against production. Returns tables, columns, foreign keys, indexes.
-3. **SQL migration inference** (last resort) — if migrations exist (`migrations/`, `prisma/migrations/`, `drizzle/`) but no ORM and no `--db-url`, the LLM is invoked to infer schema. Marked `source: inferred`, `confidence: low`.
+3. **SQL migration inference** (removed) — previously, the LLM was invoked to infer schema from migration files. This has been removed from the extraction pipeline. If migrations exist but no ORM and no `--db-url`, the schema extraction returns null and records the gap in `requires_human`.
 4. **None available** — returns null, recorded in `requires_human`.
 
 ### Rendering
@@ -206,10 +226,11 @@ Produces an OpenAPI 3.1 specification from your repository, using the best avail
 
 Controlled by `--strategy auto|1|3` (default: `auto`, which picks based on detection):
 
-| Strategy | Trigger                  | Technique        | Source         | Confidence        |
-| -------- | ------------------------ | ---------------- | -------------- | ----------------- |
-| Route 1  | On-disk spec exists      | Copy + normalize | `introspected` | `high`            |
-| Route 3  | No spec, known framework | TypeScript AST   | `inferred`     | `medium` or `low` |
+| Strategy | Trigger                  | Technique             | Source         | Confidence        |
+| -------- | ------------------------ | --------------------- | -------------- | ----------------- |
+| Route 1  | On-disk spec exists      | Copy + normalize      | `introspected` | `high`            |
+| Route 2  | Express detected         | Boot + router walk    | `introspected` | `high`            |
+| Route 3  | No spec, known framework | TypeScript AST        | `inferred`     | `low`             |
 
 ### Route 1 — Copy and normalize
 
@@ -264,12 +285,19 @@ This is the most technically interesting part. It uses the **TypeScript Compiler
 7. **Dynamic routes** — if the path argument is not a string literal (e.g., comes from a variable or function call), it's reported in `unresolved[]` instead of being silently dropped.
 
 8. **Confidence assignment:**
-   - `medium` if handlers have typed parameters (TypeScript types or Zod)
-   - `low` if handlers are untyped
+   - `low` — the ladder enforces this ceiling for all inferred (route 3) results regardless of type quality
 
-### Route 2 — Framework boot (interface only)
+### Route 2 — Boot + Introspect (Express)
 
-Would invoke the framework's built-in doc generator (e.g., NestJS + `@nestjs/swagger`) in isolation without running the full service. Currently defined as an interface but not implemented.
+Spawns a child process that imports the application module, locates the Express app export, and walks the router stack to discover all registered routes — including dynamically-registered routes that AST analysis (route 3) cannot resolve.
+
+1. **Entry point resolution** — searches `package.json` `main`, common patterns (`src/app.ts`, `src/index.ts`, `app.ts`), and accepts an explicit `--entry` override.
+2. **Child process boot** — imports the module using dynamic `import()` and searches exports for an Express app instance (default export, named `app`, or `createApp()` factory).
+3. **Router walk** — recursively walks `app._router.stack` (Express 4) or `app.router.stack` (Express 5), collecting method + path for every registered route handler and nested Router.
+4. **Timeout protection** — hard timeout (default 10s, configurable) kills the child process if boot hangs.
+5. **Failure taxonomy** — failures are classified as `entry-not-found`, `import-failed`, `no-app-export`, `timeout`, or `parse-error`. All return null (rung unavailable), never crash `dt`.
+
+Route 2 produces `high` confidence results because it discovers routes from the actual running router, not from static analysis guesses.
 
 ### Validation
 
@@ -322,11 +350,11 @@ Uses the **TypeScript Compiler API** to find kafkajs usage patterns:
 
 5. **Payload classification** (separate `payload_confidence`):
 
-   | Payload type                                     | Technique                   | `payload_confidence` |
-   | ------------------------------------------------ | --------------------------- | -------------------- |
-   | Typed generic `producer.send<OrderEvent>({...})` | Derive schema from the type | `medium`             |
-   | Inline object literal                            | LLM infers shape            | `low`                |
-   | Opaque (`Buffer`, `JSON.stringify(variable)`)    | Mark unresolved             | `low`                |
+   | Payload type                                     | Technique                       | `payload_confidence` |
+   | ------------------------------------------------ | ------------------------------- | -------------------- |
+   | Typed generic `producer.send<OrderEvent>({...})` | Derive schema from the type     | `medium`             |
+   | Inline object literal                            | Record as unresolved (handoff)  | `low`                |
+   | Opaque (`Buffer`, `JSON.stringify(variable)`)    | Mark unresolved                 | `low`                |
 
 ### Why two confidence fields?
 
@@ -344,17 +372,17 @@ Combines all prior extraction results into a single `component.json` with full p
 
 Fields are classified by how they're populated:
 
-| Category          | Fields                                                                         | How populated                                   |
-| ----------------- | ------------------------------------------------------------------------------ | ----------------------------------------------- |
-| **Derivable**     | `name`, `stack`, `type`, `provides`, `datastores`, `paths`, `docs`, `consumes` | Directly from detection + extraction results    |
-| **Inferable**     | `description`, `aliases`, `subdomain`, `consumes[].criticality`                | LLM suggestion, but requires human confirmation |
-| **Non-derivable** | `owner`, `domain`, `criticality`, `lifecycle`                                  | Interactive prompt only — never invented        |
+| Category          | Fields                                                                         | How populated                                                         |
+| ----------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| **Derivable**     | `name`, `stack`, `type`, `provides`, `datastores`, `paths`, `docs`, `consumes` | Directly from detection + extraction results                          |
+| **Non-derivable** | `owner`, `domain`, `criticality`, `lifecycle`                                  | Interactive prompt only — never invented                              |
+| **Inferable**     | `description`, `aliases`, `subdomain`, `consumes[].criticality`                | Handoff to agent layer; previously LLM-suggested, now marked requires_human |
 
 ### The `--interactive` flag
 
 Without `--interactive`: non-derivable fields stay empty, listed in `requires_human`. The manifest is technically incomplete (validation would reject it).
 
-With `--interactive`: prompts you for owner, domain, criticality, lifecycle. Also asks you to confirm or reject LLM-inferred values for description, aliases, subdomain.
+With `--interactive`: prompts you for owner, domain, criticality, lifecycle. Also asks you to confirm or edit inferred values for description, aliases, subdomain.
 
 ### Provenance (`_provenance` block)
 
@@ -1233,13 +1261,100 @@ When G1 aborts, a partition proposal is generated:
 
 ---
 
+## `dt verify contract-diff` — Breaking Change Detection
+
+### What it does
+
+Compares two versions of an API contract specification (OpenAPI or AsyncAPI) and classifies changes as breaking, non-breaking, or informational.
+
+```bash
+dt verify contract-diff --base old-spec.yaml --head new-spec.yaml
+dt verify contract-diff --base v1/openapi.yaml --head v2/openapi.yaml --json
+```
+
+### How it works internally
+
+1. **Auto-detection** — determines whether the spec is OpenAPI or AsyncAPI based on content structure (`openapi` vs `asyncapi` top-level key).
+2. **Spec loading** — parses both base and head specs (supports YAML and JSON).
+3. **Diff computation** — for OpenAPI: compares paths, methods, parameters, request bodies, response schemas, and status codes. For AsyncAPI: compares channels, operations, message schemas.
+4. **Breaking change classification** — removals of endpoints/channels, narrowing of response types, removal of enum values, addition of required fields to request bodies are classified as breaking. Additions and expansions are non-breaking.
+
+### Exit codes
+
+| Code | Meaning                               |
+| ---- | ------------------------------------- |
+| 0    | No breaking changes detected          |
+| 1    | Unexpected error                      |
+| 2    | Incorrect usage (missing flags)       |
+| 8    | Breaking change detected              |
+
+---
+
+## `dt verify impact` — Consumer Impact Analysis
+
+### What it does
+
+Given a contract ID, lists all consumers that depend on it using the catalog's inverted index. Optionally emits derived tasks for affected consumers.
+
+```bash
+dt verify impact --contract auth-v1
+dt verify impact --contract payments-v2 --emit-tasks --json
+```
+
+### How it works internally
+
+1. **Index lookup** — reads the `contracts{}` section of `catalog/index.yaml` to find the provider and consumer list for the given contract ID.
+2. **Consumer enumeration** — lists each consumer component with its criticality rating for the dependency (`hard` vs `soft`).
+3. **Task emission** (when `--emit-tasks`) — calls the tracker provider interface to emit derived update tasks per affected consumer. Currently uses a no-op stub.
+
+### Exit codes
+
+| Code | Meaning                                       |
+| ---- | --------------------------------------------- |
+| 0    | Success (consumers listed)                    |
+| 1    | Unexpected error                              |
+| 2    | Incorrect usage (missing `--contract` flag)   |
+| 12   | Unknown contract (not found in catalog index) |
+
+---
+
+## `dt verify drift` — Docs/Code Staleness Heuristic
+
+### What it does
+
+Computes a staleness heuristic per component by comparing the last commit date of source code versus documentation and contract files. Identifies components whose docs may be out of sync with recent code changes.
+
+```bash
+dt verify drift
+dt verify drift --id auth-service --threshold 30
+dt verify drift --json
+```
+
+### How it works internally
+
+1. **Component path derivation** — for each component in scope, derives the expected paths for source code, documentation, and contract files.
+2. **Git date extraction** — uses `git log` to find the last commit date for source vs. docs/contracts paths.
+3. **Staleness computation** — if docs/contracts are older than source by more than `--threshold` days (default: 30), the component is flagged as potentially drifted.
+
+### Exit codes
+
+| Code | Meaning                                               |
+| ---- | ----------------------------------------------------- |
+| 0    | Drift report generated                                |
+| 1    | Unexpected error                                      |
+| 12   | Unknown component (when `--id` specifies unknown ID)  |
+
+---
+
 ## `dt extract all` — Full Pipeline
 
-Orchestrates the complete extraction in order:
+Orchestrates the complete extraction using the **ladder pattern** for each stage:
 
 ```text
-detect → schema → openapi → asyncapi → component → extraction_report.json
+detect → schema (declared→observed) → openapi (declared→observed→inferred) → asyncapi (declared→observed) → component → extraction_report.json
 ```
+
+Each extraction stage runs rungs in priority order and stops at the first successful result. Confidence is enforced by the ladder: declared and observed rungs produce `high` confidence; inferred is capped at `low`.
 
 ### Exit codes
 
@@ -1345,11 +1460,13 @@ interface ExtractionProvider {
 
 Capabilities declared:
 
-- `openapi_native` — can copy an existing spec (route 1)
-- `openapi_ast` — can discover routes via AST (route 3)
-- `orm_ast` — can parse ORM definitions
-- `db_introspection` — can query a database
-- `topic_ast` — can find Kafka topics via AST
+- `openapi_native` — can copy an existing spec (route 1, declared rung)
+- `openapi_boot` — can boot the app and introspect routes (route 2, observed rung)
+- `openapi_ast` — can discover routes via AST (route 3, inferred rung)
+- `orm_ast` — can parse ORM definitions (declared rung)
+- `db_introspection` — can query a database (observed rung)
+- `topic_declared` — can detect on-disk AsyncAPI specs (declared rung)
+- `topic_ast` — can find Kafka topics via AST (observed rung)
 - `payload_typed` — can derive message payload schemas from types
 
 A missing capability does not fail — it's recorded in `requires_human` and the extraction continues.
@@ -1360,7 +1477,7 @@ Currently only the `node-ts` provider is shipped. Future providers could support
 
 ## Design Principles
 
-1. **No LLM for structure.** The LLM is only used for prose descriptions (table summaries, endpoint summary/description/tags). Every structural decision (routes, schemas, topics, relationships) comes from deterministic AST parsing or file inspection.
+1. **No LLM in extraction.** The extraction pipeline is entirely deterministic. Every structural decision (routes, schemas, topics, relationships) comes from deterministic AST parsing, file inspection, or runtime introspection. Prose generation (descriptions, summaries) has been removed from `dt` and is delegated to the agent layer via handoff fields in the extraction report.
 
 2. **Explicit confidence.** Every extracted value carries a `source` (introspected, inferred, manual) and `confidence` (high, medium, low). Low-confidence values are never treated as firm contracts by downstream tools.
 
@@ -1403,25 +1520,26 @@ git commit -m "feat: add component manifest via dt extract"
 
 ## Known Limitations
 
-- **Route 2 not implemented** — NestJS swagger auto-generation via framework boot exists as interface only
+- **Route 2 limited to Express** — boot + introspect works for Express 4/5; NestJS, Fastify, and Hono boot introspection is not yet supported
 - **Node/TS only** — no providers for Python, Go, Java, Ruby, etc.
-- **LLM inference stubbed** — no real LLM provider is wired; description passes produce placeholder output
+- **No LLM provider wired** — `dt scope` exits with a configuration error without `DT_LLM_PROVIDER` configured. The extraction pipeline no longer uses LLM at all — descriptions move to the agent layer
 - **Zod limited to basic `z.object` patterns** — complex compositions (unions, intersections, lazy schemas) are not fully supported
 - **Only kafkajs patterns** — other Kafka clients (confluent-kafka, rhea/AMQP, bullmq) not detected
 - **YAML parsing is minimal** — the built-in YAML parser handles basic structures; complex YAML features (anchors, merge keys) may not parse correctly
 - **Git >= 2.37 required for ctx fetch** — sparse-checkout in cone mode requires modern git; use `dev-tasks doctor` to verify
 - **rsync required for ctx fetch** — the cache write step uses `rsync` to copy sparse content; available by default on macOS and most Linux distributions
+- **Tracker provider is a stub** — `dt verify impact --emit-tasks` uses a no-op fallback; no live tracker integration is wired
 
 ---
 
 ## What's Coming Next
 
-| Phase   | Capability                                                           | Status                                                                             |
-| ------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Phase 0 | Distribution (`dev-tasks install/update/doctor`)                     | Done                                                                               |
-| Phase 1 | Extraction (`dt extract *`)                                          | Done                                                                               |
-| Phase 2 | Catalog — cross-repo aggregation + validation                        | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped) |
-| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly + session init | Done (`dt ctx fetch/gc/assemble` + `dt init --components` shipped)                 |
-| Phase 4 | Scoping — LLM-assisted component selection per task                  | Done (`dt scope` + `dt scope gate` + `dt init --task` shipped)                     |
-| Phase 5 | Verify — contract diff + impact analysis                             | Planned                                                                            |
-| Phase 6 | MCP adapter — expose as agent tools                                  | Planned                                                                            |
+| Phase   | Capability                                                           | Status                                                                                                  |
+| ------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Phase 0 | Distribution (`dev-tasks install/update/doctor`)                     | Done                                                                                                    |
+| Phase 1 | Extraction (`dt extract *`)                                          | Done — including ladder pattern, route 2 (Express), AsyncAPI declared rung, workspace discovery         |
+| Phase 2 | Catalog — cross-repo aggregation + validation                        | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped)                      |
+| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly + session init | Done (`dt ctx fetch/gc/assemble` + `dt init --components` shipped)                                      |
+| Phase 4 | Scoping — LLM-assisted component selection per task                  | Done (`dt scope` + `dt scope gate` + `dt init --task` shipped)                                          |
+| Phase 5 | Verify — contract diff + impact analysis + drift                     | Done (`dt verify contract-diff`, `dt verify impact`, `dt verify drift` shipped)                         |
+| Phase 6 | MCP adapter — expose as agent tools                                  | Planned                                                                                                 |

@@ -53,17 +53,17 @@ Both binaries share `adapters/cli/parse-args.ts` and the exit-code contract in `
 
 ### `core/` modules
 
-| Module               | Responsibility                                                                                                                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `core/distribution`  | Install, update with conflict detection, status, pin/unpin, doctor, legacy migration, backup, SHA-256 hashing, install manifest, profile→path mapping                           |
-| `core/extract`       | Stack detection; OpenAPI, AsyncAPI and database-schema extraction; ORM readers (Prisma, Drizzle, TypeORM, `information_schema`); `component.json` derivation; extraction report |
-| `core/catalog`       | Registry aggregation and index build, validation checks `V01`–`V19`, component resolution, graph queries, coverage tally, meta-repo scaffold, offline manifest validation       |
-| `core/context`       | Session init, sparse-clone fetch, SHA-keyed cache with LRU GC, layered budgeted bundle assembly, token accounting, session lock                                                 |
-| `core/scope`         | LLM-assisted scoping, graph-closure expansion, gate rules `G1`–`G7`, cross-repo partition proposal, precision/recall calibration                                                |
-| `core/verify`        | OpenAPI/AsyncAPI contract diffing and breaking-change detection, consumer impact analysis, docs/code drift heuristic                                                            |
-| `core/reconcile`     | Field-level reconciliation between generated and hand-edited manifest fields, using provenance hashes                                                                           |
-| `core/providers`     | Interface stubs for external providers (tracker emission). Interface only — no live implementation                                                                              |
-| `core/exit-codes.ts` | Process exit-code contract shared by all binaries                                                                                                                               |
+| Module               | Responsibility                                                                                                                                                                                                                                                    |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/distribution`  | Install, update with conflict detection, status, pin/unpin, doctor, legacy migration, backup, SHA-256 hashing, install manifest, profile→path mapping                                                                                                             |
+| `core/extract`       | Stack detection; ladder-based OpenAPI extraction (declared→observed→inferred); AsyncAPI extraction with declared rung; database-schema extraction (ORM AST + `information_schema`); workspace discovery for monorepos; `component.json` derivation; extraction report |
+| `core/catalog`       | Registry aggregation and index build, validation checks `V01`–`V19`, component resolution, graph queries, coverage tally, meta-repo scaffold, offline manifest validation                                                                                         |
+| `core/context`       | Session init, sparse-clone fetch, SHA-keyed cache with LRU GC, layered budgeted bundle assembly, token accounting, session lock                                                                                                                                   |
+| `core/scope`         | LLM-assisted scoping, graph-closure expansion, gate rules `G1`–`G7`, cross-repo partition proposal, precision/recall calibration                                                                                                                                  |
+| `core/verify`        | OpenAPI/AsyncAPI contract diffing and breaking-change detection, consumer impact analysis, docs/code drift heuristic                                                                                                                                              |
+| `core/reconcile`     | Field-level reconciliation between generated and hand-edited manifest fields, using provenance hashes                                                                                                                                                             |
+| `core/providers`     | Interface stubs for external providers (tracker emission). Interface only — no live implementation                                                                                                                                                                |
+| `core/exit-codes.ts` | Process exit-code contract shared by all binaries                                                                                                                                                                                                                 |
 
 ### `adapters/`
 
@@ -85,7 +85,7 @@ Eight agents (`product-engineer`, `developer`, `planner`, `verifier`, `ux-engine
 | Git              | Sparse clone and SHA pinning of component repos (`dt ctx fetch`)          | Active; `dev-tasks doctor` requires git >= 2.37 (the legacy tarball manifest declares 2.20)           |
 | npm registry     | Package distribution and pinned-version fetch during `dev-tasks update`   | Active (`@llipe.com/dev-tasks`)                                                                       |
 | GitHub           | Issues/PRs as execution state, Releases for bundle assets, Actions for CI | Active                                                                                                |
-| LLM provider     | `dt scope` component scoping, optional description enrichment             | Interface only — `dt scope` exits with a configuration error until `DT_LLM_PROVIDER` support is wired |
+| LLM provider     | `dt scope` component scoping (extraction pipeline no longer uses LLM)     | Interface only — `dt scope` exits with a configuration error until `DT_LLM_PROVIDER` support is wired |
 | Tracker provider | Emitting derived tasks from `dt verify impact --emit-tasks`               | Interface stub with no-op fallback                                                                    |
 | `memo-cli`       | Cross-session architectural memory for agents                             | Optional; skipped silently when absent                                                                |
 | MCP servers      | Consumer-owned agent tool extensions                                      | Consumer-configured; not provided by this repository                                                  |
@@ -98,7 +98,20 @@ Eight agents (`product-engineer`, `developer`, `planner`, `verifier`, `ux-engine
 
 ### 2. Component extraction
 
-`dt extract all` runs the pipeline: `detect` (stack/framework signals) → `schema` (ORM AST or database introspection) → `openapi` → `asyncapi` → `component` (derive `component.json`) → `extraction_report.json`. Step 6 is a human gate for the non-derivable fields `owner`, `domain`, `criticality`, and `aliases` confirmation. Re-running will not silently overwrite a locally edited field: `core/reconcile` detects the hash mismatch and exits `14` unless `--force`.
+`dt extract all` runs the pipeline: `detect` (stack/framework signals) → `schema` (ORM AST or database introspection) → `openapi` → `asyncapi` → `component` (derive `component.json`) → `extraction_report.json`.
+
+Extraction uses a **ladder pattern** (`core/extract/ladder.ts`): each extraction stage runs rungs in order — declared → observed → inferred — and returns the first usable result. Confidence is enforced by the ladder, not by convention: declared and observed produce `high`, inferred is capped at `low`.
+
+Key extraction capabilities:
+
+- **OpenAPI ladder**: route 1 (on-disk spec, declared) → route 2 (boot + introspect via Express router walk, observed) → route 3 (TypeScript AST route discovery, inferred).
+- **AsyncAPI ladder**: declared rung (on-disk `asyncapi.yaml`) → observed (kafkajs topic detection via TypeScript AST).
+- **Schema ladder**: declared (ORM file parsers — Prisma, Drizzle, TypeORM) → observed (`information_schema` via `--db-url`).
+- **Workspace discovery** (`core/extract/workspaces.ts`): detects pnpm-workspace.yaml or `package.json` workspaces to enumerate monorepo packages as extraction targets.
+
+LLM inference has been removed from the extraction pipeline. Judgment (descriptions, summaries) is delegated to the agent layer via handoff fields in the extraction report.
+
+Step 6 is a human gate for the non-derivable fields `owner`, `domain`, `criticality`, and `aliases` confirmation. Re-running will not silently overwrite a locally edited field: `core/reconcile` detects the hash mismatch and exits `14` unless `--force`.
 
 ### 3. Catalog build and validation
 
@@ -110,7 +123,11 @@ Eight agents (`product-engineer`, `developer`, `planner`, `verifier`, `ux-engine
 
 ### 5. Contract verification
 
-`dt verify contract-diff --base --head` classifies OpenAPI/AsyncAPI changes and exits `8` (`BreakingChange`) on a breaking diff. `dt verify impact --contract <id>` lists affected consumers from the catalog's inverted index and can emit derived tasks. `dt verify drift` computes a docs/code drift heuristic per component.
+`dt verify contract-diff --base <path> --head <path>` classifies OpenAPI/AsyncAPI changes as breaking, non-breaking, or informational, and exits `8` (`BreakingChange`) on a breaking diff. Supports both OpenAPI and AsyncAPI specs with auto-detection based on content structure.
+
+`dt verify impact --contract <id>` lists affected consumers from the catalog's inverted index. With `--emit-tasks`, it can emit derived tasks via the tracker provider interface (currently a no-op stub).
+
+`dt verify drift [--id <comp>] [--threshold <days>]` computes a docs/code staleness heuristic per component using git commit dates, identifying components whose documentation or contracts may be out of date relative to source changes.
 
 ### 6. Agent development workflow
 
@@ -139,13 +156,14 @@ Two channels are active in parallel:
 
 ## Known Constraints in the Current Implementation
 
-- OpenAPI extraction route 2 (isolated framework boot) is interface-only; routes 1 and 3 are functional.
-- No LLM provider is wired; `dt scope` without a provider exits with a configuration error.
+- No LLM provider is wired; `dt scope` without a provider exits with a configuration error. The extraction pipeline no longer uses LLM — descriptions and summaries are delegated to the agent layer.
 - Only the Node/TypeScript extraction provider exists (`core/extract/providers/node-ts.ts`).
+- Route 2 (boot + introspect) is implemented for Express applications only. NestJS and Fastify boot introspection is not yet supported.
 - Zod extraction handles basic `z.object` patterns; only `kafkajs` messaging patterns are detected.
 - `adapters/mcp/` is an empty placeholder.
 - The managed-path surface is defined twice — `core/distribution/profiles.ts` (npm) and `bundle-manifest.json` (tarball) — with no automated conformance check between them. `bundle-manifest.json` still lists `.agents/skills` and a top-level `skills-lock.json`, neither of which exists in the repository.
 - Two committed release tarballs remain tracked under `dist/` (`v0.1.8-test`, `v0.2.1`) although `dist/` is git-ignored.
+- The `--emit-tasks` flag on `dt verify impact` uses a tracker provider interface stub; no live tracker implementation is wired.
 
 Platform differences that are intentional, not drift:
 
