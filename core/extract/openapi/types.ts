@@ -5,7 +5,7 @@
 /**
  * Provenance source for OpenAPI extraction.
  */
-export type OpenApiSource = "introspected" | "inferred";
+export type OpenApiSource = "introspected" | "inferred" | "observed";
 
 /**
  * Confidence level for OpenAPI extraction.
@@ -114,8 +114,8 @@ export interface OpenApiExtractionResult {
   source: OpenApiSource;
   /** Overall confidence */
   confidence: OpenApiConfidence;
-  /** Strategy used: "route1" | "route3" */
-  strategy: "route1" | "route3";
+  /** Strategy used: "route1" | "route2" | "route3" */
+  strategy: "route1" | "route2" | "route3";
 }
 
 /**

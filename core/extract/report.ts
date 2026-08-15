@@ -3,10 +3,12 @@
  * Produces extraction_report.json alongside component.json.
  *
  * Reports: strategies used, coverage (endpoints/topics/tables resolved vs unresolved),
- * confidence counts, unresolved[] with location + reason, requires_human[].
+ * confidence counts, unresolved[] with location + reason, requires_human[],
+ * rung provenance per strategy, and handoff section for agent consumption.
  */
 
 import type { Confidence } from "./component.js";
+import type { RungKind } from "./ladder.js";
 
 /**
  * Strategy info for the report.
@@ -16,6 +18,8 @@ export interface StrategyEntry {
   strategy: string;
   source: string;
   confidence: Confidence;
+  /** Rung that produced this result (additive — omitted for legacy extractors) */
+  rung?: RungKind;
 }
 
 /**
@@ -65,6 +69,30 @@ export interface ExtractionReport {
   confidence_counts: ConfidenceCounts;
   unresolved: UnresolvedItem[];
   requires_human: RequiresHumanItem[];
+  /** Agent handoff section — lists judgment fields and unresolved items for agent consumption */
+  handoff?: HandoffSection;
+}
+
+/**
+ * Handoff section for agent consumption.
+ * Lists (a) judgment fields left empty by deterministic extraction, and
+ * (b) unresolved items that need human/agent resolution.
+ */
+export interface HandoffSection {
+  /** Judgment fields that dt cannot produce (descriptions, summaries, etc.) */
+  empty_judgment_fields: HandoffField[];
+  /** Unresolved items from extraction that need resolution */
+  unresolved_items: UnresolvedItem[];
+}
+
+/**
+ * A single judgment field that needs agent/human filling.
+ */
+export interface HandoffField {
+  /** JSON pointer to the empty field in component.json */
+  pointer: string;
+  /** What kind of content is expected */
+  expected: string;
 }
 
 /**
@@ -81,6 +109,8 @@ export interface ReportInputs {
   unresolved: UnresolvedItem[];
   requiresHuman: RequiresHumanItem[];
   confidenceEntries: Confidence[];
+  /** Optional handoff section for agent consumption */
+  handoff?: HandoffSection;
 }
 
 /**
@@ -93,7 +123,7 @@ export function buildExtractionReport(inputs: ReportInputs): ExtractionReport {
     confidenceCounts[c]++;
   }
 
-  return {
+  const report: ExtractionReport = {
     generated_at: new Date().toISOString(),
     strategies: inputs.strategies,
     coverage: {
@@ -117,6 +147,12 @@ export function buildExtractionReport(inputs: ReportInputs): ExtractionReport {
     unresolved: inputs.unresolved,
     requires_human: inputs.requiresHuman,
   };
+
+  if (inputs.handoff) {
+    report.handoff = inputs.handoff;
+  }
+
+  return report;
 }
 
 /**

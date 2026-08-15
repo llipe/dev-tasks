@@ -119,7 +119,7 @@ export interface AsyncApiExtractionResult {
   /** Topics that could not be resolved */
   unresolved: UnresolvedEntry[];
   /** Source type */
-  source: "inferred";
+  source: "inferred" | "declared";
   /** Overall confidence (lowest of all channels) */
   confidence: AsyncApiConfidence;
 }

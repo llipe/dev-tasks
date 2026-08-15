@@ -1,0 +1,9 @@
+{
+  "name": "@monorepo-npm/frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "react": "^18.0.0",
+    "next": "^14.0.0"
+  }
+}

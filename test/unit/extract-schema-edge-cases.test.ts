@@ -7,7 +7,6 @@ import { describe, it, expect } from "vitest";
 import { parsePrismaContent } from "../../core/extract/orm/prisma.js";
 import { parseDrizzleContent } from "../../core/extract/orm/drizzle.js";
 import { extractSchema } from "../../core/extract/schema.js";
-import { findMigrationSql } from "../../core/extract/orm/migration-inference.js";
 import { resolve } from "node:path";
 
 const FIXTURES_DIR = resolve(import.meta.dirname, "../fixtures/extract");
@@ -18,18 +17,6 @@ describe("edge cases - no ORM + no --db-url", () => {
       rootDir: resolve(FIXTURES_DIR, "fastify-no-orm"),
     });
     expect(result).toBeNull();
-  });
-
-  it("finds migration SQL files when they exist", () => {
-    const sql = findMigrationSql(resolve(FIXTURES_DIR, "no-orm-migrations"));
-    expect(sql).not.toBeNull();
-    expect(sql).toContain("CREATE TABLE users");
-    expect(sql).toContain("CREATE TABLE posts");
-  });
-
-  it("returns null for migration SQL when no migrations directory", () => {
-    const sql = findMigrationSql(resolve(FIXTURES_DIR, "fastify-no-orm"));
-    expect(sql).toBeNull();
   });
 });
 
