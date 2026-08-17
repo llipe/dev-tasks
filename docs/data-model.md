@@ -71,7 +71,7 @@ Invariant: a boundary contract with `payload_confidence: low` must be raised to 
 
 ### ExtractionReport — `extraction_report.json`
 
-Per-run extraction quality record: `strategies[]` (stage, strategy, source, confidence), `coverage` (resolved/unresolved/total for endpoints, topics, tables), `unresolved[]` (stage, type, location, reason), `requires_human[]` (field, reason, category ∈ `non-derivable | unconfirmed-inference | missing-capability`), and confidence counts.
+Per-run extraction quality record: `strategies[]` (stage, strategy, source, confidence, rung), `coverage` (resolved/unresolved/total for endpoints, topics, tables), `unresolved[]` (stage, type, location, reason), `requires_human[]` (field, reason, category ∈ `non-derivable | unconfirmed-inference | missing-capability`), and confidence counts. The `rung` field in each strategy entry records which ladder rung (`declared`, `observed`, or `inferred`) produced the result.
 
 Owner: generated. Lifecycle: rewritten on each extraction run; drives the human-gate prompts and catalog coverage tally.
 
