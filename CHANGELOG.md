@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.2] - 2026-08-18
+
+### Fixed
+
+- fix(dist): auto-migrate on update when manifest is missing
+
+### Changed
+
+- Merge pull request #135 from llipe:issue/fix-update-no-manifest-detection
+- test(fixtures): update catalog fixture timestamps and generator version
+
 ## [0.9.1] - 2026-08-18
 
 ### Fixed
