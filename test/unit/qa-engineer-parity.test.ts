@@ -46,7 +46,12 @@ const CONTRACT_STATEMENTS: ReadonlyArray<{ label: string; pattern: RegExp }> = [
   { label: "step 1 — standards check", pattern: /standards check/i },
   { label: "step 2 — author or fill missing tests", pattern: /author or fill/i },
   { label: "step 3 — coverage and gap report", pattern: /coverage and gap report/i },
-  { label: "does not grade its own work", pattern: /does not grade its own work/i },
+  {
+    label: "does not grade its own work",
+    // Prompts are written in second person; accept either voice. The
+    // requirement is that the separation is stated, not its grammar.
+    pattern: /do(es)? not grade (its|your) own work/i,
+  },
   { label: "verifier owns the audit", pattern: /\bverifier\b/i },
   { label: "test-only config authority", pattern: /test-only config/i },
   { label: "skill: activity-test-standards", pattern: /activity-test-standards/ },
