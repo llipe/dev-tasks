@@ -25,6 +25,7 @@ import {
   type Platform,
   type ManagedPath,
 } from "./profiles.js";
+import { runMigration } from "./migrate.js";
 
 export interface UpdateFileResult {
   path: string;
@@ -45,6 +46,8 @@ export interface UpdateResult {
   resolvedVersion: string;
   /** Whether a remote fetch was performed (pin differs from local) */
   fetched: boolean;
+  /** Whether an auto-migration was performed (manifest was missing but managed files existed) */
+  autoMigrated: boolean;
 }
 
 export interface UpdateOptions {
@@ -85,7 +88,18 @@ async function fileExists(path: string): Promise<boolean> {
  */
 export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
   const { targetDir, sourceDir, force, version } = options;
-  const manifest = await readManifest(targetDir);
+  let manifest = await readManifest(targetDir);
+  let autoMigrated = false;
+
+  if (!manifest) {
+    // Attempt auto-migration: detect managed files without a manifest and
+    // create one so the update can proceed with discovery of new/changed files.
+    const migration = await runMigration(targetDir);
+    if (migration.manifestWritten) {
+      manifest = await readManifest(targetDir);
+      autoMigrated = true;
+    }
+  }
 
   if (!manifest) {
     return {
@@ -96,6 +110,7 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
       backupDir: null,
       resolvedVersion: version,
       fetched: false,
+      autoMigrated: false,
     };
   }
 
@@ -122,7 +137,7 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
       version: effectiveVersion,
       manifest,
     });
-    return { ...result, resolvedVersion: effectiveVersion, fetched };
+    return { ...result, resolvedVersion: effectiveVersion, fetched, autoMigrated };
   } finally {
     if (cleanup) {
       await cleanup();
@@ -143,7 +158,7 @@ interface ReconcileInput {
  */
 async function runReconciliation(
   input: ReconcileInput,
-): Promise<Omit<UpdateResult, "resolvedVersion" | "fetched">> {
+): Promise<Omit<UpdateResult, "resolvedVersion" | "fetched" | "autoMigrated">> {
   const { targetDir, sourceDir, force, version, manifest } = input;
 
   const conflicts: UpdateFileResult[] = [];

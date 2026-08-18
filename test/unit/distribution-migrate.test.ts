@@ -67,6 +67,27 @@ describe("core/distribution/migrate — legacy detection", () => {
       expect(result.isLegacy).toBe(false);
     });
 
+    it("detects untracked install when managed directories have files but no .dev-tasks-version", () => {
+      const repoRoot = setup();
+      // Simulate a repo that had dev-tasks installed but lost its manifest
+      mkdirSync(join(repoRoot, ".kiro", "agents"), { recursive: true });
+      writeFileSync(join(repoRoot, ".kiro", "agents", "developer.md"), "# Developer agent");
+
+      const result = detectLegacyInstall(repoRoot);
+      expect(result.isLegacy).toBe(true);
+      expect(result.reason).toContain("managed directory");
+      expect(result.reason).toContain("without manifest");
+    });
+
+    it("returns false when managed directories exist but are empty", () => {
+      const repoRoot = setup();
+      mkdirSync(join(repoRoot, ".kiro", "agents"), { recursive: true });
+      // Directory exists but has no files
+
+      const result = detectLegacyInstall(repoRoot);
+      expect(result.isLegacy).toBe(false);
+    });
+
     it("detects legacy when skill files exist in known locations without manifest", () => {
       const repoRoot = setup();
       mkdirSync(join(repoRoot, ".github", "agents"), { recursive: true });
