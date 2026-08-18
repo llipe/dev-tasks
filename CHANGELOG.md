@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-08-18
+
+### Added
+
+- feat(qa): wire TESTING.md distribution and update all registries
+- feat(qa): wire qa-engineer into developer, planner, implement, verifier
+- feat(qa): add three testing skills mirrored across platforms
+- feat(qa): add TESTING.md contract and qa-engineer agent
+- feat(extract): wire schema extraction through ladder (declared → observed)
+- feat(extract): add pg as optional peer dep, update Known Limitations
+- feat(extract): add AsyncAPI declared rung for on-disk spec detection
+- feat(extract): add OpenAPI ladder orchestrator (declared → observed → inferred)
+- feat(extract): remove in-CLI LLM, extend report with provenance and handoff
+- feat(extract): add workspace discovery and ladder runner
+- feat(extract): implement route2 spike — boot + introspect for Express
+
+### Fixed
+
+- fix: format
+- fix(qa): address Major audit findings D-1 and D-2
+- fix(workflow): open draft PR after first commit, not before
+
+### Changed
+
+- Merge pull request #129 from llipe:issue/123-qa-agent-and-testing-standard
+- docs(qa): sync registries, guidelines, and ADR-003 for the coverage gate
+- test(qa): add fixture projects reproducing the home-ledger defects
+- test(dist): add failing root-file distribution assertions for TESTING.md
+- test(qa): add failing testing-standard assertions and rule-19 guard
+- test(qa): add failing qa-engineer parity and prompt-cap assertions
+- Merge pull request #128 from llipe/docs/current-state-sync-post-125
+- chore(workstream): reorganize docs into archive directory
+- docs: sync documentation with current dt implementation state
+- Merge pull request #125 from llipe:claude/dev-tasks-codebase-analysis-oxda22
+- chore: resolve merge conflict with main in catalog index.yaml
+- docs(workstream): fix manual test plan — scripts must run from project root
+- docs(workstream): fix manual test plan — scripts must run from project root
+- docs(workstream): rewrite manual test plan with proper tsx file approach
+- docs(workstream): fix manual test plan for tsx top-level await limitation
+- chore: fix lint and format issues, update task checklist
+- chore(workstream): link task list to issue #127 and PR #125
+- Merge pull request #126 from llipe:issue/docs-current-state-sync
+- docs: reorganize and document system architecture and agent framework
+- chore(workstream): add task list for extraction ladder inversion plan
+
 ## [0.8.0] - 2026-08-11
 
 ### Fixed
