@@ -236,6 +236,7 @@ async function main(): Promise<void> {
               command: "update",
               resolvedVersion: result.resolvedVersion,
               fetched: result.fetched,
+              autoMigrated: result.autoMigrated,
               conflicts: result.conflicts.map((c) => ({
                 path: c.path,
                 action: c.action,
@@ -263,6 +264,9 @@ async function main(): Promise<void> {
         );
       } else {
         // Human-readable output
+        if (result.autoMigrated) {
+          process.stdout.write("Auto-migrated: created manifest from existing managed files.\n\n");
+        }
         if (result.fetched) {
           process.stdout.write(`Pinned to ${result.resolvedVersion} (fetched from registry).\n\n`);
         }

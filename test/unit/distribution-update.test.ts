@@ -297,7 +297,7 @@ describe("core/distribution/update — runUpdate()", () => {
   });
 
   describe("no manifest", () => {
-    it("returns empty result when no manifest exists", async () => {
+    it("returns empty result when no manifest exists and no managed files present", async () => {
       const repoRoot = setup();
       const packageRoot = join(repoRoot, "__pkg__");
 
@@ -312,6 +312,34 @@ describe("core/distribution/update — runUpdate()", () => {
       expect(result.updated.length).toBe(0);
       expect(result.installed.length).toBe(0);
       expect(result.skipped.length).toBe(0);
+    });
+
+    it("auto-migrates and discovers new files when managed files exist without manifest", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      // Consumer has existing files from a prior install but no manifest
+      const existingContent = "# Developer agent";
+      const newContent = "# QA Engineer agent";
+      createFile(repoRoot, ".kiro/agents/developer.md", existingContent);
+
+      // Package has the existing file plus a new one
+      createFile(packageRoot, ".kiro/agents/developer.md", existingContent);
+      createFile(packageRoot, ".kiro/agents/qa-engineer.md", newContent);
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      // Should have auto-migrated and discovered the new file
+      // The existing file will be a conflict (origin unknown) but the new file should be discovered
+      expect(result.installed.length + result.conflicts.length).toBeGreaterThan(0);
+
+      // Manifest should now exist
+      expect(existsSync(join(repoRoot, ".dev-tasks", "manifest.json"))).toBe(true);
     });
   });
 

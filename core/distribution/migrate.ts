@@ -8,7 +8,7 @@
  * updates on their first `dev-tasks update` after migration.
  */
 
-import { existsSync, statSync } from "node:fs";
+import { existsSync, statSync, readdirSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { hashContent } from "./hash.js";
@@ -54,12 +54,14 @@ export interface MigrationResult {
 }
 
 /**
- * Detect whether the given repo root has a legacy install
- * driven by the old dev-tasks.sh script.
+ * Detect whether the given repo root has a legacy or untracked install.
  *
- * Legacy indicators:
+ * Legacy/untracked indicators:
  * - Has `.dev-tasks-version` file (old version marker)
  * - Has `.dev-tasks/` directory but NO `manifest.json` inside it
+ * - Has managed platform directories containing files but no manifest
+ *   (e.g. from a previous install whose manifest was lost, never committed,
+ *   or from a version that predates manifest tracking)
  */
 export function detectLegacyInstall(repoRoot: string): LegacyDetectionResult {
   const indicators: string[] = [];
@@ -86,6 +88,27 @@ export function detectLegacyInstall(repoRoot: string): LegacyDetectionResult {
       }
     } catch {
       // Ignore stat errors
+    }
+  }
+
+  // Check for managed platform directories containing files (manifestless install)
+  if (indicators.length === 0) {
+    for (const dir of LEGACY_MANAGED_DIRS) {
+      const fullDir = join(repoRoot, dir);
+      if (existsSync(fullDir)) {
+        try {
+          const stat = statSync(fullDir);
+          if (stat.isDirectory()) {
+            const entries = readdirSync(fullDir);
+            if (entries.length > 0) {
+              indicators.push(`managed directory ${dir}/ exists without manifest`);
+              break;
+            }
+          }
+        } catch {
+          // Ignore errors
+        }
+      }
     }
   }
 
