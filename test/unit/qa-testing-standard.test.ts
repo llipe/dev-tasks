@@ -248,10 +248,21 @@ describe("developer — SC-19/SC-21/AC-7: five touchpoints, no duplicated proced
   it("orders the coverage gate before the verifier audit", () => {
     for (const relPath of DEVELOPER_VARIANTS) {
       const contents = readIfExists(relPath);
-      const qaIndex = contents.search(/invoke `qa-engineer`/);
-      const verifierIndex = contents.search(/invoke `verifier` in `audit` mode/);
-      expect(qaIndex, `${relPath} never invokes qa-engineer`).toBeGreaterThan(-1);
-      expect(verifierIndex, `${relPath} never invokes the verifier audit`).toBeGreaterThan(-1);
+      // Scope to the Execution Flow section. The numbered rules list is not
+      // ordered by runtime sequence, so searching the whole document would
+      // compare rule 18 against rule 22 rather than the actual gate order.
+      const flowStart = contents.indexOf("## Execution Flow");
+      expect(flowStart, `${relPath} has no Execution Flow section`).toBeGreaterThan(-1);
+      const flow = contents.slice(flowStart);
+      const qaIndex = flow.search(/invoke `qa-engineer`/i);
+      const verifierIndex = flow.search(/invoke `verifier` in `audit` mode/i);
+      expect(qaIndex, `${relPath} never invokes qa-engineer in its execution flow`).toBeGreaterThan(
+        -1,
+      );
+      expect(
+        verifierIndex,
+        `${relPath} never invokes the verifier audit in its execution flow`,
+      ).toBeGreaterThan(-1);
       expect(
         qaIndex,
         `${relPath} must invoke qa-engineer before the verifier audit so the audit can consume the gap report`,

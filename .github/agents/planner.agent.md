@@ -344,6 +344,7 @@ workstream_files:
 - format:check: PASS | FAIL | NOT RUN
 - typecheck: PASS | FAIL | NOT RUN
 - audit: PASS | FAIL | NOT RUN
+  coverage_gate: PASS | FAIL | SKIPPED(<reason>)
   checklist_sync: synced | mismatch-fixed | blocked
   verifier_audit: run | blocked
   fidelity_verdict: High | Medium | Low | none
@@ -382,14 +383,15 @@ For each completed story PR:
 2. Verify required checks are successful.
 3. Verify delegated closeout payload reports `docs_drift_status` as `clean` or `drift-fixed`.
 4. Verify delegated quality gates are all `PASS` (`test`, `lint`, `format:check`, `typecheck`, `audit`).
-5. Verify the delegated closeout payload reports `verifier_audit: run` — this confirms `developer` invoked the mandatory `verifier` audit for this story. This check is a merge gate on trigger evidence only; the audit's drift findings (`fidelity_verdict`/`highest_drift_impact`/`drift_findings`) **MUST NOT** block the merge.
-6. For migration-bearing stories, verify explicit user confirmation was recorded before migration apply.
-7. Verify branch is up to date with integration branch (update/rebase if required by policy). Use the `git-ops` skill for rebase and conflict resolution.
-8. Detect merge conflicts before attempting merge. If conflicts are found, invoke the `git-ops` skill to resolve them.
-9. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test and quality-gate results) and approve it.
-10. Merge PR into integration branch using one consistent strategy (default: `squash`).
-11. Confirm integration branch is green after merge before moving to next story.
-12. **Write checkpoint** — update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table.
+5. Verify the delegated closeout payload reports `coverage_gate` with a value of `PASS`, `FAIL`, or `SKIPPED(<reason>)` carrying a non-empty reason. An omitted field means the QA gate was never reached — treat the story as incomplete. A `FAIL` or `SKIPPED` value does **NOT** block the merge; only omission does.
+6. Verify the delegated closeout payload reports `verifier_audit: run` — this confirms `developer` invoked the mandatory `verifier` audit for this story. This check is a merge gate on trigger evidence only; the audit's drift findings (`fidelity_verdict`/`highest_drift_impact`/`drift_findings`) **MUST NOT** block the merge.
+7. For migration-bearing stories, verify explicit user confirmation was recorded before migration apply.
+8. Verify branch is up to date with integration branch (update/rebase if required by policy). Use the `git-ops` skill for rebase and conflict resolution.
+9. Detect merge conflicts before attempting merge. If conflicts are found, invoke the `git-ops` skill to resolve them.
+10. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test and quality-gate results) and approve it.
+11. Merge PR into integration branch using one consistent strategy (default: `squash`).
+12. Confirm integration branch is green after merge before moving to next story.
+13. **Write checkpoint** — update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table.
 
 If any merge gate fails, stop and report exact blocker and PR link.
 
