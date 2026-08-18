@@ -50,6 +50,8 @@ product-engineer: refine → spec → stories → plan
 verifier (design mode): generate test plan (from spec or stories)
                                                  ↓
 developer/planner: implement (feature + tests from test plan)
+                        ↓ (automatic, at the completion gate)
+                    qa-engineer: standards check → missing tests → coverage/gap report
                         ↓ (automatic, mandatory, non-skippable)
                     verifier (audit mode): grey-box fidelity audit → fidelity report
                         ↓ (drift findings, non-blocking)
@@ -92,3 +94,17 @@ dt extract all
         ↓
     component.json derivation + extraction_report.json
 ```
+
+## Testing Standard (QA)
+
+```text
+qa-engineer: activity-test-standards      → /TESTING.md filled, harness defects, gate reachability
+                 ↓
+             activity-test-implementation  → Layer 1-2 tests, mandatory security-negative cases
+                 ↓
+             activity-coverage-gap-analysis → coverage_gate + risk-ranked gap inventory
+                 ↓
+             (no coverage provider? structural path still runs — never "unknown")
+```
+
+Invoked by `developer` at the completion gate before the `verifier` audit, or directly by a user for a standalone pass (bootstrap `/TESTING.md`, backfill legacy tests, audit coverage).

@@ -231,7 +231,7 @@ Also owns drift reconciliation via `activity-drift-reconciliation`.
 
 ### `developer`
 
-Execution agent — implements code from an existing task list. Runs `implement`, including a mandatory `verifier` audit before every PR is marked ready. Uses `git-ops` for branch management.
+Execution agent — implements code from an existing task list. Runs `implement`, including a `qa-engineer` coverage gate and a mandatory `verifier` audit before every PR is marked ready. Uses `git-ops` for branch management.
 
 ### `planner`
 
@@ -249,13 +249,14 @@ Multi-story orchestration with checkpoint/resume:
 
 ### Other Agents
 
-| Agent              | Purpose                                            |
-| ------------------ | -------------------------------------------------- |
-| `ux-engineer`      | PRD/SPEC-to-mockup prototyping                     |
-| `technical-writer` | Documentation maintenance                          |
-| `housekeeping`     | Lint, type, and test-wiring fixes                  |
-| `github-ops`       | GitHub consistency — issues, PRs, branches, labels |
-| `verifier`         | Compliance test-plan design and fidelity auditing  |
+| Agent              | Purpose                                                              |
+| ------------------ | -------------------------------------------------------------------- |
+| `ux-engineer`      | PRD/SPEC-to-mockup prototyping                                       |
+| `technical-writer` | Documentation maintenance                                            |
+| `housekeeping`     | Lint, type, and test-wiring fixes                                    |
+| `github-ops`       | GitHub consistency — issues, PRs, branches, labels                   |
+| `verifier`         | Compliance test-plan design and fidelity auditing                    |
+| `qa-engineer`      | Testing standard, missing test harnesses, coverage and gap reporting |
 
 ---
 

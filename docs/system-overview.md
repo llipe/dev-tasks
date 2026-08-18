@@ -53,17 +53,17 @@ Both binaries share `adapters/cli/parse-args.ts` and the exit-code contract in `
 
 ### `core/` modules
 
-| Module               | Responsibility                                                                                                                                                                                                                                                    |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `core/distribution`  | Install, update with conflict detection, status, pin/unpin, doctor, legacy migration, backup, SHA-256 hashing, install manifest, profile→path mapping                                                                                                             |
+| Module               | Responsibility                                                                                                                                                                                                                                                        |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/distribution`  | Install, update with conflict detection, status, pin/unpin, doctor, legacy migration, backup, SHA-256 hashing, install manifest, profile→path mapping                                                                                                                 |
 | `core/extract`       | Stack detection; ladder-based OpenAPI extraction (declared→observed→inferred); AsyncAPI extraction with declared rung; database-schema extraction (ORM AST + `information_schema`); workspace discovery for monorepos; `component.json` derivation; extraction report |
-| `core/catalog`       | Registry aggregation and index build, validation checks `V01`–`V19`, component resolution, graph queries, coverage tally, meta-repo scaffold, offline manifest validation                                                                                         |
-| `core/context`       | Session init, sparse-clone fetch, SHA-keyed cache with LRU GC, layered budgeted bundle assembly, token accounting, session lock                                                                                                                                   |
-| `core/scope`         | LLM-assisted scoping, graph-closure expansion, gate rules `G1`–`G7`, cross-repo partition proposal, precision/recall calibration                                                                                                                                  |
-| `core/verify`        | OpenAPI/AsyncAPI contract diffing and breaking-change detection, consumer impact analysis, docs/code drift heuristic                                                                                                                                              |
-| `core/reconcile`     | Field-level reconciliation between generated and hand-edited manifest fields, using provenance hashes                                                                                                                                                             |
-| `core/providers`     | Interface stubs for external providers (tracker emission). Interface only — no live implementation                                                                                                                                                                |
-| `core/exit-codes.ts` | Process exit-code contract shared by all binaries                                                                                                                                                                                                                 |
+| `core/catalog`       | Registry aggregation and index build, validation checks `V01`–`V19`, component resolution, graph queries, coverage tally, meta-repo scaffold, offline manifest validation                                                                                             |
+| `core/context`       | Session init, sparse-clone fetch, SHA-keyed cache with LRU GC, layered budgeted bundle assembly, token accounting, session lock                                                                                                                                       |
+| `core/scope`         | LLM-assisted scoping, graph-closure expansion, gate rules `G1`–`G7`, cross-repo partition proposal, precision/recall calibration                                                                                                                                      |
+| `core/verify`        | OpenAPI/AsyncAPI contract diffing and breaking-change detection, consumer impact analysis, docs/code drift heuristic                                                                                                                                                  |
+| `core/reconcile`     | Field-level reconciliation between generated and hand-edited manifest fields, using provenance hashes                                                                                                                                                                 |
+| `core/providers`     | Interface stubs for external providers (tracker emission). Interface only — no live implementation                                                                                                                                                                    |
+| `core/exit-codes.ts` | Process exit-code contract shared by all binaries                                                                                                                                                                                                                     |
 
 ### `adapters/`
 
@@ -76,7 +76,7 @@ JSON Schema 2020-12 documents validated with `ajv`: `component.schema.json`, `fl
 
 ### Harness content
 
-Eight agents (`product-engineer`, `developer`, `planner`, `verifier`, `ux-engineer`, `technical-writer`, `housekeeping`, `github-ops`), thirteen skills, and three scoped instruction/steering rules plus one always-loaded Kiro steering notice. Behavior is kept aligned across the three platform trees; file formats differ because platform schemas differ. See `AGENTS.md` for the authoritative registry and `docs/workflow-chains.md` for sequencing.
+Nine agents (`product-engineer`, `developer`, `planner`, `verifier`, `qa-engineer`, `ux-engineer`, `technical-writer`, `housekeeping`, `github-ops`), sixteen skills, and three scoped instruction/steering rules plus one always-loaded Kiro steering notice. Behavior is kept aligned across the three platform trees; file formats differ because platform schemas differ. See `AGENTS.md` for the authoritative registry and `docs/workflow-chains.md` for sequencing.
 
 ## Integrations
 
@@ -131,7 +131,7 @@ Step 6 is a human gate for the non-derivable fields `owner`, `domain`, `critical
 
 ### 6. Agent development workflow
 
-Refine → spec → stories → plan → verifier design → test-first implementation → quality gates → verifier fidelity audit → documentation → human-approved PR. Agents never merge into `main`. See `docs/workflow-chains.md`.
+Refine → spec → stories → plan → verifier design → test-first implementation → quality gates → qa-engineer coverage gate → verifier fidelity audit → documentation → human-approved PR. Agents never merge into `main`. See `docs/workflow-chains.md`.
 
 ## Distribution Channels
 
@@ -179,3 +179,11 @@ Platform differences that are intentional, not drift:
 - `docs/technical-guidelines.md` — enforceable engineering rules
 - `docs/product-context.md` — product constitution
 - `docs/adr/` — architecture decision records
+
+## Testing Standard Artifact
+
+`/TESTING.md` is the canonical testing contract, shipped as a placeholder and listed in `consumer_owned_paths` so `dev-tasks update` never overwrites a filled version. It is distributed by both install paths: `MANAGED_FILES` in `scripts/build-bundle.sh` for the shell bundle, and `ROOT_FILES` in `core/distribution/profiles.ts` for `dev-tasks install`.
+
+Root files belong to no platform. They are installed once per run regardless of how many platforms a profile resolves to, and recorded in the install manifest under the `root` profile tag — a dedicated tag is required because manifest merging replaces entries whose profile is in the installed set, so a platform tag would drop the file on one profile and duplicate it on another.
+
+`qa-engineer` owns the contract; `developer` keeps it current. An unfilled placeholder means "no standard established" and **MUST NOT** be read as permission.

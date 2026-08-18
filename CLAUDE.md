@@ -19,6 +19,8 @@ All work in this repository **MUST**:
 - Prefer `pnpm` over `npm` for JavaScript/TypeScript workflows (fallback to `npm` only when `pnpm` is unavailable or explicitly disallowed).
 - Use canonical `package.json` script names for JS/TS projects: `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `audit`, `validate`.
 - Before developer/planner completion, enforce and record quality gates: `test`, `lint`, `format:check`, `typecheck`, `audit`.
+- `qa-engineer` runs at the completion gate, before the `verifier` audit, and records `coverage_gate: PASS | FAIL | SKIPPED(<reason>)`. Skipping requires a non-empty reason; omitting the field is treated as incomplete.
+- `/TESTING.md` is the canonical testing contract — owned by `qa-engineer`, kept current by `developer`, and treated as "no standard established" while unfilled.
 - Reference GitHub Issues in branch names and commits; follow the `github-ops` conventions for all GitHub artifacts (issues, PRs, branches, labels, milestones, comments).
 - Treat `/DESIGN.md` as the source of truth for visual tokens, components, and design guidance; update it whenever UI contracts change.
 - Maintain document changelogs when updating generated artifacts (PRDs, specs, stories, refinements).
@@ -58,7 +60,7 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 
 ### Subagents (`.claude/agents/`)
 
-`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `verifier` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
+`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `verifier`, `qa-engineer` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
 
 ### Orchestration model (important)
 
@@ -69,7 +71,7 @@ Claude Code subagents **cannot spawn other subagents** — the hierarchy is flat
 
 ### Skills (`.claude/skills/`)
 
-Activity skills: `activity-init`, `activity-refine`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`, `activity-drift-reconciliation` (routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates — used by `product-engineer`). Process skills: `plan`, `implement` (the single source of truth for task-list execution rules, including the mandatory `verifier` audit gate). Operational: `git-ops`, `webapp-mockup`, `memo-cli-usage`.
+Activity skills: `activity-init`, `activity-refine`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`, `activity-test-standards`, `activity-test-implementation`, `activity-coverage-gap-analysis`, `activity-drift-reconciliation` (routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates — used by `product-engineer`). Process skills: `plan`, `implement` (the single source of truth for task-list execution rules, including the mandatory `verifier` audit gate). Operational: `git-ops`, `webapp-mockup`, `memo-cli-usage`.
 
 `plan` and `implement` are scoped instructions on Copilot (`applyTo`) and scoped steering on Kiro (`fileMatchPattern`); as Claude skills they load on demand instead of consuming context on every matching turn.
 

@@ -108,6 +108,7 @@ Follow the `implement` skill:
 
 - Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
 - For migration-bearing changes, confirm migration artifact/rollback notes and execute apply only after explicit user confirmation.
+- Invoke `qa-engineer` to run the testing-standard check and the coverage and gap report, and record `coverage_gate`. This runs before the `verifier` audit so the audit can consume the gap report as test evidence.
 - Invoke `verifier` in `audit` mode against the delivered implementation, and post its human-readable summary to the issue/PR via `github-ops` comment conventions. This step is mandatory and non-skippable; drift findings reported by `verifier` do not block this step or PR/issue completion.
 - Invoke `technical-writer` for documentation update and drift/stale-doc validation.
 - Convert PR from Draft to Ready for Review.
