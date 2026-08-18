@@ -54,6 +54,7 @@
 ## Tasks
 
 - [ ] 0.0 Project Setup (greenfield `@llipe/dev-tasks` package)
+
   - [x] 0.1 Initialize the package (`pnpm init`, set `name: @llipe/dev-tasks`, `engines.node: >=20`, `type: module`)
   - [x] 0.2 Configure TypeScript (`tsconfig.json`: strict, ESM, `outDir: dist/`, path aliases for `core/` and `adapters/`)
   - [x] 0.3 Configure linting and formatting (ESLint + Prettier; add `lint`, `lint:fix`, `format`, `format:check` scripts)
@@ -66,6 +67,7 @@
   - [x] 0.10 Verify: `pnpm run lint`, `pnpm run format:check`, `pnpm run typecheck` pass clean
 
 - [ ] 1.0 Implement Story S-001 - https://github.com/llipe/dev-tasks/issues/33: Package scaffold with two binaries and layered core
+
   - [x] 1.1 Create `core/exit-codes.ts` with the full enum (0-14) from spec §6.7; export as a const object
   - [x] 1.2 Create `bin/dev-tasks.ts` — parse argv, route to `install|update|status|pin|doctor|--version`, print usage + exit 2 on unknown
   - [x] 1.3 Create `bin/dt.ts` — parse argv, route to `extract|catalog|ctx|scope|init|verify|validate-component|--version`, print usage + exit 2 on unknown
@@ -83,6 +85,7 @@
   - [x] 1.15 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [x] 2.0 Implement Story S-002 - https://github.com/llipe/dev-tasks/issues/35: dev-tasks bootstrap — install, status, pin, doctor
+
   - [x] 2.1 Implement `core/distribution/hash.ts` — SHA-256 of file content; deterministic, reusable by S-003 and S-009
   - [x] 2.2 Implement `core/distribution/manifest.ts` — read/write `.dev-tasks/manifest.json` (schema per spec §5.5: version, pinned, installed_at, skills[], extraction)
   - [x] 2.3 Implement `dev-tasks install [--pin <version>]` — copy skill files from the package into the target repo, compute sha256 + origin_sha256 per file, write manifest
@@ -100,6 +103,7 @@
   - [x] 2.15 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 3.0 Implement Story S-003 - https://github.com/llipe/dev-tasks/issues/34: Hash-based reconciliation engine and dev-tasks update
+
   - [x] 3.1 Implement `core/reconcile.ts` — generic reconciliation function: for each file determine action (install/overwrite/skip/conflict) based on local hash vs. origin hash vs. package hash
   - [x] 3.2 Implement `core/distribution/backup.ts` — timestamped backup directory creation under `.dev-tasks/backup/<ts>/`
   - [x] 3.3 Wire `dev-tasks update [--force]` — reconcile each skill file; without --force report conflicts + exit 14; with --force backup + overwrite
@@ -115,6 +119,7 @@
   - [x] 3.13 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 4.0 Implement Story S-004 - https://github.com/llipe/dev-tasks/issues/36: Migration shim from dev-tasks.sh
+
   - [x] 4.1 Implement `core/distribution/migrate.ts` — legacy detection logic (is the current install driven by the old shell script?)
   - [x] 4.2 Implement manifest generation from legacy state: compute hashes of already-installed files, mark all as `modified: unknown`
   - [x] 4.3 Replace `dev-tasks.sh` with the migration shim: detects legacy → installs `@llipe/dev-tasks` → writes manifest → prints npm-updates notice
@@ -130,6 +135,7 @@
   - [x] 4.13 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [x] 5.0 Implement Story S-005 - https://github.com/llipe/dev-tasks/issues/37: dt extract detect and the pluggable extractor interface
+
   - [x] 5.1 Define `ExtractionProvider` interface in `core/extract/provider.ts`: `id`, `detect(repo: RepoContext): DetectionResult | null`, `capabilities: Capability[]`, optional `extractSchema/extractOpenApi/extractAsyncApi`
   - [x] 5.2 Define `Capability` enum/type: `openapi_native`, `openapi_ast`, `db_introspection`, `orm_ast`, `topic_ast`, `payload_typed`
   - [x] 5.3 Define `DetectionResult` type: `stack[]`, `http: {framework, openapi_strategy, evidence[]}`, `orm: {kind, schema_path}`, `messaging: {client, evidence[]}`, `type_hint`
@@ -149,6 +155,7 @@
   - [x] 5.17 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [x] 6.0 Implement Story S-006 - https://github.com/llipe/dev-tasks/issues/38: dt extract schema
+
   - [x] 6.1 Implement `core/extract/orm/prisma.ts` — parse `schema.prisma` AST: extract models, fields (type, nullability, attributes), relations, enums
   - [x] 6.2 Implement `core/extract/orm/drizzle.ts` — parse Drizzle table definitions via TypeScript Compiler API: extract tables, columns, types, constraints
   - [x] 6.3 Implement `core/extract/orm/typeorm.ts` — parse entity decorators via TypeScript Compiler API: extract entities, columns, relations
@@ -170,6 +177,7 @@
   - [x] 6.19 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [ ] 7.0 Implement Story S-007 - https://github.com/llipe/dev-tasks/issues/39: dt extract openapi (routes 1 and 3)
+
   - [x] 7.1 Implement `core/extract/openapi/route1.ts` — detect on-disk `openapi.yaml/json`; copy, normalize (resolve $refs, set openapi: 3.1.x), validate; attach `source: introspected`, `confidence: high`
   - [x] 7.2 Implement `core/extract/openapi/route3.ts` — AST route discovery:
     - [x] 7.2.1 Locate route registrations: Express `app|router.get|post|put|patch|delete(path, handler)`, Fastify same pattern, Hono `app.get(path, handler)` + `.route()` groupings, NestJS `@Controller/@Get/@Post` decorators
@@ -196,6 +204,7 @@
   - [x] 7.18 Run Tests: `pnpm run test:unit && pnpm run test:integration && pnpm run validate`
 
 - [x] 8.0 Implement Story S-008 - https://github.com/llipe/dev-tasks/issues/41: dt extract asyncapi (Kafka topic inventory + payloads)
+
   - [x] 8.1 Implement `core/extract/asyncapi/topics.ts` — AST over kafkajs:
     - [x] 8.1.1 `producer.send({ topic: X, messages })` → provides
     - [x] 8.1.2 `producer.sendBatch(...)` → provides
@@ -242,7 +251,7 @@
   - [x] 9.12 Verify Acceptance Criterion: derivable fields come from detection/extraction
   - [x] 9.13 Verify Acceptance Criterion: inferable fields require human confirmation; aliases not persisted without confirmation
   - [x] 9.14 Verify Acceptance Criterion: non-derivable fields prompted; unanswered → empty → invalid manifest
-  - [x] 9.15 Verify Acceptance Criterion: every field/artifact carries source + confidence + _provenance
+  - [x] 9.15 Verify Acceptance Criterion: every field/artifact carries source + confidence + \_provenance
   - [x] 9.16 Verify Acceptance Criterion: idempotent re-run; edited fields → conflict + diff; no overwrite without --force
   - [x] 9.17 Verify Acceptance Criterion: extraction_report.json with strategies, coverage, confidence, unresolved, requires_human
   - [x] 9.18 Verify Acceptance Criterion: exit 13 on missing required fields; exit 14 on conflict

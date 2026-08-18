@@ -1,11 +1,8 @@
 # Implementation Plan - Extraction Ladder Inversion (declared → observed → inferred)
 
-> **GitHub Issue:** https://github.com/llipe/dev-tasks/issues/127
-> **Branch:** `claude/dev-tasks-codebase-analysis-oxda22`
-> **PR:** https://github.com/llipe/dev-tasks/pull/125
+> **GitHub Issue:** https://github.com/llipe/dev-tasks/issues/127 > **Branch:** `claude/dev-tasks-codebase-analysis-oxda22` > **PR:** https://github.com/llipe/dev-tasks/pull/125
 
-> **Note — context for the implementer:**
-> `dt extract` currently leads with *inference* (AST route discovery, hand-written ORM parsers, kafkajs pattern matching ≈ 2,750 LOC) while the *observation* paths are stubs or unrunnable (`route2.ts` is 56 lines of interface, `information-schema.ts` depends on `pg` which is not declared anywhere). Detection also assumes a single root `package.json`, so monorepos detect as "nothing". This plan implements three changes:
+> **Note — context for the implementer:** > `dt extract` currently leads with _inference_ (AST route discovery, hand-written ORM parsers, kafkajs pattern matching ≈ 2,750 LOC) while the _observation_ paths are stubs or unrunnable (`route2.ts` is 56 lines of interface, `information-schema.ts` depends on `pg` which is not declared anywhere). Detection also assumes a single root `package.json`, so monorepos detect as "nothing". This plan implements three changes:
 >
 > 1. **Invert the strategy ladder.** Every extractor runs rungs in order **declared → observed → inferred**, stopping at the first rung that produces a usable result. Inference becomes a last-resort fallback that always emits `confidence: low` and populates `unresolved[]`.
 > 2. **Make the component (not the repo) the unit of extraction.** Discover workspace packages and run detection/extraction per package, emitting N components. This dissolves the mono-repo vs multi-repo branch.
@@ -110,11 +107,11 @@
 
 - [ ] 5.0 Database schema ladder: declared parsers → information_schema (observed), runnable at last
 
-  > Note: The ORM file parsers (prisma/drizzle/typeorm) parse *committed schema files* — under the ladder taxonomy they are **declared**-rung extractors and are kept, not deleted. What changes: `information_schema` becomes actually runnable and takes over whenever a live dev DB is available, and pattern-inference beyond the declared file (e.g., migration-inference) is demoted/removed.
+  > Note: The ORM file parsers (prisma/drizzle/typeorm) parse _committed schema files_ — under the ladder taxonomy they are **declared**-rung extractors and are kept, not deleted. What changes: `information_schema` becomes actually runnable and takes over whenever a live dev DB is available, and pattern-inference beyond the declared file (e.g., migration-inference) is demoted/removed.
 
   - [ ] 5.1 Declare `pg` in `package.json` as an optional peer dependency (`peerDependencies` + `peerDependenciesMeta: { pg: { optional: true } }`), and make `core/extract/schema.ts`'s dynamic import produce a clear, actionable `unresolved[]` entry ("--db-url provided but `pg` is not installed; run `pnpm add -D pg`") instead of a raw import error. Write the test first.
   - [ ] 5.2 Wire schema extraction through the Task 3 ladder in `core/extract/schema.ts`: rung 1 declared = existing ORM file parsers (schema.prisma / drizzle schema / typeorm entities); rung 2 observed = `information_schema` when `--db-url` is provided. When both succeed, observed wins for structure (tables/columns/constraints as they actually exist) and the report records a `declared-vs-observed` diff summary in `unresolved[]` if they disagree — that disagreement is exactly what the agent/human should see.
-  - [ ] 5.3 Remove `core/extract/orm/migration-inference.ts` and its `LlmProvider` usage (inference-by-LLM inside the CLI is out per Recommendation 3); migrations directory presence remains a declared *signal* (path recorded in the manifest) without inferred table structures. Update/remove its tests.
+  - [ ] 5.3 Remove `core/extract/orm/migration-inference.ts` and its `LlmProvider` usage (inference-by-LLM inside the CLI is out per Recommendation 3); migrations directory presence remains a declared _signal_ (path recorded in the manifest) without inferred table structures. Update/remove its tests.
   - [ ] 5.4 Add integration test for the observed rung using a mocked `PgClientFactory` (the seam already exists in `information-schema.ts`) — no Docker requirement in CI.
   - [ ] 5.5 Verify Acceptance Criterion: `dt extract schema --db-url <url>` with `pg` installed returns `rung: observed` results; without `pg` it degrades to declared parsers plus the actionable unresolved entry; without `--db-url` behavior is unchanged from today except for added rung provenance.
   - [ ] 5.6 Run Tests: `pnpm run test:unit` and `pnpm run test:integration` green.
@@ -152,8 +149,6 @@
   - [ ] 9.6 Invoke `technical-writer` for the docs drift/stale-doc check; resolve any findings.
   - [ ] 9.7 Verify Acceptance Criterion: all parent tasks 1.0–8.0 checked, quality gates green, verifier audit posted, PR converted from Draft to Ready for Review.
 
-
-
 ## Spike Findings
 
 ### Decision: GO ✓
@@ -162,22 +157,24 @@ Route 2 (boot + introspect) conclusively beats Route 3 (AST inference) on the ex
 
 ### Comparison Results
 
-| Metric | Route 3 (AST) | Route 2 (Boot) |
-|--------|---------------|----------------|
-| Total endpoints found | 6 | 10 |
-| Correctly-pathed endpoints | 3 | 10 |
-| Dynamic routes (loop-registered) | 0/4 | 4/4 |
-| Variable-prefix router routes | 3 wrong-path | 3 correct |
-| Confidence | low | high |
-| LOC | 856 | 283 (runner) + 285 (parent) = 568 total |
+| Metric                           | Route 3 (AST) | Route 2 (Boot)                          |
+| -------------------------------- | ------------- | --------------------------------------- |
+| Total endpoints found            | 6             | 10                                      |
+| Correctly-pathed endpoints       | 3             | 10                                      |
+| Dynamic routes (loop-registered) | 0/4           | 4/4                                     |
+| Variable-prefix router routes    | 3 wrong-path  | 3 correct                               |
+| Confidence                       | low           | high                                    |
+| LOC                              | 856           | 283 (runner) + 285 (parent) = 568 total |
 
 ### Key Findings
 
 1. **Route2 resolves 7 endpoints that route3 gets wrong or misses entirely:**
+
    - 4 completely invisible to AST (registered via `app[route.method](route.path, handler)` in a loop)
    - 3 found by AST but with wrong paths (router mounted with variable prefix `\`/api/${apiVersion}\``)
 
 2. **Express 5 changes:** The installed Express is v5.2.1 (not v4). Key differences:
+
    - Router accessed via `app.router` (not `app._router`)
    - Layers use `matchers[]` array instead of `regexp`
    - Layer.path is populated after calling `layer.match()`, not stored upfront

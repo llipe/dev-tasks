@@ -2,8 +2,8 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                                                                                                                                                                       | Author           |
-| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                       | Author           |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-07-28 | Initial version, reformatted from the `dev-tasks-multirepo-SPEC.md` draft (v0.2) into the standard specification format. Content preserved: core-as-library with CLI/MCP adapters, `component.json` with provenance, extraction pipeline, CLI surface, LLM scoping contract, and CI behavior. | product-engineer |
 
 ## 1. Executive Summary
@@ -20,12 +20,12 @@ This specification implements the MRC PRD as a single `@llipe/dev-tasks` npm pac
 
 ## 3. Affected Repositories
 
-| Repository            | Role                                        | Scope of Changes                                                                                                                                                                                    |
-| --------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository            | Role                                        | Scope of Changes                                                                                                                                                                                                                |
+| --------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
 | `llipe/dev-tasks`     | Source of truth for the distributed harness | Adds the `@llipe/dev-tasks` package (two binaries), `core/` library (catalog, extract, context, scope, providers), CLI/MCP adapters, JSON Schemas, the `dev-tasks.sh` migration shim, and rewritten `init` skill/agent content. |
-| Meta-repo (new)       | Catalog aggregation                         | New repository: `architecture.md`, `domains.md`, `glossary.md`, `conventions.md`, `platform.yaml`, `registry.yaml`, `adr/`, generated `catalog/`, hand-authored `catalog/flows/`, and `schemas/`.   |
-| Component repos (~20) | Consume the harness; own their metadata     | Each gains a root `component.json`, `contracts/openapi|asyncapi/`, generated `docs/schema.md`, `AGENTS.md`, and `.dev-tasks/` (`version` pin, `manifest.json`, `config.yaml`).                        |
-| CI (Bitbucket/GitHub) | Enforcement                                 | Meta-repo: scheduled + on-push `dt catalog build|validate`. Component repo: PR-time `dt validate-component` and `dt verify contract-diff|impact`.                                                     |
+| Meta-repo (new)       | Catalog aggregation                         | New repository: `architecture.md`, `domains.md`, `glossary.md`, `conventions.md`, `platform.yaml`, `registry.yaml`, `adr/`, generated `catalog/`, hand-authored `catalog/flows/`, and `schemas/`.                               |
+| Component repos (~20) | Consume the harness; own their metadata     | Each gains a root `component.json`, `contracts/openapi                                                                                                                                                                          | asyncapi/`, generated `docs/schema.md`, `AGENTS.md`, and `.dev-tasks/` (`version`pin,`manifest.json`, `config.yaml`). |
+| CI (Bitbucket/GitHub) | Enforcement                                 | Meta-repo: scheduled + on-push `dt catalog build                                                                                                                                                                                | validate`. Component repo: PR-time `dt validate-component`and`dt verify contract-diff                                 | impact`. |
 
 No other repository is in scope. There is no runtime deployment target beyond the distributed package and the YAML/JSON artifacts it produces.
 
@@ -139,16 +139,16 @@ payment-service/
 
 ### 4.6 Implementation decisions
 
-| Decision       | Choice                        | Reason                                                       |
-| -------------- | ----------------------------- | ------------------------------------------------------------ |
-| Language       | TypeScript / Node 20          | Guaranteed where the agent runs; `npx` install-free          |
-| Schemas        | JSON Schema 2020-12 (`ajv`)   | Same artifact in CLI and CI                                  |
-| TS AST         | TypeScript Compiler API       | Regex over code is unacceptable for contract extraction      |
-| Git            | binary via `execa`            | `--filter=blob:none --sparse` poorly covered by JS libraries |
-| OpenAPI diff   | `oasdiff`                     | Proven breaking-change detection                             |
-| AsyncAPI diff  | purpose-built comparator      | No equivalent standard exists                                |
-| Cache          | filesystem keyed by SHA       | Immutable, trivial invalidation                             |
-| State          | none beyond Git and cache     | No service to operate                                        |
+| Decision      | Choice                      | Reason                                                       |
+| ------------- | --------------------------- | ------------------------------------------------------------ |
+| Language      | TypeScript / Node 20        | Guaranteed where the agent runs; `npx` install-free          |
+| Schemas       | JSON Schema 2020-12 (`ajv`) | Same artifact in CLI and CI                                  |
+| TS AST        | TypeScript Compiler API     | Regex over code is unacceptable for contract extraction      |
+| Git           | binary via `execa`          | `--filter=blob:none --sparse` poorly covered by JS libraries |
+| OpenAPI diff  | `oasdiff`                   | Proven breaking-change detection                             |
+| AsyncAPI diff | purpose-built comparator    | No equivalent standard exists                                |
+| Cache         | filesystem keyed by SHA     | Immutable, trivial invalidation                              |
+| State         | none beyond Git and cache   | No service to operate                                        |
 
 ## 5. Data Model & Artifact Design
 
@@ -215,13 +215,13 @@ Key fields: identity (`id`, `name`, `description`, `repo`, `type`), classificati
 
 **`source` vocabulary:**
 
-| Value          | Meaning                                                                       |
-| -------------- | ----------------------------------------------------------------------------- |
-| `introspected` | Derived from an existing structured source (AST, on-disk spec, ORM schema)    |
-| `generated`    | Produced by a framework tool invoked by the extractor                         |
-| `inferred`     | Produced by an LLM over extracted structure; requires review                  |
-| `manual`       | Entered by a human                                                            |
-| `partial`      | Composite: part introspected, part inferred (used for AsyncAPI)               |
+| Value          | Meaning                                                                    |
+| -------------- | -------------------------------------------------------------------------- |
+| `introspected` | Derived from an existing structured source (AST, on-disk spec, ORM schema) |
+| `generated`    | Produced by a framework tool invoked by the extractor                      |
+| `inferred`     | Produced by an LLM over extracted structure; requires review               |
+| `manual`       | Entered by a human                                                         |
+| `partial`      | Composite: part introspected, part inferred (used for AsyncAPI)            |
 
 `_provenance` additionally stores `extracted_at`, `extractor` version, `repo_sha`, the `detector` result, per-field `source`/`confidence` (with `confirmed_by` for confirmed inferences), and `field_hashes` (SHA-256 per field, for later manual-edit detection).
 
@@ -316,23 +316,23 @@ dt verify drift         [--id <comp>] [--threshold 20]
 
 ### 6.7 Exit codes
 
-| Code | Meaning                                                   |
-| ---- | --------------------------------------------------------- |
-| 0    | OK                                                        |
-| 1    | Unexpected error                                          |
-| 2    | Incorrect usage                                           |
-| 3    | Partial catalog build                                     |
-| 4    | Catalog validation errors                                 |
-| 5    | Fetch failure for one or more repos                       |
-| 6    | Insufficient context budget                               |
-| 7    | Gate aborted (system decision, not an error)              |
-| 8    | Breaking change detected                                  |
-| 9    | Stale index                                               |
-| 10   | Invalid scoping after retry                               |
-| 11   | No candidates                                             |
-| 12   | Unknown component                                         |
-| 13   | Incomplete extraction: required fields unresolved         |
-| 14   | Reconciliation conflict (edited skills or fields)         |
+| Code | Meaning                                           |
+| ---- | ------------------------------------------------- |
+| 0    | OK                                                |
+| 1    | Unexpected error                                  |
+| 2    | Incorrect usage                                   |
+| 3    | Partial catalog build                             |
+| 4    | Catalog validation errors                         |
+| 5    | Fetch failure for one or more repos               |
+| 6    | Insufficient context budget                       |
+| 7    | Gate aborted (system decision, not an error)      |
+| 8    | Breaking change detected                          |
+| 9    | Stale index                                       |
+| 10   | Invalid scoping after retry                       |
+| 11   | No candidates                                     |
+| 12   | Unknown component                                 |
+| 13   | Incomplete extraction: required fields unresolved |
+| 14   | Reconciliation conflict (edited skills or fields) |
 
 ## 7. Authentication & Authorization Design
 
@@ -360,11 +360,11 @@ stateDiagram-v2
 
 **OpenAPI strategy matrix:**
 
-| Signal                                                                        | Strategy                                        | `source`       | `confidence`               |
-| ----------------------------------------------------------------------------- | ----------------------------------------------- | -------------- | -------------------------- |
-| `openapi.yaml/json` committed or produced to disk by build                    | Route 1 — copy and normalize                    | `introspected` | high                       |
-| `@nestjs/swagger`, `fastify-swagger`, `zod-to-openapi`, `tsoa`, no on-disk file | Route 2 — invoke framework builder in isolation | `generated`    | high                       |
-| Express/Fastify/Hono routes without a generator                               | Route 3 — AST + LLM for descriptions            | `inferred`     | medium (typed) / low (untyped) |
+| Signal                                                                          | Strategy                                        | `source`       | `confidence`                   |
+| ------------------------------------------------------------------------------- | ----------------------------------------------- | -------------- | ------------------------------ |
+| `openapi.yaml/json` committed or produced to disk by build                      | Route 1 — copy and normalize                    | `introspected` | high                           |
+| `@nestjs/swagger`, `fastify-swagger`, `zod-to-openapi`, `tsoa`, no on-disk file | Route 2 — invoke framework builder in isolation | `generated`    | high                           |
+| Express/Fastify/Hono routes without a generator                                 | Route 3 — AST + LLM for descriptions            | `inferred`     | medium (typed) / low (untyped) |
 
 Route 2 is an open decision (build vs. degrade to route 3); detection reports the per-strategy count even if route 2 is unimplemented. Cross-cutting constraint: no strategy runs the full service. Route 2 builds only the documentation module on a minimal app context with no DB connections or secrets; if the framework cannot be isolated, the repo degrades to route 3 — credentials are never requested.
 
@@ -421,15 +421,15 @@ emit(writeSessionLock(meta, index, scope, repos, bundle))
 
 ## 9. Integration Details
 
-| Integration               | Method                                                                             | Failure handling                                                                                          |
-| ------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Integration               | Method                                                                                       | Failure handling                                                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Git (sparse fetch)        | `git` binary via `execa` with `--filter=blob:none --no-checkout --depth 1` + sparse-checkout | Per-repo 60s timeout, concurrency 8; failure ⇒ exit 5; cache is immutable per SHA                          |
-| `oasdiff`                 | OpenAPI breaking-change detection                                                  | Deterministic; no LLM; skips `payload_confidence: low`                                                    |
-| AsyncAPI comparator (own) | Channel/field/type/enum diff                                                       | Deterministic; no standard equivalent exists                                                              |
-| LLM (scoping)             | Single call over candidates only, schema-validated output                          | One repair retry, then exit 10; never receives the full catalog                                           |
-| LLM (extraction prose)    | Descriptions over extracted structure only                                         | Never produces structure; low-confidence output is flagged, not trusted                                   |
-| kafkajs (AST)             | TypeScript Compiler API over producer/consumer calls                               | Unresolvable topics/payloads → `unresolved[]` + low confidence                                            |
-| SCM / tracker providers   | Declared dependency on the Platform Providers spec                                 | Referenced at three points: meta-repo rebuild CI, `verify` PR report, `--emit-tasks` derived-task emission |
+| `oasdiff`                 | OpenAPI breaking-change detection                                                            | Deterministic; no LLM; skips `payload_confidence: low`                                                     |
+| AsyncAPI comparator (own) | Channel/field/type/enum diff                                                                 | Deterministic; no standard equivalent exists                                                               |
+| LLM (scoping)             | Single call over candidates only, schema-validated output                                    | One repair retry, then exit 10; never receives the full catalog                                            |
+| LLM (extraction prose)    | Descriptions over extracted structure only                                                   | Never produces structure; low-confidence output is flagged, not trusted                                    |
+| kafkajs (AST)             | TypeScript Compiler API over producer/consumer calls                                         | Unresolvable topics/payloads → `unresolved[]` + low confidence                                             |
+| SCM / tracker providers   | Declared dependency on the Platform Providers spec                                           | Referenced at three points: meta-repo rebuild CI, `verify` PR report, `--emit-tasks` derived-task emission |
 
 **Bitbucket vs. GitHub CI trigger:** Bitbucket has no `repository_dispatch` equivalent. Two options — API call from each component repo (a credential distributed across 20 repos) or rely on a scheduled rebuild. **Recommendation: hourly scheduled rebuild**, with `--max-index-age` (default 240 min) as the safety net — fewer moving parts, and the freshness threshold already covers the stale-index case.
 
@@ -465,14 +465,14 @@ Not applicable — there is no end-user UI, and `/DESIGN.md` has no impact. The 
 
 ## 14. Testing Strategy
 
-| Level        | Scope                                                                                                        |
-| ------------ | ------------------------------------------------------------------------------------------------------------ |
-| Unit         | `resolve` scoring, graph closure, gate rules, `assemble` budgeting, cycle detection, hash reconciliation      |
-| Extraction   | Fixture repos per stack/framework/ORM combination; compare output against expected artifacts                 |
-| Golden       | 20-component fixture catalog; expected `index.yaml` byte-for-byte                                            |
-| Contract     | Validate the 20 real `component.json` files against the schema                                              |
-| Integration  | `dt init` end-to-end over local repos; verify bundle reproducibility                                        |
-| Eval         | 30 real tasks labeled with correct scope; scoping precision and recall, with and without graph closure       |
+| Level       | Scope                                                                                                    |
+| ----------- | -------------------------------------------------------------------------------------------------------- |
+| Unit        | `resolve` scoring, graph closure, gate rules, `assemble` budgeting, cycle detection, hash reconciliation |
+| Extraction  | Fixture repos per stack/framework/ORM combination; compare output against expected artifacts             |
+| Golden      | 20-component fixture catalog; expected `index.yaml` byte-for-byte                                        |
+| Contract    | Validate the 20 real `component.json` files against the schema                                           |
+| Integration | `dt init` end-to-end over local repos; verify bundle reproducibility                                     |
+| Eval        | 30 real tasks labeled with correct scope; scoping precision and recall, with and without graph closure   |
 
 The eval set is the project's most valuable asset; build it during Phases 1-2 from historical tasks with known scope. Scoping calibration records per session the proposed scope, the final human-corrected scope, and `confidence`; with 20 sessions, precision/recall per level is computed — if `high` precision is <80%, tune the prompt or lower the gate to 3.
 
@@ -490,18 +490,18 @@ The eval set is the project's most valuable asset; build it during Phases 1-2 fr
 
 ## 16. Dependencies & Risks
 
-| Risk                                                                                   | Mitigation                                                                                                                     |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| OpenAPI route 3 produces poor specs in repos with dynamic routing                      | Explicit `unresolved[]`; the coverage report decides whether route 2 or manual work is worth it                                |
-| Kafka payloads mostly `low` confidence                                                 | The topic inventory already unblocks graph closure; payloads are raised repo-by-repo per real need                             |
-| Consolidating the architecture takes more than one week                                | Start with a single flow (checkout); the system works with a partial catalog if the registry reflects it                       |
-| `git sparse-checkout` inconsistent across versions                                     | Require git ≥2.37, verified by `dt doctor`                                                                                     |
-| Bitbucket Pipelines base image without Node                                            | Verify before Phase 2/week 7; `npx --yes` if Node is present, custom image otherwise                                           |
-| 60k-token budget insufficient                                                          | Measure with real scopes; if two components do not fit, the problem is the size of local `docs/architecture.md`                |
-| Nobody maintains `catalog/flows/`                                                      | The only hand-authored catalog artifact — assign an explicit owner or accept that routing loses its best signal                |
-| Catalog goes stale unnoticed                                                           | `generated_at` + freshness threshold that aborts `init`; scheduled rebuild in addition to push triggers                        |
-| Low-confidence Kafka payloads contaminate graph closure                                | Explicit `topic_confidence`/`payload_confidence` split; `init` flags them and never treats an inferred payload as a firm contract |
-| The context layer is commoditized in 12-18 months                                      | Standard interfaces (JSON, MCP, `component.json` as a bridge format) keep each layer replaceable without touching the others    |
+| Risk                                                              | Mitigation                                                                                                                        |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAPI route 3 produces poor specs in repos with dynamic routing | Explicit `unresolved[]`; the coverage report decides whether route 2 or manual work is worth it                                   |
+| Kafka payloads mostly `low` confidence                            | The topic inventory already unblocks graph closure; payloads are raised repo-by-repo per real need                                |
+| Consolidating the architecture takes more than one week           | Start with a single flow (checkout); the system works with a partial catalog if the registry reflects it                          |
+| `git sparse-checkout` inconsistent across versions                | Require git ≥2.37, verified by `dt doctor`                                                                                        |
+| Bitbucket Pipelines base image without Node                       | Verify before Phase 2/week 7; `npx --yes` if Node is present, custom image otherwise                                              |
+| 60k-token budget insufficient                                     | Measure with real scopes; if two components do not fit, the problem is the size of local `docs/architecture.md`                   |
+| Nobody maintains `catalog/flows/`                                 | The only hand-authored catalog artifact — assign an explicit owner or accept that routing loses its best signal                   |
+| Catalog goes stale unnoticed                                      | `generated_at` + freshness threshold that aborts `init`; scheduled rebuild in addition to push triggers                           |
+| Low-confidence Kafka payloads contaminate graph closure           | Explicit `topic_confidence`/`payload_confidence` split; `init` flags them and never treats an inferred payload as a firm contract |
+| The context layer is commoditized in 12-18 months                 | Standard interfaces (JSON, MCP, `component.json` as a bridge format) keep each layer replaceable without touching the others      |
 
 ## 17. Open Questions
 
@@ -513,15 +513,15 @@ The eval set is the project's most valuable asset; build it during Phases 1-2 fr
 
 ## 18. Implementation Plan (indicative)
 
-| Week  | Deliverable                                                                                             |
-| ----- | ------------------------------------------------------------------------------------------------------- |
-| 1     | npm package, two binaries, hashed manifest, migration shim                                              |
-| 2-3   | `dt extract detect|schema|openapi(routes 1 & 3)|asyncapi(topics)` for Node/TS                            |
-| 4     | `dt extract component` + provenance + human gate; run on 3 pilot repos of the checkout flow             |
-| 5     | Measure OpenAPI strategy distribution → close open question 1; run extract over the 20 repos            |
-| 6     | Meta-repo: `architecture.md`, `domains.md`, `glossary.md` (human consolidation — the real schedule risk) |
-| 7     | `dt catalog build|validate|coverage` + scheduled CI                                                     |
-| 8     | `dt ctx fetch|assemble` + `dt init --components`                                                         |
-| 9-10  | LLM scoping + gate; measure against the eval set before enabling by default                             |
-| 11    | Rewritten `init` skill; multi-repo active                                                               |
-| 12+   | `dt verify` and the outer loop                                                                          |
+| Week | Deliverable                                                                                              |
+| ---- | -------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------ | ----------------------------- |
+| 1    | npm package, two binaries, hashed manifest, migration shim                                               |
+| 2-3  | `dt extract detect                                                                                       | schema                           | openapi(routes 1 & 3)    | asyncapi(topics)` for Node/TS |
+| 4    | `dt extract component` + provenance + human gate; run on 3 pilot repos of the checkout flow              |
+| 5    | Measure OpenAPI strategy distribution → close open question 1; run extract over the 20 repos             |
+| 6    | Meta-repo: `architecture.md`, `domains.md`, `glossary.md` (human consolidation — the real schedule risk) |
+| 7    | `dt catalog build                                                                                        | validate                         | coverage` + scheduled CI |
+| 8    | `dt ctx fetch                                                                                            | assemble`+`dt init --components` |
+| 9-10 | LLM scoping + gate; measure against the eval set before enabling by default                              |
+| 11   | Rewritten `init` skill; multi-repo active                                                                |
+| 12+  | `dt verify` and the outer loop                                                                           |

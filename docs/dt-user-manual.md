@@ -226,11 +226,11 @@ Produces an OpenAPI 3.1 specification from your repository, using the best avail
 
 Controlled by `--strategy auto|1|3` (default: `auto`, which picks based on detection):
 
-| Strategy | Trigger                  | Technique             | Source         | Confidence        |
-| -------- | ------------------------ | --------------------- | -------------- | ----------------- |
-| Route 1  | On-disk spec exists      | Copy + normalize      | `introspected` | `high`            |
-| Route 2  | Express detected         | Boot + router walk    | `introspected` | `high`            |
-| Route 3  | No spec, known framework | TypeScript AST        | `inferred`     | `low`             |
+| Strategy | Trigger                  | Technique          | Source         | Confidence |
+| -------- | ------------------------ | ------------------ | -------------- | ---------- |
+| Route 1  | On-disk spec exists      | Copy + normalize   | `introspected` | `high`     |
+| Route 2  | Express detected         | Boot + router walk | `introspected` | `high`     |
+| Route 3  | No spec, known framework | TypeScript AST     | `inferred`     | `low`      |
 
 ### Route 1 — Copy and normalize
 
@@ -350,11 +350,11 @@ Uses the **TypeScript Compiler API** to find kafkajs usage patterns:
 
 5. **Payload classification** (separate `payload_confidence`):
 
-   | Payload type                                     | Technique                       | `payload_confidence` |
-   | ------------------------------------------------ | ------------------------------- | -------------------- |
-   | Typed generic `producer.send<OrderEvent>({...})` | Derive schema from the type     | `medium`             |
-   | Inline object literal                            | Record as unresolved (handoff)  | `low`                |
-   | Opaque (`Buffer`, `JSON.stringify(variable)`)    | Mark unresolved                 | `low`                |
+   | Payload type                                     | Technique                      | `payload_confidence` |
+   | ------------------------------------------------ | ------------------------------ | -------------------- |
+   | Typed generic `producer.send<OrderEvent>({...})` | Derive schema from the type    | `medium`             |
+   | Inline object literal                            | Record as unresolved (handoff) | `low`                |
+   | Opaque (`Buffer`, `JSON.stringify(variable)`)    | Mark unresolved                | `low`                |
 
 ### Why two confidence fields?
 
@@ -372,10 +372,10 @@ Combines all prior extraction results into a single `component.json` with full p
 
 Fields are classified by how they're populated:
 
-| Category          | Fields                                                                         | How populated                                                         |
-| ----------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| **Derivable**     | `name`, `stack`, `type`, `provides`, `datastores`, `paths`, `docs`, `consumes` | Directly from detection + extraction results                          |
-| **Non-derivable** | `owner`, `domain`, `criticality`, `lifecycle`                                  | Interactive prompt only — never invented                              |
+| Category          | Fields                                                                         | How populated                                                               |
+| ----------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| **Derivable**     | `name`, `stack`, `type`, `provides`, `datastores`, `paths`, `docs`, `consumes` | Directly from detection + extraction results                                |
+| **Non-derivable** | `owner`, `domain`, `criticality`, `lifecycle`                                  | Interactive prompt only — never invented                                    |
 | **Inferable**     | `description`, `aliases`, `subdomain`, `consumes[].criticality`                | Handoff to agent layer; previously LLM-suggested, now marked requires_human |
 
 ### The `--interactive` flag
@@ -1281,12 +1281,12 @@ dt verify contract-diff --base v1/openapi.yaml --head v2/openapi.yaml --json
 
 ### Exit codes
 
-| Code | Meaning                               |
-| ---- | ------------------------------------- |
-| 0    | No breaking changes detected          |
-| 1    | Unexpected error                      |
-| 2    | Incorrect usage (missing flags)       |
-| 8    | Breaking change detected              |
+| Code | Meaning                         |
+| ---- | ------------------------------- |
+| 0    | No breaking changes detected    |
+| 1    | Unexpected error                |
+| 2    | Incorrect usage (missing flags) |
+| 8    | Breaking change detected        |
 
 ---
 
@@ -1338,11 +1338,11 @@ dt verify drift --json
 
 ### Exit codes
 
-| Code | Meaning                                               |
-| ---- | ----------------------------------------------------- |
-| 0    | Drift report generated                                |
-| 1    | Unexpected error                                      |
-| 12   | Unknown component (when `--id` specifies unknown ID)  |
+| Code | Meaning                                              |
+| ---- | ---------------------------------------------------- |
+| 0    | Drift report generated                               |
+| 1    | Unexpected error                                     |
+| 12   | Unknown component (when `--id` specifies unknown ID) |
 
 ---
 
@@ -1534,12 +1534,12 @@ git commit -m "feat: add component manifest via dt extract"
 
 ## What's Coming Next
 
-| Phase   | Capability                                                           | Status                                                                                                  |
-| ------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Phase 0 | Distribution (`dev-tasks install/update/doctor`)                     | Done                                                                                                    |
-| Phase 1 | Extraction (`dt extract *`)                                          | Done — including ladder pattern, route 2 (Express), AsyncAPI declared rung, workspace discovery         |
-| Phase 2 | Catalog — cross-repo aggregation + validation                        | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped)                      |
-| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly + session init | Done (`dt ctx fetch/gc/assemble` + `dt init --components` shipped)                                      |
-| Phase 4 | Scoping — LLM-assisted component selection per task                  | Done (`dt scope` + `dt scope gate` + `dt init --task` shipped)                                          |
-| Phase 5 | Verify — contract diff + impact analysis + drift                     | Done (`dt verify contract-diff`, `dt verify impact`, `dt verify drift` shipped)                         |
-| Phase 6 | MCP adapter — expose as agent tools                                  | Planned                                                                                                 |
+| Phase   | Capability                                                           | Status                                                                                          |
+| ------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Phase 0 | Distribution (`dev-tasks install/update/doctor`)                     | Done                                                                                            |
+| Phase 1 | Extraction (`dt extract *`)                                          | Done — including ladder pattern, route 2 (Express), AsyncAPI declared rung, workspace discovery |
+| Phase 2 | Catalog — cross-repo aggregation + validation                        | Done (`dt validate-component`, `dt catalog build/validate/query/scaffold` shipped)              |
+| Phase 3 | Context — sparse-fetch + budget-aware bundle assembly + session init | Done (`dt ctx fetch/gc/assemble` + `dt init --components` shipped)                              |
+| Phase 4 | Scoping — LLM-assisted component selection per task                  | Done (`dt scope` + `dt scope gate` + `dt init --task` shipped)                                  |
+| Phase 5 | Verify — contract diff + impact analysis + drift                     | Done (`dt verify contract-diff`, `dt verify impact`, `dt verify drift` shipped)                 |
+| Phase 6 | MCP adapter — expose as agent tools                                  | Planned                                                                                         |

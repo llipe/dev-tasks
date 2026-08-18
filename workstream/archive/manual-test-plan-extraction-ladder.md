@@ -1,8 +1,7 @@
 # Manual Test Plan — Extraction Ladder Inversion
 
 > **Issue:** #127
-> **Branch:** `claude/dev-tasks-codebase-analysis-oxda22`
-> **PR:** #125
+> **Branch:** `claude/dev-tasks-codebase-analysis-oxda22` > **PR:** #125
 
 ---
 
@@ -38,7 +37,8 @@ dt extract all --json
 
 ### Running test scripts
 
-> **Important:** 
+> **Important:**
+>
 > 1. `npx tsx -e "..."` does NOT support top-level `await` (treats inline code as CJS).
 > 2. Test scripts must live **inside the project root** (not `/tmp/`) because they use
 >    relative imports like `./core/extract/...` which resolve from the file's location.
@@ -73,6 +73,7 @@ npx tsx test/_manual.ts
 ```
 
 **Expected:**
+
 ```
 Winner: declared
 Strategy: route1
@@ -100,6 +101,7 @@ npx tsx test/_manual.ts
 ```
 
 **Expected:**
+
 ```
 Winner: observed
 Confidence: high
@@ -136,6 +138,7 @@ npx tsx test/_manual.ts
 ```
 
 **Expected:**
+
 ```
 Winner: inferred
 Confidence: low
@@ -179,6 +182,7 @@ npx tsx test/_manual.ts
 ```
 
 **Expected:**
+
 ```
 Count: 2
  - @monorepo/api → packages/api
@@ -212,6 +216,7 @@ pnpm run test:unit -- test/unit/extract-ladder.test.ts --reporter=verbose
 ```
 
 **Verify visually:**
+
 - First usable result wins (no further rungs attempted)
 - Inferred always capped at `low`
 - Throwing rung treated as unavailable with diagnostic message
@@ -353,6 +358,7 @@ cd ~/my-other-project
 ```
 
 **What to look for:**
+
 - `strategies[].source` should show `declared`/`observed`/`inferred`
 - If the target repo has an `openapi.yaml`, route1 should win
 - If it's an Express app with deps installed, route2 should discover routes
@@ -383,6 +389,7 @@ pnpm run test 2>&1 | tail -3
 ```
 
 **Expected:**
+
 ```
  Test Files  100 passed (100)
       Tests  1179 passed (1179)
@@ -392,18 +399,19 @@ pnpm run test 2>&1 | tail -3
 
 ## Quick Reference — All Automated Tests
 
-| Test file | What it covers |
-|-----------|---------------|
+| Test file                                  | What it covers                     |
+| ------------------------------------------ | ---------------------------------- |
 | `test/unit/extract-openapi-route2.test.ts` | Route2 boot+introspect (Express 5) |
-| `test/unit/extract-openapi-ladder.test.ts` | Ladder orchestrator ordering |
-| `test/unit/extract-workspaces.test.ts` | Workspace discovery (pnpm/npm) |
-| `test/unit/extract-ladder.test.ts` | Ladder runner contract |
-| `test/unit/extract-openapi-route3.test.ts` | Route3 AST (existing, unchanged) |
-| `test/unit/extract-openapi-route1.test.ts` | Route1 on-disk spec (existing) |
-| `test/unit/extract-schema-*.test.ts` | Schema extraction (declared) |
-| `test/integration/extract-schema.test.ts` | Schema integration |
+| `test/unit/extract-openapi-ladder.test.ts` | Ladder orchestrator ordering       |
+| `test/unit/extract-workspaces.test.ts`     | Workspace discovery (pnpm/npm)     |
+| `test/unit/extract-ladder.test.ts`         | Ladder runner contract             |
+| `test/unit/extract-openapi-route3.test.ts` | Route3 AST (existing, unchanged)   |
+| `test/unit/extract-openapi-route1.test.ts` | Route1 on-disk spec (existing)     |
+| `test/unit/extract-schema-*.test.ts`       | Schema extraction (declared)       |
+| `test/integration/extract-schema.test.ts`  | Schema integration                 |
 
 Run a subset:
+
 ```bash
 pnpm run test:unit -- --grep "ladder|route2|workspace"
 ```
