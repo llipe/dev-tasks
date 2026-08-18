@@ -465,4 +465,296 @@ describe("core/distribution/update — runUpdate()", () => {
       }
     });
   });
+
+  describe("new file discovery", () => {
+    it("installs new files added to the package that are not in the manifest", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const existingContent = "# Existing agent";
+      const newContent = "# New qa-engineer agent";
+
+      // Consumer has one existing file tracked in their manifest
+      createFile(repoRoot, ".kiro/agents/developer.md", existingContent);
+      createFile(packageRoot, ".kiro/agents/developer.md", existingContent);
+      // Package now also has qa-engineer.md (not in consumer's manifest)
+      createFile(packageRoot, ".kiro/agents/qa-engineer.md", newContent);
+
+      writeManifest(repoRoot, {
+        version: "0.8.0",
+        pinned: "0.8.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".kiro/agents/developer.md",
+            profile: "kiro",
+            sha256: hashContent(existingContent),
+            origin_sha256: hashContent(existingContent),
+          },
+        ],
+        extraction: {},
+      });
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      // qa-engineer.md should be discovered and installed
+      expect(result.installed.length).toBe(1);
+      expect(result.installed[0].path).toBe(".kiro/agents/qa-engineer.md");
+      expect(result.installed[0].profile).toBe("kiro");
+      expect(result.installed[0].action).toBe("install");
+
+      // File should exist locally
+      expect(existsSync(join(repoRoot, ".kiro/agents/qa-engineer.md"))).toBe(true);
+      expect(readFileSync(join(repoRoot, ".kiro/agents/qa-engineer.md"), "utf-8")).toBe(newContent);
+
+      // Manifest should now include the new file
+      const manifest = JSON.parse(
+        readFileSync(join(repoRoot, ".dev-tasks", "manifest.json"), "utf-8"),
+      ) as Manifest;
+      const newEntry = manifest.files.find((f) => f.path === ".kiro/agents/qa-engineer.md");
+      expect(newEntry).toBeDefined();
+      expect(newEntry!.profile).toBe("kiro");
+      expect(newEntry!.sha256).toBe(hashContent(newContent));
+      expect(newEntry!.origin_sha256).toBe(hashContent(newContent));
+    });
+
+    it("discovers new files across all installed profiles", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const existingContent = "# Dev";
+      const newGithub = "# New GH agent";
+      const newClaude = "# New Claude agent";
+      const newKiro = "# New Kiro agent";
+
+      // Consumer has files from all three platforms
+      createFile(repoRoot, ".github/agents/developer.agent.md", existingContent);
+      createFile(repoRoot, ".claude/agents/developer.md", existingContent);
+      createFile(repoRoot, ".kiro/agents/developer.md", existingContent);
+
+      // Package has existing + new files
+      createFile(packageRoot, ".github/agents/developer.agent.md", existingContent);
+      createFile(packageRoot, ".claude/agents/developer.md", existingContent);
+      createFile(packageRoot, ".kiro/agents/developer.md", existingContent);
+      createFile(packageRoot, ".github/agents/qa-engineer.agent.md", newGithub);
+      createFile(packageRoot, ".claude/agents/qa-engineer.md", newClaude);
+      createFile(packageRoot, ".kiro/agents/qa-engineer.md", newKiro);
+
+      writeManifest(repoRoot, {
+        version: "0.8.0",
+        pinned: "0.8.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".github/agents/developer.agent.md",
+            profile: "copilot",
+            sha256: hashContent(existingContent),
+            origin_sha256: hashContent(existingContent),
+          },
+          {
+            path: ".claude/agents/developer.md",
+            profile: "claude",
+            sha256: hashContent(existingContent),
+            origin_sha256: hashContent(existingContent),
+          },
+          {
+            path: ".kiro/agents/developer.md",
+            profile: "kiro",
+            sha256: hashContent(existingContent),
+            origin_sha256: hashContent(existingContent),
+          },
+        ],
+        extraction: {},
+      });
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      expect(result.installed.length).toBe(3);
+      const installedPaths = result.installed.map((f) => f.path).sort();
+      expect(installedPaths).toEqual([
+        ".claude/agents/qa-engineer.md",
+        ".github/agents/qa-engineer.agent.md",
+        ".kiro/agents/qa-engineer.md",
+      ]);
+
+      // All three files should exist
+      expect(existsSync(join(repoRoot, ".github/agents/qa-engineer.agent.md"))).toBe(true);
+      expect(existsSync(join(repoRoot, ".claude/agents/qa-engineer.md"))).toBe(true);
+      expect(existsSync(join(repoRoot, ".kiro/agents/qa-engineer.md"))).toBe(true);
+    });
+
+    it("discovers new files in recursive skill directories", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const existingSkill = "# Git ops skill";
+      const newSkill = "# New test-standards skill";
+
+      createFile(repoRoot, ".kiro/skills/git-ops/SKILL.md", existingSkill);
+      createFile(packageRoot, ".kiro/skills/git-ops/SKILL.md", existingSkill);
+      createFile(packageRoot, ".kiro/skills/activity-test-standards/SKILL.md", newSkill);
+
+      writeManifest(repoRoot, {
+        version: "0.8.0",
+        pinned: "0.8.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".kiro/skills/git-ops/SKILL.md",
+            profile: "kiro",
+            sha256: hashContent(existingSkill),
+            origin_sha256: hashContent(existingSkill),
+          },
+        ],
+        extraction: {},
+      });
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      expect(result.installed.length).toBe(1);
+      expect(result.installed[0].path).toBe(".kiro/skills/activity-test-standards/SKILL.md");
+      expect(existsSync(join(repoRoot, ".kiro/skills/activity-test-standards/SKILL.md"))).toBe(
+        true,
+      );
+    });
+
+    it("discovers new root files (e.g. TESTING.md) not yet in manifest", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const existingContent = "# Dev";
+      const testingContent = "# Testing Standard\n\n<!-- placeholder -->\n";
+
+      createFile(repoRoot, ".kiro/agents/developer.md", existingContent);
+      createFile(packageRoot, ".kiro/agents/developer.md", existingContent);
+      createFile(packageRoot, "TESTING.md", testingContent);
+
+      writeManifest(repoRoot, {
+        version: "0.8.0",
+        pinned: "0.8.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".kiro/agents/developer.md",
+            profile: "kiro",
+            sha256: hashContent(existingContent),
+            origin_sha256: hashContent(existingContent),
+          },
+        ],
+        extraction: {},
+      });
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      expect(result.installed.length).toBe(1);
+      expect(result.installed[0].path).toBe("TESTING.md");
+      expect(result.installed[0].profile).toBe("root");
+      expect(existsSync(join(repoRoot, "TESTING.md"))).toBe(true);
+      expect(readFileSync(join(repoRoot, "TESTING.md"), "utf-8")).toBe(testingContent);
+    });
+
+    it("does not re-discover files already tracked in the manifest", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const content = "# Already tracked";
+
+      createFile(repoRoot, ".kiro/agents/developer.md", content);
+      createFile(repoRoot, ".kiro/agents/qa-engineer.md", content);
+      createFile(packageRoot, ".kiro/agents/developer.md", content);
+      createFile(packageRoot, ".kiro/agents/qa-engineer.md", content);
+
+      writeManifest(repoRoot, {
+        version: "0.9.0",
+        pinned: "0.9.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".kiro/agents/developer.md",
+            profile: "kiro",
+            sha256: hashContent(content),
+            origin_sha256: hashContent(content),
+          },
+          {
+            path: ".kiro/agents/qa-engineer.md",
+            profile: "kiro",
+            sha256: hashContent(content),
+            origin_sha256: hashContent(content),
+          },
+        ],
+        extraction: {},
+      });
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      // Everything is already tracked and up to date — nothing to install
+      expect(result.installed.length).toBe(0);
+      expect(result.skipped.length).toBe(2);
+    });
+
+    it("does not scan platforms not present in the manifest", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const existingContent = "# Dev";
+      const newClaudeAgent = "# Claude agent not installed";
+
+      // Consumer only has kiro installed
+      createFile(repoRoot, ".kiro/agents/developer.md", existingContent);
+      createFile(packageRoot, ".kiro/agents/developer.md", existingContent);
+      // Package has claude agents too, but consumer never installed claude
+      createFile(packageRoot, ".claude/agents/qa-engineer.md", newClaudeAgent);
+
+      writeManifest(repoRoot, {
+        version: "0.8.0",
+        pinned: "0.8.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".kiro/agents/developer.md",
+            profile: "kiro",
+            sha256: hashContent(existingContent),
+            origin_sha256: hashContent(existingContent),
+          },
+        ],
+        extraction: {},
+      });
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      // Should NOT install claude agent since claude isn't in the manifest
+      expect(result.installed.length).toBe(0);
+      expect(existsSync(join(repoRoot, ".claude/agents/qa-engineer.md"))).toBe(false);
+    });
+  });
 });
