@@ -39,6 +39,7 @@ This activity assumes:
    - If HEAD is already a valid feature branch (matching `issue/*` or `story/*`), proceed to step 3.
    - Branch format: `issue/<issue-number>-<short-description>` or `story/<id>-<short-description>`
 3. You **MUST** open a **draft Pull Request** by delegating to `github-ops` whenever possible.
+   - A PR requires at least one commit. Open it immediately after the first commit on the feature branch — never before — and you **MUST NOT** continue past that first commit without it.
    - Base branch is the default branch unless an orchestrating caller explicitly provides a base-branch override.
    - PR title **MUST** follow Conventional Commits (e.g., `feat: implement issue 37`).
    - PR description **MUST** include `Closes #<issue-number>`.
@@ -112,7 +113,7 @@ If `github-ops` delegation is unavailable in the current runtime, you **MUST** a
 
 | Phase              | Rule                                                                                                                                                                                                                                                                      |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Before coding**  | Confirm issue open → Create branch (`github-ops`) → Open draft PR (`github-ops`) → Sync checklists                                                                                                                                                                        |
+| **Before coding**  | Confirm issue open → Create branch (`github-ops`) → First commit → Open draft PR (`github-ops`) → Sync checklists                                                                                                                                                         |
 | **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval                                                                                                                                                                                                  |
 | **Before closing** | All ACs verified → Quality gates pass (test/lint/format/typecheck/audit) → migration confirmation/apply/verify (when applicable) → docs drift check clear → verifier audit run + summary posted (non-blocking on drift) → PR ready → Approved → Merged → Then close issue |
 

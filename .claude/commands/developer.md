@@ -68,7 +68,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
    - The GitHub Issue checklist
 4. **Branch + PR discipline (before coding):** You **MUST** follow `github-ops` conventions:
    - Create branch per `github-ops` branch naming rules (e.g., `issue/42-short-description`, `story/S-003-short-description`)
-   - Open a Draft PR against the default branch unless a base branch override is provided
+   - Open a Draft PR against the default branch unless a base branch override is provided. A PR requires at least one commit, so open it immediately after the first commit on the branch — never before. You **MUST NOT** continue past that first commit without the Draft PR open.
    - Use Conventional Commit PR titles per `github-ops` PR conventions
    - Use the `github-ops` PR description template (What / Why / How / Testing / Checklist)
    - Include `Closes #<issue-number>` in the PR description

@@ -83,7 +83,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
    - The GitHub Issue checklist
 4. **Branch + PR discipline (before coding):** You **MUST** follow `github-ops` conventions:
    - Create branch per `github-ops` branch naming rules (e.g., `issue/42-short-description`, `story/S-003-short-description`)
-   - Open a Draft PR against the default branch unless a base branch override is provided
+   - Open a Draft PR against the default branch unless a base branch override is provided. A PR requires at least one commit, so open it immediately after the first commit on the branch — never before. You **MUST NOT** continue past that first commit without the Draft PR open.
    - Use Conventional Commit PR titles per `github-ops` PR conventions
    - Use the `github-ops` PR description template (What / Why / How / Testing / Checklist)
    - Include `Closes #<issue-number>` in the PR description
@@ -116,8 +116,8 @@ Follow `.kiro/steering/implement.md`:
 3. If a `verifier` Design Mode test plan exists (`/workstream/test-plan-*.md`) for this issue/story, load it as the test-first guide.
 4. **Branch gate (hard requirement):** Before any write or commit operation, you **MUST** verify you are on a feature branch:
    - Run `git rev-parse --abbrev-ref HEAD` to determine the current branch.
-   - If HEAD is the default branch (`main`) or does not match `issue/*` or `story/*` pattern, you **MUST** create a new branch and open a Draft PR before proceeding. You **MUST NOT** write implementation code, create files, or make commits while on the default branch.
-   - If HEAD is already a valid feature branch (matching `issue/*` or `story/*`), confirm the Draft PR exists and proceed.
+   - If HEAD is the default branch (`main`) or does not match `issue/*` or `story/*` pattern, you **MUST** create a new branch before proceeding, then open the Draft PR immediately after the first commit on that branch. You **MUST NOT** write implementation code, create files, or make commits while on the default branch.
+   - If HEAD is already a valid feature branch (matching `issue/*` or `story/*`), confirm the Draft PR exists and proceed. If the branch has no commits yet, no PR can exist — open it immediately after the first commit.
 5. Execute one sub-task at a time in checklist order. For each behavioral sub-task, follow **test-first**: write/update tests first, verify they fail for the right reason, then implement to make them pass.
 6. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
 7. When all sub-tasks are complete:
