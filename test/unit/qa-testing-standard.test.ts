@@ -115,13 +115,28 @@ describe("QA skills — SC-6/SC-7: three skills mirrored across all trees", () =
 
 describe("activity-test-standards — AC-5: harness-defect detection list", () => {
   const requiredChecks: ReadonlyArray<{ label: string; pattern: RegExp }> = [
-    { label: "test environment correctness", pattern: /environment/i },
-    { label: "test config presence", pattern: /config presence|missing (test )?config/i },
-    { label: "path-alias parity with tsconfig", pattern: /alias/i },
-    { label: "global cleanup policy", pattern: /restoreMocks|stubbed globals|global cleanup/i },
-    { label: "runtime version parity", pattern: /runtime (version )?parity/i },
-    { label: "locale and timezone fixture policy", pattern: /timezone/i },
-    { label: "false-green placeholder detection", pattern: /placeholder/i },
+    {
+      label: "test environment correctness",
+      pattern: /DOM or browser components runs under a bare `node` environment/i,
+    },
+    { label: "test config presence", pattern: /has tests but no test config file/i },
+    {
+      label: "path-alias parity with tsconfig",
+      pattern: /alias is defined in `tsconfig\.json` but absent from the test config/i,
+    },
+    {
+      label: "global cleanup policy",
+      pattern: /`restoreMocks` is not enabled, or a stubbed global .* is never restored/i,
+    },
+    { label: "runtime version parity", pattern: /Local, CI, and production runtimes differ/i },
+    {
+      label: "locale and timezone fixture policy",
+      pattern: /No locale or timezone fixture policy while/i,
+    },
+    {
+      label: "false-green placeholder detection",
+      pattern: /report health without exercising anything/i,
+    },
   ];
 
   for (const check of requiredChecks) {
@@ -137,10 +152,19 @@ describe("activity-test-standards — AC-5: harness-defect detection list", () =
 
 describe("activity-test-standards — AC-6: monorepo and CI reachability check", () => {
   const requirements: ReadonlyArray<{ label: string; pattern: RegExp }> = [
-    { label: "reachability from the aggregate script", pattern: /reachab/i },
-    { label: "workspace package coverage", pattern: /workspace/i },
-    { label: "CI gate invokes the aggregate", pattern: /\bCI\b/ },
-    { label: "deploy gate invokes the aggregate", pattern: /deploy/i },
+    {
+      label: "reachability from the aggregate script",
+      pattern: /is reachable from the aggregate test command/i,
+    },
+    { label: "no silent omission", pattern: /even when every script name is canonically correct/i },
+    {
+      label: "CI gate invokes the aggregate",
+      pattern: /CI workflow.s test job invokes the aggregate command/i,
+    },
+    {
+      label: "deploy gate invokes the aggregate",
+      pattern: /deploy workflow.s quality gate invokes the aggregate command/i,
+    },
   ];
 
   for (const requirement of requirements) {
@@ -156,10 +180,10 @@ describe("activity-test-standards — AC-6: monorepo and CI reachability check",
 
 describe("activity-test-implementation — AC-3: security-negative test category", () => {
   const requiredNegatives: ReadonlyArray<{ label: string; pattern: RegExp }> = [
-    { label: "invalid signature", pattern: /invalid signature/i },
-    { label: "expired token", pattern: /expired/i },
-    { label: "wrong issuer or audience", pattern: /issuer|audience/i },
-    { label: "tampered claims", pattern: /tampered/i },
+    { label: "invalid signature", pattern: /signed with the wrong key, or unsigned, is rejected/i },
+    { label: "expired token", pattern: /token past its expiry is rejected/i },
+    { label: "wrong issuer or audience", pattern: /token issued for another party is rejected/i },
+    { label: "tampered claims", pattern: /payload modified after signing is rejected/i },
     { label: "tests faithful to insecure code trap", pattern: /faithful to insecure code/i },
   ];
 
@@ -176,13 +200,22 @@ describe("activity-test-implementation — AC-3: security-negative test category
 
 describe("activity-coverage-gap-analysis — AC-11: structural path without a provider", () => {
   const requirements: ReadonlyArray<{ label: string; pattern: RegExp }> = [
-    { label: "structural path runs with no provider", pattern: /structural/i },
-    { label: "untested source enumeration", pattern: /untested|no corresponding test/i },
-    { label: "source-to-test size ratio", pattern: /ratio/i },
-    { label: "risk-based ranking", pattern: /rank/i },
-    { label: "misleading artifact validation", pattern: /misleading|stale/i },
-    { label: "SKIPPED reason form", pattern: /SKIPPED/ },
-    { label: "never reports unknown", pattern: /unknown/i },
+    { label: "structural path runs with no provider", pattern: /structural path always runs/i },
+    {
+      label: "untested source enumeration",
+      pattern: /exported symbols with no corresponding test/i,
+    },
+    { label: "source-to-test size ratio", pattern: /source-to-test size ratio/i },
+    {
+      label: "risk-based ranking",
+      pattern: /Rank by size and risk\*\*, not alphabetically and not flat/i,
+    },
+    {
+      label: "misleading artifact validation",
+      pattern: /reported as \*\*misleading\*\* and \*\*MUST NOT\*\* be used as evidence/i,
+    },
+    { label: "SKIPPED reason form", pattern: /SKIPPED\(<reason>\)/ },
+    { label: "never reports unknown", pattern: /MUST NOT\*\* return `unknown`/i },
   ];
 
   for (const requirement of requirements) {
