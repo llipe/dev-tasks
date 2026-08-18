@@ -27,6 +27,19 @@ If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MU
 
 ---
 
+## Testing Standard Contract (TESTING.md)
+
+`/TESTING.md` is the canonical testing contract for a repository. It declares the layer taxonomy and what belongs at each layer, the per-package runner and commands, coverage thresholds and baseline policy, the fixture and mocking strategy, and the mandatory security-negative cases.
+
+- `qa-engineer` **OWNS** `/TESTING.md` and fills it per project via `activity-test-standards`.
+- `developer` **MUST** keep it current when the testing contract changes.
+- Agents that read it **MUST** treat an unfilled placeholder as "no standard established", never as permission.
+- The contract is **per-package**: a repository mixing languages (for example vitest and pytest) **MUST** be describable without forcing every package into one language's script names.
+
+It ships with dev-tasks as a placeholder and is listed in `consumer_owned_paths`, so `dev-tasks update` never overwrites a filled version.
+
+---
+
 ## Taxonomy: Agent vs Skill vs Instruction
 
 | Concept         | Purpose                                                     | Loaded When                  |
@@ -48,9 +61,10 @@ If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MU
 | **housekeeping**     | `housekeeping.agent.md`     | Lint, type, and test-wiring fixes                                                                                                                                                                                                                |
 | **github-ops**       | `github-ops.agent.md`       | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy                                                                                                                       |
 | **ux-engineer**      | `ux-engineer.agent.md`      | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer`                                                                                                                          |
+| **qa-engineer**      | `qa-engineer.agent.md`      | Quality agent — establishes the `/TESTING.md` standard, authors tests for layers the project lacks, and reports coverage and structural gaps. Invoked by `developer` at the completion gate, before the `verifier` audit                         |
 | **verifier**         | `verifier.agent.md`         | Verification agent — owns compliance test-plan design (`design` mode) and post-implementation grey-box fidelity auditing (`audit` mode) against codebase, `/workstream`, tests, and PRD/spec intent                                              |
 
-`.github/agents/` and `.kiro/agents/` carry all eight agents. `.claude/agents/` carries six by design: `planner` and `product-engineer` are orchestrators that must pause for user-approval gates, so on Claude Code they run in the main thread as `.claude/commands/` entry points rather than as subagents. See `CLAUDE.md`.
+`.github/agents/` and `.kiro/agents/` carry all nine agents. `.claude/agents/` carries seven by design: `planner` and `product-engineer` are orchestrators that must pause for user-approval gates, so on Claude Code they run in the main thread as `.claude/commands/` entry points rather than as subagents. See `CLAUDE.md`.
 
 ## Skills
 
@@ -58,18 +72,21 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 
 ### Activity Skills
 
-| Skill                             | Directory                               | Purpose                                                                                                                           | Primary Consumer   |
-| --------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **activity-init**                 | `skills/activity-init/`                 | Establish product context and technical guidelines (mono/multi-repo/greenfield mode detection)                                    | `product-engineer` |
-| **activity-refine**               | `skills/activity-refine/`               | Clarify scope — issue refinement or full PRD creation                                                                             | `product-engineer` |
-| **activity-generate-spec**        | `skills/activity-generate-spec/`        | Transform PRD into technical specification                                                                                        | `product-engineer` |
-| **activity-generate-stories**     | `skills/activity-generate-stories/`     | Break spec into user stories with coverage validation                                                                             | `product-engineer` |
-| **activity-publish-github**       | `skills/activity-publish-github/`       | Publish stories as GitHub Issues via MCP                                                                                          | `product-engineer` |
-| **activity-e2e-test-design**      | `skills/activity-e2e-test-design/`      | End-to-end black-box test scenario generation from spec/stories                                                                   | `verifier`         |
-| **activity-contract-test-design** | `skills/activity-contract-test-design/` | Consumer/provider contract and schema compatibility test strategy                                                                 | `verifier`         |
-| **activity-edge-case-refinement** | `skills/activity-edge-case-refinement/` | Systematic edge-case discovery by category with concrete examples                                                                 | `verifier`         |
-| **activity-random-test-tactics**  | `skills/activity-random-test-tactics/`  | Randomized, fuzz, and property-inspired test generation with reproducibility                                                      | `verifier`         |
-| **activity-drift-reconciliation** | `skills/activity-drift-reconciliation/` | Routes verifier drift findings into task-list/checklist expansion, new issues, or PRD/spec changelog write-back (human-confirmed) | `product-engineer` |
+| Skill                              | Directory                                | Purpose                                                                                                                           | Primary Consumer   |
+| ---------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **activity-init**                  | `skills/activity-init/`                  | Establish product context and technical guidelines (mono/multi-repo/greenfield mode detection)                                    | `product-engineer` |
+| **activity-refine**                | `skills/activity-refine/`                | Clarify scope — issue refinement or full PRD creation                                                                             | `product-engineer` |
+| **activity-generate-spec**         | `skills/activity-generate-spec/`         | Transform PRD into technical specification                                                                                        | `product-engineer` |
+| **activity-generate-stories**      | `skills/activity-generate-stories/`      | Break spec into user stories with coverage validation                                                                             | `product-engineer` |
+| **activity-publish-github**        | `skills/activity-publish-github/`        | Publish stories as GitHub Issues via MCP                                                                                          | `product-engineer` |
+| **activity-e2e-test-design**       | `skills/activity-e2e-test-design/`       | End-to-end black-box test scenario generation from spec/stories                                                                   | `verifier`         |
+| **activity-contract-test-design**  | `skills/activity-contract-test-design/`  | Consumer/provider contract and schema compatibility test strategy                                                                 | `verifier`         |
+| **activity-edge-case-refinement**  | `skills/activity-edge-case-refinement/`  | Systematic edge-case discovery by category with concrete examples                                                                 | `verifier`         |
+| **activity-random-test-tactics**   | `skills/activity-random-test-tactics/`   | Randomized, fuzz, and property-inspired test generation with reproducibility                                                      | `verifier`         |
+| **activity-test-standards**        | `skills/activity-test-standards/`        | Establish and maintain `/TESTING.md`, detect harness defects, verify test-script and CI/deploy gate reachability                  | `qa-engineer`      |
+| **activity-test-implementation**   | `skills/activity-test-implementation/`   | Author Layer 1-2 tests with enforceable boundaries and a mandatory security-negative category                                     | `qa-engineer`      |
+| **activity-coverage-gap-analysis** | `skills/activity-coverage-gap-analysis/` | Measure coverage against a baseline, or run risk-ranked structural gap analysis when no provider exists                           | `qa-engineer`      |
+| **activity-drift-reconciliation**  | `skills/activity-drift-reconciliation/`  | Routes verifier drift findings into task-list/checklist expansion, new issues, or PRD/spec changelog write-back (human-confirmed) | `product-engineer` |
 
 ### Operational Skills
 
@@ -176,6 +193,7 @@ All AI coding agents working in this repository **MUST**:
 - Use canonical script names: `lint`, `format:check`, `typecheck`, `test`, `audit`, `validate`
 - Enforce quality gates before completion: `test`, `lint`, `format:check`, `typecheck`, `audit`
 - Use the `git-ops` skill for branch management, rebase, and conflict resolution
+- `qa-engineer` runs at the completion gate, before the `verifier` audit, and records `coverage_gate`. It **MAY** be skipped only as `SKIPPED(<reason>)` with a non-empty reason; omitting the field is treated as incomplete.
 - The `verifier` audit is mandatory and non-skippable before every PR is marked ready. Drift findings are non-blocking and route to `product-engineer`'s `activity-drift-reconciliation`.
 - **Test-first design is the default:** `product-engineer` recommends `verifier` Design Mode after planning; `developer` writes tests before implementation code; `planner` checks for test plans and enforces test-first in developer handoffs
 - If `memo-cli` is installed and configured: agents **MUST** read/write entries per their role (see agent files for details)

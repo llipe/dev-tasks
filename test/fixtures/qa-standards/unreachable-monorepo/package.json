@@ -1,0 +1,14 @@
+{
+  "name": "unreachable-monorepo",
+  "private": true,
+  "scripts": {
+    "test": "pnpm run test:node",
+    "test:node": "pnpm --filter app test && pnpm --filter db test",
+    "test:unit": "pnpm run test:node",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "audit": "pnpm audit --prod",
+    "validate": "pnpm run typecheck && pnpm run lint && pnpm run test"
+  }
+}

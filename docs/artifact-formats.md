@@ -33,19 +33,20 @@ Everything under `catalog/` except `flows/` is generated. Per the PRD, generated
 
 ## Component repo
 
-| File                        | Format | Author                      | Notes                                   |
-| --------------------------- | ------ | --------------------------- | --------------------------------------- |
-| `component.json`            | JSON   | **Generated + human-gated** | See exception 3; format is load-bearing |
-| `AGENTS.md`                 | MD     | Human / vendored            |                                         |
-| `.dev-tasks/manifest.json`  | JSON   | **Generated**               | Install manifest, skill hashes          |
-| `.dev-tasks/config.yaml`    | YAML   | Human                       | Per-repo configuration                  |
-| `.dev-tasks/version`        | text   | **Generated**               | Version pin                             |
-| `contracts/openapi/*.yaml`  | YAML   | **Generated** or copied     | See exception 2                         |
-| `contracts/asyncapi/*.yaml` | YAML   | **Generated** or copied     | See exception 2                         |
-| `docs/schema.md`            | MD     | **Generated**               | From ORM AST or database introspection  |
-| `docs/architecture.md`      | MD     | Human                       |                                         |
-| `docs/conventions.md`       | MD     | Human                       | Deltas from meta-repo conventions only  |
-| `extraction_report.json`    | JSON   | **Generated**               | Coverage, confidence, unresolved items  |
+| File                        | Format | Author                           | Notes                                                       |
+| --------------------------- | ------ | -------------------------------- | ----------------------------------------------------------- |
+| `component.json`            | JSON   | **Generated + human-gated**      | See exception 3; format is load-bearing                     |
+| `AGENTS.md`                 | MD     | Human / vendored                 |                                                             |
+| `TESTING.md`                | MD     | Vendored placeholder, then human | Shipped as an unfilled contract; consumer-owned once filled |
+| `.dev-tasks/manifest.json`  | JSON   | **Generated**                    | Install manifest, skill hashes                              |
+| `.dev-tasks/config.yaml`    | YAML   | Human                            | Per-repo configuration                                      |
+| `.dev-tasks/version`        | text   | **Generated**                    | Version pin                                                 |
+| `contracts/openapi/*.yaml`  | YAML   | **Generated** or copied          | See exception 2                                             |
+| `contracts/asyncapi/*.yaml` | YAML   | **Generated** or copied          | See exception 2                                             |
+| `docs/schema.md`            | MD     | **Generated**                    | From ORM AST or database introspection                      |
+| `docs/architecture.md`      | MD     | Human                            |                                                             |
+| `docs/conventions.md`       | MD     | Human                            | Deltas from meta-repo conventions only                      |
+| `extraction_report.json`    | JSON   | **Generated**                    | Coverage, confidence, unresolved items                      |
 
 ## Per-session
 

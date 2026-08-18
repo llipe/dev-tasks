@@ -93,3 +93,60 @@ describe("core/distribution/profiles", () => {
     });
   });
 });
+
+/**
+ * Root-file (platform-agnostic) distribution — issue #123 AC-10.
+ *
+ * `PROFILE_PATHS` only models platform directories, so a repo-root contract file
+ * like `TESTING.md` fits neither shape: it belongs to no platform and must be
+ * installed exactly once regardless of how many platforms a profile resolves to.
+ * `/DESIGN.md` sidesteps this by not being distributed at all, so there is no
+ * existing precedent — these assertions define the contract.
+ *
+ * Test plan mapping (workstream/test-plan-123.md): SC-27, SC-28, CT-7.
+ */
+describe("core/distribution/profiles — ROOT_FILES (AC-10)", () => {
+  it("exports a ROOT_FILES list", async () => {
+    const mod = (await import("#core/distribution/profiles.js")) as Record<string, unknown>;
+    expect(
+      mod.ROOT_FILES,
+      "profiles.ts must export ROOT_FILES for platform-agnostic files",
+    ).toBeDefined();
+    expect(Array.isArray(mod.ROOT_FILES)).toBe(true);
+  });
+
+  it("includes TESTING.md", async () => {
+    const mod = (await import("#core/distribution/profiles.js")) as Record<string, unknown>;
+    const rootFiles = (mod.ROOT_FILES ?? []) as readonly string[];
+    expect(rootFiles).toContain("TESTING.md");
+  });
+
+  it("lists no platform-directory paths — root files live at the repo root", async () => {
+    const mod = (await import("#core/distribution/profiles.js")) as Record<string, unknown>;
+    const rootFiles = (mod.ROOT_FILES ?? []) as readonly string[];
+    expect(
+      rootFiles.length,
+      "ROOT_FILES is empty — this assertion would pass vacuously",
+    ).toBeGreaterThan(0);
+    for (const relPath of rootFiles) {
+      expect(relPath, `${relPath} is a platform path, not a root file`).not.toMatch(
+        /^\.(github|claude|kiro)\//,
+      );
+      expect(relPath, `${relPath} must not be nested`).not.toContain("/");
+    }
+  });
+
+  it("keeps root files out of every platform's PROFILE_PATHS", async () => {
+    const mod = (await import("#core/distribution/profiles.js")) as Record<string, unknown>;
+    const rootFiles = (mod.ROOT_FILES ?? []) as readonly string[];
+    expect(
+      rootFiles.length,
+      "ROOT_FILES is empty — this assertion would pass vacuously",
+    ).toBeGreaterThan(0);
+    for (const platform of ["copilot", "claude", "kiro"] as const) {
+      for (const p of PROFILE_PATHS[platform]) {
+        expect(rootFiles).not.toContain(p.source);
+      }
+    }
+  });
+});

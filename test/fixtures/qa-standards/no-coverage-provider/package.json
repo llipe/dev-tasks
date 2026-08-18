@@ -1,0 +1,9 @@
+{
+  "name": "no-coverage-provider",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:cov": "pytest --cov=big_service_module_one"
+  },
+  "devDependencies": { "vitest": "4.0.0" }
+}

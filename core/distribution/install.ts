@@ -10,6 +10,8 @@ import { readManifest, writeManifest, type Manifest, type ManagedFileEntry } fro
 import {
   resolveProfile,
   PROFILE_PATHS,
+  ROOT_FILES,
+  ROOT_PROFILE_TAG,
   type Profile,
   type Platform,
   type ManagedPath,
@@ -138,6 +140,28 @@ export async function installFiles(options: InstallOptions): Promise<InstallResu
     }
   }
 
+  // Root files belong to no platform: install once per run, not once per platform.
+  for (const relFile of ROOT_FILES) {
+    const sourcePath = join(sourceDir, relFile);
+    let content: string;
+    try {
+      content = await readFile(sourcePath, "utf-8");
+    } catch {
+      // A bundle that ships no root file is valid; skip silently.
+      continue;
+    }
+    const hash = hashContent(content);
+    const targetPath = join(targetDir, relFile);
+    await mkdir(join(targetPath, ".."), { recursive: true });
+    await writeFile(targetPath, content, "utf-8");
+    managedFiles.push({
+      path: relFile,
+      profile: ROOT_PROFILE_TAG,
+      sha256: hash,
+      origin_sha256: hash,
+    });
+  }
+
   const manifest: Manifest = {
     version,
     pinned: pin,
@@ -149,7 +173,8 @@ export async function installFiles(options: InstallOptions): Promise<InstallResu
   // Merge with existing manifest: preserve files from profiles not being installed
   const existing = await readManifest(targetDir);
   if (existing) {
-    const installedProfileSet = new Set<string>(platforms);
+    // Include the root tag so root entries are replaced, not duplicated.
+    const installedProfileSet = new Set<string>([...platforms, ROOT_PROFILE_TAG]);
     const preservedFiles = existing.files.filter((f) => !installedProfileSet.has(f.profile));
     manifest.files = [...preservedFiles, ...managedFiles];
     manifest.extraction = existing.extraction;

@@ -1,0 +1,5 @@
+{
+  "name": "harness-defects",
+  "scripts": { "test": "vitest run" },
+  "devDependencies": { "vitest": "4.0.0", "react-test-renderer": "19.0.0" }
+}

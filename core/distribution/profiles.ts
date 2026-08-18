@@ -41,6 +41,29 @@ export const PROFILE_PATHS: Record<Platform, ManagedPath[]> = {
   ],
 };
 
+/**
+ * Repo-root files that belong to no platform.
+ *
+ * These are canonical contract documents installed once per run regardless of
+ * how many platforms the profile resolves to. They are also listed in
+ * `consumer_owned_paths` in `bundle-manifest.json`, so `dev-tasks update` never
+ * overwrites a version the consumer has filled in.
+ *
+ * Entries MUST be bare filenames at the repository root — a nested or
+ * platform-prefixed path belongs in `PROFILE_PATHS` instead.
+ */
+export const ROOT_FILES: readonly string[] = ["TESTING.md"] as const;
+
+/**
+ * Manifest `profile` tag for root files.
+ *
+ * Platform-agnostic files cannot be tagged with a single platform: manifest
+ * merging replaces entries whose profile is in the installed set, so a root file
+ * tagged `kiro` would be dropped when installing `copilot` and duplicated when
+ * installing `all`. A dedicated tag keeps it to exactly one entry.
+ */
+export const ROOT_PROFILE_TAG = "root";
+
 /** Valid profile values for CLI validation. */
 export const VALID_PROFILES: readonly Profile[] = [
   "copilot",

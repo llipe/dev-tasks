@@ -1,0 +1,3 @@
+# Reproduces the home-ledger sub-finding: coverage/ is ignored but the
+# committed .coverage database is not, so it slips into version control.
+coverage/
