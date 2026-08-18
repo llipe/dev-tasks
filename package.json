@@ -30,6 +30,7 @@
     ".kiro/hooks/",
     "AGENTS.md",
     "CLAUDE.md",
+    "TESTING.md",
     "bundle-manifest.json",
     "README.md",
     "CHANGELOG.md"
