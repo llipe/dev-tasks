@@ -217,7 +217,7 @@ This system brings structure and clarity to AI-assisted development by:
 
 Agents are autonomous personas that orchestrate skills and activities.
 
-> **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). Copilot and Kiro define all 8 agents below. On Claude Code, the two orchestrators (`planner`, `product-engineer`) run in the main thread as `/commands` so they can pause for approval gates; the other 6 are subagents.
+> **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). Copilot and Kiro define all 9 agents below. On Claude Code, the two orchestrators (`planner`, `product-engineer`) run in the main thread as `/commands` so they can pause for approval gates; the other 7 are subagents.
 
 ### `product-engineer`
 
@@ -264,21 +264,24 @@ Multi-story orchestration with checkpoint/resume:
 
 On-demand capabilities loaded only when invoked.
 
-| Skill                           | Purpose                                         | Consumer                                            |
-| ------------------------------- | ----------------------------------------------- | --------------------------------------------------- |
-| `activity-init`                 | Product context and technical guidelines        | `product-engineer`                                  |
-| `activity-refine`               | Issue refinement or PRD creation                | `product-engineer`                                  |
-| `activity-generate-spec`        | PRD → technical specification                   | `product-engineer`                                  |
-| `activity-generate-stories`     | Spec → user stories with coverage validation    | `product-engineer`                                  |
-| `activity-publish-github`       | Stories → GitHub Issues                         | `product-engineer`                                  |
-| `activity-drift-reconciliation` | Routes verifier drift findings into remediation | `product-engineer`                                  |
-| `git-ops`                       | Branch, rebase, merge, conflict resolution      | `developer`, `planner`                              |
-| `webapp-mockup`                 | React mockup scaffold for UX testing            | `ux-engineer`                                       |
-| `activity-e2e-test-design`      | E2E black-box test scenario generation          | `verifier`                                          |
-| `activity-contract-test-design` | Consumer/provider contract testing              | `verifier`                                          |
-| `activity-edge-case-refinement` | Systematic edge-case discovery                  | `verifier`                                          |
-| `activity-random-test-tactics`  | Randomized, fuzz, and property-inspired tests   | `verifier`                                          |
-| `memo-cli-usage`                | Shared architectural memory across sessions     | `product-engineer`, `developer`, `technical-writer` |
+| Skill                            | Purpose                                         | Consumer                                            |
+| -------------------------------- | ----------------------------------------------- | --------------------------------------------------- |
+| `activity-init`                  | Product context and technical guidelines        | `product-engineer`                                  |
+| `activity-refine`                | Issue refinement or PRD creation                | `product-engineer`                                  |
+| `activity-generate-spec`         | PRD → technical specification                   | `product-engineer`                                  |
+| `activity-generate-stories`      | Spec → user stories with coverage validation    | `product-engineer`                                  |
+| `activity-publish-github`        | Stories → GitHub Issues                         | `product-engineer`                                  |
+| `activity-drift-reconciliation`  | Routes verifier drift findings into remediation | `product-engineer`                                  |
+| `git-ops`                        | Branch, rebase, merge, conflict resolution      | `developer`, `planner`                              |
+| `webapp-mockup`                  | React mockup scaffold for UX testing            | `ux-engineer`                                       |
+| `activity-e2e-test-design`       | E2E black-box test scenario generation          | `verifier`                                          |
+| `activity-contract-test-design`  | Consumer/provider contract testing              | `verifier`                                          |
+| `activity-edge-case-refinement`  | Systematic edge-case discovery                  | `verifier`                                          |
+| `activity-random-test-tactics`   | Randomized, fuzz, and property-inspired tests   | `verifier`                                          |
+| `activity-test-standards`        | Establish and maintain `/TESTING.md`            | `qa-engineer`                                       |
+| `activity-test-implementation`   | Author Layer 1-2 tests with enforced boundaries | `qa-engineer`                                       |
+| `activity-coverage-gap-analysis` | Coverage measurement and risk-ranked gaps       | `qa-engineer`                                       |
+| `memo-cli-usage`                 | Shared architectural memory across sessions     | `product-engineer`, `developer`, `technical-writer` |
 
 ---
 
@@ -305,20 +308,21 @@ Copilot reads `.github/instructions/*.instructions.md`, Kiro reads `.kiro/steeri
 
 > Copilot: `.github/prompts/*.prompt.md`. Claude Code: `.claude/commands/*.md`. Kiro: embedded in `.kiro/agents/*.md`.
 
-| Prompt                     | Agent            | Purpose                           |
-| -------------------------- | ---------------- | --------------------------------- |
-| `product-engineer-init`    | product-engineer | Initialize foundation documents   |
-| `product-engineer-feature` | product-engineer | Design and plan a feature         |
-| `product-engineer-issue`   | product-engineer | Refine and plan a GitHub Issue    |
-| `developer-execute`        | developer        | Execute an existing task list     |
-| `planner`                  | planner          | Orchestrate multi-story execution |
-| `planner-resume`           | planner          | Resume from checkpoint            |
-| `ux-engineer`              | ux-engineer      | Generate UX mockups               |
-| `github-ops`               | github-ops       | GitHub consistency                |
-| `technical-writer`         | technical-writer | Documentation maintenance         |
-| `housekeeping`             | housekeeping     | Lint, type, test fixes            |
-| `verifier-design`          | verifier         | Generate compliance test plan     |
-| `verifier-audit`           | verifier         | Grey-box fidelity audit           |
+| Prompt                     | Agent            | Purpose                            |
+| -------------------------- | ---------------- | ---------------------------------- |
+| `product-engineer-init`    | product-engineer | Initialize foundation documents    |
+| `product-engineer-feature` | product-engineer | Design and plan a feature          |
+| `product-engineer-issue`   | product-engineer | Refine and plan a GitHub Issue     |
+| `developer-execute`        | developer        | Execute an existing task list      |
+| `planner`                  | planner          | Orchestrate multi-story execution  |
+| `planner-resume`           | planner          | Resume from checkpoint             |
+| `ux-engineer`              | ux-engineer      | Generate UX mockups                |
+| `github-ops`               | github-ops       | GitHub consistency                 |
+| `technical-writer`         | technical-writer | Documentation maintenance          |
+| `housekeeping`             | housekeeping     | Lint, type, test fixes             |
+| `qa-engineer`              | qa-engineer      | Testing standard and coverage gate |
+| `verifier-design`          | verifier         | Generate compliance test plan      |
+| `verifier-audit`           | verifier         | Grey-box fidelity audit            |
 
 ---
 
@@ -326,15 +330,15 @@ Copilot reads `.github/instructions/*.instructions.md`, Kiro reads `.kiro/steeri
 
 Match your situation to a chain, then invoke the first agent in it. Full diagrams, including the UX validation loop and project initialization, are in [`docs/workflow-chains.md`](docs/workflow-chains.md).
 
-| Situation                   | Chain                                                                                                         |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Full feature, PRD-driven    | `product-engineer` (refine → spec → stories → publish → plan) → `developer`                                   |
-| Single GitHub Issue         | `product-engineer` (refine → plan) → `developer`                                                              |
-| Several dependent stories   | `product-engineer` (… → plan) → `planner` → `developer` per story, sequential                                 |
-| Quick fix, task list exists | `developer`                                                                                                   |
-| Test-first design           | … → plan → `verifier` (design) → `developer` → `verifier` (audit) → `product-engineer` (drift reconciliation) |
-| UX validation before build  | `product-engineer` (refine → spec) → `ux-engineer` → `product-engineer`                                       |
-| New project                 | `product-engineer` (init mode)                                                                                |
+| Situation                   | Chain                                                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Full feature, PRD-driven    | `product-engineer` (refine → spec → stories → publish → plan) → `developer`                                                   |
+| Single GitHub Issue         | `product-engineer` (refine → plan) → `developer`                                                                              |
+| Several dependent stories   | `product-engineer` (… → plan) → `planner` → `developer` per story, sequential                                                 |
+| Quick fix, task list exists | `developer`                                                                                                                   |
+| Test-first design           | … → plan → `verifier` (design) → `developer` → `qa-engineer` → `verifier` (audit) → `product-engineer` (drift reconciliation) |
+| UX validation before build  | `product-engineer` (refine → spec) → `ux-engineer` → `product-engineer`                                                       |
+| New project                 | `product-engineer` (init mode)                                                                                                |
 
 The `verifier` audit after implementation is mandatory and non-skippable before a PR is marked ready.
 

@@ -133,6 +133,7 @@ All AI coding agents working in this repository **MUST**:
 - Use canonical script names: `lint`, `format:check`, `typecheck`, `test`, `audit`, `validate`
 - Enforce quality gates before completion: `test`, `lint`, `format:check`, `typecheck`, `audit`
 - Use the `git-ops` skill for branch management, rebase, and conflict resolution
+- `qa-engineer` runs at the completion gate, before the `verifier` audit, and records `coverage_gate`. It **MAY** be skipped only as `SKIPPED(<reason>)` with a non-empty reason; omitting the field is treated as incomplete.
 - The `verifier` audit is mandatory and non-skippable before every PR is marked ready. Drift findings are non-blocking and route to `product-engineer`'s `activity-drift-reconciliation`.
 - **Test-first design is the default:** `product-engineer` recommends `verifier` Design Mode after planning; `developer` writes tests before implementation code; `planner` checks for test plans and enforces test-first in developer handoffs
 - If `memo-cli` is installed and configured: agents **MUST** read/write entries per their role (see agent files for details)

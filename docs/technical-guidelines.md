@@ -2,9 +2,10 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                        | Author           |
-| ------- | ---------- | ---------------------------------------------- | ---------------- |
-| 1.0     | 2026-07-20 | Initial repository-wide technical constitution | product-engineer |
+| Version | Date       | Summary                                                                   | Author           |
+| ------- | ---------- | ------------------------------------------------------------------------- | ---------------- |
+| 1.0     | 2026-07-20 | Initial repository-wide technical constitution                            | product-engineer |
+| 1.1     | 2026-08-18 | Added `qa-engineer` coverage gate to the golden path; named `/TESTING.md` | technical-writer |
 
 ## Overview
 
@@ -191,7 +192,7 @@ Line or branch coverage alone is insufficient. Confidence requires:
 - deterministic replay for randomized failures;
 - explicit recording of untested or observational-only areas.
 
-Projects set numeric thresholds. The harness provides baseline/no-regression policies and must not invent a passing threshold when none has been approved.
+Projects set numeric thresholds. The harness provides baseline/no-regression policies and must not invent a passing threshold when none has been approved. A project **MUST** instantiate this coverage-and-confidence policy in its own `/TESTING.md` testing contract, which declares the layer taxonomy, per-package runners and commands, coverage thresholds and baseline policy, fixture and mocking strategy, and mandatory security-negative cases; an unfilled `/TESTING.md` placeholder **MUST** be treated as no standard established rather than as permission.
 
 ### Blocking policy and drift resolution
 
@@ -259,10 +260,11 @@ Validation must be confidence-efficient:
 4. Implement behavior test-first in bounded increments.
 5. For each increment, execute targeted deterministic checks and relevant runtime validation; diagnose, fix, and retry within budget.
 6. Run broader quality gates, mutation policy, and acceptance checks.
-7. Run an independent verifier fidelity audit.
-8. Resolve blocking drift through implementation fixes, test correction, approved requirement change, eligible tracked deferral, or additional evidence.
-9. Update documentation and attach sanitized evidence to CI/PR.
-10. Obtain required human review and approval; agents never merge into `main`.
+7. Run the `qa-engineer` coverage gate and record `coverage_gate` as `PASS`, `FAIL`, or `SKIPPED(<reason>)`.
+8. Run an independent verifier fidelity audit.
+9. Resolve blocking drift through implementation fixes, test correction, approved requirement change, eligible tracked deferral, or additional evidence.
+10. Update documentation and attach sanitized evidence to CI/PR.
+11. Obtain required human review and approval; agents never merge into `main`.
 
 ## Known Constraints and Trade-offs
 

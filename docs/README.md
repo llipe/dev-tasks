@@ -34,6 +34,7 @@ These live outside `docs/` because agent runtimes load them directly:
 | `../AGENTS.md`    | Authoritative registry of agents, skills, and instructions; agent rules |
 | `../CLAUDE.md`    | Claude Code entry point                                                 |
 | `../DESIGN.md`    | Canonical design-system contract for UI work                            |
+| `../TESTING.md`   | Canonical testing contract — layers, runners, thresholds, fixtures      |
 | `../CHANGELOG.md` | Release history                                                         |
 
 ## Working Documents

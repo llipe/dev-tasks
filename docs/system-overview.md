@@ -167,7 +167,7 @@ Two channels are active in parallel:
 
 Platform differences that are intentional, not drift:
 
-- `.claude/agents/` holds six agents; `planner` and `product-engineer` run as main-thread `.claude/commands/` entry points because a subagent cannot pause for a user-approval gate.
+- `.claude/agents/` holds seven agents; `planner` and `product-engineer` run as main-thread `.claude/commands/` entry points because a subagent cannot pause for a user-approval gate.
 - `plan` and `implement` are scoped instructions on Copilot, scoped steering on Kiro, and on-demand skills on Claude Code, which has no scoped-instruction mechanism.
 
 ## Related Documents

@@ -36,6 +36,16 @@ Agent toolkit files are organized by AI platform:
 | `both`    | `copilot` + `claude`                                                              |
 | `all`     | `copilot` + `claude` + `kiro` (default)                                           |
 
+### Root Files
+
+Some managed files belong to no platform. They are installed at the repository root on **every** profile, exactly once per run regardless of how many platforms the profile resolves to, and recorded in the manifest under the `root` profile tag rather than a platform tag.
+
+| File         | Purpose                                                                  |
+| ------------ | ------------------------------------------------------------------------ |
+| `TESTING.md` | Canonical testing contract, shipped unfilled; consumer-owned once filled |
+
+`TESTING.md` is listed in `consumer_owned_paths`, so `dev-tasks update` never overwrites a version you have filled in.
+
 ### Manifest
 
 Every installation writes `.dev-tasks/manifest.json` — the source of truth for what's installed:
@@ -112,11 +122,12 @@ dev-tasks install --json                   # Machine-readable output
 1. Resolves the profile to a list of platforms
 2. For each platform, collects all files from the package's managed directories
 3. Copies each file to the target repo at its native path
-4. Computes SHA-256 hash per file
-5. Reads the existing manifest (if any) and merges:
+4. Copies root files (see [Root Files](#root-files)) once per run, regardless of profile
+5. Computes SHA-256 hash per file
+6. Reads the existing manifest (if any) and merges:
    - Preserves entries from profiles **not** being installed
-   - Replaces entries for the profiles being installed
-6. Writes the updated manifest to `.dev-tasks/manifest.json`
+   - Replaces entries for the profiles being installed, plus the `root` tag
+7. Writes the updated manifest to `.dev-tasks/manifest.json`
 
 #### Flags
 
@@ -322,6 +333,7 @@ your-repo/
 ├── .dev-tasks/
 │   ├── manifest.json    # Installation manifest (managed by dev-tasks)
 │   └── version          # Pin file (optional, written by `dev-tasks pin`)
+├── TESTING.md           # Root file — testing contract (consumer-owned once filled)
 ├── .github/             # Copilot platform files
 │   ├── agents/
 │   ├── skills/

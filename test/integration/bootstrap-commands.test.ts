@@ -67,7 +67,9 @@ describe("dev-tasks bootstrap commands (integration)", () => {
       for (const file of manifest.files) {
         expect(file.sha256).toMatch(/^[a-f0-9]{64}$/);
         expect(file.origin_sha256).toMatch(/^[a-f0-9]{64}$/);
-        expect(file.profile).toMatch(/^(copilot|claude|kiro)$/);
+        // `root` covers platform-agnostic repo-root files such as TESTING.md,
+        // which are installed once per run rather than per platform (issue #123).
+        expect(file.profile).toMatch(/^(copilot|claude|kiro|root)$/);
       }
     });
 
@@ -92,8 +94,15 @@ describe("dev-tasks bootstrap commands (integration)", () => {
       };
       expect(output.platforms).toEqual(["kiro"]);
       for (const file of output.files) {
-        expect(file.profile).toBe("kiro");
+        // Root files carry the `root` tag on every profile; only platform files
+        // are expected to carry the requested platform's tag.
+        expect(file.profile).toMatch(/^(kiro|root)$/);
       }
+      // The kiro profile must still not pull in another platform's files.
+      const platformProfiles = output.files
+        .filter((f) => f.profile !== "root")
+        .map((f) => f.profile);
+      expect(new Set(platformProfiles)).toEqual(new Set(["kiro"]));
     });
 
     it("--profile all installs all three platforms", () => {
