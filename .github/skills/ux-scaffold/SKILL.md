@@ -16,12 +16,12 @@ Create mockup projects at the correct fidelity level, styled from DESIGN.md toke
 
 ## Templates
 
-| Template | Fidelity | Output | Build step required |
-| --- | --- | --- | --- |
-| `html-lite` | Low | Self-contained HTML per screen + `index.html` | No — opens from `file://` |
-| `react-full` | High | Vite + React + shadcn/ui project | Yes — `pnpm install && pnpm dev` |
-| ~~`react-mid`~~ | — | Cut (decision 2) | — |
-| `react-native` | — | Reserved, not implemented | — |
+| Template        | Fidelity | Output                                        | Build step required              |
+| --------------- | -------- | --------------------------------------------- | -------------------------------- |
+| `html-lite`     | Low      | Self-contained HTML per screen + `index.html` | No — opens from `file://`        |
+| `react-full`    | High     | Vite + React + shadcn/ui project              | Yes — `pnpm install && pnpm dev` |
+| ~~`react-mid`~~ | —        | Cut (decision 2)                              | —                                |
+| `react-native`  | —        | Reserved, not implemented                     | —                                |
 
 ## Scripts
 
@@ -32,6 +32,7 @@ Usage: ./scripts/scaffold-lite.sh <feature> <variant-num> <theme-css-path> <outp
 ```
 
 Generates:
+
 - `<output-dir>/index.html` — entry point listing all screens with nav
 - `<output-dir>/screen-<name>.html` — one per enumerated screen
 - `<output-dir>/screen-map.md` — Mermaid flowchart of screen navigation
@@ -43,6 +44,7 @@ Usage: ./scripts/scaffold-full.sh <feature> <variant-num> <output-dir>
 ```
 
 Scaffolds a Vite + shadcn project. The script:
+
 1. Creates the Vite app via `npm create vite@latest`.
 2. Runs `pnpm install`.
 3. Runs `shadcn@4.18.0 init --base radix --preset nova --css-variables --yes --silent` in the created dir.
@@ -52,16 +54,16 @@ Scaffolds a Vite + shadcn project. The script:
 
 Before scaffolding, the agent enumerates screens from the source artifact:
 
-| Screen type | Purpose |
-| --- | --- |
-| `happy` | Primary flow, success state |
-| `error-validation` | Form validation failures |
-| `error-server` | Server/network error states |
+| Screen type        | Purpose                         |
+| ------------------ | ------------------------------- |
+| `happy`            | Primary flow, success state     |
+| `error-validation` | Form validation failures        |
+| `error-server`     | Server/network error states     |
 | `error-permission` | Permission denied, unauthorized |
-| `empty` | No data, first-use experience |
-| `loading` | Skeleton screens, spinners |
-| `edge-overflow` | Long text, many items |
-| `edge-zero` | Zero items, disabled states |
+| `empty`            | No data, first-use experience   |
+| `loading`          | Skeleton screens, spinners      |
+| `edge-overflow`    | Long text, many items           |
+| `edge-zero`        | Zero items, disabled states     |
 
 Each screen becomes a named file (`screen-happy.html`, `screen-error-validation.html`, etc.).
 
@@ -96,18 +98,18 @@ The `palette` parameter and the `colorhunt.co` fallback are **removed**. DESIGN.
 
 Pinned to the verified compatibility matrix:
 
-| Package | Version | Notes |
-| --- | --- | --- |
-| `vite` | ^8 | via `create vite` |
-| `@vitejs/plugin-react` | ^6 | Vite 8 only |
-| `@tailwindcss/vite` | ^4 | replaces postcss + autoprefixer |
-| `tailwindcss` | ^4 | CSS-first, no config file |
-| `shadcn` | 4.18.0 | pinned exactly; never @latest |
-| `radix-ui` | ^1.6 | unified package |
-| `tw-animate-css` | ^1.4 | replaces tailwindcss-animate |
-| `class-variance-authority` | ^0.7 | |
-| `clsx` + `tailwind-merge` | latest | |
-| `lucide-react` | ^1.33 | icon library |
+| Package                    | Version | Notes                           |
+| -------------------------- | ------- | ------------------------------- |
+| `vite`                     | ^8      | via `create vite`               |
+| `@vitejs/plugin-react`     | ^6      | Vite 8 only                     |
+| `@tailwindcss/vite`        | ^4      | replaces postcss + autoprefixer |
+| `tailwindcss`              | ^4      | CSS-first, no config file       |
+| `shadcn`                   | 4.18.0  | pinned exactly; never @latest   |
+| `radix-ui`                 | ^1.6    | unified package                 |
+| `tw-animate-css`           | ^1.4    | replaces tailwindcss-animate    |
+| `class-variance-authority` | ^0.7    |                                 |
+| `clsx` + `tailwind-merge`  | latest  |                                 |
+| `lucide-react`             | ^1.33   | icon library                    |
 
 **Node requirement:** `>= 24` (shadcn CLI needs `>= 20.18.1`; repo floor is `>= 24`).
 

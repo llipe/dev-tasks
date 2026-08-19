@@ -89,6 +89,7 @@ after your explicit confirmation. It MUST NOT author a design system silently.
 
 The sentinel for an unset value is the string "<unfilled>" in front matter and
 `<!-- unfilled -->` in prose. `ux-theme-gen` refuses to generate while any
+
 sentinel remains, and agents MUST treat `status: placeholder` as "no standard
 established" rather than as permission.
 
@@ -99,9 +100,9 @@ overwrite a version you have filled in.
 
 ## Changelog
 
-| Version | Date       | Summary                       | Author      |
-| ------- | ---------- | ----------------------------- | ----------- |
-| alpha   | —          | Shipped as an unfilled contract | dev-tasks |
+| Version | Date | Summary                         | Author    |
+| ------- | ---- | ------------------------------- | --------- |
+| alpha   | —    | Shipped as an unfilled contract | dev-tasks |
 
 Add a row on every change once filled.
 
@@ -176,15 +177,15 @@ than as inline exceptions.
 
 ### Microcopy patterns
 
-| Context              | Pattern                        | Example                                                        |
-| -------------------- | ------------------------------ | -------------------------------------------------------------- |
-| Success confirmation | <!-- unfilled -->              | "Changes saved."                                               |
-| Error message        | cause + recovery action        | "Could not save. Check your connection and try again."         |
-| Empty state          | state + next action            | "No transactions yet. Add your first one to get started."      |
-| Loading              | <!-- unfilled -->              | "Loading your data..."                                         |
-| Destructive action   | consequence + irreversibility  | "This permanently deletes X. This cannot be undone."           |
-| Button labels        | verb or verb + noun            | "Save changes" / "Delete" / "Continue"                         |
-| Placeholder text     | example-prefixed               | "e.g., john@example.com"                                       |
+| Context              | Pattern                       | Example                                                   |
+| -------------------- | ----------------------------- | --------------------------------------------------------- |
+| Success confirmation | <!-- unfilled -->             | "Changes saved."                                          |
+| Error message        | cause + recovery action       | "Could not save. Check your connection and try again."    |
+| Empty state          | state + next action           | "No transactions yet. Add your first one to get started." |
+| Loading              | <!-- unfilled -->             | "Loading your data..."                                    |
+| Destructive action   | consequence + irreversibility | "This permanently deletes X. This cannot be undone."      |
+| Button labels        | verb or verb + noun           | "Save changes" / "Delete" / "Continue"                    |
+| Placeholder text     | example-prefixed              | "e.g., john@example.com"                                  |
 
 Examples above are defaults, not decisions — replace them with this product's
 actual phrasing when filling the contract.

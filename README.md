@@ -249,14 +249,14 @@ Multi-story orchestration with checkpoint/resume:
 
 ### Other Agents
 
-| Agent              | Purpose                                                              |
-| ------------------ | -------------------------------------------------------------------- |
+| Agent              | Purpose                                                                         |
+| ------------------ | ------------------------------------------------------------------------------- |
 | `ux-engineer`      | PRD/SPEC-to-screen visualization (lite/full), DESIGN.md ownership, gap analysis |
-| `technical-writer` | Documentation maintenance                                            |
-| `housekeeping`     | Lint, type, and test-wiring fixes                                    |
-| `github-ops`       | GitHub consistency — issues, PRs, branches, labels                   |
-| `verifier`         | Compliance test-plan design and fidelity auditing                    |
-| `qa-engineer`      | Testing standard, missing test harnesses, coverage and gap reporting |
+| `technical-writer` | Documentation maintenance                                                       |
+| `housekeeping`     | Lint, type, and test-wiring fixes                                               |
+| `github-ops`       | GitHub consistency — issues, PRs, branches, labels                              |
+| `verifier`         | Compliance test-plan design and fidelity auditing                               |
+| `qa-engineer`      | Testing standard, missing test harnesses, coverage and gap reporting            |
 
 ---
 
@@ -264,25 +264,25 @@ Multi-story orchestration with checkpoint/resume:
 
 On-demand capabilities loaded only when invoked.
 
-| Skill                            | Purpose                                         | Consumer                                            |
-| -------------------------------- | ----------------------------------------------- | --------------------------------------------------- |
-| `activity-init`                  | Product context and technical guidelines        | `product-engineer`                                  |
-| `activity-refine`                | Issue refinement or PRD creation                | `product-engineer`                                  |
-| `activity-generate-spec`         | PRD → technical specification                   | `product-engineer`                                  |
-| `activity-generate-stories`      | Spec → user stories with coverage validation    | `product-engineer`                                  |
-| `activity-publish-github`        | Stories → GitHub Issues                         | `product-engineer`                                  |
-| `activity-drift-reconciliation`  | Routes verifier drift findings into remediation | `product-engineer`                                  |
-| `git-ops`                        | Branch, rebase, merge, conflict resolution      | `developer`, `planner`                              |
-| `ux-scaffold`                    | Template-aware mockup generation (lite/full)    | `ux-engineer`                                       |
-| `ux-theme-gen`                   | DESIGN.md → theme artifacts (CSS vars, Tailwind v4, RN) | `ux-engineer`, `developer`                   |
-| `activity-e2e-test-design`       | E2E black-box test scenario generation          | `verifier`                                          |
-| `activity-contract-test-design`  | Consumer/provider contract testing              | `verifier`                                          |
-| `activity-edge-case-refinement`  | Systematic edge-case discovery                  | `verifier`                                          |
-| `activity-random-test-tactics`   | Randomized, fuzz, and property-inspired tests   | `verifier`                                          |
-| `activity-test-standards`        | Establish and maintain `/TESTING.md`            | `qa-engineer`                                       |
-| `activity-test-implementation`   | Author Layer 1-2 tests with enforced boundaries | `qa-engineer`                                       |
-| `activity-coverage-gap-analysis` | Coverage measurement and risk-ranked gaps       | `qa-engineer`                                       |
-| `memo-cli-usage`                 | Shared architectural memory across sessions     | `product-engineer`, `developer`, `technical-writer` |
+| Skill                            | Purpose                                                 | Consumer                                            |
+| -------------------------------- | ------------------------------------------------------- | --------------------------------------------------- |
+| `activity-init`                  | Product context and technical guidelines                | `product-engineer`                                  |
+| `activity-refine`                | Issue refinement or PRD creation                        | `product-engineer`                                  |
+| `activity-generate-spec`         | PRD → technical specification                           | `product-engineer`                                  |
+| `activity-generate-stories`      | Spec → user stories with coverage validation            | `product-engineer`                                  |
+| `activity-publish-github`        | Stories → GitHub Issues                                 | `product-engineer`                                  |
+| `activity-drift-reconciliation`  | Routes verifier drift findings into remediation         | `product-engineer`                                  |
+| `git-ops`                        | Branch, rebase, merge, conflict resolution              | `developer`, `planner`                              |
+| `ux-scaffold`                    | Template-aware mockup generation (lite/full)            | `ux-engineer`                                       |
+| `ux-theme-gen`                   | DESIGN.md → theme artifacts (CSS vars, Tailwind v4, RN) | `ux-engineer`, `developer`                          |
+| `activity-e2e-test-design`       | E2E black-box test scenario generation                  | `verifier`                                          |
+| `activity-contract-test-design`  | Consumer/provider contract testing                      | `verifier`                                          |
+| `activity-edge-case-refinement`  | Systematic edge-case discovery                          | `verifier`                                          |
+| `activity-random-test-tactics`   | Randomized, fuzz, and property-inspired tests           | `verifier`                                          |
+| `activity-test-standards`        | Establish and maintain `/TESTING.md`                    | `qa-engineer`                                       |
+| `activity-test-implementation`   | Author Layer 1-2 tests with enforced boundaries         | `qa-engineer`                                       |
+| `activity-coverage-gap-analysis` | Coverage measurement and risk-ranked gaps               | `qa-engineer`                                       |
+| `memo-cli-usage`                 | Shared architectural memory across sessions             | `product-engineer`, `developer`, `technical-writer` |
 
 ---
 
@@ -338,8 +338,8 @@ Match your situation to a chain, then invoke the first agent in it. Full diagram
 | Several dependent stories   | `product-engineer` (… → plan) → `planner` → `developer` per story, sequential                                                 |
 | Quick fix, task list exists | `developer`                                                                                                                   |
 | Test-first design           | … → plan → `verifier` (design) → `developer` → `qa-engineer` → `verifier` (audit) → `product-engineer` (drift reconciliation) |
-| UX validation before build  | `product-engineer` (refine → spec) → `ux-engineer` (lite) → `product-engineer` (stories) → `developer`                                    |
-| Quick screen sketches       | `ux-engineer` (lite mode, direct invocation with PRD/spec path)                                                                            |
+| UX validation before build  | `product-engineer` (refine → spec) → `ux-engineer` (lite) → `product-engineer` (stories) → `developer`                        |
+| Quick screen sketches       | `ux-engineer` (lite mode, direct invocation with PRD/spec path)                                                               |
 | New project                 | `product-engineer` (init mode)                                                                                                |
 
 The `verifier` audit after implementation is mandatory and non-skippable before a PR is marked ready.
