@@ -86,6 +86,9 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 | **activity-random-test-tactics** | `skills/activity-random-test-tactics/` | Randomized, fuzz, and property-inspired test generation with reproducibility | `verifier` |
 | **activity-test-standards**       | `skills/activity-test-standards/`       | Establish and maintain `/TESTING.md`, detect harness defects, verify test-script and CI/deploy gate reachability          | `qa-engineer`      |
 | **activity-test-implementation**  | `skills/activity-test-implementation/`  | Author Layer 1-2 tests with enforceable boundaries and a mandatory security-negative category                            | `qa-engineer`      |
+| **activity-integration-test-implementation** | `skills/activity-integration-test-implementation/` | Author integration tests (Layer 2.5) against real databases — local via testcontainers/docker-compose/Supabase CLI, remote via testing environments | `qa-engineer` |
+| **activity-e2e-test-implementation** | `skills/activity-e2e-test-implementation/` | Author Playwright end-to-end tests from verifier scenario tables. Covers auth, state reset, CI config, and scenario-to-spec traceability | `qa-engineer` |
+| **activity-contract-validation**  | `skills/activity-contract-validation/`  | Validate API contracts against implementation using dt verify (contract-diff, impact, drift). Detects breaking changes and spec-to-code staleness | `qa-engineer` |
 | **activity-coverage-gap-analysis** | `skills/activity-coverage-gap-analysis/` | Measure coverage against a baseline, or run risk-ranked structural gap analysis when no provider exists                 | `qa-engineer`      |
 | **activity-drift-reconciliation** | `skills/activity-drift-reconciliation/` | Routes verifier drift findings into task-list/checklist expansion, new issues, or PRD/spec changelog write-back (human-confirmed) | `product-engineer` |
 

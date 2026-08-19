@@ -25,15 +25,18 @@ established" rather than as permission.
 
 The layer taxonomy below is fixed. What belongs in each layer is project-specific.
 
-| Layer | Name                      | Scope                                                                     | Status            |
-| ----- | ------------------------- | ------------------------------------------------------------------------- | ----------------- |
-| 1     | Deterministic foundations | Unit tests, schema validation. No I/O, no network, no real database.      | <!-- unfilled --> |
-| 2     | Constrained model/tool    | Backend component tests, mocked APIs, fixtures and gold datasets.         | <!-- unfilled --> |
-| 3     | Product evaluation        | Semantic, tone, groundedness, hallucination evals. Only for LLM features. | <!-- unfilled --> |
-| 4     | Human evaluation          | Review gates, safeguards, risk alerts.                                    | <!-- unfilled --> |
+| Layer    | Name                      | Scope                                                                          | Status            |
+| -------- | ------------------------- | ------------------------------------------------------------------------------ | ----------------- |
+| 1        | Deterministic foundations | Unit tests, schema validation. No I/O, no network, no real database.           | <!-- unfilled --> |
+| 2        | Constrained model/tool    | Backend component tests, mocked APIs, fixtures and gold datasets.              | <!-- unfilled --> |
+| 2.5      | Integration               | Real database, real migrations, RLS policies, schema contracts. No mocked data layer. | <!-- unfilled --> |
+| E2E      | End-to-end                | Playwright CLI — committed browser automation, full-stack, scenario-driven.    | <!-- unfilled --> |
+| Contract | Contract validation       | API spec drift, breaking-change detection, consumer impact. `dt verify` family. | <!-- unfilled --> |
+| 3        | Product evaluation        | Semantic, tone, groundedness, hallucination evals. Only for LLM features.      | <!-- unfilled --> |
+| 4        | Human evaluation          | Review gates, safeguards, risk alerts.                                         | <!-- unfilled --> |
 
-Integration and end-to-end layers are declared per project in the table below
-when they exist.
+Integration, end-to-end, and contract validation layers are declared per project
+in the table below when they exist.
 
 ### Layer boundaries
 
@@ -42,8 +45,12 @@ enforceable rather than aspirational.
 
 - **Layer 1 must not:** <!-- unfilled -->
 - **Layer 2 must not:** <!-- unfilled -->
+- **Layer 2.5 must not:** mock the data layer. If the database is mocked, the test belongs at Layer 2. If the test hits a live external service over the network, it may belong at E2E or remote integration.
+- **E2E must not:** assert on internal state or implementation details. Assertions are on observable user-facing behavior only.
+- **Contract validation must not:** test internal business logic. It checks the boundary/interface only.
 - **Escalation rule** — when a Layer 1 test needs a real dependency, it moves up
   a layer rather than growing a test double that reimplements the dependency.
+  When a Layer 2 test needs a real database, it moves to Layer 2.5.
 
 ## Packages
 
@@ -86,8 +93,9 @@ Canonical script names for JS/TS packages. Prefer `pnpm`.
 | `typecheck`        | Type analysis                             | yes                 |
 | `test`             | Aggregate — MUST reach every test package | yes                 |
 | `test:unit`        | Layer 1                                   | yes                 |
-| `test:integration` | Integration layer                         | when present        |
-| `test:e2e`         | End-to-end layer                          | when present        |
+| `test:integration` | Layer 2.5 — real database integration     | when present        |
+| `test:e2e`         | E2E layer — Playwright browser automation | when present        |
+| `test:contract`    | Contract validation — `dt verify` family  | when present        |
 | `test:coverage`    | Coverage measurement                      | when tooling exists |
 | `audit`            | Dependency vulnerability scan             | yes                 |
 | `validate`         | Aggregate quality gate                    | yes                 |

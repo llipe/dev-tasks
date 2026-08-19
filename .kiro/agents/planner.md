@@ -456,15 +456,16 @@ Planner **MUST NOT** allow multiple open story PRs to merge concurrently.
 After all stories are merged into integration:
 
 1. Run full integration test suite on integration branch.
-2. Invoke `verifier` in `audit` mode for a **PRD-level rollup audit** against the full integrated scope (all merged stories on the integration branch, cross-checked against the source PRD/spec/milestone). This is mandatory and non-skippable — it runs whether or not any story-level drift was previously reported. Post the resulting human-readable summary to the plan/milestone issue via `github-ops` comment conventions. Rollup drift findings **MUST NOT** block the consolidated PR handoff; Unintended/Intended drift routes to `product-engineer`'s `activity-drift-reconciliation` flow.
-3. Invoke `technical-writer` for a planner-level drift/stale-doc validation pass against integrated changes; unresolved drift **MUST** block handoff.
-4. Open one consolidated PR from integration branch to `main`.
-5. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
-6. Wait for the user to approve and merge the PR into `main`.
-7. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
+2. Invoke `qa-engineer` at **PRD scope** (all packages affected by the merged stories, all layers) for a coverage and gap rollup. Report a PRD-level `coverage_gate` that aggregates per-story gates. Scope to packages affected by the merged stories, not the entire workspace.
+3. Invoke `verifier` in `audit` mode for a **PRD-level rollup audit** against the full integrated scope (all merged stories on the integration branch, cross-checked against the source PRD/spec/milestone). This is mandatory and non-skippable — it runs whether or not any story-level drift was previously reported. Post the resulting human-readable summary to the plan/milestone issue via `github-ops` comment conventions. Rollup drift findings **MUST NOT** block the consolidated PR handoff; Unintended/Intended drift routes to `product-engineer`'s `activity-drift-reconciliation` flow.
+4. Invoke `technical-writer` for a planner-level drift/stale-doc validation pass against integrated changes; unresolved drift **MUST** block handoff.
+5. Open one consolidated PR from integration branch to `main`.
+6. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
+7. Wait for the user to approve and merge the PR into `main`.
+8. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
    - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
    - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
-8. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
+9. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
    - consolidated PR URL
    - current CI/check status
    - exact required user actions: review, approve, and merge

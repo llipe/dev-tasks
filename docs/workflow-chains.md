@@ -109,13 +109,62 @@ dt extract all
 ## Testing Standard (QA)
 
 ```text
-qa-engineer: activity-test-standards      → /TESTING.md filled, harness defects, gate reachability
-                 ↓
-             activity-test-implementation  → Layer 1-2 tests, mandatory security-negative cases
-                 ↓
-             activity-coverage-gap-analysis → coverage_gate + risk-ranked gap inventory
-                 ↓
-             (no coverage provider? structural path still runs — never "unknown")
+qa-engineer:
+  Step 1: activity-test-standards         → /TESTING.md filled, harness defects, gate reachability
+                                            (detects integration/E2E/contract infra)
+      ↓
+  Step 2: activity-test-implementation    → Layer 1-2 tests, security-negative cases
+      ↓
+  Step 2.5: activity-integration-test-implementation → Layer 2.5 tests (conditional)
+                                                       - local: real DB via testcontainers/docker/supabase-local
+                                                       - remote: read-only default, testing-env writes with approval
+                                                       - RLS, migrations, pgTAP
+      ↓
+  Step 3: activity-e2e-test-implementation → E2E layer (conditional)
+                                             - Playwright specs from scenario tables
+                                             - SC-{n} → .spec.ts traceability
+                                             - Auth, state reset, CI config
+      ↓
+  Step 4: activity-contract-validation     → Contract layer (conditional)
+                                             - dt verify contract-diff / impact / drift
+                                             - OpenAPI/AsyncAPI drift detection
+      ↓
+  Step 5: activity-coverage-gap-analysis   → coverage_gate + risk-ranked gap inventory
+                                             (scope includes integration + E2E + contract layers)
 ```
 
 Invoked by `developer` at the completion gate before the `verifier` audit, or directly by a user for a standalone pass (bootstrap `/TESTING.md`, backfill legacy tests, audit coverage).
+
+## Integration & E2E Testing Decision Path
+
+```text
+Does the project have Docker available?
+    ├── YES → Use testcontainers or docker-compose (prefer testcontainers for isolation)
+    │         Real Postgres, real migrations, real RLS
+    │
+    └── NO → Is Supabase CLI installed?
+                 ├── YES → Use `supabase start` for local stack
+                 │         Real Postgres, real migrations, real RLS
+                 │
+                 └── NO → Is a dedicated testing environment configured?
+                              ├── YES → Connect to testing env (explicit approval for writes)
+                              │         Read-only validation by default
+                              │
+                              └── NO → Record limitation. Use Layer 2 mocked tests.
+                                        Report "integration layer unavailable" in gap analysis.
+                                        Recommend environment setup as a follow-up.
+```
+
+## Planner Integration Rollup
+
+```text
+planner: orchestrate stories → developer: implement (per story)
+              ↓ (all stories merged to integration branch)
+         qa-engineer (PRD scope): full procedure on affected packages
+              ↓
+         coverage_gate (PRD-level, aggregated)
+              ↓
+         verifier (audit mode): PRD-level fidelity audit
+              ↓
+         PR: integration → main (user approval required)
+```
