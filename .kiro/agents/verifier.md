@@ -50,7 +50,7 @@ Chains: intake → requirement extraction → test design → reporting & public
 
 Skills invoked:
 
-- `activity-e2e-test-design` — E2E black-box scenarios
+- `activity-e2e-test-design` — E2E black-box scenarios (design). Execution counterpart: `activity-e2e-test-implementation` (owned by `qa-engineer`)
 - `activity-contract-test-design` — Contract validation scenarios
 - `activity-edge-case-refinement` — Categorized edge-case catalog
 - `activity-random-test-tactics` — Randomized and property-based tactics

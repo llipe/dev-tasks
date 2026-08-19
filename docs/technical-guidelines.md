@@ -175,8 +175,10 @@ For each behavioral task:
 
 - **Static validation:** formatting, linting, type checks, schema/frontmatter checks, and security scanning.
 - **Unit tests:** isolated business logic, transformations, and error handling.
+- **Integration tests (Layer 2.5):** real database, real migrations, RLS policies, schema contracts via pgTAP or equivalent. No mocked data layer.
 - **Integration/contract tests:** service boundaries, database behavior, migrations, permissions, and compatibility.
 - **E2E tests:** committed Playwright-style tests are the authoritative source for repeatable browser behavior.
+- **Contract validation:** API spec drift, breaking-change detection, and consumer impact via `dt verify` family.
 - **Runtime inspection:** live-browser tools inspect console errors, network failures, DOM/accessibility state, responsive behavior, and performance. They supplement but do not replace E2E tests.
 - **Mutation testing:** evaluates whether tests detect plausible faults. Initial PR policy establishes a baseline and prevents regression; changed-code/incremental enforcement may follow once runtime and flakiness are understood.
 - **Fidelity audit:** independently compares approved intent, workstream artifacts, implementation, tests, and observed evidence.

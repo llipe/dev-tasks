@@ -40,7 +40,7 @@ Invoke `activity-test-standards`. It establishes or refreshes `/TESTING.md` for 
 - Verify script reachability: every package containing tests **MUST** be reachable from the aggregate test command, and the CI and deploy gates **MUST** invoke that aggregate. A correct script name that omits a package is a defect.
 - Preserve consumer-authored content. Additions are additive.
 
-### 2. Author or fill missing tests
+### 2. Author or fill missing tests (Layers 1-2)
 
 Invoke `activity-test-implementation` for the requested scope.
 
@@ -49,7 +49,34 @@ Invoke `activity-test-implementation` for the requested scope.
 - Security-negative tests are **mandatory** for every authentication and authorization path: invalid signature, expired credential, wrong issuer or audience, tampered claims.
 - A passing suite over a permissive implementation is a finding, not a pass.
 
-### 3. Coverage and gap report
+### 2.5. Integration tests (Layer 2.5) — conditional
+
+Invoke `activity-integration-test-implementation` for the requested scope.
+
+- **Condition:** Run only when Layer 2.5 is configured in `/TESTING.md` (not `<!-- unfilled -->`). If Layer 2.5 is not configured, emit `SKIPPED(Layer 2.5 not configured in TESTING.md)` and proceed to the next step.
+- Detect the local environment (testcontainers, docker-compose, Supabase local CLI) and recommend the easiest option.
+- Write integration tests: migration clean-apply, RLS policy assertions, schema contracts.
+- Report limitations when no local or remote environment is available.
+
+### 3. E2E tests — conditional
+
+Invoke `activity-e2e-test-implementation` for the requested scope.
+
+- **Condition:** Run only when the E2E layer is configured in `/TESTING.md` (not `<!-- unfilled -->`). If E2E is not configured, emit `SKIPPED(E2E layer not configured in TESTING.md)` and proceed to the next step.
+- Convert verifier scenario tables into Playwright specs with `@scenario SC-{n}` traceability.
+- Verify Playwright prerequisites (auth, base URL, state reset, browser install).
+- Report uncovered scenarios from the test plan.
+
+### 4. Contract validation — conditional
+
+Invoke `activity-contract-validation` for the requested scope.
+
+- **Condition:** Run only when the Contract Validation layer is configured in `/TESTING.md` (not `<!-- unfilled -->`) or when OpenAPI/AsyncAPI specs are detected in the repository. If neither condition is met, emit `SKIPPED(no contract validation layer configured and no API specs found)` and proceed to the next step.
+- Detect `dt` availability. If unavailable, emit `SKIPPED(dt not installed)` with manual instructions.
+- Run `dt verify contract-diff`, `impact`, and `drift`.
+- Report breaking changes as critical findings. Report drift as non-blocking.
+
+### 5. Coverage and gap report
 
 Invoke `activity-coverage-gap-analysis`.
 
@@ -74,7 +101,7 @@ You **MUST NOT** edit:
 
 ## Non-Negotiable Rules
 
-1. You **MUST** run all three steps in order, every invocation.
+1. You **MUST** run all steps in order, every invocation. Steps 2.5, 3, and 4 are conditional — skip with a reason when the layer is not configured.
 2. You **MUST NOT** report a pass for anything you could not measure.
 3. You **MUST** report an unfilled `/TESTING.md` placeholder as unfilled.
 4. You **MUST** treat a green suite over an insecure or permissive implementation as a finding.

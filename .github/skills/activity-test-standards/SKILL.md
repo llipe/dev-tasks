@@ -92,6 +92,46 @@ A monorepo defines `test:node` as `app && scraper && db` while the `api` package
 
 Correct output: **defect** — `api` is unreachable from the aggregate; the CI gate and the deploy gate both let untested backend code through. Reporting "all script names conform" here is a false pass.
 
+## Part 4 — Integration, E2E, and Contract Infrastructure Detection
+
+Detect the presence and configuration state of higher-layer test infrastructure. Report findings as **informational** — missing infrastructure is not a defect, but it informs the gap analysis.
+
+### Integration testing infrastructure
+
+| Check | What to look for |
+| ----- | ---------------- |
+| **Testcontainers** | `@testcontainers/postgresql` or similar in dependencies |
+| **Docker Compose** | `docker-compose.yml` or `compose.yml` with a database service |
+| **Supabase local CLI** | `supabase/config.toml` or `.supabase/` directory |
+| **Docker availability** | `docker info` succeeds (report if unavailable) |
+
+### E2E testing infrastructure
+
+| Check | What to look for |
+| ----- | ---------------- |
+| **Playwright config** | `playwright.config.ts` or `playwright.config.js` present |
+| **Base URL configured** | Config references `process.env.BASE_URL` or equivalent (not hardcoded localhost) |
+| **Auth setup project** | A `global-setup` or setup project defined in Playwright config |
+| **Browser install in CI** | CI workflow includes `playwright install` step |
+| **`test:e2e` script** | Present in `package.json` and reachable from aggregate |
+
+### Contract validation infrastructure
+
+| Check | What to look for |
+| ----- | ---------------- |
+| **OpenAPI spec** | `openapi.yaml`, `openapi.json`, `swagger.*` in repo |
+| **AsyncAPI spec** | `asyncapi.yaml`, `asyncapi.json` in repo |
+| **`dt` CLI** | `which dt` succeeds |
+| **`test:contract` script** | Present in `package.json` and reachable from aggregate |
+
+### Reporting
+
+Report each finding as:
+- `[INFO] <infrastructure> detected: <path or status>`
+- `[INFO] <infrastructure> not found — Layer {X} tests require this`
+
+These are informational findings for the gap analysis. They do **NOT** block or fail the standards check.
+
 ## Failure Modes
 
 | Condition                     | Required behavior                                                           |
