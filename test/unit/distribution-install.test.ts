@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { installFiles } from "#core/distribution/install.js";
+import { ROOT_FILES } from "#core/distribution/profiles.js";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import type { Manifest } from "#core/distribution/manifest.js";
@@ -589,6 +590,151 @@ describe("core/distribution/install — root-file distribution (AC-10)", () => {
       write(sourceDir, ".kiro/agents/developer.md", "# Kiro Dev");
       await expect(install("kiro")).resolves.toBeDefined();
       expect(rootEntries(readManifestFile())).toHaveLength(0);
+    });
+  });
+});
+
+/**
+ * Registry-driven root-file distribution (issue #136, AC-1 .. AC-4).
+ *
+ * `TESTING.md` (#134) and `DESIGN.md` (#136) both failed the same way: a root
+ * contract was declared canonical in AGENTS.md but was absent from one or more
+ * of the four surfaces that actually ship it. Asserting a hardcoded filename
+ * would not have caught either. These tests assert the *registry* instead, so
+ * any future root file is covered the moment it is added to ROOT_FILES.
+ *
+ * The four surfaces that must agree:
+ *   1. core/distribution/profiles.ts  ROOT_FILES        (npm installer)
+ *   2. package.json                   files             (npm publish allowlist)
+ *   3. scripts/build-bundle.sh        MANAGED_FILES     (tarball bundle)
+ *   4. bundle-manifest.json           consumer_owned_paths (update protection)
+ */
+describe("core/distribution/install — root-file registry parity (#136)", () => {
+  const repoRoot = resolve(__dirname, "../..");
+
+  function readRepoFile(rel: string): string {
+    return readFileSync(join(repoRoot, rel), "utf-8");
+  }
+
+  it("ROOT_FILES is non-empty and contains both shipped contracts", () => {
+    expect(ROOT_FILES.length).toBeGreaterThan(0);
+    expect(ROOT_FILES).toContain("TESTING.md");
+    expect(
+      ROOT_FILES,
+      "DESIGN.md is declared canonical in AGENTS.md; it must ship via the installer",
+    ).toContain("DESIGN.md");
+  });
+
+  it("every ROOT_FILES entry is a bare root-level filename", () => {
+    for (const f of ROOT_FILES) {
+      expect(f, `${f} must be a bare filename; nested paths belong in PROFILE_PATHS`).not.toContain(
+        "/",
+      );
+    }
+  });
+
+  it("every ROOT_FILES entry exists at the repository root", () => {
+    for (const f of ROOT_FILES) {
+      expect(existsSync(join(repoRoot, f)), `${f} listed in ROOT_FILES but missing on disk`).toBe(
+        true,
+      );
+    }
+  });
+
+  it("every ROOT_FILES entry is in the package.json files allowlist", () => {
+    const pkg = JSON.parse(readRepoFile("package.json")) as { files?: string[] };
+    const files = pkg.files ?? [];
+    for (const f of ROOT_FILES) {
+      expect(
+        files,
+        `${f} missing from package.json "files" — it would not reach npm consumers`,
+      ).toContain(f);
+    }
+  });
+
+  it("every ROOT_FILES entry is in build-bundle.sh MANAGED_FILES", () => {
+    const script = readRepoFile("scripts/build-bundle.sh");
+    const block = script.match(/MANAGED_FILES=\(([\s\S]*?)\)/);
+    expect(block, "MANAGED_FILES block not found in build-bundle.sh").not.toBeNull();
+    for (const f of ROOT_FILES) {
+      expect(block![1], `${f} missing from build-bundle.sh MANAGED_FILES`).toContain(f);
+    }
+  });
+
+  it("every ROOT_FILES entry is in consumer_owned_paths so update never overwrites it", () => {
+    const manifest = JSON.parse(readRepoFile("bundle-manifest.json")) as {
+      consumer_owned_paths?: string[];
+    };
+    const owned = manifest.consumer_owned_paths ?? [];
+    for (const f of ROOT_FILES) {
+      expect(
+        owned,
+        `${f} missing from consumer_owned_paths — a filled consumer version could be overwritten`,
+      ).toContain(f);
+    }
+  });
+
+  describe("install behaviour across profiles", () => {
+    let tmpDir: string;
+    let targetDir: string;
+    let sourceDir: string;
+
+    beforeEach(() => {
+      tmpDir = mkdtempSync(join(tmpdir(), "dev-tasks-rootreg-"));
+      targetDir = join(tmpDir, "target-repo");
+      sourceDir = join(tmpDir, "package-source");
+      mkdirSync(targetDir, { recursive: true });
+      mkdirSync(sourceDir, { recursive: true });
+      // one platform file so the profile resolves, plus every root file
+      mkdirSync(join(sourceDir, ".kiro/agents"), { recursive: true });
+      writeFileSync(join(sourceDir, ".kiro/agents/developer.md"), "# Dev", "utf-8");
+      mkdirSync(join(sourceDir, ".github/agents"), { recursive: true });
+      writeFileSync(join(sourceDir, ".github/agents/developer.agent.md"), "# Dev", "utf-8");
+      mkdirSync(join(sourceDir, ".claude/agents"), { recursive: true });
+      writeFileSync(join(sourceDir, ".claude/agents/developer.md"), "# Dev", "utf-8");
+      for (const f of ROOT_FILES) {
+        writeFileSync(join(sourceDir, f), `# ${f} placeholder\n`, "utf-8");
+      }
+    });
+
+    afterEach(() => {
+      rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    for (const profile of ["copilot", "claude", "kiro", "both", "all"] as const) {
+      it(`installs every root file exactly once under --profile ${profile}`, async () => {
+        await installFiles({
+          sourceDir,
+          targetDir,
+          version: "0.1.0",
+          pin: "0.1.0",
+          profile,
+        });
+
+        const manifest = JSON.parse(
+          readFileSync(join(targetDir, ".dev-tasks/manifest.json"), "utf-8"),
+        ) as Manifest;
+
+        for (const f of ROOT_FILES) {
+          expect(existsSync(join(targetDir, f)), `${f} missing after --profile ${profile}`).toBe(
+            true,
+          );
+          const entries = manifest.files.filter((e) => e.path === f);
+          expect(entries, `${f} must have exactly one manifest entry`).toHaveLength(1);
+          expect(entries[0].profile).toBe("root");
+        }
+      });
+    }
+
+    it("restores a deleted root file on re-install", async () => {
+      await installFiles({ sourceDir, targetDir, version: "0.1.0", pin: "0.1.0", profile: "all" });
+      for (const f of ROOT_FILES) {
+        rmSync(join(targetDir, f));
+      }
+      await installFiles({ sourceDir, targetDir, version: "0.1.0", pin: "0.1.0", profile: "all" });
+      for (const f of ROOT_FILES) {
+        expect(existsSync(join(targetDir, f))).toBe(true);
+      }
     });
   });
 });
