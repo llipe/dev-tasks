@@ -275,7 +275,6 @@ On-demand capabilities loaded only when invoked.
 | `git-ops`                        | Branch, rebase, merge, conflict resolution      | `developer`, `planner`                              |
 | `ux-scaffold`                    | Template-aware mockup generation (lite/full)    | `ux-engineer`                                       |
 | `ux-theme-gen`                   | DESIGN.md → theme artifacts (CSS vars, Tailwind v4, RN) | `ux-engineer`, `developer`                   |
-| `webapp-mockup`                  | *(Deprecated → ux-scaffold)* React mockup scaffold | `ux-engineer`                                    |
 | `activity-e2e-test-design`       | E2E black-box test scenario generation          | `verifier`                                          |
 | `activity-contract-test-design`  | Consumer/provider contract testing              | `verifier`                                          |
 | `activity-edge-case-refinement`  | Systematic edge-case discovery                  | `verifier`                                          |

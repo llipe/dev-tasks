@@ -95,7 +95,6 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 | **git-ops**        | `skills/git-ops/`        | Branch management, rebase, merge, conflict resolution, recovery                                                                           | `developer`, `planner`          |
 | **ux-scaffold**    | `skills/ux-scaffold/`    | Template-aware mockup project creation with DESIGN.md-derived tokens. Supports html-lite (zero-install, navigable) and react-full (shadcn + Vite + Radix) | `ux-engineer`                   |
 | **ux-theme-gen**   | `skills/ux-theme-gen/`   | Generate platform-specific theme artifacts from DESIGN.md. Use when mockups or production code need consumable tokens derived from the canonical design contract | `ux-engineer`, `developer`      |
-| **webapp-mockup**  | `skills/webapp-mockup/`  | *(Deprecated — routes to ux-scaffold with fidelity: full)* Scaffold and generate React mockup apps for UX testing                         | `ux-engineer`                   |
 | **memo-cli-usage** | `skills/memo-cli-usage/` | Read and write architectural decisions to a shared Qdrant knowledge base for multi-session, multi-agent, and team-wide context continuity | `technical-writer`, `developer` |
 
 ### Third-Party Skills

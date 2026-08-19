@@ -113,7 +113,7 @@ Pinned to the verified compatibility matrix:
 
 ## Backward Compatibility
 
-`webapp-mockup` remains as a deprecated alias. Its SKILL.md directs to `ux-scaffold` with `fidelity: full`.
+`webapp-mockup` has been removed. Use `ux-scaffold` directly with the appropriate template.
 
 ## Acceptance Checklist
 

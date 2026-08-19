@@ -25,7 +25,7 @@ graph LR
     SK_STORIES[activity-generate-stories]
     SK_PUB[activity-publish-github]
     SK_GIT[git-ops]
-    SK_MOCK[webapp-mockup]
+    SK_SCAFFOLD[ux-scaffold]
   end
 
   %% -----------------------------

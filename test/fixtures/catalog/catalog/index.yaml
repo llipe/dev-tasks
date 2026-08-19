@@ -756,7 +756,7 @@ domains:
 errors:
   - error: component.json not found at /Users/felipemallea/Documents/Documentos - M-FMALLEAS/Dev/dev-tasks/test/fixtures/catalog/repos/broken-repo/component.json
     repo: ./repos/broken-repo
-    timestamp: 2026-08-18T19:21:00.616Z
+    timestamp: 2026-08-19T18:14:34.812Z
 extraction_quality:
   per_component:
     - component_id: admin-frontend
@@ -909,5 +909,5 @@ flows:
       - auth-service
       - notification-service
       - email-worker
-generated_at: 2026-08-18T19:21:00.616Z
-generator: dev-tasks@0.9.1
+generated_at: 2026-08-19T18:14:34.812Z
+generator: dev-tasks@0.9.2

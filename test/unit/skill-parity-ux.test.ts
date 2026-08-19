@@ -142,22 +142,13 @@ describe("ux-engineer agent parity", () => {
   });
 });
 
-describe("webapp-mockup deprecation parity", () => {
-  const kiroPath = resolve(ROOT, ".kiro/skills/webapp-mockup/SKILL.md");
-  const githubPath = resolve(ROOT, ".github/skills/webapp-mockup/SKILL.md");
-  const claudePath = resolve(ROOT, ".claude/skills/webapp-mockup/SKILL.md");
-
-  const kiroContent = stripFrontmatter(readFileSync(kiroPath, "utf-8"));
-  const githubContent = stripFrontmatter(readFileSync(githubPath, "utf-8"));
-  const claudeContent = stripFrontmatter(readFileSync(claudePath, "utf-8"));
-
-  it("all three trees have identical deprecation content", () => {
-    expect(kiroContent).toBe(githubContent);
-    expect(kiroContent).toBe(claudeContent);
-  });
-
-  it("is marked deprecated and directs to ux-scaffold", () => {
-    expect(kiroContent).toContain("Deprecated");
-    expect(kiroContent).toContain("ux-scaffold");
+describe("webapp-mockup removal", () => {
+  it("webapp-mockup skill directories no longer exist in any tree", () => {
+    for (const tree of [".github", ".claude", ".kiro"]) {
+      expect(
+        existsSync(resolve(ROOT, `${tree}/skills/webapp-mockup/SKILL.md`)),
+        `${tree}/skills/webapp-mockup should be removed`,
+      ).toBe(false);
+    }
   });
 });
