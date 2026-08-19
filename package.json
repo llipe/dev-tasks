@@ -30,6 +30,7 @@
     ".kiro/hooks/",
     "AGENTS.md",
     "CLAUDE.md",
+    "DESIGN.md",
     "TESTING.md",
     "bundle-manifest.json",
     "README.md",
@@ -40,7 +41,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "build": "tsc",
@@ -75,7 +76,7 @@
   "packageManager": "pnpm@10.11.0",
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "22.15.18",
+    "@types/node": "24.13.3",
     "@typescript-eslint/eslint-plugin": "8.32.1",
     "@typescript-eslint/parser": "8.32.1",
     "eslint": "9.27.0",

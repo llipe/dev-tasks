@@ -52,7 +52,7 @@ export const PROFILE_PATHS: Record<Platform, ManagedPath[]> = {
  * Entries MUST be bare filenames at the repository root — a nested or
  * platform-prefixed path belongs in `PROFILE_PATHS` instead.
  */
-export const ROOT_FILES: readonly string[] = ["TESTING.md"] as const;
+export const ROOT_FILES: readonly string[] = ["DESIGN.md", "TESTING.md"] as const;
 
 /**
  * Manifest `profile` tag for root files.

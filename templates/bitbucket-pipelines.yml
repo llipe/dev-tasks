@@ -2,9 +2,10 @@
 # Runs on a schedule to rebuild and validate the catalog, committing changes if any.
 #
 # Prerequisites:
-#   - Node.js >= 20 must be available in the base image.
-#     The default atlassian/default-image:4 includes Node 20+.
-#     If using a custom image, ensure Node >= 20 is installed.
+#   - Node.js >= 24 must be available in the base image.
+#     Verify your base image ships Node >= 24; atlassian/default-image may
+#     pin an older line. If it does, install Node >= 24 explicitly or use a
+#     node:24 image.
 #   - @llipe/dev-tasks (installed via npx at runtime)
 #
 # Schedule configuration:
@@ -27,8 +28,8 @@ definitions:
           - node --version
           - |
             NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]')
-            if [ "$NODE_MAJOR" -lt 20 ]; then
-              echo "ERROR: Node.js >= 20 required (found v$(node --version))"
+            if [ "$NODE_MAJOR" -lt 24 ]; then
+              echo "ERROR: Node.js >= 24 required (found v$(node --version))"
               exit 1
             fi
           # Build the catalog from the registry

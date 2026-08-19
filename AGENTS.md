@@ -18,7 +18,7 @@ This system brings structure and clarity to AI-assisted development by:
 
 `/DESIGN.md` is the canonical design-system artifact for this repository.
 
-- `ux-engineer` **MUST** use `/DESIGN.md` as the primary style source for mockups.
+- `ux-engineer` **OWNS** `/DESIGN.md` and fills it per project via the interview-driven filling procedure. It **MUST** use `/DESIGN.md` as the primary style source for mockups.
 - `product-engineer` **MUST** reference `/DESIGN.md` for UI-impacting specs and stories.
 - `developer` **MUST** validate UI changes against `/DESIGN.md` and update it when the visual contract changes.
 - `planner` **MUST** require DESIGN.md compliance in UI-impacting delegated runs.
@@ -60,7 +60,7 @@ It ships with dev-tasks as a placeholder and is listed in `consumer_owned_paths`
 | **technical-writer** | `technical-writer.agent.md` | Autonomous documentation maintenance                                                                                                                                                                                                             |
 | **housekeeping**     | `housekeeping.agent.md`     | Lint, type, and test-wiring fixes                                                                                                                                                                                                                |
 | **github-ops**       | `github-ops.agent.md`       | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy                                                                                                                       |
-| **ux-engineer**      | `ux-engineer.agent.md`      | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer`                                                                                                                          |
+| **ux-engineer**      | `ux-engineer.agent.md`      | UX prototyping, DESIGN.md ownership, and gap analysis — owns `/DESIGN.md`, generates navigable screen sets at two fidelity levels (html-lite, react-full), and feeds refinements back to `product-engineer`                                       |
 | **qa-engineer**      | `qa-engineer.agent.md`      | Quality agent — establishes the `/TESTING.md` standard, authors tests for layers the project lacks, and reports coverage and structural gaps. Invoked by `developer` at the completion gate, before the `verifier` audit                         |
 | **verifier**         | `verifier.agent.md`         | Verification agent — owns compliance test-plan design (`design` mode) and post-implementation grey-box fidelity auditing (`audit` mode) against codebase, `/workstream`, tests, and PRD/spec intent                                              |
 
@@ -93,7 +93,8 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 | Skill              | Directory                | Purpose                                                                                                                                   | Primary Consumer                |
 | ------------------ | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | **git-ops**        | `skills/git-ops/`        | Branch management, rebase, merge, conflict resolution, recovery                                                                           | `developer`, `planner`          |
-| **webapp-mockup**  | `skills/webapp-mockup/`  | Scaffold and generate React mockup apps for UX testing                                                                                    | `ux-engineer`                   |
+| **ux-scaffold**    | `skills/ux-scaffold/`    | Template-aware mockup project creation with DESIGN.md-derived tokens. Supports html-lite (zero-install, navigable) and react-full (shadcn + Vite + Radix) | `ux-engineer`                   |
+| **ux-theme-gen**   | `skills/ux-theme-gen/`   | Generate platform-specific theme artifacts from DESIGN.md. Use when mockups or production code need consumable tokens derived from the canonical design contract | `ux-engineer`, `developer`      |
 | **memo-cli-usage** | `skills/memo-cli-usage/` | Read and write architectural decisions to a shared Qdrant knowledge base for multi-session, multi-agent, and team-wide context continuity | `technical-writer`, `developer` |
 
 ### Third-Party Skills

@@ -1424,7 +1424,7 @@ With `--force`: backs up conflicting files to `.dev-tasks/backup/<timestamp>/` t
 
 Validates your environment:
 
-- Node.js >= 20
+- Node.js >= 24
 - git >= 2.37 (needed for sparse-checkout support)
 - Cache directory (`~/.cache/dev-tasks`) is writable
 - No version skew between installed and pinned versions

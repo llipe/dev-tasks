@@ -103,6 +103,7 @@
   "consumer_owned_paths": [
     "AGENTS.md",
     "CLAUDE.md",
+    "DESIGN.md",
     "TESTING.md",
     ".claude/settings.json",
     ".kiro/settings/mcp.json",

@@ -37,9 +37,20 @@ developer: implement
 ```text
 product-engineer: refine → generate-spec
                                ↓
-ux-engineer: mockups → gap analysis → refinement handoff
+ux-engineer (lite): screen sketches → gap analysis → refinement handoff
                                           ↓
-product-engineer: update spec/stories
+product-engineer: update spec/stories → generate-stories → plan
+                                                               ↓
+developer: implement
+```
+
+Lite mode (default) produces navigable HTML screens at zero install cost.
+For interactive usability testing, invoke `ux-engineer` with `fidelity: full`
+(shadcn + Vite + Radix prototype).
+
+```text
+Quick screen sketches (direct):
+  ux-engineer (lite, source: PRD or spec path) → screen set + gap analysis
 ```
 
 ## Test-First Design (Verifier)

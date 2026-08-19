@@ -251,7 +251,7 @@ Multi-story orchestration with checkpoint/resume:
 
 | Agent              | Purpose                                                              |
 | ------------------ | -------------------------------------------------------------------- |
-| `ux-engineer`      | PRD/SPEC-to-mockup prototyping                                       |
+| `ux-engineer`      | PRD/SPEC-to-screen visualization (lite/full), DESIGN.md ownership, gap analysis |
 | `technical-writer` | Documentation maintenance                                            |
 | `housekeeping`     | Lint, type, and test-wiring fixes                                    |
 | `github-ops`       | GitHub consistency — issues, PRs, branches, labels                   |
@@ -273,7 +273,8 @@ On-demand capabilities loaded only when invoked.
 | `activity-publish-github`        | Stories → GitHub Issues                         | `product-engineer`                                  |
 | `activity-drift-reconciliation`  | Routes verifier drift findings into remediation | `product-engineer`                                  |
 | `git-ops`                        | Branch, rebase, merge, conflict resolution      | `developer`, `planner`                              |
-| `webapp-mockup`                  | React mockup scaffold for UX testing            | `ux-engineer`                                       |
+| `ux-scaffold`                    | Template-aware mockup generation (lite/full)    | `ux-engineer`                                       |
+| `ux-theme-gen`                   | DESIGN.md → theme artifacts (CSS vars, Tailwind v4, RN) | `ux-engineer`, `developer`                   |
 | `activity-e2e-test-design`       | E2E black-box test scenario generation          | `verifier`                                          |
 | `activity-contract-test-design`  | Consumer/provider contract testing              | `verifier`                                          |
 | `activity-edge-case-refinement`  | Systematic edge-case discovery                  | `verifier`                                          |
@@ -337,7 +338,8 @@ Match your situation to a chain, then invoke the first agent in it. Full diagram
 | Several dependent stories   | `product-engineer` (… → plan) → `planner` → `developer` per story, sequential                                                 |
 | Quick fix, task list exists | `developer`                                                                                                                   |
 | Test-first design           | … → plan → `verifier` (design) → `developer` → `qa-engineer` → `verifier` (audit) → `product-engineer` (drift reconciliation) |
-| UX validation before build  | `product-engineer` (refine → spec) → `ux-engineer` → `product-engineer`                                                       |
+| UX validation before build  | `product-engineer` (refine → spec) → `ux-engineer` (lite) → `product-engineer` (stories) → `developer`                                    |
+| Quick screen sketches       | `ux-engineer` (lite mode, direct invocation with PRD/spec path)                                                                            |
 | New project                 | `product-engineer` (init mode)                                                                                                |
 
 The `verifier` audit after implementation is mandatory and non-skippable before a PR is marked ready.
@@ -407,7 +409,7 @@ memo setup init --repo <repo-name> --org <org-name> --domain <domain>
 
 ### Prerequisites
 
-- Node.js >= 20
+- Node.js >= 24
 - pnpm (via `corepack enable`)
 - git >= 2.37
 

@@ -37,6 +37,7 @@ MANAGED_FILES=(
   "dev-tasks.sh"
   "AGENTS.md"
   "CLAUDE.md"
+  "DESIGN.md"
   "TESTING.md"
   ".claude/settings.json"
 )

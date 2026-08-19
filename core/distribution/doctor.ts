@@ -1,6 +1,6 @@
 /**
  * Doctor checks — validate environment prerequisites.
- * Checks: Node >= 20, git >= 2.37, cache dir writable, version skew.
+ * Checks: Node >= 24, git >= 2.37, cache dir writable, version skew.
  */
 
 import { mkdir, writeFile, rm } from "node:fs/promises";
@@ -20,7 +20,7 @@ export interface DoctorOptions {
   cacheDir?: string;
 }
 
-const MIN_NODE_MAJOR = 20;
+const MIN_NODE_MAJOR = 24;
 const MIN_GIT_MAJOR = 2;
 const MIN_GIT_MINOR = 37;
 
@@ -38,7 +38,7 @@ function parseSemver(version: string): { major: number; minor: number; patch: nu
 }
 
 /**
- * Check Node.js version >= 20.
+ * Check Node.js version >= 24.
  */
 export function checkNodeVersion(versionStr?: string): DoctorCheck {
   const version = versionStr ?? process.version;

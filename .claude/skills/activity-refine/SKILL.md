@@ -234,3 +234,4 @@ Rules:
 6. You **MUST** save the finalized document.
 7. In Issue Refinement mode, you **MUST** update the GitHub Issue with a "Refined Scope" section by delegating to `github-ops` whenever possible.
 8. When updating an existing document, you **MUST** add a new row to the Changelog table with an incremented version, the current date, a summary of changes, and the responsible author/agent.
+9. After producing the document, if the feature includes UI/UX scope (detected by keywords: UI, screen, page, form, modal, dialog, navigation, layout, component, responsive, accessibility), you **SHOULD** add the following recommendation to the user: "This feature has UI scope. **Recommended:** use `ux-engineer` (lite mode) to generate screen sketches before proceeding to spec/stories."
