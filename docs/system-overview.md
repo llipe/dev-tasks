@@ -184,6 +184,8 @@ Platform differences that are intentional, not drift:
 
 `/TESTING.md` is the canonical testing contract, shipped as a placeholder and listed in `consumer_owned_paths` so `dev-tasks update` never overwrites a filled version. It is distributed by both install paths: `MANAGED_FILES` in `scripts/build-bundle.sh` for the shell bundle, and `ROOT_FILES` in `core/distribution/profiles.ts` for `dev-tasks install`.
 
+`/DESIGN.md` is the canonical visual and technical design contract, shipped identically to `TESTING.md` — placeholder status, `consumer_owned_paths`, and distributed via both `MANAGED_FILES` and `ROOT_FILES`. `ux-engineer` owns the contract and fills it via an interview-driven procedure that requires explicit human confirmation; `developer` keeps it current when the visual contract changes. An unfilled placeholder means "no standard established" and blocks mockup generation and theme-artifact output.
+
 Root files belong to no platform. They are installed once per run regardless of how many platforms a profile resolves to, and recorded in the install manifest under the `root` profile tag — a dedicated tag is required because manifest merging replaces entries whose profile is in the installed set, so a platform tag would drop the file on one profile and duplicate it on another.
 
-`qa-engineer` owns the contract; `developer` keeps it current. An unfilled placeholder means "no standard established" and **MUST NOT** be read as permission.
+`qa-engineer` owns `/TESTING.md`; `ux-engineer` owns `/DESIGN.md`. `developer` keeps both current. An unfilled placeholder means "no standard established" and **MUST NOT** be read as permission.
