@@ -53,3 +53,12 @@ test/fixtures/catalog/catalog/index.yaml
 
 # Manual test scratch file
 test/_manual.ts
+
+
+# Generated mockup apps — source tracked, build output ignored
+/mockups/*/node_modules/
+/mockups/*/dist/
+/mockups/*/.vite/
+
+# Active workstream mockups are transient; archived copies are durable
+/workstream/mockups/

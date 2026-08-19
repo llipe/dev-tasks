@@ -1,76 +1,39 @@
 ---
 name: webapp-mockup
-description: "Scaffold and generate runnable React mockups for UX testing. Use when prototyping UI before full implementation."
+description: "DEPRECATED — use ux-scaffold instead. This skill routes to ux-scaffold with fidelity: full for backward compatibility."
+deprecated: true
+successor: ux-scaffold
 ---
 
-# Webapp Mockup Skill
+# Webapp Mockup (Deprecated)
 
-Purpose
+> **This skill is deprecated.** Use `ux-scaffold` instead.
+>
+> `webapp-mockup` is retained for backward compatibility. Internally it routes
+> to `ux-scaffold` with `fidelity: full` (the `react-full` template).
+>
+> Removal target: end of the 0.x release line.
 
-- Generate consistent, runnable React mockups for feature discovery and UI/functionality gap analysis.
-- Produce partial, high-signal mockups with realistic UI artifacts: components, texts, transitions, popups, warnings, inputs, and validations.
+## Migration
 
-When to use
+Replace invocations of `webapp-mockup` with `ux-scaffold`:
 
-- User asks to visualize a potential UI before full implementation.
-- Team needs a browsable prototype to identify missing requirements.
-- A feature section is still exploratory and should not include full backend flow.
+- For lightweight screens: invoke `ux-scaffold` with template `html-lite`.
+- For interactive prototypes: invoke `ux-scaffold` with template `react-full`.
 
-Required behavior
+The `scaffold-mockup.sh` script in this directory is superseded by:
+- `.github/skills/ux-scaffold/scripts/scaffold-full.sh`
+- `.github/skills/ux-scaffold/scripts/scaffold-lite.sh`
 
-1. Folder layout
+## Differences from ux-scaffold
 
-- Create mockups only under:
-  - /mockups/mockup-<feature>-<num>
-- Keep each mockup self-contained and runnable with npm scripts.
-
-2. Color palette rule
-
-- If the project or user has not defined a palette, ask for one.
-- Default fallback palette source:
-  - https://colorhunt.co/palette/281c594e8d9c85c79aedf7bd
-
-3. UI coverage requirements
-
-- Include:
-  - Core components (cards, buttons, inputs, labels)
-  - Meaningful UI text and microcopy
-  - Transition behavior (section reveal, popup open/close)
-  - Popup/dialog examples
-  - Warning and error states
-  - Input validation states and messages
-- No need to complete entire flow.
-- If only a section is implemented, add a visible banner with instructions indicating this is a partial mockup and where to continue.
-
-4. CSS references
-
-- Ensure CSS files are referenced correctly from app entry/components.
-- Keep any additional stylesheet imports explicit.
-
-5. Consistency via scaffold script
-
-- Use:
-  - ./.github/skills/webapp-mockup/scripts/scaffold-mockup.sh <feature> <num> [palette_url]
-- This script must be the default path for creating new mockups to keep structure and baseline behavior consistent.
-- The scaffold path must remain non-interactive so agents can run it without manual terminal confirmation.
-
-Operational workflow
-
-1. Confirm feature slug and mockup number.
-2. Confirm palette or apply fallback URL.
-3. Run scaffold script.
-
-- The script is designed to run non-interactively in agent terminal sessions.
-
-4. Implement or adjust the specific mockup section requested.
-5. Verify app runs with npm run dev.
-6. Summarize what is mocked vs intentionally not implemented.
-
-Acceptance checklist
-
-- Mockup path follows /mockups/mockup-<feature>-<num>
-- App is runnable locally
-- Palette is user-defined or fallback applied
-- Banner exists for partial implementation
-- Includes inputs + validations + warnings + popup + transitions
-- CSS references are present and valid
+| webapp-mockup (old) | ux-scaffold (new) |
+| --- | --- |
+| One template (React + hardcoded palette) | Two templates: html-lite, react-full |
+| `colorhunt.co` fallback palette | DESIGN.md is the sole token source |
+| `tailwindcss-animate` + `postcss` | `tw-animate-css` + `@tailwindcss/vite` (Tailwind v4) |
+| Per-component `@radix-ui/react-*` | Unified `radix-ui` package |
+| Hand-rolled components in heredoc | `shadcn` CLI + `shadcn add` |
+| No screen enumeration | Systematic screen types (happy/error/empty/loading/edge) |
+| No annotations | AC/story references on every screen section |
+| No inter-screen navigation | index.html + prev/next links (html-lite) |
