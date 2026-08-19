@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.10.0] - 2026-08-19
+
+### Added
+
+- feat(ux): add ux-scaffold, ux-theme-gen skills; rewrite ux-engineer agent
+
+### Fixed
+
+- fix(design): distribute DESIGN.md and convert it to a placeholder contract
+
+### Changed
+
+- chore: format update
+- Merge pull request #137 from llipe/issue/136-ux-engineer-overhaul
+- chore: remove webapp-mockup skill entirely
+- docs: add DESIGN.md to system-overview and update workflow-chains with lite mode
+- chore!: raise minimum Node.js to >= 24
+
 ## [Unreleased]
 
 ### Changed
