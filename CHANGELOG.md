@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **BREAKING:** raise the minimum supported Node.js version to `>= 24` (was `>= 20`).
+  Node 24 is an LTS line supported through April 2028; Node 20 is past end-of-life,
+  so the previous floor claimed support for an unsupported runtime. Consumers on
+  Node 20 or 22 must upgrade. Affects `engines.node`, the `dev-tasks doctor` check
+  (`MIN_NODE_MAJOR`), the shipped CI templates (`templates/meta-repo/catalog-rebuild.yml`,
+  `templates/bitbucket-pipelines.yml`), and the documented prerequisites.
+- Pin `@types/node` to `24.13.3`, matching the minimum supported runtime rather than
+  the latest release, so Node 26-only APIs cannot be referenced against a Node 24 floor.
+
 ## [0.9.2] - 2026-08-18
 
 ### Fixed

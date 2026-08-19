@@ -407,7 +407,7 @@ memo setup init --repo <repo-name> --org <org-name> --domain <domain>
 
 ### Prerequisites
 
-- Node.js >= 20
+- Node.js >= 24
 - pnpm (via `corepack enable`)
 - git >= 2.37
 

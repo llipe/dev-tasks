@@ -2,7 +2,7 @@
 # Runs hourly to rebuild and validate the catalog, committing changes if any.
 #
 # Prerequisites:
-#   - Node.js >= 20
+#   - Node.js >= 24
 #   - @llipe/dev-tasks installed (via npx)
 #
 # Alert mechanism: non-zero exit causes the workflow to fail,
@@ -35,7 +35,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Build catalog
         run: npx @llipe/dev-tasks dt catalog build --registry registry.yaml

@@ -12,25 +12,25 @@ import { tmpdir } from "node:os";
 
 describe("core/distribution/doctor", () => {
   describe("checkNodeVersion", () => {
-    it("passes when Node version >= 20", () => {
-      const result = checkNodeVersion("v20.0.0");
+    it("passes when Node version >= 24", () => {
+      const result = checkNodeVersion("v24.0.0");
       expect(result.pass).toBe(true);
       expect(result.name).toBe("node-version");
     });
 
-    it("passes for Node v22.x", () => {
-      const result = checkNodeVersion("v22.5.1");
+    it("passes for Node v26.x", () => {
+      const result = checkNodeVersion("v26.7.0");
       expect(result.pass).toBe(true);
     });
 
-    it("fails for Node v18.x", () => {
-      const result = checkNodeVersion("v18.19.0");
+    it("fails for Node v22.x (previous LTS, now below the floor)", () => {
+      const result = checkNodeVersion("v22.5.1");
       expect(result.pass).toBe(false);
-      expect(result.message).toMatch(/20/);
+      expect(result.message).toMatch(/24/);
     });
 
-    it("fails for Node v16.x", () => {
-      const result = checkNodeVersion("v16.0.0");
+    it("fails for Node v20.x", () => {
+      const result = checkNodeVersion("v20.0.0");
       expect(result.pass).toBe(false);
     });
   });

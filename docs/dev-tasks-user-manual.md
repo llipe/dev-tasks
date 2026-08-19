@@ -293,7 +293,7 @@ dev-tasks doctor --json  # Machine-readable output
 
 | Check           | Requirement                                          |
 | --------------- | ---------------------------------------------------- |
-| Node.js version | >= 20                                                |
+| Node.js version | >= 24                                                |
 | Git version     | >= 2.37                                              |
 | Cache directory | `~/.dev-tasks/cache/` is writable                    |
 | Version skew    | Installed version matches pinned version (if pinned) |
