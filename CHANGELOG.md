@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.11.0] - 2026-08-25
+
+### Added
+
+- feat(agent): add researcher agent and activity-codebase-research skill
+- feat(test): add integration, E2E, and contract validation skills (#130)
+
+### Fixed
+
+- fix: trim AGENTS.md from 2678 to 1218 words
+
+### Changed
+
+- chore: prettier
+- chore: archive workstream
+- Merge pull request #147 from llipe:issue/139-research-agent
+- docs: fix drift found by technical-writer pass
+- Merge pull request #146 from llipe:issue/142-clean-agents-md
+- test(fixtures): update catalog fixture timestamps and generator version
+- Merge pull request #138 from llipe/issue/130-integration-testing-playwright-e2e
+- test: add parity and content tests for issue #130 skills
+
 ## [Unreleased]
 
 ### Added
