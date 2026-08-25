@@ -19,10 +19,10 @@ This skill renders **no verdict**. It describes what exists; it does not grade, 
 
 ## Budget Caps
 
-| Constraint | Limit |
-| ---------- | ----- |
+| Constraint    | Limit            |
+| ------------- | ---------------- |
 | Report length | **<= 250 lines** |
-| Cited files | **<= 30 files** |
+| Cited files   | **<= 30 files**  |
 
 When research exceeds either cap, truncate by relevance and record the omission under "Not Investigated". Never silently drop findings or exceed the cap.
 
@@ -39,16 +39,16 @@ No application code, PRD, spec, task list, test, `/DESIGN.md`, or any other file
 
 The report **MUST** address all eight slices. A slice with no relevant findings **MUST** be marked `N/A` with a one-line reason. Silence is not permitted — an empty slice and an unexamined slice are different facts for the consumer.
 
-| Slice | ID | Covers |
-| ----- | -- | ------ |
-| Components / modules | S1 | Owning modules, entry points, boundaries, responsibility split |
-| APIs and contracts | S2 | Public functions, routes, CLI surfaces, OpenAPI/AsyncAPI/schema contracts, consumers |
-| UI surfaces | S3 | Screens, components, and the `/DESIGN.md` tokens they consume |
-| Tests | S4 | Suites, specific cases, fixtures, harness wiring, and visible coverage gaps |
-| Data model | S5 | Entities, schema, migrations, RLS or permission rules |
-| Config / env / CI | S6 | Config files, env vars, scripts, CI jobs and gates that touch the area |
-| Relationships | S7 | Call sites, imports, dependency direction, blast radius of a change |
-| Prior history | S8 | Related `/workstream` artifacts, ADRs, PRDs, issues, and relevant commits |
+| Slice                | ID  | Covers                                                                               |
+| -------------------- | --- | ------------------------------------------------------------------------------------ |
+| Components / modules | S1  | Owning modules, entry points, boundaries, responsibility split                       |
+| APIs and contracts   | S2  | Public functions, routes, CLI surfaces, OpenAPI/AsyncAPI/schema contracts, consumers |
+| UI surfaces          | S3  | Screens, components, and the `/DESIGN.md` tokens they consume                        |
+| Tests                | S4  | Suites, specific cases, fixtures, harness wiring, and visible coverage gaps          |
+| Data model           | S5  | Entities, schema, migrations, RLS or permission rules                                |
+| Config / env / CI    | S6  | Config files, env vars, scripts, CI jobs and gates that touch the area               |
+| Relationships        | S7  | Call sites, imports, dependency direction, blast radius of a change                  |
+| Prior history        | S8  | Related `/workstream` artifacts, ADRs, PRDs, issues, and relevant commits            |
 
 ## Artifact Contract
 

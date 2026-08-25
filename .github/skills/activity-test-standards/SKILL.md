@@ -98,35 +98,36 @@ Detect the presence and configuration state of higher-layer test infrastructure.
 
 ### Integration testing infrastructure
 
-| Check | What to look for |
-| ----- | ---------------- |
-| **Testcontainers** | `@testcontainers/postgresql` or similar in dependencies |
-| **Docker Compose** | `docker-compose.yml` or `compose.yml` with a database service |
-| **Supabase local CLI** | `supabase/config.toml` or `.supabase/` directory |
-| **Docker availability** | `docker info` succeeds (report if unavailable) |
+| Check                   | What to look for                                              |
+| ----------------------- | ------------------------------------------------------------- |
+| **Testcontainers**      | `@testcontainers/postgresql` or similar in dependencies       |
+| **Docker Compose**      | `docker-compose.yml` or `compose.yml` with a database service |
+| **Supabase local CLI**  | `supabase/config.toml` or `.supabase/` directory              |
+| **Docker availability** | `docker info` succeeds (report if unavailable)                |
 
 ### E2E testing infrastructure
 
-| Check | What to look for |
-| ----- | ---------------- |
-| **Playwright config** | `playwright.config.ts` or `playwright.config.js` present |
-| **Base URL configured** | Config references `process.env.BASE_URL` or equivalent (not hardcoded localhost) |
-| **Auth setup project** | A `global-setup` or setup project defined in Playwright config |
-| **Browser install in CI** | CI workflow includes `playwright install` step |
-| **`test:e2e` script** | Present in `package.json` and reachable from aggregate |
+| Check                     | What to look for                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------- |
+| **Playwright config**     | `playwright.config.ts` or `playwright.config.js` present                         |
+| **Base URL configured**   | Config references `process.env.BASE_URL` or equivalent (not hardcoded localhost) |
+| **Auth setup project**    | A `global-setup` or setup project defined in Playwright config                   |
+| **Browser install in CI** | CI workflow includes `playwright install` step                                   |
+| **`test:e2e` script**     | Present in `package.json` and reachable from aggregate                           |
 
 ### Contract validation infrastructure
 
-| Check | What to look for |
-| ----- | ---------------- |
-| **OpenAPI spec** | `openapi.yaml`, `openapi.json`, `swagger.*` in repo |
-| **AsyncAPI spec** | `asyncapi.yaml`, `asyncapi.json` in repo |
-| **`dt` CLI** | `which dt` succeeds |
+| Check                      | What to look for                                       |
+| -------------------------- | ------------------------------------------------------ |
+| **OpenAPI spec**           | `openapi.yaml`, `openapi.json`, `swagger.*` in repo    |
+| **AsyncAPI spec**          | `asyncapi.yaml`, `asyncapi.json` in repo               |
+| **`dt` CLI**               | `which dt` succeeds                                    |
 | **`test:contract` script** | Present in `package.json` and reachable from aggregate |
 
 ### Reporting
 
 Report each finding as:
+
 - `[INFO] <infrastructure> detected: <path or status>`
 - `[INFO] <infrastructure> not found — Layer {X} tests require this`
 

@@ -30,11 +30,11 @@ Before authoring specs, verify or establish these prerequisites:
 
 ### Authentication strategy
 
-| Strategy | When to Use | How |
-| -------- | ----------- | --- |
+| Strategy                                       | When to Use                                   | How                                                                                                         |
+| ---------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | **`storageState` via setup project** (default) | Multi-test suites sharing a logged-in session | A `global-setup.ts` or setup project authenticates once, saves `storageState.json`, and all specs reuse it. |
-| **Per-test programmatic login** | Tests that need different users or roles | Each spec calls login API directly in `beforeEach`. Slower but flexible. |
-| **API-token seeding** | API-only E2E, no browser UI | Set auth headers directly via `request.newContext()`. No browser needed. |
+| **Per-test programmatic login**                | Tests that need different users or roles      | Each spec calls login API directly in `beforeEach`. Slower but flexible.                                    |
+| **API-token seeding**                          | API-only E2E, no browser UI                   | Set auth headers directly via `request.newContext()`. No browser needed.                                    |
 
 Default to `storageState` unless the test requires a different user or role per test.
 
@@ -54,6 +54,7 @@ Default to `storageState` unless the test requires a different user or role per 
 ### Database state reset between runs
 
 Choose one:
+
 - **Migration + seed** (preferred): drop, migrate, seed before the test suite.
 - **Transaction rollback**: wrap each test in a transaction (complex for E2E).
 - **Snapshot restore**: restore a known-good database snapshot before runs.
@@ -87,7 +88,7 @@ Every Playwright spec **MUST** be traceable to a `verifier` Design Mode scenario
 
 ```typescript
 // @scenario SC-1
-test('SC-1: Successful login with valid credentials', async ({ page }) => {
+test("SC-1: Successful login with valid credentials", async ({ page }) => {
   // ...
 });
 ```
@@ -95,7 +96,7 @@ test('SC-1: Successful login with valid credentials', async ({ page }) => {
 Or in the test title directly:
 
 ```typescript
-test('[SC-1] User logs in with valid credentials', async ({ page }) => {
+test("[SC-1] User logs in with valid credentials", async ({ page }) => {
   // ...
 });
 ```

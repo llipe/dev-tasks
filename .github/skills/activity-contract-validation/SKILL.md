@@ -38,6 +38,7 @@ which dt && dt --version
 ### Detect API specifications
 
 Search the repository for:
+
 - `openapi.yaml`, `openapi.json`, `swagger.yaml`, `swagger.json` (or under `docs/`, `api/`, `specs/`)
 - `asyncapi.yaml`, `asyncapi.json`
 - `component.json` (dt-managed extraction output)
@@ -54,21 +55,21 @@ dt verify contract-diff --base origin/main --head HEAD
 
 ### Findings classification
 
-| Exit code | Meaning | Severity |
-| --------- | ------- | -------- |
-| 0 | No breaking changes | — |
-| 8 | Breaking changes detected | Critical |
-| 1 | Execution error | Blocked |
+| Exit code | Meaning                   | Severity |
+| --------- | ------------------------- | -------- |
+| 0         | No breaking changes       | —        |
+| 8         | Breaking changes detected | Critical |
+| 1         | Execution error           | Blocked  |
 
 ### Report format
 
 For each breaking change found:
 
 ```markdown
-| Finding | Severity | Path | Description |
-| ------- | -------- | ---- | ----------- |
-| BREAK-1 | critical | POST /api/orders → request body | Required field `customerId` removed |
-| BREAK-2 | major | GET /api/users → response | Field `email` type changed string → object |
+| Finding | Severity | Path                            | Description                                |
+| ------- | -------- | ------------------------------- | ------------------------------------------ |
+| BREAK-1 | critical | POST /api/orders → request body | Required field `customerId` removed        |
+| BREAK-2 | major    | GET /api/users → response       | Field `email` type changed string → object |
 ```
 
 ## Part 3 — Impact Analysis (Consumer Enumeration)
@@ -80,6 +81,7 @@ dt verify impact --contract <contract-id>
 ```
 
 Report:
+
 - List of consumers that depend on the changed contract.
 - Per consumer: which endpoints/events they consume.
 - Recommendation: notify consumers, or validate with consumer-driven tests.
@@ -94,23 +96,23 @@ dt verify drift [--id <component-id>]
 
 ### Drift types
 
-| Type | Description | Severity |
-| ---- | ----------- | -------- |
-| Spec-ahead | Spec documents endpoints not in code | Major |
-| Code-ahead | Code has endpoints not in spec | Major |
-| Stale | Spec not updated in >90 days while code changed | Minor |
-| Schema-mismatch | Response shape differs from spec | Critical |
+| Type            | Description                                     | Severity |
+| --------------- | ----------------------------------------------- | -------- |
+| Spec-ahead      | Spec documents endpoints not in code            | Major    |
+| Code-ahead      | Code has endpoints not in spec                  | Major    |
+| Stale           | Spec not updated in >90 days while code changed | Minor    |
+| Schema-mismatch | Response shape differs from spec                | Critical |
 
 ### Report format
 
 Same risk-ranked table format as `activity-coverage-gap-analysis`:
 
 ```markdown
-| Finding | Severity | Component | Description | Days since spec update |
-| ------- | -------- | --------- | ----------- | ---------------------- |
-| DRIFT-1 | critical | api-gateway | Response schema mismatch: /api/orders | — |
-| DRIFT-2 | major | api-gateway | 12 endpoints in code, 8 in spec | — |
-| DRIFT-3 | minor | auth-service | Spec unchanged 120 days, 14 code commits since | 120 |
+| Finding | Severity | Component    | Description                                    | Days since spec update |
+| ------- | -------- | ------------ | ---------------------------------------------- | ---------------------- |
+| DRIFT-1 | critical | api-gateway  | Response schema mismatch: /api/orders          | —                      |
+| DRIFT-2 | major    | api-gateway  | 12 endpoints in code, 8 in spec                | —                      |
+| DRIFT-3 | minor    | auth-service | Spec unchanged 120 days, 14 code commits since | 120                    |
 ```
 
 ## Part 5 — Integration with Coverage Gate
@@ -131,6 +133,7 @@ Contract validation findings **MUST** be reported alongside coverage in the `cov
 - **Status:** PASS (no breaking changes)
 
 ### Drift Findings (non-blocking)
+
 | ... |
 ```
 

@@ -138,15 +138,15 @@
 
 ## AC-to-Task Mapping
 
-| AC    | Primary Task(s) | Validation Method |
-| ----- | --------------- | ----------------- |
-| AC-1  | 2.1-2.5, 2.6   | `researcher-parity.test.ts` — presence, contract, frontmatter |
-| AC-2  | 1.1-1.3, 1.4   | `skill-parity-codebase-research.test.ts` — three trees, slices, caps |
-| AC-3  | 4.1, 4.2       | `researcher-artifact-contract.test.ts` — section order, slice completeness |
-| AC-4  | 4.1, 4.3       | `researcher-artifact-contract.test.ts` — boundary comparators |
-| AC-5  | 2.1-2.3, 2.7   | `researcher-parity.test.ts` — prohibition text |
-| AC-6  | 3.1-3.9, 3.10  | `researcher-parity.test.ts` — caller wiring assertions |
-| AC-7  | 4.1, 4.4       | `researcher-artifact-contract.test.ts` — provenance fields |
-| AC-8  | 1.1, 2.1, 6.6  | Manual + contract text in skill/agent |
-| AC-9  | 5.1-5.10, 5.11 | `researcher-parity.test.ts` — registry grep assertions |
-| AC-10 | 6.1-6.8        | `pnpm run validate` |
+| AC    | Primary Task(s) | Validation Method                                                          |
+| ----- | --------------- | -------------------------------------------------------------------------- |
+| AC-1  | 2.1-2.5, 2.6    | `researcher-parity.test.ts` — presence, contract, frontmatter              |
+| AC-2  | 1.1-1.3, 1.4    | `skill-parity-codebase-research.test.ts` — three trees, slices, caps       |
+| AC-3  | 4.1, 4.2        | `researcher-artifact-contract.test.ts` — section order, slice completeness |
+| AC-4  | 4.1, 4.3        | `researcher-artifact-contract.test.ts` — boundary comparators              |
+| AC-5  | 2.1-2.3, 2.7    | `researcher-parity.test.ts` — prohibition text                             |
+| AC-6  | 3.1-3.9, 3.10   | `researcher-parity.test.ts` — caller wiring assertions                     |
+| AC-7  | 4.1, 4.4        | `researcher-artifact-contract.test.ts` — provenance fields                 |
+| AC-8  | 1.1, 2.1, 6.6   | Manual + contract text in skill/agent                                      |
+| AC-9  | 5.1-5.10, 5.11  | `researcher-parity.test.ts` — registry grep assertions                     |
+| AC-10 | 6.1-6.8         | `pnpm run validate`                                                        |

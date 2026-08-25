@@ -2,7 +2,7 @@
 
 Branch: `issue/136-ux-engineer-overhaul` · PR: #137
 
-## Phase 0 — DESIGN.md distribution  ✅ complete
+## Phase 0 — DESIGN.md distribution ✅ complete
 
 - [x] 0.1 `package.json` `files` += `DESIGN.md`
 - [x] 0.2 `core/distribution/profiles.ts` `ROOT_FILES` += `DESIGN.md`
@@ -11,19 +11,19 @@ Branch: `issue/136-ux-engineer-overhaul` · PR: #137
 - [x] 0.5 Convert `DESIGN.md` to placeholder (`status: placeholder`, `<!-- unfilled -->`)
 - [x] 0.6 Extend root-file distribution tests to cover `DESIGN.md`
 
-## Phase 1 — Contract hardening  ✅ complete
+## Phase 1 — Contract hardening ✅ complete
 
 - [x] 1.1 New front matter fields (`status`, `owner`, `platform`, `framework`, `css_approach`, `component_library`, `primitive_base`, `component_library_version`, `theme_output`, `responsive_breakpoints`)
 - [x] 1.2 Voice and Tone section
 - [x] 1.3 Technical Standards section
 
-## Phase 2  ✅ complete — ux-theme-gen skill
+## Phase 2 ✅ complete — ux-theme-gen skill
 
 - [x] 2.1 SKILL.md in `.github/skills/ux-theme-gen/`
 - [x] 2.2 Mirror to `.claude/` and `.kiro/`
 - [x] 2.3 Parity test
 
-## Phase 3  ✅ complete — ux-scaffold skill
+## Phase 3 ✅ complete — ux-scaffold skill
 
 - [x] 3.1 SKILL.md in `.github/skills/ux-scaffold/`
 - [x] 3.2 `scripts/scaffold-lite.sh` (html-lite, navigable, zero-install)
@@ -32,13 +32,13 @@ Branch: `issue/136-ux-engineer-overhaul` · PR: #137
 - [x] 3.5 Deprecate `webapp-mockup` as alias
 - [x] 3.6 Parity test
 
-## Phase 4  ✅ complete — ux-engineer agent
+## Phase 4 ✅ complete — ux-engineer agent
 
 - [x] 4.1 Rewrite `.github/agents/ux-engineer.agent.md`
 - [x] 4.2 Mirror to `.claude/` and `.kiro/`
 - [x] 4.3 Parity test
 
-## Phase 5  ✅ complete — Integration and docs
+## Phase 5 ✅ complete — Integration and docs
 
 - [x] 5.1 `activity-refine` UI-scope detection (3 trees)
 - [x] 5.2 `product-engineer` Phase 2.5 suggestion (3 trees)

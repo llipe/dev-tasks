@@ -2,10 +2,10 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                                       | Author           |
-| ------- | ---------- | ------------------------------------------------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-08-17 | Initial task list                                                                                             | product-engineer |
-| 1.1     | 2026-08-17 | Added AC-10 distribution scope: test-first sub-task 1.4, expanded sub-task 1.20, verification sub-task 1.35          | product-engineer |
+| Version | Date       | Summary                                                                                                                                                | Author           |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| 1.0     | 2026-08-17 | Initial task list                                                                                                                                      | product-engineer |
+| 1.1     | 2026-08-17 | Added AC-10 distribution scope: test-first sub-task 1.4, expanded sub-task 1.20, verification sub-task 1.35                                            | product-engineer |
 | 1.2     | 2026-08-17 | Folded in five home-ledger audit findings: expanded 1.5, 1.9, 1.11, 1.13; split AC-5/AC-6 verification; added AC-11 verification; renumbered from 1.31 | product-engineer |
 
 ## Context

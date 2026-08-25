@@ -2,10 +2,10 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                                             | Author           |
-| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-08-17 | Initial refinement                                                                                                  | product-engineer |
-| 1.1     | 2026-08-17 | Added AC-10: `/TESTING.md` must be distributed by `dev-tasks` through both the shell bundle and the npm install path | product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                       | Author           |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.0     | 2026-08-17 | Initial refinement                                                                                                                                                                                                                                                                                            | product-engineer |
+| 1.1     | 2026-08-17 | Added AC-10: `/TESTING.md` must be distributed by `dev-tasks` through both the shell bundle and the npm install path                                                                                                                                                                                          | product-engineer |
 | 1.2     | 2026-08-17 | Folded in five findings from the home-ledger test audit: CI-aware script check (AC-6), expanded standards detection (AC-5), structural gap analysis without a coverage provider (new AC-11), mandatory security-negative test category (AC-3), per-package `/TESTING.md` (AC-4). Refined AC-8 skip semantics. | product-engineer |
 
 ## Summary
@@ -18,12 +18,12 @@
 
 This issue adopts a four-layer model as the shared vocabulary for `/TESTING.md`:
 
-| Layer | Name                                          | Status after this issue              |
-| ----- | --------------------------------------------- | ------------------------------------ |
-| 1     | Deterministic foundations (unit, schema)      | In scope                             |
+| Layer | Name                                           | Status after this issue              |
+| ----- | ---------------------------------------------- | ------------------------------------ |
+| 1     | Deterministic foundations (unit, schema)       | In scope                             |
 | 2     | Constrained model/tool tests (mocks, fixtures) | In scope                             |
-| 3     | Product evals (semantic, tone, hallucination) | Out of scope — backlog issue         |
-| 4     | Human evaluation (safeguards, risk alerts)    | Already covered by PR approval gates |
+| 3     | Product evals (semantic, tone, hallucination)  | Out of scope — backlog issue         |
+| 4     | Human evaluation (safeguards, risk alerts)     | Already covered by PR approval gates |
 
 `verifier` sits on a different axis and is **not** Layer 3. It evaluates development-artifact fidelity (spec vs. delivered code), not product output quality. `verifier` is not extended by this issue beyond a one-line pointer to `qa-engineer` in its Out of Scope section.
 
@@ -49,14 +49,14 @@ Local integration testing, remote integration testing, and Playwright CLI E2E (i
 
 The five additions in v1.2 come from a real test audit of the `home-ledger` repository, used here as the reference case for what this issue must be able to detect:
 
-| Audit finding                                                                       | Addressed by |
-| ----------------------------------------------------------------------------------- | ------------ |
+| Audit finding                                                                        | Addressed by |
+| ------------------------------------------------------------------------------------ | ------------ |
 | 56% of tests absent from the CI gate; deploy quality gate never runs backend tests   | AC-6         |
 | Coverage unmeasured, no provider installed, stale artifact measuring 1 of 8 modules  | AC-11        |
 | Large untested surfaces invisible without a coverage provider                        | AC-11        |
-| Test environment, config, alias, cleanup, runtime-parity and placeholder defects      | AC-5         |
+| Test environment, config, alias, cleanup, runtime-parity and placeholder defects     | AC-5         |
 | Auth tests faithful to an implementation that never verifies JWT signature or expiry | AC-3         |
-| Mixed-language monorepo (vitest + pytest) not describable by a JS-only contract       | AC-4         |
+| Mixed-language monorepo (vitest + pytest) not describable by a JS-only contract      | AC-4         |
 
 Findings from the same audit that remain **out of scope** and route to follow-up issues: frontend component tests, accessibility assertions, and DESIGN.md token enforcement; detection of mock-reimplementation anti-patterns in existing suites (mutation testing is the eventual mechanism); RLS policy tests, migration clean-apply tests, real-Postgres integration, and OpenAPI spec-to-implementation validation.
 

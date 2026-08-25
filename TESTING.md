@@ -25,15 +25,15 @@ established" rather than as permission.
 
 The layer taxonomy below is fixed. What belongs in each layer is project-specific.
 
-| Layer    | Name                      | Scope                                                                          | Status            |
-| -------- | ------------------------- | ------------------------------------------------------------------------------ | ----------------- |
-| 1        | Deterministic foundations | Unit tests, schema validation. No I/O, no network, no real database.           | <!-- unfilled --> |
-| 2        | Constrained model/tool    | Backend component tests, mocked APIs, fixtures and gold datasets.              | <!-- unfilled --> |
+| Layer    | Name                      | Scope                                                                                 | Status            |
+| -------- | ------------------------- | ------------------------------------------------------------------------------------- | ----------------- |
+| 1        | Deterministic foundations | Unit tests, schema validation. No I/O, no network, no real database.                  | <!-- unfilled --> |
+| 2        | Constrained model/tool    | Backend component tests, mocked APIs, fixtures and gold datasets.                     | <!-- unfilled --> |
 | 2.5      | Integration               | Real database, real migrations, RLS policies, schema contracts. No mocked data layer. | <!-- unfilled --> |
-| E2E      | End-to-end                | Playwright CLI — committed browser automation, full-stack, scenario-driven.    | <!-- unfilled --> |
-| Contract | Contract validation       | API spec drift, breaking-change detection, consumer impact. `dt verify` family. | <!-- unfilled --> |
-| 3        | Product evaluation        | Semantic, tone, groundedness, hallucination evals. Only for LLM features.      | <!-- unfilled --> |
-| 4        | Human evaluation          | Review gates, safeguards, risk alerts.                                         | <!-- unfilled --> |
+| E2E      | End-to-end                | Playwright CLI — committed browser automation, full-stack, scenario-driven.           | <!-- unfilled --> |
+| Contract | Contract validation       | API spec drift, breaking-change detection, consumer impact. `dt verify` family.       | <!-- unfilled --> |
+| 3        | Product evaluation        | Semantic, tone, groundedness, hallucination evals. Only for LLM features.             | <!-- unfilled --> |
+| 4        | Human evaluation          | Review gates, safeguards, risk alerts.                                                | <!-- unfilled --> |
 
 Integration, end-to-end, and contract validation layers are declared per project
 in the table below when they exist.

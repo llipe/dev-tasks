@@ -69,11 +69,11 @@ Chains: `refine` → `plan`. Produces a lightweight refinement doc under `/works
 
 Detect mode from user input:
 
-| Input                             | Mode             | Activity Chain                                                                                                                                                                          |
-| --------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "init" or foundation request      | **Init Mode**    | `activity-init`                                                                                                                                                                         |
-| Feature description / PRD request | **Feature Mode** | `activity-refine` → [`researcher`] → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan` → `verifier` (Design Mode) recommendation              |
-| GitHub Issue number + repo        | **Issue Mode**   | [`researcher`] → `activity-refine` → `plan` → `verifier` (Design Mode) recommendation                                                                                                   |
+| Input                             | Mode             | Activity Chain                                                                                                                                                             |
+| --------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "init" or foundation request      | **Init Mode**    | `activity-init`                                                                                                                                                            |
+| Feature description / PRD request | **Feature Mode** | `activity-refine` → [`researcher`] → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan` → `verifier` (Design Mode) recommendation |
+| GitHub Issue number + repo        | **Issue Mode**   | [`researcher`] → `activity-refine` → `plan` → `verifier` (Design Mode) recommendation                                                                                      |
 
 > **Note:** `[researcher]` steps are conditional — recommended when trigger heuristics are met, skipped for trivial or single-file changes. See "Codebase Research (Conditional)" below.
 

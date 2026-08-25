@@ -21,11 +21,11 @@
 
 ## Confirmed Design Decisions
 
-| #   | Decision          | Resolution                                                                                                                                                                                                                                |
-| --- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Packaging         | New agent `researcher` **and** skill `activity-codebase-research`. The agent provides the delegation boundary; the skill carries the slice procedure so `developer`/`verifier` can run it inline where subagent delegation is unavailable.  |
+| #   | Decision          | Resolution                                                                                                                                                                                                                                 |
+| --- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Packaging         | New agent `researcher` **and** skill `activity-codebase-research`. The agent provides the delegation boundary; the skill carries the slice procedure so `developer`/`verifier` can run it inline where subagent delegation is unavailable. |
 | 2   | Trigger policy    | Conditional and recommended, never mandatory. Explicit trigger heuristics are written into the calling agents.                                                                                                                             |
-| 3   | Callers           | `product-engineer` (Issue Mode pre-refine; Feature Mode pre-spec), `developer` (troubleshooting/diagnosis), `planner` (pre-orchestration scoping). `verifier` and `qa-engineer` may consume the artifact but do not invoke the agent.       |
+| 3   | Callers           | `product-engineer` (Issue Mode pre-refine; Feature Mode pre-spec), `developer` (troubleshooting/diagnosis), `planner` (pre-orchestration scoping). `verifier` and `qa-engineer` may consume the artifact but do not invoke the agent.      |
 | 4   | Research slices   | Eight-slice taxonomy, each slice either populated or explicitly marked `N/A`. See below.                                                                                                                                                   |
 | 5   | Context budget    | Report <= 250 lines, <= 30 cited files, relevance-ranked findings, mandatory "Not Investigated" section.                                                                                                                                   |
 | 6   | External research | Codebase-first. Web findings permitted only in a separate, attributed section.                                                                                                                                                             |
@@ -142,12 +142,12 @@ It **SHOULD NOT** be invoked for single-file changes, typo/copy fixes, or when a
 
 ## Risks and Edge Cases
 
-| #   | Risk / Edge case                                                                  | Handling                                                                                                                          |
-| --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| #   | Risk / Edge case                                                                  | Handling                                                                                                                           |
+| --- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | R1  | The report becomes as large as the context it was meant to save.                  | Hard caps (AC-4) plus answer-first ordering, so a consumer can stop reading after 10 lines.                                        |
 | R2  | Context isolation is weak on Kiro/Copilot, making the benefit platform-dependent. | Contract and tests target the artifact, not runtime isolation. Documented as a known platform limitation.                          |
 | R3  | Stale research silently misleads a later spec.                                    | Provenance SHA + consumer-side staleness rule (AC-7).                                                                              |
-| R4  | Scope creep into verdict-rendering, overlapping `verifier`/`qa-engineer`.          | Explicit non-goal; the agent describes what exists and **MUST NOT** grade, approve, or recommend acceptance.                       |
+| R4  | Scope creep into verdict-rendering, overlapping `verifier`/`qa-engineer`.         | Explicit non-goal; the agent describes what exists and **MUST NOT** grade, approve, or recommend acceptance.                       |
 | R5  | Another mandatory step slows small changes.                                       | Conditional triggers with explicit negative cases (AC-6).                                                                          |
 | R6  | Research question is vague, producing an unfocused survey.                        | Intake phase requires a single answerable research question; otherwise ask one focused clarification.                              |
 | R7  | Empty result - the area genuinely does not exist yet (greenfield).                | Valid outcome: all slices `N/A` with reasons, confidence stated, "no existing implementation" as the answer.                       |
@@ -180,18 +180,18 @@ It **SHOULD NOT** be invoked for single-file changes, typo/copy fixes, or when a
 - **Security-negative checks:** a file containing instruction-like text is summarized as data, not obeyed (untrusted input); a `.env`-style file in scope is referenced by key name with no values reproduced (R9).
 - **Acceptance-criteria-to-test mapping:**
 
-| AC    | Validation method                                                                                                                                                                                 |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-1  | `researcher-parity.test.ts` - presence, contract statements, frontmatter                                                                                                                          |
-| AC-2  | skill-parity test - three trees, slices, caps                                                                                                                                                     |
-| AC-3  | `researcher-artifact-contract.test.ts` - section order and slice completeness; manual artifact review                                                                                              |
-| AC-4  | `researcher-artifact-contract.test.ts` - boundary comparators; manual review of a real report                                                                                                      |
-| AC-5  | parity test asserts the prohibition text; manual `git status` check after a real run                                                                                                               |
-| AC-6  | wiring test greps caller files for the research step and its conditional language; manual trivial-issue run                                                                                        |
-| AC-7  | artifact-contract test asserts Provenance fields; parity test asserts the consumer staleness rule                                                                                                  |
-| AC-8  | manual run in a `component.json` repository and in this repository (fallback path)                                                                                                                 |
-| AC-9  | registry-consistency test greps `AGENTS.md`, `CLAUDE.md`, `README.md`, `docs/system-overview.md`, `docs/workflow-chains.md`, `docs/adr/README.md`                                                  |
-| AC-10 | `pnpm run validate` (test, lint, format:check, typecheck, audit)                                                                                                                                   |
+| AC    | Validation method                                                                                                                                 |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-1  | `researcher-parity.test.ts` - presence, contract statements, frontmatter                                                                          |
+| AC-2  | skill-parity test - three trees, slices, caps                                                                                                     |
+| AC-3  | `researcher-artifact-contract.test.ts` - section order and slice completeness; manual artifact review                                             |
+| AC-4  | `researcher-artifact-contract.test.ts` - boundary comparators; manual review of a real report                                                     |
+| AC-5  | parity test asserts the prohibition text; manual `git status` check after a real run                                                              |
+| AC-6  | wiring test greps caller files for the research step and its conditional language; manual trivial-issue run                                       |
+| AC-7  | artifact-contract test asserts Provenance fields; parity test asserts the consumer staleness rule                                                 |
+| AC-8  | manual run in a `component.json` repository and in this repository (fallback path)                                                                |
+| AC-9  | registry-consistency test greps `AGENTS.md`, `CLAUDE.md`, `README.md`, `docs/system-overview.md`, `docs/workflow-chains.md`, `docs/adr/README.md` |
+| AC-10 | `pnpm run validate` (test, lint, format:check, typecheck, audit)                                                                                  |
 
 ## Open Questions
 

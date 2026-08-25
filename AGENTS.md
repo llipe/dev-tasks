@@ -4,35 +4,35 @@ Portable, repo-installed workflow harness for structured, PRD-driven AI-assisted
 
 ## Contracts
 
-| File | Owner | Purpose |
-|------|-------|---------|
-| `/DESIGN.md` | `ux-engineer` | Canonical design-system tokens and UI guidance |
-| `/TESTING.md` | `qa-engineer` | Layer taxonomy, runners, thresholds, fixtures |
+| File          | Owner         | Purpose                                        |
+| ------------- | ------------- | ---------------------------------------------- |
+| `/DESIGN.md`  | `ux-engineer` | Canonical design-system tokens and UI guidance |
+| `/TESTING.md` | `qa-engineer` | Layer taxonomy, runners, thresholds, fixtures  |
 
 If `/DESIGN.md` is missing and scope includes UI work, agents **MUST** create a baseline before finalizing design-dependent outputs. An unfilled `/TESTING.md` placeholder means "no standard established", never permission.
 
 ## Taxonomy
 
-| Concept | Purpose | Loaded When |
-|---------|---------|-------------|
-| **Agent** | Autonomous role with decisions and handoffs | Invoked by name |
-| **Skill** | Reusable on-demand procedure | On demand by agent |
+| Concept         | Purpose                                      | Loaded When             |
+| --------------- | -------------------------------------------- | ----------------------- |
+| **Agent**       | Autonomous role with decisions and handoffs  | Invoked by name         |
+| **Skill**       | Reusable on-demand procedure                 | On demand by agent      |
 | **Instruction** | Scoped rule auto-applied to matching context | Auto-applied by runtime |
 
 ## Agents
 
-| Agent | Purpose |
-|-------|---------|
-| **product-engineer** | Preparation — PRD, spec, stories, plan. Owns drift-reconciliation. |
-| **developer** | Execution — implements from task lists with mandatory verifier audit pre-PR. |
-| **planner** | Multi-story orchestration with dependency ordering and integration PR. |
-| **technical-writer** | Autonomous documentation maintenance. |
-| **housekeeping** | Lint, type, and test-wiring fixes. |
-| **github-ops** | GitHub consistency — issues, PRs, branches, labels, milestones, merge authority. |
-| **ux-engineer** | UX prototyping, DESIGN.md ownership, mockup generation. |
-| **qa-engineer** | Testing standard, test authoring, coverage/gap reporting. |
-| **researcher** | Bounded codebase investigation producing structured research artifacts. |
-| **verifier** | Compliance test-plan design and post-implementation fidelity audit. |
+| Agent                | Purpose                                                                          |
+| -------------------- | -------------------------------------------------------------------------------- |
+| **product-engineer** | Preparation — PRD, spec, stories, plan. Owns drift-reconciliation.               |
+| **developer**        | Execution — implements from task lists with mandatory verifier audit pre-PR.     |
+| **planner**          | Multi-story orchestration with dependency ordering and integration PR.           |
+| **technical-writer** | Autonomous documentation maintenance.                                            |
+| **housekeeping**     | Lint, type, and test-wiring fixes.                                               |
+| **github-ops**       | GitHub consistency — issues, PRs, branches, labels, milestones, merge authority. |
+| **ux-engineer**      | UX prototyping, DESIGN.md ownership, mockup generation.                          |
+| **qa-engineer**      | Testing standard, test authoring, coverage/gap reporting.                        |
+| **researcher**       | Bounded codebase investigation producing structured research artifacts.          |
+| **verifier**         | Compliance test-plan design and post-implementation fidelity audit.              |
 
 Platform coverage: `.github/agents/` and `.kiro/agents/` carry all ten. `.claude/agents/` carries eight — `planner` and `product-engineer` run as `.claude/commands/` (need user-approval gates).
 
@@ -40,50 +40,50 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all ten. `.claude
 
 ### Activity Skills
 
-| Skill | Purpose | Consumer |
-|-------|---------|----------|
-| activity-init | Establish product context and technical guidelines | product-engineer |
-| activity-refine | Issue refinement or full PRD creation | product-engineer |
-| activity-codebase-research | Bounded codebase investigation with structured artifact | researcher |
-| activity-generate-spec | PRD to technical specification | product-engineer |
-| activity-generate-stories | Spec to user stories with coverage validation | product-engineer |
-| activity-publish-github | Publish stories as GitHub Issues | product-engineer |
-| activity-e2e-test-design | E2E scenario generation from spec/stories | verifier |
-| activity-contract-test-design | Contract and schema compatibility test strategy | verifier |
-| activity-edge-case-refinement | Systematic edge-case discovery | verifier |
-| activity-random-test-tactics | Randomized/fuzz/property test generation | verifier |
-| activity-test-standards | Establish/maintain TESTING.md, detect harness defects | qa-engineer |
-| activity-test-implementation | Author Layer 1-2 tests with security-negative category | qa-engineer |
-| activity-integration-test-implementation | Layer 2.5 tests against real databases | qa-engineer |
-| activity-e2e-test-implementation | Playwright E2E from verifier scenario tables | qa-engineer |
-| activity-contract-validation | API contract drift/breaking-change detection | qa-engineer |
-| activity-coverage-gap-analysis | Coverage measurement or structural gap analysis | qa-engineer |
-| activity-drift-reconciliation | Route drift findings to task expansion or spec write-back | product-engineer |
+| Skill                                    | Purpose                                                   | Consumer         |
+| ---------------------------------------- | --------------------------------------------------------- | ---------------- |
+| activity-init                            | Establish product context and technical guidelines        | product-engineer |
+| activity-refine                          | Issue refinement or full PRD creation                     | product-engineer |
+| activity-codebase-research               | Bounded codebase investigation with structured artifact   | researcher       |
+| activity-generate-spec                   | PRD to technical specification                            | product-engineer |
+| activity-generate-stories                | Spec to user stories with coverage validation             | product-engineer |
+| activity-publish-github                  | Publish stories as GitHub Issues                          | product-engineer |
+| activity-e2e-test-design                 | E2E scenario generation from spec/stories                 | verifier         |
+| activity-contract-test-design            | Contract and schema compatibility test strategy           | verifier         |
+| activity-edge-case-refinement            | Systematic edge-case discovery                            | verifier         |
+| activity-random-test-tactics             | Randomized/fuzz/property test generation                  | verifier         |
+| activity-test-standards                  | Establish/maintain TESTING.md, detect harness defects     | qa-engineer      |
+| activity-test-implementation             | Author Layer 1-2 tests with security-negative category    | qa-engineer      |
+| activity-integration-test-implementation | Layer 2.5 tests against real databases                    | qa-engineer      |
+| activity-e2e-test-implementation         | Playwright E2E from verifier scenario tables              | qa-engineer      |
+| activity-contract-validation             | API contract drift/breaking-change detection              | qa-engineer      |
+| activity-coverage-gap-analysis           | Coverage measurement or structural gap analysis           | qa-engineer      |
+| activity-drift-reconciliation            | Route drift findings to task expansion or spec write-back | product-engineer |
 
 ### Operational Skills
 
-| Skill | Purpose | Consumer |
-|-------|---------|----------|
-| git-ops | Branch management, rebase, merge, conflict resolution | developer, planner |
-| ux-scaffold | Mockup project creation (html-lite, react-full) | ux-engineer |
-| ux-theme-gen | Generate theme artifacts from DESIGN.md | ux-engineer, developer |
-| memo-cli-usage | Read/write decisions to shared knowledge base | technical-writer, developer |
+| Skill          | Purpose                                               | Consumer                    |
+| -------------- | ----------------------------------------------------- | --------------------------- |
+| git-ops        | Branch management, rebase, merge, conflict resolution | developer, planner          |
+| ux-scaffold    | Mockup project creation (html-lite, react-full)       | ux-engineer                 |
+| ux-theme-gen   | Generate theme artifacts from DESIGN.md               | ux-engineer, developer      |
+| memo-cli-usage | Read/write decisions to shared knowledge base         | technical-writer, developer |
 
 ## Instructions
 
-| Instruction | Scope | Purpose |
-|-------------|-------|---------|
-| plan | `workstream/**` | Convert stories/issues into task lists |
-| implement | `workstream/**/tasks-*.md` | Execute task list with branching and PR discipline |
-| nextjs-pages-components | `**/app/**/*.tsx` | Next.js + React conventions |
-| git-guard-notice | Always (Kiro) | Git invariants reminder |
+| Instruction             | Scope                      | Purpose                                            |
+| ----------------------- | -------------------------- | -------------------------------------------------- |
+| plan                    | `workstream/**`            | Convert stories/issues into task lists             |
+| implement               | `workstream/**/tasks-*.md` | Execute task list with branching and PR discipline |
+| nextjs-pages-components | `**/app/**/*.tsx`          | Next.js + React conventions                        |
+| git-guard-notice        | Always (Kiro)              | Git invariants reminder                            |
 
 ## Hooks
 
-| Hook | Purpose |
-|------|---------|
-| git-guard | Blocks pushes/merges to `main`, non-Conventional commits, inline `gh --body` |
-| branch-guard | Blocks write operations on default branch |
+| Hook         | Purpose                                                                      |
+| ------------ | ---------------------------------------------------------------------------- |
+| git-guard    | Blocks pushes/merges to `main`, non-Conventional commits, inline `gh --body` |
+| branch-guard | Blocks write operations on default branch                                    |
 
 Hook enforcement is best-effort. Human PR review is the actual gate.
 

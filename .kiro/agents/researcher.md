@@ -51,10 +51,10 @@ One procedure. Invoke `activity-codebase-research` and follow its phases:
 
 ## Budget Caps
 
-| Constraint | Limit |
-| ---------- | ----- |
+| Constraint    | Limit        |
+| ------------- | ------------ |
 | Report length | <= 250 lines |
-| Cited files | <= 30 files |
+| Cited files   | <= 30 files  |
 
 When research exceeds either cap, truncate by relevance and record the omission under "Not Investigated". Never silently drop findings or exceed the cap.
 
@@ -84,13 +84,13 @@ Secret-bearing files that fall within research scope **MUST** be referenced by k
 
 ## Integration
 
-| Agent              | Relationship                                                             |
-| ------------------ | ------------------------------------------------------------------------ |
-| `product-engineer` | Invokes you pre-refine (Issue Mode) and pre-spec (Feature Mode)          |
-| `developer`        | Invokes you for troubleshooting and diagnosis                            |
-| `planner`          | Invokes you for pre-orchestration scoping                                |
-| `verifier`         | May consume your artifact but does not invoke you                        |
-| `qa-engineer`      | May consume your artifact but does not invoke you                        |
+| Agent              | Relationship                                                    |
+| ------------------ | --------------------------------------------------------------- |
+| `product-engineer` | Invokes you pre-refine (Issue Mode) and pre-spec (Feature Mode) |
+| `developer`        | Invokes you for troubleshooting and diagnosis                   |
+| `planner`          | Invokes you for pre-orchestration scoping                       |
+| `verifier`         | May consume your artifact but does not invoke you               |
+| `qa-engineer`      | May consume your artifact but does not invoke you               |
 
 ## Output Contract
 

@@ -91,13 +91,13 @@ RLS tests **MUST** exercise the real database policy, not application-level tena
 
 ### Required assertions
 
-| Case | Assertion |
-| ---- | --------- |
-| Tenant A reads own data | Returns expected rows |
-| Tenant A reads Tenant B data | Returns empty set or error |
-| Tenant A writes to Tenant B | Insert/update fails or is invisible |
-| Unauthenticated access | Denied by policy |
-| Service role bypasses RLS | Returns all rows (when expected) |
+| Case                         | Assertion                           |
+| ---------------------------- | ----------------------------------- |
+| Tenant A reads own data      | Returns expected rows               |
+| Tenant A reads Tenant B data | Returns empty set or error          |
+| Tenant A writes to Tenant B  | Insert/update fails or is invisible |
+| Unauthenticated access       | Denied by policy                    |
+| Service role bypasses RLS    | Returns all rows (when expected)    |
 
 ### Record limitations
 

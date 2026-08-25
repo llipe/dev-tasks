@@ -30,6 +30,7 @@ These answers were confirmed during refinement:
 ### New Skills
 
 - [ ] **AC-1 — `activity-integration-test-implementation` skill exists on all three platforms.** A skill is present at `.kiro/skills/activity-integration-test-implementation/SKILL.md`, `.github/skills/activity-integration-test-implementation/SKILL.md`, and `.claude/skills/activity-integration-test-implementation/SKILL.md`. Given the three files, when compared, then the behavioral contract is equivalent.
+
   - The skill covers:
     - Local integration: real database in tests via testcontainers, docker-compose, or Supabase local CLI — detect the easiest applicable option and recommend it.
     - Fixtures, seeding, transactional rollback between tests, deterministic teardown.
@@ -40,6 +41,7 @@ These answers were confirmed during refinement:
     - Honest fallback: when no testing environment exists and production is read-only, record the limitation explicitly — never silently omit.
 
 - [ ] **AC-2 — `activity-e2e-test-implementation` skill exists on all three platforms.** A skill is present at `.kiro/skills/activity-e2e-test-implementation/SKILL.md`, `.github/skills/activity-e2e-test-implementation/SKILL.md`, and `.claude/skills/activity-e2e-test-implementation/SKILL.md`. Given the three files, when compared, then the behavioral contract is equivalent.
+
   - The skill covers the Playwright prerequisite contract:
     - Authentication strategy: `storageState` via setup project as default; per-test programmatic login and API-token seeding as alternatives with guidance on when each applies.
     - Seeded test users and how credentials reach CI without landing in the repository (env vars or secrets).
@@ -62,11 +64,13 @@ These answers were confirmed during refinement:
 ### `/TESTING.md` Updates
 
 - [ ] **AC-4 — Layer 2.5 (Integration) is a formal named layer in the taxonomy.** The `/TESTING.md` placeholder gains a Layer 2.5 row:
+
   - Layer 2.5: Integration — real database, real migrations, RLS policies, schema contracts. No mocked data layer.
   - The layer boundary is explicit: Layer 2.5 **MUST NOT** mock the data layer. If the database is mocked, the test belongs at Layer 2. If the test hits a live external service over the network, it may belong at E2E or remote integration.
   - The escalation rule is updated: "When a Layer 2 test needs a real database, it moves to Layer 2.5."
 
 - [ ] **AC-5 — E2E layer is declared in `/TESTING.md`.** The placeholder gains an E2E row below Layer 2.5:
+
   - E2E: Playwright CLI — committed browser automation, full-stack, scenario-driven.
   - Boundary: E2E tests **MUST NOT** assert on internal state or implementation. Assertions are on observable user-facing behavior only.
   - Per-package commands: `test:integration` for Layer 2.5, `test:e2e` for the E2E layer.
@@ -79,6 +83,7 @@ These answers were confirmed during refinement:
 ### Workflow Integration
 
 - [ ] **AC-7 — `qa-engineer` procedure is extended.** The `qa-engineer` agent prompt gains steps for the new layers:
+
   - Step 1: `activity-test-standards` (existing — now also detects integration and E2E config)
   - Step 2: `activity-test-implementation` (existing — Layers 1-2)
   - Step 2.5: `activity-integration-test-implementation` (new — Layer 2.5)
@@ -88,6 +93,7 @@ These answers were confirmed during refinement:
   - The agent **MUST** run steps in order. Steps 2.5, 3, and 4 are **conditional**: they run only when the project has the corresponding layer configured in `/TESTING.md`. If a layer is not configured, the step emits `SKIPPED(<layer not configured>)`.
 
 - [ ] **AC-8 — `activity-test-standards` detects integration and E2E harness state.** The existing skill gains detection for:
+
   - Testcontainers, docker-compose, or Supabase local CLI presence/configuration.
   - Playwright config file presence and correctness (base URL, auth setup project, browser install).
   - `test:integration` and `test:e2e` script presence and reachability from the aggregate.
@@ -95,6 +101,7 @@ These answers were confirmed during refinement:
   - Reports missing integration/E2E infrastructure as findings (not defects that block — informational for the gap analysis).
 
 - [ ] **AC-9 — Planner integration rollup.** `planner` gains one post-merge step after all stories merge to the integration branch:
+
   - Invoke `qa-engineer` at PRD scope (all packages, all layers).
   - Report a PRD-level `coverage_gate` that aggregates per-story gates.
   - This runs before the PRD-level `verifier` audit.

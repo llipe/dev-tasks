@@ -53,12 +53,12 @@ The AC-3 through AC-6 and AC-11 requirements are derived from a real test audit 
 
 | Audit finding                                                                        | Addressed by |
 | ------------------------------------------------------------------------------------ | ------------ |
-| 56% of tests absent from the CI gate; deploy quality gate never runs backend tests    | AC-6         |
-| Coverage unmeasured, no provider installed, stale artifact measuring 1 of 8 modules   | AC-11        |
-| Large untested surfaces invisible without a coverage provider                         | AC-11        |
-| Test environment, config, alias, cleanup, runtime-parity and placeholder defects       | AC-5         |
-| Auth tests faithful to an implementation that never verifies JWT signature or expiry  | AC-3         |
-| Mixed-language monorepo (vitest + pytest) not describable by a JS-only contract        | AC-4         |
+| 56% of tests absent from the CI gate; deploy quality gate never runs backend tests   | AC-6         |
+| Coverage unmeasured, no provider installed, stale artifact measuring 1 of 8 modules  | AC-11        |
+| Large untested surfaces invisible without a coverage provider                        | AC-11        |
+| Test environment, config, alias, cleanup, runtime-parity and placeholder defects     | AC-5         |
+| Auth tests faithful to an implementation that never verifies JWT signature or expiry | AC-3         |
+| Mixed-language monorepo (vitest + pytest) not describable by a JS-only contract      | AC-4         |
 
 ## Non-Goals
 
