@@ -76,7 +76,7 @@ JSON Schema 2020-12 documents validated with `ajv`: `component.schema.json`, `fl
 
 ### Harness content
 
-Ten agents (`product-engineer`, `developer`, `planner`, `researcher`, `verifier`, `qa-engineer`, `ux-engineer`, `technical-writer`, `housekeeping`, `github-ops`), seventeen skills, and three scoped instruction/steering rules plus one always-loaded Kiro steering notice. Behavior is kept aligned across the three platform trees; file formats differ because platform schemas differ. See `AGENTS.md` for the authoritative registry and `docs/workflow-chains.md` for sequencing.
+Ten agents (`product-engineer`, `developer`, `planner`, `researcher`, `verifier`, `qa-engineer`, `ux-engineer`, `technical-writer`, `housekeeping`, `github-ops`), twenty-one skills, and three scoped instruction/steering rules plus one always-loaded Kiro steering notice. Behavior is kept aligned across the three platform trees; file formats differ because platform schemas differ. See `AGENTS.md` for the authoritative registry and `docs/workflow-chains.md` for sequencing.
 
 ## Integrations
 
@@ -167,7 +167,7 @@ Two channels are active in parallel:
 
 Platform differences that are intentional, not drift:
 
-- `.claude/agents/` holds seven agents; `planner` and `product-engineer` run as main-thread `.claude/commands/` entry points because a subagent cannot pause for a user-approval gate.
+- `.claude/agents/` holds eight agents; `planner` and `product-engineer` run as main-thread `.claude/commands/` entry points because a subagent cannot pause for a user-approval gate.
 - `plan` and `implement` are scoped instructions on Copilot, scoped steering on Kiro, and on-demand skills on Claude Code, which has no scoped-instruction mechanism.
 
 ## Related Documents

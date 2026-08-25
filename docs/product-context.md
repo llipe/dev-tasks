@@ -53,7 +53,7 @@ The workflow must scale down to small projects and direct production environment
 
 ## Current State
 
-`dev-tasks` is an actively evolving toolkit distributed as a versioned repository bundle. It currently provides product, development, planning, verification, quality assurance, documentation, housekeeping, GitHub operations, and UX roles; reusable activity skills; scoped instructions; installer/update scripts; and support for multiple AI coding platforms.
+`dev-tasks` is an actively evolving toolkit distributed as a versioned repository bundle. It currently provides product, development, planning, research, verification, quality assurance, documentation, housekeeping, GitHub operations, and UX roles; reusable activity skills; scoped instructions; installer/update scripts; and support for multiple AI coding platforms.
 
 The workflow includes PRD-driven planning, test-first guidance, canonical quality gates, a pre-implementation verifier design mode, a quality-assurance coverage gate recorded before completion, a per-repository testing-standard contract (`/TESTING.md`), and a post-implementation fidelity audit. The CLI toolkit (`dt`) implements the full multi-repo context pipeline: extraction (with a ladder pattern for confidence-ranked source selection), catalog aggregation and validation, context assembly with token budgeting, LLM-assisted scoping with gate rules, and contract verification (breaking-change detection, consumer impact analysis, and docs/code drift heuristics). The extraction pipeline is fully deterministic — no LLM is used for structural extraction.
 
