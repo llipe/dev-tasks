@@ -31,9 +31,10 @@ If `/DESIGN.md` is missing and scope includes UI work, agents **MUST** create a 
 | **github-ops** | GitHub consistency — issues, PRs, branches, labels, milestones, merge authority. |
 | **ux-engineer** | UX prototyping, DESIGN.md ownership, mockup generation. |
 | **qa-engineer** | Testing standard, test authoring, coverage/gap reporting. |
+| **researcher** | Bounded codebase investigation producing structured research artifacts. |
 | **verifier** | Compliance test-plan design and post-implementation fidelity audit. |
 
-Platform coverage: `.github/agents/` and `.kiro/agents/` carry all nine. `.claude/agents/` carries seven — `planner` and `product-engineer` run as `.claude/commands/` (need user-approval gates).
+Platform coverage: `.github/agents/` and `.kiro/agents/` carry all ten. `.claude/agents/` carries eight — `planner` and `product-engineer` run as `.claude/commands/` (need user-approval gates).
 
 ## Skills
 
@@ -43,6 +44,7 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all nine. `.claud
 |-------|---------|----------|
 | activity-init | Establish product context and technical guidelines | product-engineer |
 | activity-refine | Issue refinement or full PRD creation | product-engineer |
+| activity-codebase-research | Bounded codebase investigation with structured artifact | researcher |
 | activity-generate-spec | PRD to technical specification | product-engineer |
 | activity-generate-stories | Spec to user stories with coverage validation | product-engineer |
 | activity-publish-github | Publish stories as GitHub Issues | product-engineer |

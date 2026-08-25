@@ -84,6 +84,20 @@ If any required input is missing, ask one focused question with a default option
 
 ---
 
+## Codebase Research for Pre-Orchestration (Conditional)
+
+Before parsing stories and building the dependency graph, you **SHOULD** invoke `researcher` if:
+
+- The stories span multiple modules or packages whose dependencies are not yet established.
+- The orchestration involves unfamiliar areas of the codebase.
+- Story ordering requires understanding cross-module data flow or contract boundaries.
+
+**Skip when:** story dependencies are already explicit in the task file, the codebase is small and well-understood, or a non-stale research artifact already covers the scope.
+
+When triggered, delegate to `researcher` with the orchestration question (e.g., "What are the dependency relationships between modules X, Y, and Z?"). Consume the resulting `/workstream/research-*.md` artifact to inform dependency ordering in Phase 1.
+
+---
+
 ## Phase 0 - Discover Task Source
 
 ### Option A - File in /workstream

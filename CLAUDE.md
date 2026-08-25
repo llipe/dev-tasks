@@ -55,13 +55,14 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 | `/technical-writer` | Sync `/docs` with the codebase.                                                                                                                                                               |
 | `/housekeeping`     | Fix lint/type/test-wiring issues.                                                                                                                                                             |
 | `/qa-engineer`      | Establish `/TESTING.md`, author missing Layer 1-2 tests, and report `coverage_gate` plus risk-ranked gaps.                                                                                    |
+| `/researcher`       | Bounded codebase investigation producing a structured research artifact at `/workstream/research-*.md`.                                                                                       |
 | `/ux-engineer`      | PRD/SPEC → React mockups + refinement handoff.                                                                                                                                                |
 | `/verifier-design`  | Generate a compliance test plan + traceability matrix from a spec/story (Design Mode).                                                                                                        |
 | `/verifier-audit`   | Grey-box fidelity audit of delivered work against requirements and PRD/spec intent (Audit Mode).                                                                                              |
 
 ### Subagents (`.claude/agents/`)
 
-`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `verifier`, `qa-engineer` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
+`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `verifier`, `qa-engineer`, `researcher` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
 
 ### Orchestration model (important)
 
@@ -72,7 +73,7 @@ Claude Code subagents **cannot spawn other subagents** — the hierarchy is flat
 
 ### Skills (`.claude/skills/`)
 
-Activity skills: `activity-init`, `activity-refine`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-contract-test-design`, `activity-edge-case-refinement`, `activity-random-test-tactics`, `activity-test-standards`, `activity-test-implementation`, `activity-coverage-gap-analysis`, `activity-drift-reconciliation` (routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates — used by `product-engineer`). Process skills: `plan`, `implement` (the single source of truth for task-list execution rules, including the mandatory `verifier` audit gate). Operational: `git-ops`, `webapp-mockup`, `memo-cli-usage`.
+Activity skills: `activity-init`, `activity-refine`, `activity-codebase-research`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-e2e-test-implementation`, `activity-contract-test-design`, `activity-contract-validation`, `activity-edge-case-refinement`, `activity-random-test-tactics`, `activity-test-standards`, `activity-test-implementation`, `activity-integration-test-implementation`, `activity-coverage-gap-analysis`, `activity-drift-reconciliation` (routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates — used by `product-engineer`). Process skills: `plan`, `implement` (the single source of truth for task-list execution rules, including the mandatory `verifier` audit gate). Operational: `git-ops`, `ux-scaffold`, `ux-theme-gen`, `memo-cli-usage`.
 
 `plan` and `implement` are scoped instructions on Copilot (`applyTo`) and scoped steering on Kiro (`fileMatchPattern`); as Claude skills they load on demand instead of consuming context on every matching turn.
 

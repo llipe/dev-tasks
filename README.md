@@ -257,6 +257,7 @@ Multi-story orchestration with checkpoint/resume:
 | `github-ops`       | GitHub consistency — issues, PRs, branches, labels                              |
 | `verifier`         | Compliance test-plan design and fidelity auditing                               |
 | `qa-engineer`      | Testing standard, missing test harnesses, coverage and gap reporting            |
+| `researcher`       | Bounded codebase investigation producing structured research artifacts           |
 
 ---
 

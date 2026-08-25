@@ -5,18 +5,32 @@ Reference documentation for how agents chain together in different scenarios.
 ## Full Feature (PRD-Driven)
 
 ```text
-product-engineer: refine → generate-spec → generate-stories → publish-github → plan
-                                                                                  ↓
+product-engineer: refine → [researcher] → generate-spec → generate-stories → publish-github → plan
+                                                                                                 ↓
 developer: implement
 ```
+
+> `[researcher]` is conditional — invoked when the feature touches existing implementation, spans multiple modules, or the area is unfamiliar. Skipped for greenfield features.
 
 ## Single GitHub Issue
 
 ```text
-product-engineer: refine → plan
-                            ↓
+[researcher] → product-engineer: refine → plan
+                                            ↓
 developer: implement
 ```
+
+> `[researcher]` is conditional — invoked when the issue is multi-module, diagnostic, or unfamiliar. Skipped for trivial single-file changes.
+
+## Codebase Research (Standalone)
+
+```text
+researcher: intake → multi-repo detect → slice execution (S1-S8) → synthesis → budget enforcement → provenance
+                                                                                                        ↓
+                                                                        /workstream/research-*.md (250 lines, 30 files max)
+```
+
+Invoked by `product-engineer` (pre-refine, pre-spec), `developer` (troubleshooting), or `planner` (pre-orchestration). Conditional and non-mandatory.
 
 ## Multi-Story Orchestration
 

@@ -121,11 +121,22 @@ Follow the `implement` skill:
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `product-engineer` | Produces the task lists and refined issues that `developer` executes                                                                                                                                                       |
 | `planner`          | Orchestrates multi-story runs — delegates each story to `developer` in Execute Mode with an integration branch override                                                                                                    |
+| `researcher`       | May be invoked by `developer` for troubleshooting/diagnosis when a bug or regression is unclear; conditional, never mandatory                                                                                              |
 | `verifier`         | Invoked by `developer` in `audit` mode, post-implementation and pre-PR-ready, mandatory and non-skippable — reports fidelity/drift; findings route to `product-engineer`'s `activity-drift-reconciliation` for remediation |
 | `qa-engineer`      | Invoked by `developer` at the completion gate, before the `verifier` audit — owns the testing standard, missing test harnesses, and coverage/gap reporting; `developer` still authors feature tests under rule 19          |
 | `technical-writer` | Invoked by `developer` before PR is marked ready — updates `/docs`                                                                                                                                                         |
 | `housekeeping`     | Can be invoked during implementation for lint/type/test-wiring fixes                                                                                                                                                       |
 | `github-ops`       | Defines conventions for all GitHub artifacts — `developer` follows these rules                                                                                                                                             |
+
+### Codebase Research for Troubleshooting (Conditional)
+
+When diagnosing a bug, regression, or unclear failure during implementation, you **SHOULD** invoke `researcher` if:
+
+- The failure spans multiple modules and the root cause is not immediately apparent.
+- The area is unfamiliar or lacks documentation.
+- Multiple hypotheses need codebase evidence to disambiguate.
+
+**Skip when:** the failure is localized to a single file or function, or the root cause is already identified. This is a recommended diagnostic tool, not a mandatory gate.
 
 ---
 
