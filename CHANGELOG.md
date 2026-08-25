@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- feat(agent): add `researcher` agent and `activity-codebase-research` skill (#139)
+  - Ten-agent roster (Copilot/Kiro), eight Claude subagents
+  - Eight-slice taxonomy, 250-line/30-file budget caps
+  - Conditional pre-refine (Issue Mode) and pre-spec (Feature Mode) research step
+  - Developer troubleshooting and planner pre-orchestration paths
+  - ADR-004: pre-spec codebase research step
+
 ## [0.10.0] - 2026-08-19
 
 ### Added

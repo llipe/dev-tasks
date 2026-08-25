@@ -65,6 +65,7 @@ It ships with dev-tasks as a placeholder and is listed in `consumer_owned_paths`
 | **github-ops** | `github-ops.agent.md` | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy |
 | **ux-engineer** | `ux-engineer.agent.md` | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer` |
 | **qa-engineer** | `qa-engineer.agent.md` | Quality agent — establishes the `/TESTING.md` standard, authors tests for layers the project lacks, and reports coverage and structural gaps. Invoked by `developer` at the completion gate, before the `verifier` audit |
+| **researcher** | `researcher.agent.md` | Codebase research agent — bounded, delegated investigation producing structured research artifacts. Invoked conditionally by `product-engineer`, `developer`, and `planner` |
 | **verifier** | `verifier.agent.md` | Verification agent — owns compliance test-plan design (`design` mode) and post-implementation grey-box fidelity auditing (`audit` mode) against codebase, `/workstream`, tests, and PRD/spec intent |
 
 ## Skills
@@ -77,6 +78,7 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 |---|---|---|---|
 | **activity-init** | `skills/activity-init/` | Establish product context and technical guidelines | `product-engineer` |
 | **activity-refine** | `skills/activity-refine/` | Clarify scope — issue refinement or full PRD creation | `product-engineer` |
+| **activity-codebase-research** | `skills/activity-codebase-research/` | Bounded codebase investigation with structured artifact | `researcher` |
 | **activity-generate-spec** | `skills/activity-generate-spec/` | Transform PRD into technical specification | `product-engineer` |
 | **activity-generate-stories** | `skills/activity-generate-stories/` | Break spec into user stories with coverage validation | `product-engineer` |
 | **activity-publish-github** | `skills/activity-publish-github/` | Publish stories as GitHub Issues via MCP | `product-engineer` |

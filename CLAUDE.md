@@ -55,13 +55,14 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 | `/technical-writer` | Sync `/docs` with the codebase.                                                                                                                                                               |
 | `/housekeeping`     | Fix lint/type/test-wiring issues.                                                                                                                                                             |
 | `/qa-engineer`      | Establish `/TESTING.md`, author missing Layer 1-2 tests, and report `coverage_gate` plus risk-ranked gaps.                                                                                    |
+| `/researcher`       | Bounded codebase investigation producing a structured research artifact at `/workstream/research-*.md`.                                                                                       |
 | `/ux-engineer`      | PRD/SPEC → React mockups + refinement handoff.                                                                                                                                                |
 | `/verifier-design`  | Generate a compliance test plan + traceability matrix from a spec/story (Design Mode).                                                                                                        |
 | `/verifier-audit`   | Grey-box fidelity audit of delivered work against requirements and PRD/spec intent (Audit Mode).                                                                                              |
 
 ### Subagents (`.claude/agents/`)
 
-`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `verifier`, `qa-engineer` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
+`developer`, `github-ops`, `technical-writer`, `housekeeping`, `ux-engineer`, `verifier`, `qa-engineer`, `researcher` — isolated, scoped-tool workers. Claude delegates to these automatically when a task matches their description, and the orchestrator commands (`/planner`, `/product-engineer`) drive them via the Task tool.
 
 ### Orchestration model (important)
 

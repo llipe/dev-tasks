@@ -39,11 +39,13 @@ You **MUST NOT** write application code, open Pull Requests, or create branches.
 
 Detect mode from user input:
 
-| Input                             | Mode             | Activity Chain                                                                                                                                            |
-| --------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "init" or foundation request      | **Init Mode**    | `activity-init`                                                                                                                                           |
-| Feature description / PRD request | **Feature Mode** | `activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan` → `verifier` (Design Mode) recommendation |
-| GitHub Issue number + repo        | **Issue Mode**   | `activity-refine` → `plan` → `verifier` (Design Mode) recommendation                                                                                      |
+| Input                             | Mode             | Activity Chain                                                                                                                                                                          |
+| --------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "init" or foundation request      | **Init Mode**    | `activity-init`                                                                                                                                                                         |
+| Feature description / PRD request | **Feature Mode** | `activity-refine` → [`researcher`] → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan` → `verifier` (Design Mode) recommendation              |
+| GitHub Issue number + repo        | **Issue Mode**   | [`researcher`] → `activity-refine` → `plan` → `verifier` (Design Mode) recommendation                                                                                                   |
+
+> **Note:** `[researcher]` steps are conditional — recommended when trigger heuristics are met, skipped for trivial or single-file changes. See "Codebase Research (Conditional)" below.
 
 If the user explicitly asks to start from a later activity (e.g., "generate stories from this spec"), you **MAY** skip earlier steps when the required input artifacts already exist and are approved.
 
@@ -126,6 +128,7 @@ This agent invokes the following **skills** for each activity. You **MUST** load
 | -------------------------------- | ------------------------------------ |
 | Initialize foundation            | `activity-init`                      |
 | Refine scope / create PRD        | `activity-refine`                    |
+| Codebase research (conditional)  | `activity-codebase-research`         |
 | Generate technical specification | `activity-generate-spec`             |
 | Generate user stories            | `activity-generate-stories`          |
 | Publish stories to GitHub        | `activity-publish-github`            |
@@ -180,7 +183,19 @@ Follow the `activity-refine` skill (PRD mode):
 4. Produce PRD: `/docs/requirements/prd-[feature-name].md`
 5. Present for user review and iterate.
 
-#### Phase 2 — Generate Specification
+#### Phase 2 — Codebase Research (Conditional)
+
+After refining and before generating the specification, evaluate whether `researcher` SHOULD be invoked. Trigger heuristics:
+
+- A spec is about to be written for an area with existing implementation.
+- The change plausibly spans more than one module, package, or repository.
+- The target area is unfamiliar or undocumented in `/workstream`.
+
+**Skip when:** the feature is entirely greenfield with no existing code to map, or a non-stale research artifact already covers the scope.
+
+When triggered, delegate to `researcher` with the PRD scope as the research question. Consume the resulting `/workstream/research-*.md` artifact as input to Phase 3 (Generate Specification).
+
+#### Phase 3 — Generate Specification
 
 Follow the `activity-generate-spec` skill:
 
@@ -189,7 +204,7 @@ Follow the `activity-generate-spec` skill:
 3. Produce specification: `/workstream/specification-[prd-name].md`
 4. Present for user review and iterate.
 
-#### Phase 3 — Generate Stories
+#### Phase 4 — Generate Stories
 
 Follow the `activity-generate-stories` skill:
 
@@ -198,7 +213,7 @@ Follow the `activity-generate-stories` skill:
 3. Produce stories: `/workstream/user-stories-[prd-name].md`
 4. Present for user review and iterate.
 
-#### Phase 4 — Publish to GitHub
+#### Phase 5 — Publish to GitHub
 
 Follow the `activity-publish-github` skill:
 
@@ -206,7 +221,7 @@ Follow the `activity-publish-github` skill:
 2. Publish each story as a GitHub Issue (delegate to `github-ops`).
 3. Produce publication report: `/workstream/github-publication-[prd-name].md`
 
-#### Phase 5 — Plan
+#### Phase 6 — Plan
 
 Follow the `plan` instruction:
 
@@ -214,7 +229,7 @@ Follow the `plan` instruction:
 2. Generate task list: `/workstream/tasks-[prd-name]-plan.md`
 3. Update GitHub Issues with checklists.
 
-#### Phase 6 — Verifier Design Recommendation (Test-First)
+#### Phase 7 — Verifier Design Recommendation (Test-First)
 
 After the task list is finalized:
 
@@ -225,6 +240,18 @@ After the task list is finalized:
 This enforces the repository's **test-first design** default: tests and acceptance scenarios are designed before code is written.
 
 ### Issue Mode
+
+#### Codebase Research (Conditional)
+
+Before refining, evaluate whether `researcher` SHOULD be invoked. Trigger heuristics:
+
+- The target area is unfamiliar or undocumented in `/workstream`.
+- The change plausibly spans more than one module, package, or repository.
+- The task is diagnostic (bug, regression, "why does X happen").
+
+**Skip when:** the issue is a trivial single-file change, a typo/copy fix, or a non-stale research artifact already covers the same scope.
+
+When triggered, delegate to `researcher` with the issue title/description as the research question. Consume the resulting `/workstream/research-*.md` artifact as input to Phase A.
 
 #### Phase A — Refine Issue
 

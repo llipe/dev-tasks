@@ -76,7 +76,7 @@ JSON Schema 2020-12 documents validated with `ajv`: `component.schema.json`, `fl
 
 ### Harness content
 
-Nine agents (`product-engineer`, `developer`, `planner`, `verifier`, `qa-engineer`, `ux-engineer`, `technical-writer`, `housekeeping`, `github-ops`), sixteen skills, and three scoped instruction/steering rules plus one always-loaded Kiro steering notice. Behavior is kept aligned across the three platform trees; file formats differ because platform schemas differ. See `AGENTS.md` for the authoritative registry and `docs/workflow-chains.md` for sequencing.
+Ten agents (`product-engineer`, `developer`, `planner`, `researcher`, `verifier`, `qa-engineer`, `ux-engineer`, `technical-writer`, `housekeeping`, `github-ops`), seventeen skills, and three scoped instruction/steering rules plus one always-loaded Kiro steering notice. Behavior is kept aligned across the three platform trees; file formats differ because platform schemas differ. See `AGENTS.md` for the authoritative registry and `docs/workflow-chains.md` for sequencing.
 
 ## Integrations
 
