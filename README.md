@@ -8,6 +8,8 @@ A set of agents, skills, and instructions for GitHub Copilot, Claude Code, Kiro,
 
 ### 1. Install the package
 
+Use npm to install the [dev-tasks package](https://www.npmjs.com/package/@llipe.com/dev-tasks/).
+
 ```bash
 pnpm add -g @llipe.com/dev-tasks
 ```
