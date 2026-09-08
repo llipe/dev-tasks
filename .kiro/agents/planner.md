@@ -1,6 +1,6 @@
 ---
 description: "Orchestration agent for multi-story execution from /workstream or milestone, with dependency-ordered sequential execution and one consolidated PR."
-tools: [read, write, shell]
+tools: [read, write, shell, subagent]
 resources:
   - file://AGENTS.md
   - file://DESIGN.md
