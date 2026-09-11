@@ -231,7 +231,7 @@ Branch names **MUST** follow this pattern:
 | ------------- | -------------------------------- | ------------------------------------- |
 | `issue`       | Single GitHub Issue              | `issue/42-rate-limiting`              |
 | `story`       | PRD-driven user story            | `story/S-003-password-reset`          |
-| `integration` | Multi-story consolidation branch | `integration/prd-auth-password-reset`
+| `integration` | Multi-story consolidation branch | `integration/prd-auth-password-reset` |
 
 Rules:
 

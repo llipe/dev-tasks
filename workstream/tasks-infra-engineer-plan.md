@@ -37,14 +37,14 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
 ## Tasks
 
-- [x] 0.0 Branch convention hygiene (chore, outside the PRD; open a `chore` issue via `github-ops` first so the branch and commit carry a number)
+- [ ] 0.0 Branch convention hygiene (chore, outside the PRD; open a `chore` issue via `github-ops` first so the branch and commit carry a number)
 
   - [x] 0.1 In `git-ops` SKILL.md (three trees) replace `integrate/<milestone-or-prd-name>` with `integration/<plan-id>-<short-description>` to match `github-ops` and `planner`
   - [x] 0.2 In `github-ops` (three trees) drop the `fix`, `chore`, and `docs` branch types so the table matches the `issue/*` and `story/*` check in `developer` and `implement`; keep `issue`, `story`, `integration`
   - [x] 0.3 In `github-ops` (three trees) add the merge rule: issue and story PRs merge by squash with branch deletion (into integration by `planner`, into `main` by the user); integration PRs merge into `main` by merge commit, by the user; align the `git-ops` merge-strategy table wording
   - [x] 0.4 Grep all three trees and `docs/` for `integrate/`, `fix/`, `chore/`, `docs/` branch examples and update stragglers
   - [x] 0.5 Verify Acceptance Criterion: no file in `.github/`, `.claude/`, `.kiro/` mentions `integrate/`; branch type tables are identical across trees
-  - [x] 0.6 Run Tests: `pnpm run test:unit` (existing parity tests), `pnpm run format:check`
+  - [ ] 0.6 Run Tests: `pnpm run test:unit` (existing parity tests), `pnpm run format:check`
 
   > Validation: branch-table and `integrate/` checks passed; `pnpm run format:check` passed. `pnpm run test:unit` is blocked before discovery by the pre-existing Node/Vitest/tinypool module-compatibility error.
 
@@ -56,10 +56,10 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
   - [x] 1.4 Add `templates/infra/environments.yaml` with `# status: template` first line and the spec schema; add the template-status block rule to the agent body
   - [x] 1.5 Verify Acceptance Criterion: AC-1 to AC-13 present in all three variants (parity test green)
   - [x] 1.6 Verify Acceptance Criterion: AC-14 template header and block rule
-  - [x] 1.7 Manual verification: run `/infra-engineer` against a throwaway fly app with a filled `environments.yaml`; confirm one approval per step and a refusal on a template-status file
+  - [ ] 1.7 Manual verification: run `/infra-engineer` against a throwaway fly app with a filled `environments.yaml`; confirm one approval per step and a refusal on a template-status file
   - [ ] 1.8 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-  > Validation: static parity and template checks pass. The parity test and `pnpm run test:unit` cannot start because the installed Vitest/tinypool dependency graph fails during module loading; manual throwaway-provider verification was not run because no safe non-production target/credentials were provided. `1.8` remains pending until `pnpm run validate` is attempted.
+  > Validation: focused `pnpm exec vitest run test/unit/infra-engineer-parity.test.ts` passes 38/38. Full `pnpm run test:unit` remains blocked by unrelated pre-existing unit failures. `pnpm run typecheck` and `pnpm run format:check` pass. `pnpm run validate` is blocked at lint by invalid package metadata in the installed dependency tree. `pnpm run audit` reports four pre-existing high vulnerabilities in `fast-uri` through `ajv`. Manual throwaway-provider verification was not run because no safe non-production target/credentials were provided.
 
 - [ ] 2.0 Implement Story S-002: aws-ops skill
 

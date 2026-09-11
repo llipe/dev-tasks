@@ -25,13 +25,13 @@ There is no skippable phase, autonomous mode, batch mode, or approval that carri
 
 Each step has `kind`, `tool`, `environment`, `forward`, `expected result`, `verify`, `revert`, and `touches state`. Valid states are `pending → approved → backed_up? → applied → verified | failed → reverted?`, with `pending → skipped` only when a human gives a reason. Invalid transitions, duplicate approvals, and resumed completed steps are blocked.
 
-Every step has a revert. Production with no revert is refused; non-production `Revert: none (accepted)` needs explicit per-step acceptance. Production `touches state: yes` requires a backup id and restore command in `result.md` before apply. Foundation resources route to `tier0_tool` and are never applied; ephemeral resources carry `ExpiresAt`. Destroy uses reverse dependency order, typed environment confirmation, and refuses production foundation targets.
+Every step has a revert. Production with no revert is refused; non-production `Revert: none (accepted)` needs explicit per-step acceptance. Production `touches state: yes` requires a backup id and restore command in `result.md` before apply. The two-tier model classifies resources as foundation or application; foundation resources route to `tier0_tool` and are never applied. Foundation resources route to `tier0_tool` and are never applied; ephemeral resources carry `ExpiresAt`. Destroy uses reverse dependency order, typed environment confirmation, and refuses production foundation targets.
 
 ## Environment, identity, tools, and tool-routing table
 
 A missing `infra/environments.yaml` or a first line of `# status: template` is treated as missing and blocks. Missing platform blocks refuse steps targeting that platform. `production: true` selects tag-triggered deploys, backup, and no-revert policy.
 
-The tool check verifies presence, skill-declared version floor, and authentication. Results are `ok`, `missing`, `below-floor`, `unauthenticated`, or `wrong-identity`; non-`ok` blocks with remediation. No auto-install and no fallback. Floors are AWS CLI `2.x`, flyctl current major, Supabase CLI `2.x`, gh `2.x`, and yq `4.x`. Identity probes are `aws sts get-caller-identity`, `flyctl auth whoami`, `supabase projects list`, `gh auth status`, and the Cloudflare token verification endpoint; mismatch is `blocked`.
+The tool check verifies presence, skill-declared version floor, and authentication. Results are `ok`, `missing`, `below-floor`, `unauthenticated`, or `wrong-identity`; non-`ok` blocks with remediation. No auto-install and no fallback. Floors are AWS CLI `2.x`, flyctl current major, Supabase CLI `2.x`, gh `2.x`, and yq `4.x`. Identity assertion compares the target environment with these probes: `aws sts get-caller-identity`, `flyctl auth whoami`, `supabase projects list`, `gh auth status`, and the Cloudflare token verification endpoint; mismatch is `blocked`.
 
 | Change kind | Tool | Phase | Owning skill |
 | --- | --- | --- | --- |

@@ -29,7 +29,7 @@ Before discover and again before the first apply step, perform the tool check. R
 
 Each step has `kind`, `tool`, `environment`, `forward`, `expected result`, `verify`, `revert`, and `touches state`. The state machine is `pending → approved → backed_up? → applied → verified | failed → reverted?`, with `pending → skipped` only with a human reason. Invalid transitions, duplicate approvals, and resumed completed steps are blocked.
 
-Every step has a revert. Production without a revert is refused; non-production `Revert: none (accepted)` requires explicit per-step acceptance. Production `touches state: yes` runs only after a backup id and restore command are recorded in `result.md`. Foundation resources route to `tier0_tool` and are never applied; ephemeral resources carry `ExpiresAt`. Destroy lists reverse dependency order, requires the environment name typed back exactly, and refuses production foundation targets.
+Every step has a revert. Production without a revert is refused; non-production `Revert: none (accepted)` requires explicit per-step acceptance. Production `touches state: yes` runs only after a backup id and restore command are recorded in `result.md`. The two-tier model classifies resources as foundation or application; foundation resources route to `tier0_tool` and are never applied. Foundation resources route to `tier0_tool` and are never applied; ephemeral resources carry `ExpiresAt`. Destroy lists reverse dependency order, requires the environment name typed back exactly, and refuses production foundation targets.
 
 ## Environment and identity
 
