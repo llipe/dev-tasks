@@ -2,292 +2,216 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                                                                                                                             | Author           |
-| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-01 | Initial PRD. Absorbs and supersedes issues #143 (infra-engineer agent + lifecycle skills), #144 (deploy/release script contract), #145 (Supabase Cloud support), and #150 (log-ops). Organized as four phases. | product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                     | Author           |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.3     | 2026-09-11 | Trunk-based environment mapping: `main` deploys to dev, a release tag deploys to prod, dev is optional. Prerelease tags removed. Tag policy (human-only, `main`-only, immutable) and its enforcement added to Phase 2.                                                                                      |
+| 1.2     | 2026-09-11 | Phase 1 now covers AWS, fly.io, and Supabase together. Version floors restored. Added the step-gated execution model with per-step revert, mandatory production backups, and ownership of GitHub Actions deploy/release workflows. Two phases.                                                              | product-engineer |
+| 1.1     | 2026-09-11 | Simplified. Dropped the platform adapter contract, the standalone safety instruction, `tooling.yaml` and `cost-thresholds.yaml`, the `RELEVANT`/`MARGINAL` taxonomy, and the separate `log-ops`, `infra-inventory`, `secrets-ops`, and `deploy-alternatives` skills. Open questions resolved with defaults. | product-engineer |
+| 1.0     | 2026-09-01 | Initial PRD. Absorbs and supersedes issues #143, #144, #145, and #150. Organized as four phases.                                                                                                                                                                                                            | product-engineer |
 
 ## Executive Summary
 
-`dev-tasks` applies a disciplined discover → plan → approve → apply → record → verify loop to code, but infrastructure changes still live in people's heads and ad hoc CI YAML. This PRD introduces `infra-engineer`: an agent that manages cloud resources, deploys, releases, and log triage under that same discipline, with every write gated behind an approved `ChangeId` and no autonomous execution mode — because the cost of an infrastructure mistake exceeds that of a code mistake.
+`dev-tasks` applies a discover → plan → approve → apply → record loop to code, but infrastructure changes still live in people's heads and ad hoc CI YAML. This PRD introduces `infra-engineer`: an agent that carries out infrastructure work step by step, with a human approval before every step, a recorded revert path for every step, and a backup before any production step that touches state. There is no autonomous mode, because an infrastructure mistake costs more than a code mistake.
 
-The central goal is to **establish a consistent way of working with infrastructure**: register every change with a legible record, and *teach which tool to use for which change* (AWS CLI, declared IaC tool, Supabase CLI, `gh`, `flyctl`, Cloudflare DNS) — treating those tools as validated requirements rather than ambient assumptions. The feature is delivered in four phases: the core agent and lifecycle harness (Phase 1), the deploy/release script contract (Phase 2), Supabase Cloud as the second platform adapter (Phase 3), and read-only log triage (Phase 4).
+The purpose is **one consistent way of working with infrastructure**: every change leaves a legible, revertible record under `infra/changes/`, and the agent teaches which tool to use for which change. Phase 1 delivers the agent and the three platforms in daily use (AWS, fly.io, Supabase Cloud). Phase 2 codifies the repeatable deploy and release path into scripts and GitHub Actions workflows that the agent owns, on a trunk-based model: a merge to `main` deploys to dev, a release tag deploys to prod, and dev is optional.
 
 ## Feature Overview
 
-`infra-engineer` turns a set of cloud resources and deploy steps into a governed, recorded, tool-routed workflow. It is organized as four cooperating phases on top of a platform-neutral core:
+`infra-engineer` is one agent, one working loop, and four skills. The agent body owns the loop, the safety rules, the record format, the tool-routing table, and the log-triage rules. Each skill owns the concrete commands, version floors, and log sources for one surface.
 
-1. **Phase 1 — Core harness (was #143):** the agent, three skills (`aws-ops`, `infra-inventory`, `secrets-ops`), a scoped safety instruction, the phase gate, the lifecycle tier model, the cost model, discovery/inventory, the destroy flow, the **platform adapter contract**, the **tool-routing table**, and **tooling-as-requirements** validation. AWS is the first adapter and proves the contract.
-2. **Phase 2 — Deploy and release (was #144):** a canonical, repo-local script contract (`deploy:<env>`, `deploy:verify:<env>`, `rollback:<env>`, `deploy:status`, generalized `release`) plus a `deploy-alternatives` skill that frames deploy-target options for the user to choose.
-3. **Phase 3 — Supabase Cloud (was #145):** a `supabase-ops` skill that registers Supabase against the Phase 1 adapter contract — tiers, inventory, cost, secrets, and a genuine `db diff`-based migration plan — with zero edits to Phase 1 artifacts.
-4. **Phase 4 — Log triage (was #150):** a `log-ops` skill with a symptom-to-source routing table, bounded/billed-query refusal, mandatory redaction, and the evidence format the `verify` phase cites. Read-only; the one capability that needs no `ChangeId`.
+| Phase | Absorbs          | Ships                                                                                                                                                                |
+| ----- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | #143, #145, #150 | `infra-engineer` agent (all platforms), `aws-ops`, `fly-ops`, `supabase-ops` skills, `infra/` layout, ADR-005, registries, tests                                     |
+| 2     | #144             | `deploy-ops` skill: script templates under `templates/scripts/`, GitHub Actions workflow templates under `templates/workflows/`, tag policy and its `git-guard` rule |
+
+In Phase 1 the agent does infrastructure work by hand with the platform CLIs, one approved step at a time: build an image, create an app, deploy it, create secrets, create and attach IAM policies, add DNS records, issue certificates. Phase 2 turns the path that repeats (build, migrate, deploy, verify, rollback) into scripts and pipelines.
 
 ```mermaid
-graph TD
-  subgraph Core["Phase 1 — Core harness (platform-neutral)"]
-    AGENT[infra-engineer agent]
-    GATE[phase gate: discover→assess→plan→approve→apply→record→verify]
-    ADAPTER[platform adapter contract]
-    ROUTE[tool-routing table]
-    REQ[tooling-as-requirements validation]
-    TIERS[tier model + cost model + destroy flow]
-    SKILLS1[aws-ops / infra-inventory / secrets-ops]
-  end
-  P2[Phase 2 — deploy/release + deploy-alternatives]
-  P3[Phase 3 — supabase-ops adapter]
-  P4[Phase 4 — log-ops]
-  AGENT --> GATE --> ADAPTER
-  ADAPTER --> ROUTE --> REQ
-  ADAPTER -. registers .-> P3
-  P2 -->|consumes environments.yaml + infra/changes/| Core
-  P3 -->|registers via adapter contract| ADAPTER
-  P4 -->|cited by verify phase| GATE
-  P2 -.->|failed verify triaged by| P4
+graph LR
+  D[discover] --> P[plan: numbered steps] --> C[approve plan: ChangeId]
+  C --> S{next step}
+  S --> A[approve step] --> B[backup if prod + stateful] --> X[apply] --> V[verify + record] --> S
+  S -- all done --> R[result + PR]
+  V -- failed --> RB[run revert for this step]
 ```
 
 ## Goals and Objectives
 
-1. **A recorded way of working.** Every infrastructure change produces a legible record under `infra/changes/` (plan, commands, result, rollback), so "what changed, when, why, and by whom" is answerable from the repo.
-2. **Teach which tool to use.** A first-class tool-routing table maps each kind of change to exactly one tool and the phase it runs in — the "teaching" deliverable.
-3. **Tools as validated requirements.** Required tools are checked for presence, minimum version, and authentication before the phase that uses them; an unmet requirement blocks with actionable remediation, never a silent fallback.
-4. **Blast-radius safety.** No autonomous mode; writes locked behind an approved `ChangeId`; production Tier 0 destroy refused; typed confirmation for destructive non-production Tier 0.
-5. **Platform-neutral extensibility.** A second platform (Supabase) registers by declaring data, not by editing the harness.
-6. **Traceable delivery.** Every deployed artifact is identified by version and commit SHA; production deploys only from release tags; rollback resolves from recorded history.
+1. **A recorded, revertible way of working.** Every change produces `infra/changes/<date>-<slug>/` with the plan, the exact commands run per step, the result per step, and the revert commands per step.
+2. **Step-gated execution.** A plan is a numbered list of steps. The human approves the plan, then approves each step before it runs. The agent never runs ahead.
+3. **Production is recoverable.** In production, a step with no revert path is refused, and a step that touches state runs only after a backup is taken and recorded.
+4. **Teach which tool to use.** One routing table maps each kind of change to one tool and the phase it runs in.
+5. **Traceable delivery.** One trunk, no environment branches. A merge to `main` deploys to dev; a human-created release tag deploys to prod. Every deploy records version and commit SHA; rollback resolves from the record; the pipelines that do this are owned by the agent.
 
 ## Affected Repositories
 
-| Repository        | Role / Impact                                                                                                              |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `llipe/dev-tasks` | Sole repository. Adds the agent (4 platform files), skills (×3 trees), safety instruction (×2 platforms), policy templates, docs registries, ADR-005, manifest globs, and parity/security tests. `infra/` becomes a consumer-owned tree. |
+| Repository        | Role / Impact                                                                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `llipe/dev-tasks` | Sole repository. Adds the agent, four skills across the three skill trees, script and workflow templates, ADR-005, registry updates, and tests. |
 
-This is a workflow-harness feature: the "system" is the agent + skills + instruction + policy contracts, not a runtime service. Consumer repositories that install `dev-tasks` receive the agent and the `infra/` scaffold.
+Consumer repositories that install `dev-tasks` receive the agent, skills, and an `infra/` scaffold. `infra/` and `.github/workflows/` deploy and release workflows are consumer-owned files that the agent maintains.
 
 ## Target Users
 
-### Primary
-
-- **Solo developers and small teams** using `dev-tasks` who manage their own cloud infrastructure (AWS, Supabase, fly.io, Cloudflare DNS) and want a consistent, recorded, low-risk way to do it. Initial profile is personal use (single USD 20/month cost threshold).
-
-### Secondary
-
-- **`dev-tasks` maintainers** extending the harness with additional platform adapters.
-- **Reviewers** who need a legible change record and a clear human-approval boundary before any production write.
+- **Primary:** solo developers and small teams using `dev-tasks` who run their own AWS, fly.io, Supabase Cloud, and Cloudflare DNS resources. Personal-use cost profile.
+- **Secondary:** reviewers who need a legible change record and a clear human-approval boundary before any production write.
 
 ## User Stories
 
-1. As an operator, I want the agent to discover what already exists before proposing a change, so a synthesized plan is grounded in real state.
-2. As an operator, I want every write gated behind an approved `ChangeId`, so nothing is applied without my explicit go-ahead.
-3. As an operator, I want to be told which tool to use for a given change, so I work consistently instead of improvising.
-4. As an operator, I want the agent to refuse when a required tool is missing, underversioned, or unauthenticated — with the exact fix — so I never get a half-applied change.
-5. As an operator, I want each planned cost-bearing resource approved as its own line item with a sourced estimate, so cost never hides inside a block approval.
-6. As an operator, I want production Tier 0 destroys refused outright and non-production destroys to require typed confirmation, so blast radius is bounded.
-7. As an operator, I want a canonical `deploy:<env>` path that runs quality gates, builds an immutable artifact, migrates with confirmation, deploys, verifies, and records — so deploys are repeatable.
-8. As an operator, I want production to deploy only from a release tag and rollback to resolve the last good version automatically, so releases are traceable and reversible.
-9. As an operator, I want to add Supabase without rewriting the harness, so the way of working generalizes across platforms.
-10. As an operator diagnosing an incident, I want a symptom-to-source log map with bounded, redacted queries, so I find evidence fast without leaking secrets or running an unbounded billed query.
-11. As a maintainer, I want the deploy-target options framed with cost trade-offs and the decision left to me, so the agent never silently picks where my workload runs.
+1. As an operator, I want the agent to discover what exists before proposing a change, so the plan is grounded in real state.
+2. As an operator, I want a plan as numbered steps, each approved individually before it runs, so I stay in control of every write.
+3. As an operator, I want each step recorded with its revert commands, so any change can be undone in order.
+4. As an operator, I want a backup taken and recorded before any production step that touches data, so I can restore if the revert is not enough.
+5. As an operator, I want to be told which tool to use for a given change, so I work consistently instead of improvising.
+6. As an operator, I want the agent to refuse when a required tool is missing, below its minimum version, or unauthenticated, with the fix named, so I never get a half-applied change.
+7. As an operator, I want to see the monthly cost of each planned resource before I approve it.
+8. As an operator, I want a canonical `deploy:<env>` path, run by a GitHub Actions workflow the agent maintains, so deploys are repeatable.
+9. As an operator, I want `main` to deploy to dev and a release tag to deploy to prod, with rollback resolving the last good version automatically, and I want to be able to skip the dev environment entirely.
+10. As an operator diagnosing an incident, I want bounded, redacted log queries pointed at the right source, so I find evidence without leaking secrets.
 
 ## Functional Requirements
 
-### Phase 1 — Core harness (was #143)
+### Agent (all phases)
 
-1. **Agent packaging.** `infra-engineer` ships as `.github/agents/infra-engineer.agent.md`, `.kiro/agents/infra-engineer.md`, `.claude/commands/infra-engineer.md` (main-thread command — every write pauses for approval, so it cannot be a subagent), and `.github/prompts/infra-engineer.prompt.md`. Kiro frontmatter declares `description`/`tools` and contains **no** `permissions` block. No `.claude/agents/` entry.
-2. **Skills.** `aws-ops` (AWS CLI command sets per phase/service, tier classification, cost estimation), `infra-inventory` (discovery, inventory generation, change recording, adapter registration, and the platform-neutral tool-routing + tooling-validation logic), and `secrets-ops` (Secrets Manager + `fly secrets`) ship as `<tree>/skills/<name>/SKILL.md` across `.github/`, `.claude/`, `.kiro/`.
-3. **Safety instruction.** Ships as `.github/instructions/infra-safety.instructions.md` (`applyTo: "infra/**"`) and `.kiro/steering/infra-safety.md` (`fileMatchPattern: "infra/**"`), and is restated verbatim in the agent body on all three platforms so Phase 0 discovery is covered before the first write.
-4. **Phase gate.** `discover → assess → plan → approve → apply → record → verify`. No phase skippable, no write command emitted or executed without an approved `ChangeId`, and no autonomous/batch mode exists.
-5. **Lifecycle tiers.** Tier 0 foundation (IaC-managed, discovery mandatory, destroy blocked in prod), Tier 1 application (CLI-managed), Tier 2 ephemeral (`ExpiresAt` required, swept). Every resource type the agent can create carries an explicit tier.
-6. **Tier 0 handling (route, not write).** The declared `tier0_tool` (`cdk | terraform | cloudformation | none`) in `environments.yaml` owns Tier 0. The agent is read-only for Tier 0: it discovers state and **routes** a foundation change to that tool, recording the handoff. It does not author or apply IaC. `tier0_tool: none` with a Tier 0 change present is reported, not silently proceeded past.
-7. **Cost model.** Every planned resource is `RELEVANT` or `MARGINAL`; each `RELEVANT` item carries a sourced monthly estimate with a retrieval date and its own approval line item. Threshold read from `infra/policy/cost-thresholds.yaml` (resolved: **USD 20/month, single threshold, prod = non-prod**). A missing policy file blocks. Cost sweep (read-only) reports eight AWS orphan categories plus log groups with no retention policy.
-8. **Discovery and inventory.** Inventory lands at `infra/inventory/<platform>/…`, carries a "generated, do not hand-edit" header, records platform/identity/region/timestamp, and `infra/inventory/_index.md` includes a dependency graph.
-9. **Destroy flow.** Reverse dependency check → blast-radius report → tier check → typed environment confirmation → ordered teardown (Tier 2 → 1 → 0); refuses when any step is unsatisfied.
-10. **Platform adapter contract.** `environments.yaml` declares per-platform identity with no platform structurally privileged. An adapter registers by declaring: identity key, identity assertion, tier assignments, inventory path, cost entries, plan source, and log-row ownership. Adding a platform requires **no edit** to the agent body, the safety instruction, or the tier-model prose.
-11. **Tool-routing table.** A first-class map in the agent body: each change kind → one tool → the phase it runs in (`aws`, declared IaC tool, `supabase`, `gh` via `github-ops`, `fly`, Cloudflare DNS, `release-ops`, `log-ops`). Extended by adapters, not by prose edits.
-12. **Tooling as requirements.** Before a phase runs, each required tool for that platform+phase is validated for **presence**, **minimum version** (from `infra/policy/tooling.yaml`), and **authentication/scope**. An unmet check produces a **blocked** state with the exact install/upgrade/authenticate remediation — no fallback to a different tool, no skipped phase, no auto-install/upgrade/authenticate. Requirement sets are per platform and per phase.
-13. **Identity assertion.** Every plan states the target environment's resolved platform identity from `environments.yaml` (AWS account ID + region for AWS) and refuses to proceed when active credentials resolve to a different identity than the plan declares. Defined once, generically, so Phases 2 and 3 consume it.
-14. **Secrets.** No secret value appears in any generated artifact. AWS workloads reference Secrets Manager by ARN; fly-only workloads use `fly secrets` and create no AWS secret.
-15. **Tagging.** `Environment`, `Owner`, `ManagedBy`, `ChangeId`, `Tier` on every created resource; `ExpiresAt` additionally on Tier 2. Untagged resources reported as orphans, never modified without explicit instruction.
+1. **Packaging.** `infra-engineer` ships as `.github/agents/infra-engineer.agent.md`, `.kiro/agents/infra-engineer.md`, `.claude/commands/infra-engineer.md`, and `.github/prompts/infra-engineer.prompt.md`. On Claude it is a main-thread command, not a subagent, because every step pauses for approval. Kiro frontmatter declares `description` and `tools` and no `permissions` block.
+2. **Working loop.** `discover → plan → approve plan → (approve step → backup → apply → verify → record) per step → result`. No phase is skippable. No write command is emitted or executed without an approved `ChangeId` and an approval for that specific step. No autonomous or batch mode exists. Safety rules live in the agent body only.
+3. **Plan as steps.** `plan.md` is a numbered list. Each step declares: change kind, tool, environment, exact forward commands, expected result, verification command, exact revert commands, and whether it touches state. Steps run in order; a failed verification stops the run and offers the revert for that step. The agent asks for the next step only after the previous one is recorded.
+4. **Revert.** Every step has a revert. `rollback.sh` is assembled from the per-step reverts in reverse order and is runnable from any step downward. A step without a revert is refused in production and requires an explicit "accept no revert" approval elsewhere.
+5. **Backup.** In production, any step that touches state (database schema or data, volumes, buckets, DNS zone) runs only after a backup step: `supabase db dump` or a PITR reference, an RDS snapshot, `fly volumes snapshots create`, an S3 versioning check, a Cloudflare zone export. The backup identifier and its restore command are recorded in `result.md` before the step applies.
+6. **Two tiers.** _Foundation_ resources (VPC, cluster, Supabase project, fly org, Cloudflare zone) are owned by the IaC tool declared per environment in `infra/environments.yaml` (`cdk | terraform | cloudformation | none`). The agent is read-only for foundation: it discovers state and routes a change to that tool, recording the handoff. _Application_ resources are CLI-managed behind `ChangeId`. Ephemeral resources carry `ExpiresAt` and are reported when expired. Production foundation destroy is refused. Any other destroy requires typing the environment name and proceeds in reverse dependency order.
+7. **Identity assertion.** Every plan states the target environment's identity from `infra/environments.yaml` (AWS account and region, fly app and org, Supabase project ref) and refuses to proceed when active credentials resolve elsewhere.
+8. **Tool check with version floors.** Before a phase runs, each tool it needs is checked for presence on `PATH`, version at or above the floor declared in the owning skill, and working authentication. A failed check blocks with the install, upgrade, or login command. No auto-install, no fallback to another tool. Floors: AWS CLI 2.x, `flyctl` current major, Supabase CLI 2.x, `gh` 2.x; exact minor versions pinned at implementation.
+9. **Tool-routing table.** The agent body carries one table: change kind → tool → phase. Rows cover at least: build image (`docker` or `fly deploy --build-only`), create app (`fly apps create`, `aws ecs create-service`), deploy (`fly deploy`, `aws ecs update-service`, `supabase functions deploy`), secrets (`aws secretsmanager`, `fly secrets`, `supabase secrets`), IAM policy create and attach (`aws iam`), DNS records (Cloudflare API), certificates (`aws acm`, `fly certs`), database migration (`supabase db push`), foundation change (declared IaC tool, handoff), repo and PR operations (`gh` via `github-ops`), pipeline change (workflow file under `ChangeId`), log triage (platform skill tables).
+10. **Cost.** Every planned resource lists an estimated monthly cost with its source. Any resource at or above the threshold in `infra/environments.yaml` (default USD 20/month) is called out for its own approval. A read-only cost sweep reports resources that cost money without serving traffic, including untagged resources, expired ephemerals, and log groups with no retention.
+11. **Record and inventory.** Discovery writes `infra/inventory/<platform>/…` with a "generated, do not hand-edit" header. Each change writes `infra/changes/<date>-<slug>/{plan.md, commands.sh, result.md, rollback.sh}`. The agent commits its `infra/` records and any workflow edits on a branch and opens a draft PR via `github-ops`; it never merges.
+12. **Tagging.** `Environment`, `Owner`, `ManagedBy`, `ChangeId` on every created resource that supports tags; `ExpiresAt` on ephemeral resources. Untagged resources are reported, never modified without instruction.
+13. **Secrets.** No secret value appears in any generated artifact, transcript, issue, or PR. AWS workloads reference Secrets Manager by ARN; fly workloads use `fly secrets`; Supabase workloads use `supabase secrets set`; GitHub Actions use repository or environment secrets set with `gh secret set`, with OIDC preferred over long-lived AWS keys.
+14. **Log triage.** Read-only; needs no `ChangeId`. Every query is time-bounded and anchored to a `ChangeId`, deploy timestamp, or stated incident window in UTC; an unbounded billed query is refused. Raw output is never committed: the change record holds a redacted excerpt plus the reproducing query. Verify steps name source, window, and observed line; a conclusion not backed by a source is labelled inference.
 
-### Phase 2 — Deploy and release (was #144)
+### Phase 1 — `aws-ops`, `fly-ops`, `supabase-ops` (was #143, #145, #150)
 
-16. **Script contract.** Shell-first scripts under `templates/scripts/` are the implementation; `package.json` wrappers exist only for JS/TS repos. Contract: `release` (human-only), `release:dry-run`, `deploy:<env>`, `deploy:verify:<env>`, `rollback:<env>`, `deploy:status`. Environment names derive from `environments.yaml`, never hardcoded.
-17. **Ordered deploy steps.** `deploy:<env>` performs preflight (clean tree, identity assertion) → quality gate (`validate`; never bypassable for prod) → build (immutable artifact by version+SHA) → publish artifact → migrate (confirmation-gated for shared/prod) → deploy → verify → record. No step skippable without an explicit documented flag; no flag skips the prod quality gate.
-18. **Tagging and semver.** Annotated `v<major>.<minor>.<patch>` tags; the tag is the only release trigger; no mutable `latest` deploy target; production deploys only from an existing release tag; non-prod may deploy from a branch with a prerelease identifier including the SHA. Bump type derived from Conventional Commits, human-confirmed.
-19. **Rollback.** `rollback:<env>` resolves the previous good version from recorded history under `infra/changes/` with no manual lookup. A failing `deploy:verify:<env>` prints the exact rollback command instead of reporting success.
-20. **Deploy-target framing.** A `deploy-alternatives` skill frames options (AWS on existing foundation / AWS with new foundation / fly.io / Supabase Edge Functions) with cost trade-offs; **the user always decides**. Cloudflare Workers excluded as a deploy target. Decision inputs gathered first: VPC-private connectivity, compliance constraint, existing Tier 0, statefulness, prod vs non-prod.
-21. **Authority boundary.** `release` and `deploy:prod` are human-invoked only and refuse to run in a non-interactive agent context; non-prod deploys require an approved `ChangeId`.
+15. **`aws-ops`.** Command sets per change kind for ECS, ECR, IAM (create policy, attach policy, roles), Secrets Manager, ACM, ALB, CloudWatch; tier per resource type; cost estimation; backup commands (RDS snapshot, S3 versioning); the AWS log table (CloudWatch, ECS `stoppedReason`, ALB access logs, Logs Insights, VPC Flow Logs, CloudTrail, GitHub Actions). AWS has no native plan, so a plan is synthesized from discovery, delta, and exact commands.
+16. **`fly-ops`.** Command sets for apps, machines, volumes, secrets, certificates, and deploy (`fly deploy`); release history as the revert source (`fly releases`, `fly deploy --image <previous>`); volume snapshots as the backup; the fly log table (`fly logs`, `fly status`, `fly machine status`).
+17. **`supabase-ops`.** Project, plan, compute, replicas, and PITR are foundation; schema, migrations, storage, auth, and functions are application; preview branches are ephemeral with `ExpiresAt`. `supabase db diff` is the plan; destructive statements are itemized; confirmation precedes `supabase db push` to a shared or production project; `supabase migration list` is recorded as verification; a non-empty diff with no pending local migration is reported as drift, never pushed. Backup is `supabase db dump` or a recorded PITR point. Inventory at `infra/inventory/supabase/<project-ref>.json` holds no key material. Discovery reports legacy-only `anon`/`service_role` keys and RLS-disabled tables as findings. Writes never go through an MCP path. Supabase Cloud log table (Postgres, API, Auth, Storage, Realtime, Edge Functions) with the short-retention caveat: capture evidence at incident time.
+18. **DNS and certificates.** Cloudflare DNS record create, update, and delete via the Cloudflare API, with the prior record value captured as the revert; certificates via `aws acm` or `fly certs`, with DNS validation records handled as steps in the same plan.
 
-### Phase 3 — Supabase Cloud adapter (was #145)
+### Phase 2 — `deploy-ops` (was #144)
 
-22. **`supabase-ops` skill** ships across the three skill trees and declares all seven adapter fields from the Phase 1 contract; registration requires **no edit** to Phase 1 artifacts. If it would, that is a Phase 1 contract defect, fixed there.
-23. **Tiers.** Supabase project = Tier 0 (destroy blocked in prod); org/plan/compute/replicas/PITR = Tier 0; schema/migrations/RLS/roles = Tier 1; storage/auth/functions = Tier 1; preview branches = Tier 2 (`ExpiresAt` required).
-24. **Discovery order.** Supabase MCP (read-only) → CLI → Management API, recording which path was used; no write ever executes through an MCP path.
-25. **Migration flow.** `supabase db diff` is the plan (a genuine diff, not synthesized); destructive statements itemized; explicit confirmation before `supabase db push` to shared/prod; `supabase migration list` recorded as post-apply verification. A non-empty `db diff` with no pending local migration is reported as **drift**, never silently pushed.
-26. **Inventory and secrets.** `infra/inventory/supabase/<project-ref>.json` with documented fields and **no key material** (masked or otherwise). Legacy-only `anon`/`service_role` keys reported as a security finding (they cannot be rotated); new `sb_publishable_*`/`sb_secret_*` preferred; publishable vs secret distinguished at every reference point; no AWS Secrets Manager entry for a Supabase-only workload; Edge Function secrets via `supabase secrets set`.
-27. **Cost and config-as-code.** Cost classification covers plan, compute, replicas, PITR, branches, egress; sweep reports six Supabase waste categories. `config.toml` is treated as committed config-as-code: divergence from remote settings is reported as drift.
-28. **RLS boundary.** RLS state is reported in discovery (disabled, or enabled with zero policies); the skill explicitly disclaims authoring RLS tests, deferring to `qa-engineer`.
+19. **Script contract.** `release` (human only), `release:dry-run`, `deploy:<env>`, `deploy:verify:<env>`, `rollback:<env>`, `deploy:status`. Shell scripts under `templates/scripts/` are the implementation; `package.json` wrappers exist only for JS/TS repos. Environment names come from `infra/environments.yaml`. `scripts/release.sh` in this repo is generalized, not reimplemented.
+20. **Deploy steps.** Preflight (clean tree, identity assertion) → `validate` → build an artifact tagged by version and SHA → backup (prod, when migrating) → migrate (confirmation-gated for shared/prod) → deploy → verify → record. No flag skips `validate` or the backup for production.
+21. **Environment mapping.** Trunk-based; no `develop`, `staging`, or other environment branches. The git ref is the trigger:
 
-### Phase 4 — Log triage (was #150)
+    | Environment | Trigger              | Ref that runs               | Artifact tag       | Rollback                              |
+    | ----------- | -------------------- | --------------------------- | ------------------ | ------------------------------------- |
+    | dev         | push to `main`       | `main` HEAD                 | `main-<short-sha>` | redeploy previous SHA from the record |
+    | prod        | push of tag `vX.Y.Z` | the tagged commit on `main` | `vX.Y.Z`           | redeploy previous tag from the record |
 
-29. **`log-ops` skill** ships across the three skill trees with a symptom-to-source routing table (AWS: CloudWatch, ECS `stoppedReason`, ALB access logs, Logs Insights, VPC Flow Logs, CloudTrail; GitHub Actions; fly; Supabase Cloud: Postgres, API/PostgREST, Auth, Storage, Realtime, Edge Functions), each row with a concrete read command.
-30. **Bounded queries.** Every query is time-bounded and anchored to a `ChangeId`, deploy timestamp, or explicit incident window, reported in UTC. An unbounded-window Insights or `filter-log-events` query is refused with the reason; the window and expected scan scope are stated before any billed query runs.
-31. **Redaction.** Read-only, no `ChangeId` required (stated explicitly), but redaction is unconditional: raw log output never committed; the change record holds a redacted excerpt plus the reproducing query; no secret, token, credential, or PII reaches a transcript, issue, PR, or file under `infra/`.
-32. **Verify-phase evidence.** Each verify step names source, window, and the observed line or metric; any conclusion not substantiated by a log source is labelled **inference**, not observation.
-33. **Append-only extension.** The routing table is documented as an append-only extension point per the Phase 1 adapter contract; adding a platform's rows requires no edit to the skill's prose. Supabase log coverage is **cloud only**; self-hosted and local-CLI surfaces are out of scope.
+    Dev is optional. When no non-production environment is declared in `infra/environments.yaml`, a push to `main` runs `validate` only and the tag remains the sole deploy trigger; the local stack plus the `validate` gate is the pre-production check. No prerelease tags exist in v1; if a staging environment is ever added, `vX.Y.Z-rc.N` tags are the additive way to feed it. A hotfix branches from `main` (or from the last tag when `main` carries unreleased work), merges by PR, and ships as a new patch tag. Holding a release line open on a `release/X.Y` branch is an escape hatch documented in one line, not built.
+
+22. **Tag policy.** Release tags are annotated `v<major>.<minor>.<patch>`, created by a human, pointing only at a commit on `main`, and immutable: a bad release gets a new patch tag, never a moved or deleted one. Agents never create, move, or delete tags. Bump type is derived from Conventional Commits and confirmed by the human. The policy is documented in `github-ops` next to branch naming, procedures in `git-ops`, and enforced by a new `git-guard` rule that blocks `git tag` and any push of `refs/tags` from an agent. Workflow tag filters match exact semver (`v[0-9]+.[0-9]+.[0-9]+`), so this repo's existing `[0-9]*` suffix is corrected. Closing milestone `vX.Y` implies tag `vX.Y.0` exists.
+23. **Rollback.** `rollback:<env>` reads the previous good version from `infra/changes/`. A failing verify prints the rollback command instead of reporting success. No deploy targets a mutable `latest` tag.
+24. **Pipeline ownership.** `infra-engineer` owns the deploy and release workflows in `.github/workflows/`. Templates ship under `templates/workflows/`: a `main`-push dev deploy that exists only when a non-production environment is declared, a tag-triggered production deploy behind a GitHub environment with a required reviewer, and a manual rollback. Workflows call the canonical scripts and contain no inline deploy logic. Any workflow edit is a change: planned, approved, recorded under `infra/changes/`, delivered by PR. This repository has no pull-request CI today: both existing workflows fire only on a tag push. Adding a quality gate on pull requests is a separate decision and is not part of this feature.
+25. **Authority.** `release` and `deploy:prod` are human-invoked: locally, or by pushing the tag and approving the protected GitHub environment. Both refuse to run in a non-interactive agent context. A dev deploy triggered by a merge to `main` needs no `ChangeId`, because the merge itself was human-approved by PR; an agent-run `deploy:<env>` outside the pipeline requires an approved `ChangeId`.
+26. **Deploy-target framing.** The skill lists the options (AWS on existing foundation, AWS with new foundation, fly.io, Supabase Edge Functions) with cost shape and fit; the user decides. Cloudflare Workers is not a target.
 
 ## Business Rules
 
 - No agent pushes or merges into `main`; `release` and `deploy:prod` are human-invoked only.
-- No write without an approved `ChangeId`; log reading is the sole exception (read-only).
-- No autonomous or batch mode anywhere in the workflow.
-- Production Tier 0 destroy is always refused; non-production destructive Tier 0 requires typed environment confirmation.
-- No auto-install, auto-upgrade, or auto-authentication of any tool.
-- No secret material in any generated artifact, in any form, on any platform.
-- Missing policy files (`cost-thresholds.yaml`, `tooling.yaml`) block; they never default silently.
-- A tool requirement failure blocks with remediation; it never falls back to a different tool.
+- Agents never create, move, or delete git tags. Release tags point only at `main` and are never moved.
+- No environment branches. `main` is dev, the latest tag is prod.
+- No write without an approved `ChangeId` and an approval for the specific step; log reading is the sole exception.
+- No autonomous or batch mode.
+- Every step has a revert. In production, no revert means no step.
+- In production, no backup means no state-touching step.
+- Production foundation destroy is always refused; other destroys require typed environment confirmation.
+- No auto-install, auto-upgrade, or auto-authentication of any tool; below-floor versions block.
+- No secret material in any generated artifact.
+- A missing `infra/environments.yaml` blocks; it never defaults silently.
 
 ## Data Requirements
 
-The "data model" of this feature is a set of file contracts under the consumer-owned `infra/` tree.
-
-```mermaid
-erDiagram
-  ENVIRONMENTS ||--o{ INVENTORY : "identifies"
-  ENVIRONMENTS ||--o{ CHANGE_RECORD : "targets"
-  TOOLING ||--o{ CHANGE_RECORD : "gates"
-  COST_THRESHOLDS ||--o{ CHANGE_RECORD : "bounds"
-  CHANGE_RECORD ||--|| ROLLBACK : "carries"
-
-  ENVIRONMENTS {
-    string env_name
-    string tier0_tool
-    object aws "account_id, region, profile"
-    string supabase_project_ref
-    string fly_app
-  }
-  TOOLING {
-    string platform
-    string phase
-    array tools "tool, min_version, version_probe, auth_check"
-  }
-  COST_THRESHOLDS {
-    number monthly_usd "20, single threshold"
-  }
-  INVENTORY {
-    string platform
-    string identity
-    string region_or_ref
-    datetime discovered_at
-    string generated_header
-  }
-  CHANGE_RECORD {
-    string change_id
-    string date_slug
-    file plan_md
-    file commands_sh
-    file result_md
-    file rollback_sh
-  }
-```
-
-Repository layout:
+One consumer-owned tree. `environments.yaml` ships as an unfilled template following the `/TESTING.md` sentinel pattern.
 
 ```
 infra/
-  inventory/                      # Generated by discovery, never hand-edited
+  environments.yaml               # per env: aws {account_id, region, profile}, fly {org, app},
+                                  #          supabase.project_ref, cloudflare.zone_id, tier0_tool,
+                                  #          production: true|false, cost_threshold_usd (default 20)
+                                  # production: true deploys from tags; false deploys from main;
+                                  # declare no non-production env to skip dev entirely
+  inventory/                      # generated by discovery, never hand-edited
     aws/<account>/<region>/<service>.json
-    cloudflare/<zone>.json
     fly/<app>.json
-    supabase/<project-ref>.json   # Phase 3, via adapter contract
-    _index.md                     # Summary + dependency graph
+    supabase/<project-ref>.json
+    cloudflare/<zone>.json
   changes/<date>-<slug>/
-    plan.md
-    commands.sh                   # For a Tier 0 route: the commands the human runs
-    result.md                     # status: applied | routed-to-<tool>, awaiting-human-apply
-    rollback.sh
-  policy/
-    environments.yaml             # per-platform identity + tier0_tool per env
-    cost-thresholds.yaml          # USD 20/month, single threshold
-    tooling.yaml                  # required tools + min versions per platform/phase
+    plan.md                       # numbered steps: kind, tool, commands, verify, revert, touches_state
+    commands.sh                   # forward commands as executed, one block per step
+    result.md                     # per-step status, backup ids + restore commands, verification output
+    rollback.sh                   # per-step reverts in reverse order
 ```
-
-### Sensitivity constraints
-
-- No key material, token, credential, or PII is ever written to inventory, change records, log excerpts, or transcripts — on any platform, masked or otherwise.
-- Policy files are consumer-owned and ship as unfilled templates following the `/TESTING.md` sentinel pattern.
 
 ## Non-Goals (Out of Scope)
 
-- No application code; `infra-engineer` writes only under `infra/` and follows branch/PR discipline via `github-ops`.
-- Does not author or apply Tier 0 IaC — routes to the declared tool (Option A). Assisted IaC authoring (Option B) is a deferred future decision.
-- Does not auto-install, auto-upgrade, or auto-authenticate tools.
-- Cloudflare Workers is not a deploy target; Cloudflare stays scoped to DNS/zone management.
-- Does not take ownership of consumer CI; scripts are the interface, workflow YAML stays consumer-owned.
-- Not a cost-optimization engine — the sweep reports, it does not remediate.
-- Does not author RLS policies or pgTAP tests (that stays with `qa-engineer`); does not manage self-hosted Supabase.
-- Log coverage is Supabase Cloud only; not a log-aggregation or alerting product.
+- No application code; the agent writes only under `infra/`, `templates/`, and deploy/release workflow files.
+- Does not author or apply foundation IaC; routes to the declared tool.
+- Does not auto-install, upgrade, or authenticate tools.
+- Does not own quality-gate CI workflows; only deploy and release workflows.
+- Not a cost-optimization engine; the sweep reports, it does not remediate.
+- Does not author RLS policies or tests (`qa-engineer`); does not manage self-hosted Supabase; Supabase logs are cloud only.
+- No generic platform adapter contract. A fifth platform means a new skill and new routing rows.
+- No environment branches and no prerelease tags in v1.
 - No new npm dependency, no new `dt` subcommand, no MCP server.
 
 ## Design Considerations
 
-This feature has no UI. The "interface" is the agent's phase gate, the tool-routing table, and the `infra/` file contracts. Cross-platform behavioral parity (GitHub Copilot, Claude Code, Kiro) is required per `docs/technical-guidelines.md`; parity is behavioral, not byte-for-byte, and is enforced by parity tests.
+No UI. Cross-platform parity (Copilot, Claude Code, Kiro) is behavioral, not byte-for-byte, and is checked by the existing parity-test convention.
 
 ## Technical Considerations
 
-- **AWS has no native plan/preview**, so Tier 1 plans are *synthesized* (discovery + delta + exact commands). Supabase *does* have a real plan (`db diff`), which the adapter contract accommodates via the per-adapter "plan source" field.
-- **Cross-cutting rules load timing:** scoping the safety instruction to `infra/**` plus restating it in the agent body avoids an always-loaded `applyTo: "**"` instruction while still covering Phase 0 discovery.
-- **Claude packaging:** the agent is a main-thread command because step-gated approval cannot run as a subagent.
-- **`bundle-manifest.json`:** existing globs must be confirmed to cover the new agent/skill/instruction/prompt/steering files; `infra/` is added to `consumer_owned_paths`. Because every current entry is a specific file or narrow config dir and `infra/` is the first broad consumer tree, directory-prefix semantics must be **verified** against the installer/updater, not assumed.
-- **`/TESTING.md` is an unfilled placeholder**, so every security-negative test in this feature is specified with explicit fixtures inline rather than deferred to the testing contract.
-- **ADR-005** records the architecturally significant decisions: phase-gate + `ChangeId`, Tier 0 route-not-write (Option A), and tooling-as-requirements.
+- Claude packaging is a command because per-step approval cannot run in a subagent.
+- `bundle-manifest.json`: confirm existing globs cover the new files; add `infra/` and the deploy/release workflow files to `consumer_owned_paths` and verify directory-prefix semantics against the installer and updater.
+- `/TESTING.md` is unfilled, so the security-negative test is specified inline with fixtures (synthetic AWS key, `sb_secret_*` key, fly token, bearer token, connection string, email).
+- ADR-005 records: step-gated `ChangeId` loop with per-step revert, production backup rule, foundation route-not-write, agent ownership of deploy and release workflows, and the trunk-based mapping (`main` to dev, tag to prod, no environment branches).
 
 ## Acceptance Criteria
 
-Phase-level acceptance; per-story acceptance criteria are derived in the stories step.
-
-- [ ] **Phase 1** — Agent + 3 skills + safety instruction ship cross-platform with the phase gate, tier model, cost model (USD 20/month policy), discovery/inventory, destroy flow, platform adapter contract, tool-routing table, and tooling-as-requirements validation all enforced and documented; AWS proves the adapter contract; ADR-005 added; registries and manifest updated; parity and security-negative tests pass.
-- [ ] **Phase 2** — The deploy/release script contract and `deploy-alternatives` skill ship; `deploy:<env>` runs all eight steps; production deploys only from a release tag; rollback resolves from recorded history; authority boundary enforced; identity assertion consumed from Phase 1.
-- [ ] **Phase 3** — `supabase-ops` registers via the adapter contract with zero Phase 1 edits; `db diff` migration flow with confirmation and drift reporting; no key material in any artifact (fixture-backed security-negative test); RLS state reported without authoring RLS tests.
-- [ ] **Phase 4** — `log-ops` ships with the full routing table (AWS + GitHub + fly + Supabase Cloud), bounded/billed-query refusal, unconditional redaction (fixture-backed security-negative test), and the verify-phase evidence format; append-only extension documented.
-- [ ] **Global** — `pnpm run validate` and `pnpm run audit` pass; every new test is reachable from the aggregate `pnpm run test`; no agent path pushes or merges to `main`.
+- [ ] **Phase 1** — Agent ships on all platforms with the step-gated loop, per-step revert, production backup rule, two-tier model, identity assertion, tool check with version floors, routing table, cost callout, record format, tagging, secrets, and log-triage rules; `aws-ops`, `fly-ops`, and `supabase-ops` ship in three trees, each declaring its version floors, backup commands, revert sources, and log table; `infra/environments.yaml` template ships; ADR-005 added; registries and manifest updated; `infra-engineer-parity.test.ts`, `skill-parity-infra.test.ts`, and the secrets/redaction security-negative test pass.
+- [ ] **Phase 2** — `deploy-ops` ships in three trees; script templates pass shellcheck and support `--help` and dry-run; workflow templates ship and call scripts only; `main` push deploys dev only when a non-production environment is declared; production refuses non-tag refs and runs behind a protected environment; tag policy documented in `github-ops`, `git-guard` blocks agent tag operations, and this repo's workflow tag filters match exact semver; rollback resolves from `infra/changes/`; human-only scripts refuse non-interactive execution; canonical script names documented in `technical-guidelines.md`.
+- [ ] **Global** — `pnpm run validate` and `pnpm run audit` pass; every new test is reachable from `pnpm run test`; no agent path pushes or merges to `main`.
 
 ## Success Metrics
 
-- Every infrastructure change in a consuming repo produces a complete `infra/changes/` record (plan + commands + result + rollback).
-- Zero secrets detected in generated artifacts across all phases (security-negative tests green).
-- No write path executes without an approved `ChangeId`; no production Tier 0 destroy succeeds.
-- A new platform adapter can be added with no edit to the Phase 1 agent body, safety instruction, or tier-model prose (proven by Phase 3 and an adapter-contract test).
-- Every required tool gap is reported as a blocked state with remediation rather than a silent fallback.
+- Every infrastructure change in a consuming repo produces a complete, per-step `infra/changes/` record with a runnable `rollback.sh`.
+- Every production state-touching step has a recorded backup id and restore command.
+- Zero secrets in generated artifacts (security-negative test green).
+- No write executes without an approved `ChangeId` and step approval; no production foundation destroy succeeds.
 
 ## Assumptions
 
-- Single-repo `dev-tasks`; consumer repos install the harness and own their `infra/` tree, credentials, and tool binaries.
-- Personal-use cost profile: one USD 20/month threshold for both prod and non-prod.
-- AWS CLI v2, Supabase CLI v2, `gh`, `flyctl`, and Cloudflare access are consumer-provided; exact version floors are pinned during implementation because command surfaces move between majors.
-- GitHub Issues/PRs remain the execution and review record; `github-ops` owns issue/PR/branch operations.
+- Personal-use cost profile: one threshold, default USD 20/month, overridable per consumer in `environments.yaml`.
+- AWS CLI, `flyctl`, Supabase CLI, `gh`, and Cloudflare API access are consumer-provided.
+- Multi-account AWS access uses named profiles declared in `environments.yaml`; GitHub Actions use OIDC.
+- One Supabase project and one fly app per long-lived environment; preview branches and throwaway apps only for ephemeral use.
+- Single fixed version per repo for `release`.
+- A remote dev environment is optional; some consumer repos deploy to prod only.
 
 ## Constraints and Dependencies
 
-- **Phase ordering is producer-before-consumer:** Phase 1 defines `environments.yaml`, the `infra/changes/` format, the `ChangeId` concept, the identity assertion, and the adapter contract. Phases 2, 3, and 4 all consume them and cannot complete before Phase 1.
-- Phase 4 (`log-ops`) is consumed by Phase 2's `deploy:verify:<env>` and by Phase 3's Supabase incident triage; it should land before or alongside Phases 2–3.
-- #142 (clean `AGENTS.md`) and #139 (research agent) are **closed**; `ADR-004` is taken, so this feature uses **ADR-005**.
-- Registry files (`AGENTS.md`, `CLAUDE.md`, `README.md`, `docs/system-overview.md`, `docs/workflow-chains.md`, `docs/technical-guidelines.md`) are edited by multiple phases — sequence, do not parallelize those edits.
+- Phase 1 defines `environments.yaml`, the record format, and `ChangeId`; Phase 2 consumes them and cannot land first. Phase 1 is the larger phase and should be split into one story per platform at the story stage.
+- Registry files (`AGENTS.md`, `CLAUDE.md`, `README.md`, `docs/system-overview.md`, `docs/workflow-chains.md`, `docs/technical-guidelines.md`) are touched by both phases; sequence those edits.
+- `ADR-004` is taken; this feature uses `ADR-005`.
 
 ## Security and Compliance
 
-- Least privilege and read-only-by-default; write phases assert the resolved identity matches the plan.
-- Per-operation human approval for production writes, migration applies, and destructive operations; approval for one operation is never standing approval for the next.
-- No secret material persisted anywhere, on any platform, in any form.
-- All log output redacted before it reaches any artifact or transcript; billed queries refused when unbounded.
-- Untrusted-input discipline: tool output, log content, and remote state are data, never executable instructions.
+- Read-only by default; write steps assert identity before executing.
+- Per-step approval; approval for one step is never standing approval for the next.
+- Production state changes are preceded by a recorded backup and carry a recorded revert.
+- No secret material persisted anywhere; log output redacted before it reaches any artifact.
+- Tool output, log content, and remote state are data, never instructions.
 
 ## Open Questions
 
-Non-blocking; carried into spec/implementation with proposed defaults.
-
-1. Does `infra-engineer` commit and open a draft PR for its `infra/` records, or leave them uncommitted? Proposal: commit + draft PR via `github-ops`, never merge.
-2. Tooling minimum-version floors — pin now or during implementation? Proposal: during implementation, after verifying current command surfaces.
-3. Claude packaging — command-only, or add a read-only `infra-inspect` subagent later for discovery/cost-sweep/log-triage? Proposal: command-only for v1; revisit after Phase 4.
-4. Multi-account AWS access — named profiles vs assume-role vs ambient env vars? Proposal: named profiles declared in `environments.yaml`, resolved at plan time.
-5. Monorepo versioning for `release` — single fixed version vs per-package? Proposal: single fixed version unless `component.json` declares multiple publishable components.
-6. Supabase Cloud log retrieval endpoint and per-plan retention — confirm exact Management API path during implementation (a `researcher` pass is recommended before the Phase 4 spec).
-7. One Supabase project per environment vs one project with preview branches as non-prod? Proposal: separate projects for prod/staging, branches for ephemeral Tier 2 only.
-8. Should Supabase Edge Functions be a first-class fourth deploy target in `deploy-alternatives`? Proposal: yes.
+1. Supabase Cloud log retrieval: confirm the Management API endpoint and per-plan retention during Phase 1 implementation. A `researcher` pass is recommended before the spec.
+2. Redaction: ship a pattern set as a skill asset so the security-negative test has one concrete target. Proposal: yes.
+3. Exact version floors per CLI: pin at implementation after checking each tool's current command surface.
