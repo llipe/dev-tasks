@@ -1,8 +1,8 @@
 # Implementation Plan - infra-engineer
 
-Source: `workstream/user-stories-infra-engineer.md` v1.0 (all nine stories selected), `workstream/specification-infra-engineer.md` v1.0, `docs/requirements/prd-infra-engineer.md` v1.3.
+Source: `workstream/user-stories-infra-engineer.md` v1.1 (all ten stories selected), `workstream/specification-infra-engineer.md` v1.0, `docs/requirements/prd-infra-engineer.md` v1.3.
 
-Sequencing: 0 → 1 → (2, 3, 4, 5) → 6 closes Phase 1. 7 has no dependency and may run any time before 8. 8 → 9 closes Phase 2. Each parent task is one PR on an `issue/` or `story/` branch; `planner` may run them under one integration branch per phase.
+Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependency and may run any time before 8. 8 → 9 closes Phase 2. Task 10 is numbered last but belongs to Phase 1: it wires the other agents to route to `infra-engineer`, without which the agent ships inert and `developer` keeps running platform write commands itself. Sequence 10 against 6, since both touch registry files. Each parent task is one PR on an `issue/` or `story/` branch; `planner` may run them under one integration branch per phase.
 
 > Note: Task 0 is outside the PRD. It fixes branch-convention inconsistencies found while reviewing `github-ops`, `git-ops`, `developer`, and `implement`, so the conventions the new agent inherits are consistent before Phase 1 lands.
 
@@ -30,6 +30,8 @@ Sequencing: 0 → 1 → (2, 3, 4, 5) → 6 closes Phase 1. 7 has no dependency a
 - `test/unit/infra-redaction.test.ts`, `test/fixtures/infra/redaction/*.txt` - security-negative
 - `test/unit/git-guard-tags.test.ts` - hook rule 4
 - `test/unit/infra-script-contract.test.ts`, `test/fixtures/infra/bin/*`, `test/fixtures/infra/environments.yaml` - script contract
+- `.github/agents/{developer,housekeeping,planner,product-engineer,github-ops}.agent.md` plus their `.kiro/agents/` and `.claude/` counterparts - caller wiring
+- `.claude/skills/implement/SKILL.md`, `.github/instructions/implement.instructions.md`, `.kiro/steering/implement.md` - task-list routing rule
 - `test/unit/infra-workflow-templates.test.ts` - workflow templates
 - `test/unit/distribution-install.test.ts`, `test/unit/distribution-update.test.ts` - prefix semantics
 
@@ -98,7 +100,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5) → 6 closes Phase 1. 7 has no dependency a
   - [ ] 6.1 Read `core/distribution/*` to learn how `consumer_owned_paths` is matched; write a distribution test for a directory prefix (`infra/`) on install and update; confirm current behavior
   - [ ] 6.2 Implement prefix handling if the test shows it is missing; add `templates/infra` to `managed_paths` and `infra/` to `consumer_owned_paths`; add `templates/` to `package.json` `files`
   - [ ] 6.3 Write `docs/adr/ADR-005-infra-engineer-lifecycle-gates.md` (Context, Decision, Consequences, Alternatives: adapter contract, autonomous mode, IaC authoring, environment branches); index in `docs/adr/README.md`
-  - [ ] 6.4 Update `AGENTS.md` (+ template), `CLAUDE.md` (+ template), `README.md`, `docs/system-overview.md`, `docs/workflow-chains.md`: agent, three skills, templates, agent counts, main-thread rationale
+  - [ ] 6.4 Update `AGENTS.md` (+ template), `CLAUDE.md` (+ template), `README.md`, `docs/system-overview.md`: agent, three skills, templates, agent counts, main-thread rationale. Chain diagrams are Task 10.5, not here
   - [ ] 6.5 Verify Acceptance Criterion: AC-1 registries (parity test registry checks)
   - [ ] 6.6 Verify Acceptance Criterion: AC-3, AC-4 manifest and prefix semantics (distribution tests)
   - [ ] 6.7 Manual verification: `dt install` into a scratch repo, fill `environments.yaml`, `dt update`, confirm the file is untouched
@@ -134,6 +136,20 @@ Sequencing: 0 → 1 → (2, 3, 4, 5) → 6 closes Phase 1. 7 has no dependency a
   - [ ] 9.3 Add the scaffolding procedure to `deploy-ops` (three trees): install `deploy-dev.yml` only when an environment with `production: false` is declared; workflow edits are recorded changes delivered by PR
   - [ ] 9.4 Add `templates/scripts` and `templates/workflows` to `managed_paths` and the three workflow files to `consumer_owned_paths`; extend distribution tests
   - [ ] 9.5 Update `docs/technical-guidelines.md` canonical script list; register `deploy-ops` and templates in `AGENTS.md` (+ template), `CLAUDE.md` (+ template), `README.md`, `docs/system-overview.md`, `docs/workflow-chains.md`
+  - [ ] 9.5b Phase 2 caller wiring: add the post-integration deploy handoff to `planner` (three trees); extend the Task 10.5 deploy chain with the `deploy-ops` script and workflow steps; add the assertions to the caller-wiring block of `infra-engineer-parity.test.ts`
   - [ ] 9.6 Verify Acceptance Criterion: AC-1, AC-2, AC-6 (workflow test); AC-4 (distribution tests); AC-5 (parity registry checks)
   - [ ] 9.7 Manual verification: install into the scratch repo, push a `main` commit and a tag, confirm the dev job runs and the prod job waits for the reviewer
   - [ ] 9.8 Run Tests: `pnpm run validate`, `pnpm run audit`
+
+- [ ] 10.0 Implement Story S-010: Caller wiring and workflow chains
+  - [ ] 10.1 Add a caller-wiring block to `test/unit/infra-engineer-parity.test.ts` listing every caller file and asserting both a reference to `infra-engineer` and conditional language, modeled on the `AC-6` block in `test/unit/researcher-parity.test.ts`; confirm it fails
+  - [ ] 10.2 Edit `developer` in four files (`.github/agents/developer.agent.md`, `.kiro/agents/developer.md`, `.claude/agents/developer.md`, `.claude/commands/developer.md`): **MUST NOT** emit or execute a platform write command; name the sub-task kinds that route to `infra-engineer` (secrets, deploy, DNS, certificates, IAM policy, cloud migrations); narrow rule 19's "purely infrastructure/config" exemption so it cannot read as licence to run platform writes
+  - [ ] 10.3 Add the same routing rule to the `implement` skill in three trees (`.claude/skills/implement/SKILL.md`, `.github/instructions/implement.instructions.md`, `.kiro/steering/implement.md`), since it is the single source of truth for task-list execution
+  - [ ] 10.4 Edit `housekeeping` (three trees) to add `infra/`, `.github/workflows/deploy-*.yml`, `rollback.yml`, `templates/scripts/`, `templates/workflows/` to its "Never touch" table; edit `planner` (three trees) for conditional per-story infra routing; edit `product-engineer` (three trees) to recommend an infra pass on infra-scoped PRDs and route `infra/` drift through `activity-drift-reconciliation`; edit `github-ops` (three trees) to document the change-record draft PR shape (title prefix, body sections citing the `ChangeId`, label)
+  - [ ] 10.5 Author the "Infrastructure Change" chain in `docs/workflow-chains.md` (discover, plan, per-step approval, apply, verify, record, draft PR) and add the conditional infra handoff to the Full Feature and Single GitHub Issue chains
+  - [ ] 10.6 Add the reverse-direction paragraph to the `infra-engineer` body in three variants: conditionally invoke `researcher` for an unfamiliar platform surface; state whether a `verifier` audit applies to `infra/` deliverables
+  - [ ] 10.7 Verify Acceptance Criterion: AC-1 to AC-7 and AC-9 (caller-wiring block green)
+  - [ ] 10.8 Verify Acceptance Criterion: AC-8 chain headings present in `docs/workflow-chains.md`
+  - [ ] 10.9 Manual verification: hand `developer` a task list containing "set the production database secret" and confirm it refuses and names `infra-engineer` instead of running `fly secrets set`
+  - [ ] 10.10 Edge cases: an infra-shaped but local-only sub-task such as a `.env.example` edit stays with `developer`; a story with no infra scope invokes nothing; a `housekeeping` run over a repo whose deploy workflow has a lint error leaves it alone
+  - [ ] 10.11 Run Tests: `pnpm run test:unit`, `pnpm run validate`

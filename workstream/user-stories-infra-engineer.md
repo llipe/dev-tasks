@@ -4,11 +4,14 @@
 
 | Version | Date       | Summary                                      | Author           |
 | ------- | ---------- | -------------------------------------------- | ---------------- |
+| 1.1     | 2026-09-11 | Added S-010 (caller wiring and workflow chains). Phase 2 caller wiring folded into S-009. S-006 no longer authors workflow chains. | product-engineer |
 | 1.0     | 2026-09-11 | Initial version, from PRD v1.3 and spec v1.0 | product-engineer |
 
 Source: `docs/requirements/prd-infra-engineer.md` (v1.3), `workstream/specification-infra-engineer.md` (v1.0).
 
-Execution order: S-001 → (S-002, S-003, S-004, S-005 in any order) → S-006 closes Phase 1. S-007 has no Phase 1 dependency and can run first. S-008 → S-009 close Phase 2.
+Execution order: S-001 → (S-002, S-003, S-004, S-005, S-010 in any order) → S-006 closes Phase 1. S-007 has no Phase 1 dependency and can run first. S-008 → S-009 close Phase 2.
+
+S-010 is the integration story. Without it the agent ships but no other agent routes to it, and `developer` keeps running platform write commands itself. It is Critical for that reason, not for its size.
 
 Shared definition of done for every story: implemented per `docs/technical-guidelines.md`; tests written first and passing; `pnpm run validate` and `pnpm run audit` green; acceptance criteria mapped to test evidence; `verifier` audit run; `coverage_gate` recorded; PR opened, never self-merged.
 
@@ -366,7 +369,7 @@ So that consumers receive Phase 1 through `dt install` and `dt update`.
 
 #### Acceptance Criteria
 
-- [ ] AC-1 `AGENTS.md` (+ template), `CLAUDE.md` (+ template), `README.md`, `docs/system-overview.md`, `docs/workflow-chains.md` list `infra-engineer`, the three platform skills, and the templates; agent counts updated; the "main-thread command on Claude" rationale is stated.
+- [ ] AC-1 `AGENTS.md` (+ template), `CLAUDE.md` (+ template), `README.md`, `docs/system-overview.md` list `infra-engineer`, the three platform skills, and the templates; agent counts updated; the "main-thread command on Claude" rationale is stated. Chain diagrams in `docs/workflow-chains.md` are authored by S-010, not here.
 - [ ] AC-2 `docs/adr/ADR-005-infra-engineer-lifecycle-gates.md` added with Context, Decision, Consequences, Alternatives; indexed in `docs/adr/README.md`.
 - [ ] AC-3 `bundle-manifest.json` has `templates/infra` as a managed path and `infra/` as consumer-owned; `package.json` `files` includes `templates/`.
 - [ ] AC-4 `distribution-install` and `distribution-update` tests prove: managed template files are installed; a consumer-owned directory prefix is never overwritten on update when it exists.
@@ -565,6 +568,7 @@ The agent owns deploy and release workflows in consumer repos. Templates ship ma
 - [ ] AC-3 The `deploy-ops` scaffolding procedure installs `deploy-dev.yml` only when an environment with `production: false` is declared.
 - [ ] AC-4 `bundle-manifest.json` has `templates/scripts` and `templates/workflows` as managed and `.github/workflows/deploy-dev.yml`, `deploy-prod.yml`, `rollback.yml` as consumer-owned; distribution tests cover it.
 - [ ] AC-5 `docs/technical-guidelines.md` lists the canonical deploy and release script names next to `lint`, `test`, `validate`; `AGENTS.md` (+ template), `CLAUDE.md` (+ template), `README.md`, `docs/system-overview.md`, `docs/workflow-chains.md` register `deploy-ops` and the templates.
+- [ ] AC-5b Phase 2 caller wiring: `planner` (three trees) names the post-integration deploy handoff to `infra-engineer`; the `docs/workflow-chains.md` deploy chain from S-010 is extended with the `deploy-ops` script and workflow steps; assertions added to the caller-wiring block of `infra-engineer-parity.test.ts`.
 - [ ] AC-6 `test/unit/infra-workflow-templates.test.ts` passes (YAML parse, triggers, environment, no inline deploy calls, this repo's release workflows on exact semver).
 - [ ] AC-7 `pnpm run validate` and `pnpm run audit` pass.
 
@@ -609,12 +613,91 @@ The agent owns deploy and release workflows in consumer repos. Templates ship ma
 
 ---
 
+### Story S-010: Caller wiring and workflow chains
+
+**Priority:** Critical
+**Estimated Size:** M
+**Dependencies:** S-001
+
+#### User Story
+
+As an operator,
+I want the other agents to route infrastructure work to `infra-engineer` and to refuse to run platform write commands themselves,
+So that the approval, revert, and backup gates actually bind instead of being bypassed by whichever agent runs first.
+
+#### Context
+
+`researcher` set the precedent under ADR-004: it shipped with a caller-wiring acceptance criterion and a parity test asserting that `product-engineer`, `developer`, and `planner` reference it with conditional language across three trees. Registration alone tells a human the agent exists; wiring is what makes another agent route to it.
+
+The gap is live today. Rule 19 of `developer` exempts sub-tasks that are "purely infrastructure/config", and the `plan` skill's Task 0 template tells it to configure environment variables. Nothing stops `developer` from running a deploy or writing a secret, with no change record, no per-step approval, no revert, and no backup.
+
+#### Acceptance Criteria
+
+- [ ] AC-1 `developer` (`.github/agents/developer.agent.md`, `.kiro/agents/developer.md`, `.claude/agents/developer.md`, `.claude/commands/developer.md`) **MUST NOT** emit or execute a platform write command (`aws`, `flyctl`, `supabase`, Cloudflare API writes) and hands the sub-task to `infra-engineer`. The sub-task kinds that route are named: secrets, deploy, DNS, certificates, IAM policy, and migrations against a shared or cloud project. Rule 19's "purely infrastructure/config" exemption is narrowed so it cannot read as licence to run platform writes.
+- [ ] AC-2 The `implement` skill (`.claude/skills/implement/SKILL.md`, `.github/instructions/implement.instructions.md`, `.kiro/steering/implement.md`) carries the same routing rule, since it is the single source of truth for task-list execution and `developer` defers to it.
+- [ ] AC-3 `housekeeping` (three trees) adds `infra/`, `.github/workflows/deploy-*.yml`, `rollback.yml`, `templates/scripts/`, and `templates/workflows/` to its "Never touch" table.
+- [ ] AC-4 `planner` (three trees) references `infra-engineer` with conditional language for per-story infra routing; the post-integration deploy handoff is added by S-009 AC-5b.
+- [ ] AC-5 `product-engineer` (three trees) recommends an `infra-engineer` pass when a PRD or spec has infra scope, with conditional language, and routes drift findings under `infra/` through `activity-drift-reconciliation` like any other drift.
+- [ ] AC-6 `github-ops` (three trees) documents the change-record draft PR shape that `infra-engineer` delegates in S-001 AC-11: title prefix, body sections referencing the `ChangeId`, and label.
+- [ ] AC-7 Reverse direction: the `infra-engineer` body (three trees) conditionally invokes `researcher` for an unfamiliar platform surface, and states whether a `verifier` audit applies to `infra/` deliverables.
+- [ ] AC-8 `docs/workflow-chains.md` gains an "Infrastructure Change" chain showing discover, plan, per-step approval, apply, verify, record, and draft PR; the Full Feature and Single GitHub Issue chains show the conditional infra handoff.
+- [ ] AC-9 `test/unit/infra-engineer-parity.test.ts` gains a caller-wiring block modeled on the `researcher` AC-6 assertions: every caller file references `infra-engineer` and uses conditional language, across all three trees.
+- [ ] AC-10 `pnpm run validate` passes and the caller-wiring assertions are reachable from `pnpm run test`.
+
+#### Business Rules
+
+- No agent other than `infra-engineer` emits a platform write command.
+- Caller wiring is conditional, never mandatory: an issue with no infra scope never invokes `infra-engineer`.
+- `housekeeping` never touches `infra/` or a deploy workflow, even to fix formatting.
+
+#### Technical Notes
+
+- Model AC-9 on the `AC-6: Callers wired with conditional triggers` block in `test/unit/researcher-parity.test.ts`, including its conditional-language pattern.
+- Caller files: five agents across three trees. `developer` carries a full contract in both `.claude/agents/` and `.claude/commands/`, so both need the rule; `housekeeping` and `github-ops` Claude commands are thin wrappers and need no edit.
+- Sequence this story's edits against S-006, which touches the same registry files, to avoid conflicts.
+
+#### Testing Requirements
+
+- **Unit Tests:** caller-wiring block in `infra-engineer-parity.test.ts`; a negative assertion that `housekeeping` lists the infra paths as never-touch.
+- **Integration Tests:** none.
+- **Manual/UI Testing:** hand `developer` a task list containing a "set the production database secret" sub-task and confirm it refuses and names `infra-engineer` instead of running `fly secrets set`.
+- **Edge-Case Matrix:** a sub-task that is infra-shaped but local only, such as a `.env.example` edit, which `developer` still owns; a story with no infra scope, where no caller invokes `infra-engineer`; a `housekeeping` run over a repo whose deploy workflow has a lint error.
+- **Acceptance-Criteria Mapping:** AC-1 to AC-7, AC-9 → `infra-engineer-parity.test.ts`; AC-8 → same test asserts the chain heading exists; AC-10 → `pnpm run validate`; manual run covers AC-1 behaviorally.
+- **Execution Commands:** `pnpm run test:unit`, `pnpm run validate`.
+
+#### Migration Requirements
+
+- Not applicable.
+
+#### Implementation Steps
+
+1. Write the caller-wiring block in `infra-engineer-parity.test.ts` listing every caller file and the conditional-language pattern; confirm it fails.
+2. Edit `developer` in four files and the `implement` skill in three trees with the routing rule and the narrowed rule 19 wording.
+3. Edit `housekeeping`, `planner`, `product-engineer`, and `github-ops` across three trees.
+4. Add the reverse-direction paragraph to the `infra-engineer` body in three variants.
+5. Author the "Infrastructure Change" chain and edit the two existing chains in `docs/workflow-chains.md`.
+6. Run the parity test to green; run `pnpm run validate`.
+
+#### Files to Create/Modify
+
+- `.github/agents/developer.agent.md`, `.kiro/agents/developer.md`, `.claude/agents/developer.md`, `.claude/commands/developer.md`
+- `.claude/skills/implement/SKILL.md`, `.github/instructions/implement.instructions.md`, `.kiro/steering/implement.md`
+- `.github/agents/housekeeping.agent.md`, `.kiro/agents/housekeeping.md`, `.claude/agents/housekeeping.md`
+- `.github/agents/planner.agent.md`, `.kiro/agents/planner.md`, `.claude/commands/planner.md`
+- `.github/agents/product-engineer.agent.md`, `.kiro/agents/product-engineer.md`, `.claude/commands/product-engineer.md`
+- `.github/agents/github-ops.agent.md`, `.kiro/agents/github-ops.md`, `.claude/agents/github-ops.md`
+- `infra-engineer` agent files from S-001 (reverse-direction paragraph)
+- `docs/workflow-chains.md`
+- `test/unit/infra-engineer-parity.test.ts`
+
+---
+
 ## Coverage Validation
 
 ### Summary
 
 - **Total PRD Requirements:** 26 functional requirements + 9 business rules
-- **Total User Stories:** 9
+- **Total User Stories:** 10
 - **Coverage:** 100%
 - **Status:** Complete
 
@@ -659,6 +742,7 @@ The agent owns deploy and release workflows in consumer repos. Templates ship ma
 | BR No secret material; template file blocks       | S-005, S-001                        | ✅ Covered |
 | AC Phase 1 (ADR-005, registries, manifest, tests) | S-006                               | ✅ Covered |
 | AC Phase 2 (registration, guidelines)             | S-009                               | ✅ Covered |
+| Harness integration (caller wiring, chains)       | S-010                               | ✅ Covered |
 
 ### Gaps
 
