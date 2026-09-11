@@ -39,7 +39,7 @@ git checkout -b <branch-name>
 
 - Story branches: `story/<story-id>-<short-description>`
 - Issue branches: `issue/<issue-number>-<short-description>`
-- Integration branches: `integrate/<milestone-or-prd-name>`
+- Integration branches: `integration/<plan-id>-<short-description>`
 
 ### 2. Create Branch from Integration Branch
 
@@ -98,11 +98,11 @@ Choose the appropriate strategy based on context:
 
 | Strategy         | When to Use                                                                         | Command                     |
 | ---------------- | ----------------------------------------------------------------------------------- | --------------------------- |
-| **Squash merge** | Story/issue PRs → integration or main branch. Produces clean single-commit history. | `gh pr merge <pr> --squash` |
-| **Merge commit** | Integration branch → main. Preserves the full story history.                        | `gh pr merge <pr> --merge`  |
-| **Rebase merge** | Small PRs with clean linear history. Avoid for multi-commit stories.                | `gh pr merge <pr> --rebase` |
+| **Squash merge** | Issue/story PRs → integration (planner) or `main` (user); delete the source branch. | `gh pr merge <pr> --squash --delete-branch` |
+| **Merge commit** | Integration PRs → `main` (user); preserve the story history.                         | `gh pr merge <pr> --merge`                 |
+| **Rebase merge** | Not part of the issue/story/integration policy; use only when explicitly approved.   | `gh pr merge <pr> --rebase`                |
 
-**Default**: Squash merge for story PRs, merge commit for integration PRs to main.
+**Default**: Issue/story PRs use squash with branch deletion; integration PRs use a merge commit. Planner handles integration targets, and the user handles `main`.
 
 ### 6. Resolve Merge Conflicts
 

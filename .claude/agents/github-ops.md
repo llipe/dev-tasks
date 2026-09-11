@@ -231,17 +231,19 @@ Branch names **MUST** follow this pattern:
 | ------------- | -------------------------------- | ------------------------------------- |
 | `issue`       | Single GitHub Issue              | `issue/42-rate-limiting`              |
 | `story`       | PRD-driven user story            | `story/S-003-password-reset`          |
-| `fix`         | Bug fix                          | `fix/87-session-expiry`               |
-| `chore`       | Maintenance task                 | `chore/91-upgrade-node`               |
-| `docs`        | Documentation only               | `docs/45-api-reference`               |
-| `integration` | Multi-story consolidation branch | `integration/prd-auth-password-reset` |
+| `integration` | Multi-story consolidation branch | `integration/prd-auth-password-reset`
 
 Rules:
 
 - **MUST** use lowercase and hyphens only (no underscores, no camelCase).
 - Short description **MUST** be 2–5 words, hyphen-separated.
-- Branches of type `issue`, `story`, `fix`, `chore`, and `docs` **MUST** include the issue or story number.
+- Branches of type `issue` and `story` **MUST** include the issue or story number.
 - Branches of type `integration` **MUST** identify the plan, PRD, or milestone being consolidated.
+
+## Branch-Type Merge Rules
+
+- Issue and story PRs **MUST** merge by squash with source-branch deletion. The planner merges them into an integration branch; the user merges them into `main`.
+- Integration PRs **MUST** merge into `main` by merge commit, and only the user may merge them.
 
 ---
 
