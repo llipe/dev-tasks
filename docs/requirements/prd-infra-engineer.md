@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                                                                                                                                                                                     | Author           |
 | ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.3     | 2026-09-11 | Trunk-based environment mapping: `main` deploys to dev, a release tag deploys to prod, dev is optional. Prerelease tags removed. Tag policy (human-only, `main`-only, immutable) and its enforcement added to Phase 2.                                                                                      |
 | 1.2     | 2026-09-11 | Phase 1 now covers AWS, fly.io, and Supabase together. Version floors restored. Added the step-gated execution model with per-step revert, mandatory production backups, and ownership of GitHub Actions deploy/release workflows. Two phases.                                                              | product-engineer |
 | 1.1     | 2026-09-11 | Simplified. Dropped the platform adapter contract, the standalone safety instruction, `tooling.yaml` and `cost-thresholds.yaml`, the `RELEVANT`/`MARGINAL` taxonomy, and the separate `log-ops`, `infra-inventory`, `secrets-ops`, and `deploy-alternatives` skills. Open questions resolved with defaults. | product-engineer |
 | 1.0     | 2026-09-01 | Initial PRD. Absorbs and supersedes issues #143, #144, #145, and #150. Organized as four phases.                                                                                                                                                                                                            | product-engineer |
@@ -12,16 +13,16 @@
 
 `dev-tasks` applies a discover → plan → approve → apply → record loop to code, but infrastructure changes still live in people's heads and ad hoc CI YAML. This PRD introduces `infra-engineer`: an agent that carries out infrastructure work step by step, with a human approval before every step, a recorded revert path for every step, and a backup before any production step that touches state. There is no autonomous mode, because an infrastructure mistake costs more than a code mistake.
 
-The purpose is **one consistent way of working with infrastructure**: every change leaves a legible, revertible record under `infra/changes/`, and the agent teaches which tool to use for which change. Phase 1 delivers the agent and the three platforms in daily use (AWS, fly.io, Supabase Cloud). Phase 2 codifies the repeatable deploy and release path into scripts and GitHub Actions workflows that the agent owns.
+The purpose is **one consistent way of working with infrastructure**: every change leaves a legible, revertible record under `infra/changes/`, and the agent teaches which tool to use for which change. Phase 1 delivers the agent and the three platforms in daily use (AWS, fly.io, Supabase Cloud). Phase 2 codifies the repeatable deploy and release path into scripts and GitHub Actions workflows that the agent owns, on a trunk-based model: a merge to `main` deploys to dev, a release tag deploys to prod, and dev is optional.
 
 ## Feature Overview
 
 `infra-engineer` is one agent, one working loop, and four skills. The agent body owns the loop, the safety rules, the record format, the tool-routing table, and the log-triage rules. Each skill owns the concrete commands, version floors, and log sources for one surface.
 
-| Phase | Absorbs          | Ships                                                                                                                              |
-| ----- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | #143, #145, #150 | `infra-engineer` agent (all platforms), `aws-ops`, `fly-ops`, `supabase-ops` skills, `infra/` layout, ADR-005, registries, tests   |
-| 2     | #144             | `deploy-ops` skill: script templates under `templates/scripts/` and GitHub Actions workflow templates under `templates/workflows/` |
+| Phase | Absorbs          | Ships                                                                                                                                                                |
+| ----- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | #143, #145, #150 | `infra-engineer` agent (all platforms), `aws-ops`, `fly-ops`, `supabase-ops` skills, `infra/` layout, ADR-005, registries, tests                                     |
+| 2     | #144             | `deploy-ops` skill: script templates under `templates/scripts/`, GitHub Actions workflow templates under `templates/workflows/`, tag policy and its `git-guard` rule |
 
 In Phase 1 the agent does infrastructure work by hand with the platform CLIs, one approved step at a time: build an image, create an app, deploy it, create secrets, create and attach IAM policies, add DNS records, issue certificates. Phase 2 turns the path that repeats (build, migrate, deploy, verify, rollback) into scripts and pipelines.
 
@@ -40,7 +41,7 @@ graph LR
 2. **Step-gated execution.** A plan is a numbered list of steps. The human approves the plan, then approves each step before it runs. The agent never runs ahead.
 3. **Production is recoverable.** In production, a step with no revert path is refused, and a step that touches state runs only after a backup is taken and recorded.
 4. **Teach which tool to use.** One routing table maps each kind of change to one tool and the phase it runs in.
-5. **Traceable delivery.** Every deploy records version and commit SHA; production deploys only from a release tag; rollback resolves from the record; the pipelines that do this are owned by the agent.
+5. **Traceable delivery.** One trunk, no environment branches. A merge to `main` deploys to dev; a human-created release tag deploys to prod. Every deploy records version and commit SHA; rollback resolves from the record; the pipelines that do this are owned by the agent.
 
 ## Affected Repositories
 
@@ -65,7 +66,7 @@ Consumer repositories that install `dev-tasks` receive the agent, skills, and an
 6. As an operator, I want the agent to refuse when a required tool is missing, below its minimum version, or unauthenticated, with the fix named, so I never get a half-applied change.
 7. As an operator, I want to see the monthly cost of each planned resource before I approve it.
 8. As an operator, I want a canonical `deploy:<env>` path, run by a GitHub Actions workflow the agent maintains, so deploys are repeatable.
-9. As an operator, I want production to deploy only from a release tag and rollback to resolve the last good version automatically.
+9. As an operator, I want `main` to deploy to dev and a release tag to deploy to prod, with rollback resolving the last good version automatically, and I want to be able to skip the dev environment entirely.
 10. As an operator diagnosing an incident, I want bounded, redacted log queries pointed at the right source, so I find evidence without leaking secrets.
 
 ## Functional Requirements
@@ -98,14 +99,26 @@ Consumer repositories that install `dev-tasks` receive the agent, skills, and an
 
 19. **Script contract.** `release` (human only), `release:dry-run`, `deploy:<env>`, `deploy:verify:<env>`, `rollback:<env>`, `deploy:status`. Shell scripts under `templates/scripts/` are the implementation; `package.json` wrappers exist only for JS/TS repos. Environment names come from `infra/environments.yaml`. `scripts/release.sh` in this repo is generalized, not reimplemented.
 20. **Deploy steps.** Preflight (clean tree, identity assertion) → `validate` → build an artifact tagged by version and SHA → backup (prod, when migrating) → migrate (confirmation-gated for shared/prod) → deploy → verify → record. No flag skips `validate` or the backup for production.
-21. **Tags and rollback.** Annotated `v<major>.<minor>.<patch>` tags are the only release trigger. Production deploys only from an existing release tag; non-production may deploy from a branch as `v<semver>-rc.N+<sha>`. Bump type is derived from Conventional Commits and confirmed by the human. `rollback:<env>` reads the previous good version from `infra/changes/`. A failing verify prints the rollback command instead of reporting success.
-22. **Pipeline ownership.** `infra-engineer` owns the deploy and release workflows in `.github/workflows/`. Templates ship under `templates/workflows/`: a tag-triggered production deploy using a GitHub environment with required reviewers, a branch-triggered non-production deploy, and a manual rollback. Workflows call the canonical scripts and contain no inline deploy logic. Any workflow edit is a change: planned, approved, recorded under `infra/changes/`, delivered by PR. Existing quality-gate workflows (`validate`) stay as they are.
-23. **Authority.** `release` and `deploy:prod` are human-invoked, either locally or by approving the protected GitHub environment; they refuse to run in a non-interactive agent context. Non-prod deploys require an approved `ChangeId`.
-24. **Deploy-target framing.** The skill lists the options (AWS on existing foundation, AWS with new foundation, fly.io, Supabase Edge Functions) with cost shape and fit; the user decides. Cloudflare Workers is not a target.
+21. **Environment mapping.** Trunk-based; no `develop`, `staging`, or other environment branches. The git ref is the trigger:
+
+    | Environment | Trigger              | Ref that runs               | Artifact tag       | Rollback                              |
+    | ----------- | -------------------- | --------------------------- | ------------------ | ------------------------------------- |
+    | dev         | push to `main`       | `main` HEAD                 | `main-<short-sha>` | redeploy previous SHA from the record |
+    | prod        | push of tag `vX.Y.Z` | the tagged commit on `main` | `vX.Y.Z`           | redeploy previous tag from the record |
+
+    Dev is optional. When no non-production environment is declared in `infra/environments.yaml`, a push to `main` runs `validate` only and the tag remains the sole deploy trigger; the local stack plus the `validate` gate is the pre-production check. No prerelease tags exist in v1; if a staging environment is ever added, `vX.Y.Z-rc.N` tags are the additive way to feed it. A hotfix branches from `main` (or from the last tag when `main` carries unreleased work), merges by PR, and ships as a new patch tag. Holding a release line open on a `release/X.Y` branch is an escape hatch documented in one line, not built.
+
+22. **Tag policy.** Release tags are annotated `v<major>.<minor>.<patch>`, created by a human, pointing only at a commit on `main`, and immutable: a bad release gets a new patch tag, never a moved or deleted one. Agents never create, move, or delete tags. Bump type is derived from Conventional Commits and confirmed by the human. The policy is documented in `github-ops` next to branch naming, procedures in `git-ops`, and enforced by a new `git-guard` rule that blocks `git tag` and any push of `refs/tags` from an agent. Workflow tag filters match exact semver (`v[0-9]+.[0-9]+.[0-9]+`), so this repo's existing `[0-9]*` suffix is corrected. Closing milestone `vX.Y` implies tag `vX.Y.0` exists.
+23. **Rollback.** `rollback:<env>` reads the previous good version from `infra/changes/`. A failing verify prints the rollback command instead of reporting success. No deploy targets a mutable `latest` tag.
+24. **Pipeline ownership.** `infra-engineer` owns the deploy and release workflows in `.github/workflows/`. Templates ship under `templates/workflows/`: a `main`-push dev deploy that exists only when a non-production environment is declared, a tag-triggered production deploy behind a GitHub environment with a required reviewer, and a manual rollback. Workflows call the canonical scripts and contain no inline deploy logic. Any workflow edit is a change: planned, approved, recorded under `infra/changes/`, delivered by PR. Existing quality-gate workflows (`validate`) stay as they are.
+25. **Authority.** `release` and `deploy:prod` are human-invoked: locally, or by pushing the tag and approving the protected GitHub environment. Both refuse to run in a non-interactive agent context. A dev deploy triggered by a merge to `main` needs no `ChangeId`, because the merge itself was human-approved by PR; an agent-run `deploy:<env>` outside the pipeline requires an approved `ChangeId`.
+26. **Deploy-target framing.** The skill lists the options (AWS on existing foundation, AWS with new foundation, fly.io, Supabase Edge Functions) with cost shape and fit; the user decides. Cloudflare Workers is not a target.
 
 ## Business Rules
 
 - No agent pushes or merges into `main`; `release` and `deploy:prod` are human-invoked only.
+- Agents never create, move, or delete git tags. Release tags point only at `main` and are never moved.
+- No environment branches. `main` is dev, the latest tag is prod.
 - No write without an approved `ChangeId` and an approval for the specific step; log reading is the sole exception.
 - No autonomous or batch mode.
 - Every step has a revert. In production, no revert means no step.
@@ -124,6 +137,8 @@ infra/
   environments.yaml               # per env: aws {account_id, region, profile}, fly {org, app},
                                   #          supabase.project_ref, cloudflare.zone_id, tier0_tool,
                                   #          production: true|false, cost_threshold_usd (default 20)
+                                  # production: true deploys from tags; false deploys from main;
+                                  # declare no non-production env to skip dev entirely
   inventory/                      # generated by discovery, never hand-edited
     aws/<account>/<region>/<service>.json
     fly/<app>.json
@@ -145,6 +160,7 @@ infra/
 - Not a cost-optimization engine; the sweep reports, it does not remediate.
 - Does not author RLS policies or tests (`qa-engineer`); does not manage self-hosted Supabase; Supabase logs are cloud only.
 - No generic platform adapter contract. A fifth platform means a new skill and new routing rows.
+- No environment branches and no prerelease tags in v1.
 - No new npm dependency, no new `dt` subcommand, no MCP server.
 
 ## Design Considerations
@@ -156,12 +172,12 @@ No UI. Cross-platform parity (Copilot, Claude Code, Kiro) is behavioral, not byt
 - Claude packaging is a command because per-step approval cannot run in a subagent.
 - `bundle-manifest.json`: confirm existing globs cover the new files; add `infra/` and the deploy/release workflow files to `consumer_owned_paths` and verify directory-prefix semantics against the installer and updater.
 - `/TESTING.md` is unfilled, so the security-negative test is specified inline with fixtures (synthetic AWS key, `sb_secret_*` key, fly token, bearer token, connection string, email).
-- ADR-005 records: step-gated `ChangeId` loop with per-step revert, production backup rule, foundation route-not-write, agent ownership of deploy and release workflows.
+- ADR-005 records: step-gated `ChangeId` loop with per-step revert, production backup rule, foundation route-not-write, agent ownership of deploy and release workflows, and the trunk-based mapping (`main` to dev, tag to prod, no environment branches).
 
 ## Acceptance Criteria
 
 - [ ] **Phase 1** — Agent ships on all platforms with the step-gated loop, per-step revert, production backup rule, two-tier model, identity assertion, tool check with version floors, routing table, cost callout, record format, tagging, secrets, and log-triage rules; `aws-ops`, `fly-ops`, and `supabase-ops` ship in three trees, each declaring its version floors, backup commands, revert sources, and log table; `infra/environments.yaml` template ships; ADR-005 added; registries and manifest updated; `infra-engineer-parity.test.ts`, `skill-parity-infra.test.ts`, and the secrets/redaction security-negative test pass.
-- [ ] **Phase 2** — `deploy-ops` ships in three trees; script templates pass shellcheck and support `--help` and dry-run; workflow templates ship and call scripts only; production refuses non-tag refs and runs behind a protected environment; rollback resolves from `infra/changes/`; human-only scripts refuse non-interactive execution; canonical script names documented in `technical-guidelines.md`.
+- [ ] **Phase 2** — `deploy-ops` ships in three trees; script templates pass shellcheck and support `--help` and dry-run; workflow templates ship and call scripts only; `main` push deploys dev only when a non-production environment is declared; production refuses non-tag refs and runs behind a protected environment; tag policy documented in `github-ops`, `git-guard` blocks agent tag operations, and this repo's workflow tag filters match exact semver; rollback resolves from `infra/changes/`; human-only scripts refuse non-interactive execution; canonical script names documented in `technical-guidelines.md`.
 - [ ] **Global** — `pnpm run validate` and `pnpm run audit` pass; every new test is reachable from `pnpm run test`; no agent path pushes or merges to `main`.
 
 ## Success Metrics
@@ -178,6 +194,7 @@ No UI. Cross-platform parity (Copilot, Claude Code, Kiro) is behavioral, not byt
 - Multi-account AWS access uses named profiles declared in `environments.yaml`; GitHub Actions use OIDC.
 - One Supabase project and one fly app per long-lived environment; preview branches and throwaway apps only for ephemeral use.
 - Single fixed version per repo for `release`.
+- A remote dev environment is optional; some consumer repos deploy to prod only.
 
 ## Constraints and Dependencies
 
