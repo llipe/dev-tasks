@@ -580,7 +580,7 @@ The agent owns deploy and release workflows in consumer repos. Templates ship ma
 #### Technical Notes
 
 - Guidelines: Deployment and DevOps (consumer CI remains consumer-owned; templates only).
-- Quality-gate workflows are untouched.
+- Quality-gate CI is out of scope. This repository has no pull-request workflow today; both existing workflows fire only on a tag push. Adding one is a separate decision.
 
 #### Testing Requirements
 
