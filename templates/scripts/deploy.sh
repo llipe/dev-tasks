@@ -157,6 +157,9 @@ detect_kind
 if [ "$IS_PROD" = "true" ] && [ -n "${CI:-}" ] && [ "${INFRA_HUMAN_APPROVED:-}" != "1" ]; then
   blocked "Production deploy under CI requires human approval (INFRA_HUMAN_APPROVED=1 exported by the protected environment job)."
 fi
+if [ "$IS_PROD" = "true" ] && [ ! -t 0 ] && [ "${INFRA_HUMAN_APPROVED:-}" != "1" ]; then
+  blocked "Production deploy refuses to run in a non-interactive agent context without INFRA_HUMAN_APPROVED=1."
+fi
 
 # ─── Step 1: preflight (clean tree, ref rules, identity) ─────────────────────
 

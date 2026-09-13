@@ -338,6 +338,16 @@ describe("human-only guard (business rule)", () => {
     expect(/approval|human/i.test(res.stdout + res.stderr)).toBe(true);
   });
 
+  it("deploy.sh prod refuses in a non-interactive context without INFRA_HUMAN_APPROVED (CI unset)", () => {
+    const res = runScript("deploy.sh", ["prod", "--dry-run"], {
+      CI: "",
+      INFRA_HUMAN_APPROVED: "",
+      INFRA_ASSUME_REF_OK: "1",
+    });
+    expect(res.status).toBe(2);
+    expect(/approval|human|non-interactive/i.test(res.stdout + res.stderr)).toBe(true);
+  });
+
   it("release.sh refuses when CI is set without INFRA_HUMAN_APPROVED", () => {
     const res = runScript("release.sh", ["patch", "--dry-run"], {
       CI: "true",
