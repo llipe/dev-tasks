@@ -195,7 +195,6 @@ describe("infra-engineer — template status guard", () => {
   });
 });
 
-
 // ─── S-009 AC-5b: planner post-integration deploy handoff (caller wiring) ────
 
 describe("infra-engineer — S-009 AC-5b: planner deploy handoff", () => {

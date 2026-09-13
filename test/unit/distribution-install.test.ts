@@ -739,7 +739,6 @@ describe("core/distribution/install — root-file registry parity (#136)", () =>
   });
 });
 
-
 /**
  * Manifest path registration for infra templates (Story S-009, AC-4).
  *
@@ -763,7 +762,9 @@ describe("bundle-manifest — infra template path registration (#162, S-009 AC-4
   }
 
   function loadManifest(): BundleManifest {
-    return JSON.parse(readFileSync(join(repoRoot, "bundle-manifest.json"), "utf-8")) as BundleManifest;
+    return JSON.parse(
+      readFileSync(join(repoRoot, "bundle-manifest.json"), "utf-8"),
+    ) as BundleManifest;
   }
 
   it("registers templates/scripts as a managed path", () => {
@@ -793,8 +794,12 @@ describe("bundle-manifest — infra template path registration (#162, S-009 AC-4
     for (const p of ["templates/scripts", "templates/workflows"]) {
       const entry = managed.find((m) => m.path === p);
       expect(entry, `${p} missing from managed_paths`).toBeDefined();
-      expect(entry?.pattern, `${p} must follow the templates/infra glob shape`).toBe(infra?.pattern);
-      expect(entry?.recursive, `${p} must be recursive like templates/infra`).toBe(infra?.recursive);
+      expect(entry?.pattern, `${p} must follow the templates/infra glob shape`).toBe(
+        infra?.pattern,
+      );
+      expect(entry?.recursive, `${p} must be recursive like templates/infra`).toBe(
+        infra?.recursive,
+      );
     }
   });
 

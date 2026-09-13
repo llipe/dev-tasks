@@ -89,7 +89,10 @@ describe("infra workflow templates — AC-1 triggers", () => {
   it("deploy-prod.yml does not trigger on push to a branch", () => {
     const doc = parseYaml(read(DEPLOY_PROD)) as Record<string, unknown>;
     const push = triggers(doc).push as { branches?: unknown } | undefined;
-    expect(push?.branches, "deploy-prod.yml must be tag-only, not branch-triggered").toBeUndefined();
+    expect(
+      push?.branches,
+      "deploy-prod.yml must be tag-only, not branch-triggered",
+    ).toBeUndefined();
   });
 
   it("rollback.yml triggers on workflow_dispatch with an environment input", () => {
@@ -109,7 +112,9 @@ describe("infra workflow templates — AC-1 triggers", () => {
 
 describe("infra workflow templates — AC-1 environment protection", () => {
   it("deploy-prod.yml declares environment: production on its deploy job", () => {
-    const doc = parseYaml(read(DEPLOY_PROD)) as { jobs?: Record<string, { environment?: unknown }> };
+    const doc = parseYaml(read(DEPLOY_PROD)) as {
+      jobs?: Record<string, { environment?: unknown }>;
+    };
     const jobs = doc.jobs ?? {};
     const environments = Object.values(jobs).map((j) => {
       const env = j.environment;
@@ -119,10 +124,9 @@ describe("infra workflow templates — AC-1 environment protection", () => {
       }
       return undefined;
     });
-    expect(
-      environments,
-      "deploy-prod.yml has no job with environment: production",
-    ).toContain("production");
+    expect(environments, "deploy-prod.yml has no job with environment: production").toContain(
+      "production",
+    );
   });
 
   it("deploy-dev.yml does not gate its job behind the production environment", () => {
