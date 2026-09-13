@@ -218,6 +218,7 @@ Projects set numeric thresholds. The harness provides baseline/no-regression pol
 ## Deployment and DevOps
 
 - Releases are versioned bundles published through GitHub Releases.
+- Release tags are annotated, immutable, exact-semver (`v<major>.<minor>.<patch>`) tags created only by a human on `main`; agents never create, move, delete, or push tags (enforced by `git-guard` rule 4).
 - Build and smoke tests must verify managed files, checksums, profile contents, and installer/update behavior.
 - CI evidence should be attached to workflow runs or pull requests rather than committing volatile reports to the repository.
 - Durable plans, traceability records, concise verification summaries, and architectural decisions may be committed when they remain useful after a run.

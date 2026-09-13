@@ -192,6 +192,26 @@ git push --force-with-lease origin <branch-name>
 
 **Never use** `git push --force` without `--with-lease`.
 
+### 10. Tag Procedure (Human-Only)
+
+Tags are the production deploy trigger and are created **only by a human**. Agents **MUST NOT** create, move, delete, or push tags; `git-guard` rule 4 enforces this. This section documents the procedure a human follows — it is not an agent action.
+
+```bash
+# Ensure you are on main at the exact release commit
+git checkout main
+git pull origin main
+
+# Create an annotated, immutable release tag (exact semver only)
+git tag -a v<major>.<minor>.<patch> -m "Release v<major>.<minor>.<patch>"
+
+# Push the tag (triggers the production deploy workflow)
+git push origin v<major>.<minor>.<patch>
+```
+
+Rules: annotated tags only (never lightweight), exact `v<major>.<minor>.<patch>` (no prerelease suffixes in v1), tag a commit on `main`, and never move or delete a pushed tag.
+
+**Hotfix:** a hotfix ships as the next patch tag (`vX.Y.Z+1`) cut from `main` after the fix merges; never re-point or force-update an existing tag.
+
 ---
 
 ## Conflict Resolution Heuristics

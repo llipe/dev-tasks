@@ -320,6 +320,33 @@ Rules:
 
 ---
 
+## Tags
+
+Tags are the production deploy trigger. They **MUST** be trustworthy, so their creation is tightly constrained.
+
+### Format
+
+```
+v<major>.<minor>.<patch>
+```
+
+Example: `v1.4.0`
+
+Rules:
+
+- Tags **MUST** be annotated (`git tag -a`), never lightweight.
+- Tags **MUST** be created by a human. Agents **MUST NOT** create, move, delete, or push tags — this is enforced by `git-guard` rule 4.
+- A tag **MUST** point at a commit on `main`.
+- Tags **MUST** be immutable: once pushed, a tag is never moved, re-pointed, force-updated, or deleted.
+- Prerelease tags (e.g., `v1.0.0-rc.1`, `v1.0.0-beta`) **MUST NOT** be used in v1; only exact `v<major>.<minor>.<patch>` tags are valid.
+- A milestone `v<major>.<minor>` **MUST** be closed when its `v<major>.<minor>.0` tag exists.
+
+### Relationship to Milestones
+
+A milestone tracks the scope of a minor version (`vX.Y`); the tag `vX.Y.0` marks its release. Patch tags (`vX.Y.1`, `vX.Y.2`, …) do not open new milestones.
+
+---
+
 ## Audit Mode
 
 When invoked with `audit` as input, `github-ops` **MUST**:
