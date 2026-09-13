@@ -47,10 +47,11 @@ interface RunResult {
  * overrides are merged on top. A per-run stub log path is injected so argv
  * capture is isolated between cases.
  */
-function runScript(name: string, args: string[], env: Record<string, string> = {}): RunResult {
+function runScript(name: string, args: string[], env: Record<string, string> = {}, cwd?: string): RunResult {
   const stubLog = resolve(mkdtempSync(resolve(tmpdir(), "infra-stub-")), "argv.log");
   const result = spawnSync("bash", [scriptPath(name), ...args], {
     encoding: "utf-8",
+    cwd,
     env: {
       ...process.env,
       PATH: `${STUB_BIN}${delimiter}${process.env.PATH ?? ""}`,
@@ -291,5 +292,95 @@ describe("human-only guard (business rule)", () => {
     });
     expect(res.status).toBe(2);
     expect(/approval|human/i.test(res.stdout + res.stderr)).toBe(true);
+  });
+});
+
+
+// ─── AC-3 / AC-4 edge cases against a real throwaway git repo (8.9) ──────────
+//
+// These exercise the production ref rules and the dirty-tree preflight against a
+// disposable git repository so `git describe`, tag object types, and worktree
+// state are real. The stub bin dir is still on PATH for yq/flyctl.
+
+describe("deploy.sh prod — ref-rule edge cases in a real repo (AC-4, 8.9)", () => {
+  let repo: string;
+  let envFile: string;
+
+  function git(...cmd: string[]): void {
+    const r = spawnSync("git", cmd, {
+      cwd: repo,
+      encoding: "utf-8",
+      env: {
+        ...process.env,
+        GIT_AUTHOR_NAME: "t",
+        GIT_AUTHOR_EMAIL: "t@example.com",
+        GIT_COMMITTER_NAME: "t",
+        GIT_COMMITTER_EMAIL: "t@example.com",
+      },
+    });
+    if (r.status !== 0) throw new Error(`git ${cmd.join(" ")} failed: ${r.stderr}`);
+  }
+
+  beforeEach(() => {
+    repo = mkdtempSync(resolve(tmpdir(), "infra-repo-"));
+    git("init", "-q", "-b", "main");
+    envFile = resolve(repo, "environments.yaml");
+    writeFileSync(
+      envFile,
+      [
+        "default_cost_threshold_usd: 20",
+        "environments:",
+        "  prod:",
+        "    production: true",
+        "    tier0_tool: none",
+        "    fly: { org: test-org, app: test-app }",
+        "",
+      ].join("\n"),
+    );
+    git("add", "environments.yaml");
+    git("commit", "-q", "-m", "chore: seed");
+  });
+
+  afterEach(() => {
+    rmSync(repo, { recursive: true, force: true });
+  });
+
+  // Runs deploy.sh with the real repo as cwd and real ref rules enforced.
+  function runProd(): RunResult {
+    return runScript(
+      "deploy.sh",
+      ["prod"],
+      { INFRA_ENV_FILE: envFile, INFRA_ASSUME_REF_OK: "0", INFRA_HUMAN_APPROVED: "1", CI: "" },
+      repo,
+    );
+  }
+
+  it("refuses a lightweight (non-annotated) tag", () => {
+    git("tag", "v1.0.0"); // lightweight
+    git("checkout", "-q", "v1.0.0");
+    const res = runProd();
+    expect(res.status).toBe(2);
+    expect(/annotated|tag/i.test(res.stdout + res.stderr)).toBe(true);
+  });
+
+  it("refuses an annotated tag that is not on main", () => {
+    // Create a branch off main, commit, annotate-tag there; tag is not an
+    // ancestor of origin/main (no origin at all → ancestry check fails → refuse).
+    git("checkout", "-q", "-b", "side");
+    writeFileSync(resolve(repo, "x.txt"), "x\n");
+    git("add", "x.txt");
+    git("commit", "-q", "-m", "feat: side");
+    git("tag", "-a", "v2.0.0", "-m", "release");
+    git("checkout", "-q", "v2.0.0");
+    const res = runProd();
+    expect(res.status).toBe(2);
+  });
+
+  it("refuses a dirty working tree at preflight", () => {
+    git("tag", "-a", "v1.0.0", "-m", "release");
+    git("checkout", "-q", "v1.0.0");
+    writeFileSync(resolve(repo, "environments.yaml"), readFileSync(envFile, "utf-8") + "# dirty\n");
+    const res = runProd();
+    expect(res.status).toBe(2);
   });
 });
