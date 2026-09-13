@@ -72,12 +72,12 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
 - [ ] 3.0 Implement Story S-003: fly-ops skill
 
-  - [ ] 3.1 Extend `skill-parity-infra.test.ts` for `fly-ops`; confirm it fails
-  - [ ] 3.2 Write `.github/skills/fly-ops/SKILL.md`: tool declaration, command sets (apps, deploy, secrets, volumes, certs, scale, machines, destroy), tier table, revert via `fly releases`, volume snapshot backup, log table, cost and sweep
-  - [ ] 3.3 Copy to the other two trees
-  - [ ] 3.4 Verify Acceptance Criterion: AC-1 to AC-8 via the parity test
-  - [ ] 3.5 Manual verification: full plan on a throwaway app (create, secret, deploy, cert, DNS), then run the generated `rollback.sh` to zero
-  - [ ] 3.6 Run Tests: `pnpm run test:unit`
+  - [x] 3.1 Extend `skill-parity-infra.test.ts` for `fly-ops`; confirm it fails
+  - [x] 3.2 Write `.github/skills/fly-ops/SKILL.md`: tool declaration, command sets (apps, deploy, secrets, volumes, certs, scale, machines, destroy), tier table, revert via `fly releases`, volume snapshot backup, log table, cost and sweep
+  - [x] 3.3 Copy to the other two trees
+  - [x] 3.4 Verify Acceptance Criterion: AC-1 to AC-8 via the parity test
+  - [ ] 3.5 Manual verification: full plan on a throwaway app (create, secret, deploy, cert, DNS), then run the generated `rollback.sh` to zero _(not run — requires user sandbox/credentials; repro: create a throwaway fly app in a non-prod org, run a full create→secret→deploy→cert→DNS plan through `infra-engineer`, then execute the generated `rollback.sh` and confirm the app is destroyed)_
+  - [x] 3.6 Run Tests: `pnpm run test:unit`
 
 - [ ] 4.0 Implement Story S-004: supabase-ops skill
 
