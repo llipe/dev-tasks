@@ -19,6 +19,8 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd || pwd)"
+# Allow tests/CI to point the release inspection at a specific repo.
+REPO_ROOT="${INFRA_REPO_DIR:-$REPO_ROOT}"
 DRY_RUN=false
 
 info() { printf '[release] %s\n' "$*"; }

@@ -266,6 +266,36 @@ describe("release.sh — dry-run writes nothing (AC-7)", () => {
     // must exit cleanly (0) or with a benign non-mutating status.
     expect(res.stdout.toLowerCase()).toMatch(/dry.?run/);
   });
+
+  it("suggests a bump type from Conventional Commits", () => {
+    // Run against a real repo whose last commit is a `feat:` so the suggestion
+    // logic (minor for feat) is exercised deterministically.
+    const repo = mkdtempSync(resolve(tmpdir(), "infra-rel-"));
+    const gitEnv = {
+      ...process.env,
+      GIT_AUTHOR_NAME: "t",
+      GIT_AUTHOR_EMAIL: "t@example.com",
+      GIT_COMMITTER_NAME: "t",
+      GIT_COMMITTER_EMAIL: "t@example.com",
+    };
+    const g = (...cmd: string[]) => {
+      const r = spawnSync("git", cmd, { cwd: repo, encoding: "utf-8", env: gitEnv });
+      if (r.status !== 0) throw new Error(`git ${cmd.join(" ")}: ${r.stderr}`);
+    };
+    g("init", "-q", "-b", "main");
+    writeFileSync(resolve(repo, "a.txt"), "a\n");
+    g("add", "a.txt");
+    g("commit", "-q", "-m", "feat: add a feature");
+    const res = runScript(
+      "release.sh",
+      ["patch", "--dry-run"],
+      { INFRA_HUMAN_APPROVED: "1", INFRA_REPO_DIR: repo },
+      repo,
+    );
+    expect(res.stdout.toLowerCase()).toMatch(/suggested increment from conventional commits/);
+    expect(res.stdout).toMatch(/minor/);
+    rmSync(repo, { recursive: true, force: true });
+  });
 });
 
 // ─── AC-3: exit 2 on blocked conditions / edge cases (8.9) ───────────────────
