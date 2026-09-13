@@ -1,0 +1,77 @@
+# templates/workflows/rollback.yml
+#
+# Consumer-owned rollback workflow, delivered by infra-engineer via deploy-ops.
+# Dispatched on demand (workflow_dispatch) with an environment input, it rolls
+# an environment back to its previous good version by calling the canonical
+# templates/scripts/rollback.sh — no inline aws/flyctl/supabase logic.
+#
+# When the `environment` input names a production environment, the job runs
+# behind the GitHub `production` environment reviewer. Prune the tool setup
+# steps your target does not use when you scaffold this.
+
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to roll back (must exist in infra/environments.yaml)"
+        required: true
+        type: string
+      to_version:
+        description: "Optional explicit version to roll back to (defaults to previous good)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: rollback-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Roll back ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    # Rollbacks of production run behind the same reviewer gate as deploys.
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # rollback.sh resolves the previous good version from history
+
+      # ── Tool setup (version-pinned; prune what you do not use) ──────────────
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@v1
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Set up yq
+        uses: mikefarah/yq@v4
+
+      # ── Roll back via the canonical script only ─────────────────────────────
+      - name: Roll back
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          INFRA_HUMAN_APPROVED: "1"
+          ROLLBACK_TO_VERSION: ${{ github.event.inputs.to_version }}
+        run: |
+          if [ -n "${ROLLBACK_TO_VERSION}" ]; then
+            bash templates/scripts/rollback.sh "${{ github.event.inputs.environment }}" --to "${ROLLBACK_TO_VERSION}"
+          else
+            bash templates/scripts/rollback.sh "${{ github.event.inputs.environment }}"
+          fi

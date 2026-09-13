@@ -1,0 +1,66 @@
+# templates/workflows/deploy-dev.yml
+#
+# Consumer-owned deploy workflow, delivered by infra-engineer via deploy-ops.
+# Installed ONLY when infra/environments.yaml declares a `production: false`
+# environment. Deploys the non-production `dev` environment on every push to
+# `main` by calling the canonical templates/scripts/deploy.sh — it contains no
+# inline aws/flyctl/supabase deploy logic of its own.
+#
+# Tooling is set up with version-pinned actions and OIDC for AWS. Prune the tool
+# setup steps your target does not use (fly/supabase/aws) when you scaffold this
+# into a repo; keep the script invocation as the single deploy step.
+#
+# Rename `dev` below to match the non-production environment name in
+# infra/environments.yaml.
+
+name: Deploy dev
+
+on:
+  push:
+    branches:
+      - main
+
+# OIDC for AWS role assumption; no long-lived cloud keys in the repo.
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
+jobs:
+  deploy-dev:
+    name: Deploy dev environment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # scripts read git history for the build tag
+
+      # ── Tool setup (version-pinned; prune what you do not use) ──────────────
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@v1
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Set up yq
+        uses: mikefarah/yq@v4
+
+      # ── Deploy via the canonical script only ────────────────────────────────
+      - name: Deploy dev
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: bash templates/scripts/deploy.sh dev
