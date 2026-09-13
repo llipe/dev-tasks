@@ -70,7 +70,7 @@ if [[ "$expr" =~ ^\.environments\.([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)$ ]]; then
   env="${BASH_REMATCH[1]}"
   field="${BASH_REMATCH[2]}"
   block="$(env_block "$env")"
-  val="$(printf '%s\n' "$block" | grep -E "^    ${field}:" | head -1 | sed -E "s/^    ${field}:[[:space:]]*//")"
+  val="$(printf '%s\n' "$block" | grep -E "^    ${field}:" | head -1 | sed -E "s/^    ${field}:[[:space:]]*//" || true)"
   if [ -z "$val" ]; then printf 'null\n'; else printf '%s\n' "$val"; fi
   exit 0
 fi

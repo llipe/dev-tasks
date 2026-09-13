@@ -162,17 +162,20 @@ describe("deploy.sh dev — dry-run sequence (AC-3, AC-4)", () => {
   });
 
   it("prints the eight ordered steps in order", () => {
+    // Match the explicit "Step N/8 <name>" markers the script emits, so the
+    // `[deploy]` log prefix does not create false substring hits.
     const steps = [
-      "preflight",
-      "validate",
-      "build",
-      "backup",
-      "migrate",
-      "deploy",
-      "verify",
-      "record",
+      "step 1/8 preflight",
+      "step 2/8 validate",
+      "step 3/8 build",
+      "step 4/8 backup",
+      "step 5/8 migrate",
+      "step 6/8 deploy",
+      "step 7/8 verify",
+      "step 8/8 record",
     ];
-    const indices = steps.map((s) => res.stdout.toLowerCase().indexOf(s));
+    const lower = res.stdout.toLowerCase();
+    const indices = steps.map((s) => lower.indexOf(s));
     expect(indices.every((i) => i >= 0), `missing step in output:\n${res.stdout}`).toBe(true);
     const sorted = [...indices].sort((a, b) => a - b);
     expect(indices).toEqual(sorted);
