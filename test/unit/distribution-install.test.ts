@@ -738,3 +738,82 @@ describe("core/distribution/install — root-file registry parity (#136)", () =>
     });
   });
 });
+
+
+/**
+ * Manifest path registration for infra templates (Story S-009, AC-4).
+ *
+ * `templates/scripts` and `templates/workflows` must ship as managed content
+ * (same shape as the already-managed `templates/infra`), while the three
+ * installed workflow files (`.github/workflows/deploy-dev.yml`,
+ * `deploy-prod.yml`, `rollback.yml`) must be consumer-owned so an update never
+ * overwrites a workflow the consumer has edited.
+ */
+describe("bundle-manifest — infra template path registration (#162, S-009 AC-4)", () => {
+  const repoRoot = resolve(__dirname, "../..");
+
+  interface ManagedPath {
+    path: string;
+    pattern?: string;
+    recursive?: boolean;
+  }
+  interface BundleManifest {
+    managed_paths?: ManagedPath[];
+    consumer_owned_paths?: string[];
+  }
+
+  function loadManifest(): BundleManifest {
+    return JSON.parse(readFileSync(join(repoRoot, "bundle-manifest.json"), "utf-8")) as BundleManifest;
+  }
+
+  it("registers templates/scripts as a managed path", () => {
+    const managed = loadManifest().managed_paths ?? [];
+    expect(
+      managed.some((m) => m.path === "templates/scripts"),
+      "templates/scripts is not a managed path — script templates would not ship on update",
+    ).toBe(true);
+  });
+
+  it("registers templates/workflows as a managed path", () => {
+    const managed = loadManifest().managed_paths ?? [];
+    expect(
+      managed.some((m) => m.path === "templates/workflows"),
+      "templates/workflows is not a managed path — workflow templates would not ship on update",
+    ).toBe(true);
+  });
+
+  it("keeps templates/infra managed (existing behaviour, unchanged)", () => {
+    const managed = loadManifest().managed_paths ?? [];
+    expect(managed.some((m) => m.path === "templates/infra")).toBe(true);
+  });
+
+  it("registers the recursive glob shape for the new template dirs, matching templates/infra", () => {
+    const managed = loadManifest().managed_paths ?? [];
+    const infra = managed.find((m) => m.path === "templates/infra");
+    for (const p of ["templates/scripts", "templates/workflows"]) {
+      const entry = managed.find((m) => m.path === p);
+      expect(entry, `${p} missing from managed_paths`).toBeDefined();
+      expect(entry?.pattern, `${p} must follow the templates/infra glob shape`).toBe(infra?.pattern);
+      expect(entry?.recursive, `${p} must be recursive like templates/infra`).toBe(infra?.recursive);
+    }
+  });
+
+  it("registers the three installed workflow files as consumer-owned", () => {
+    const owned = loadManifest().consumer_owned_paths ?? [];
+    for (const f of [
+      ".github/workflows/deploy-dev.yml",
+      ".github/workflows/deploy-prod.yml",
+      ".github/workflows/rollback.yml",
+    ]) {
+      expect(
+        owned,
+        `${f} missing from consumer_owned_paths — a consumer-edited workflow could be overwritten`,
+      ).toContain(f);
+    }
+  });
+
+  it("keeps infra/ as a consumer-owned directory prefix (existing behaviour)", () => {
+    const owned = loadManifest().consumer_owned_paths ?? [];
+    expect(owned).toContain("infra/");
+  });
+});

@@ -29,6 +29,9 @@ MANAGED_DIRS=(
   ".kiro/skills"
   ".kiro/steering"
   ".kiro/hooks"
+  "templates/infra"
+  "templates/scripts"
+  "templates/workflows"
 )
 
 MANAGED_FILES=(

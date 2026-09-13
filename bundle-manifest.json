@@ -104,6 +104,18 @@
       "description": "Infrastructure scaffolding templates (environments.yaml, redaction patterns)",
       "pattern": "*",
       "recursive": true
+    },
+    {
+      "path": "templates/scripts",
+      "description": "Deploy, verify, rollback, status, and release script templates",
+      "pattern": "*",
+      "recursive": true
+    },
+    {
+      "path": "templates/workflows",
+      "description": "GitHub Actions deploy/rollback workflow templates",
+      "pattern": "*",
+      "recursive": true
     }
   ],
   "consumer_owned_paths": [
@@ -114,7 +126,10 @@
     ".claude/settings.json",
     ".kiro/settings/mcp.json",
     ".kiro/specs",
-    "infra/"
+    "infra/",
+    ".github/workflows/deploy-dev.yml",
+    ".github/workflows/deploy-prod.yml",
+    ".github/workflows/rollback.yml"
   ],
   "version_file": ".dev-tasks-version",
   "backup_dir": ".dev-tasks-backup",
