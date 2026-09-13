@@ -265,3 +265,264 @@ describe("infra-engineer — S-009 AC-5: deploy-ops registry parity", () => {
     ).toBe(true);
   });
 });
+
+// ─── S-010 AC-1..AC-7, AC-9: caller wiring and reverse-direction ─────────────
+//
+// Modeled on the `AC-6: Callers wired with conditional triggers` block in
+// test/unit/researcher-parity.test.ts. Every caller file must reference
+// infra-engineer AND use conditional-routing language, across all three trees.
+
+/** Caller files, grouped by agent, that must route to infra-engineer. */
+const S010_CALLER_FILES = {
+  developer: [
+    ".github/agents/developer.agent.md",
+    ".kiro/agents/developer.md",
+    ".claude/agents/developer.md",
+    ".claude/commands/developer.md",
+  ],
+  implement: [
+    ".claude/skills/implement/SKILL.md",
+    ".github/instructions/implement.instructions.md",
+    ".kiro/steering/implement.md",
+  ],
+  housekeeping: [
+    ".github/agents/housekeeping.agent.md",
+    ".kiro/agents/housekeeping.md",
+    ".claude/agents/housekeeping.md",
+  ],
+  planner: [
+    ".github/agents/planner.agent.md",
+    ".kiro/agents/planner.md",
+    ".claude/commands/planner.md",
+  ],
+  productEngineer: [
+    ".github/agents/product-engineer.agent.md",
+    ".kiro/agents/product-engineer.md",
+    ".claude/commands/product-engineer.md",
+  ],
+  githubOps: [
+    ".github/agents/github-ops.agent.md",
+    ".kiro/agents/github-ops.md",
+    ".claude/agents/github-ops.md",
+  ],
+} as const;
+
+/** Conditional-routing language, mirroring the researcher AC-6 pattern. */
+const CONDITIONAL_PATTERN = /conditional|recommended|SHOULD|optional|when|only when|if the/i;
+
+// AC-9: every caller references infra-engineer with conditional language.
+for (const [caller, files] of Object.entries(S010_CALLER_FILES)) {
+  describe(`infra-engineer — S-010 AC-9: ${caller} caller wiring`, () => {
+    for (const relativePath of files) {
+      it(`${relativePath} exists`, () => {
+        expect(exists(relativePath), `caller file missing: ${relativePath}`).toBe(true);
+      });
+
+      it(`${relativePath} references infra-engineer`, () => {
+        expect(
+          /infra-engineer/i.test(read(relativePath)),
+          `${relativePath} does not reference infra-engineer`,
+        ).toBe(true);
+      });
+
+      it(`${relativePath} uses conditional-routing language`, () => {
+        expect(
+          CONDITIONAL_PATTERN.test(read(relativePath)),
+          `${relativePath} does not use conditional-routing language for infra-engineer`,
+        ).toBe(true);
+      });
+    }
+  });
+}
+
+// AC-1: developer forbids platform write commands and names routed sub-task kinds.
+describe("infra-engineer — S-010 AC-1: developer platform-write prohibition", () => {
+  for (const relativePath of S010_CALLER_FILES.developer) {
+    it(`${relativePath} forbids emitting or executing a platform write command`, () => {
+      const content = read(relativePath);
+      expect(
+        /MUST NOT.*(emit|execute|run).*(platform write|aws|flyctl|supabase|cloudflare)/is.test(
+          content,
+        ),
+        `${relativePath} does not forbid platform write commands`,
+      ).toBe(true);
+    });
+
+    it(`${relativePath} names the routed sub-task kinds`, () => {
+      const content = read(relativePath);
+      for (const kind of [
+        /secrets?/i,
+        /deploy/i,
+        /DNS/i,
+        /certificate/i,
+        /IAM policy/i,
+        /migration/i,
+      ]) {
+        expect(kind.test(content), `${relativePath} does not name routed kind ${kind}`).toBe(true);
+      }
+    });
+
+    it(`${relativePath} narrows the rule 19 infrastructure/config exemption`, () => {
+      const content = read(relativePath);
+      expect(
+        /purely infrastructure\/config/i.test(content) &&
+          /(no testable behavior|not?.*licen[cs]e|does not (cover|extend|permit)|excludes? platform writes)/i.test(
+            content,
+          ),
+        `${relativePath} does not narrow rule 19's infrastructure/config exemption`,
+      ).toBe(true);
+    });
+  }
+});
+
+// AC-3: housekeeping lists the infra paths as never-touch (negative assertion).
+describe("infra-engineer — S-010 AC-3: housekeeping never-touch infra paths", () => {
+  const NEVER_TOUCH = [
+    /infra\//,
+    /\.github\/workflows\/deploy-\*\.yml|deploy-\*\.yml/,
+    /rollback\.yml/,
+    /templates\/scripts\//,
+    /templates\/workflows\//,
+  ];
+  for (const relativePath of S010_CALLER_FILES.housekeeping) {
+    for (const path of NEVER_TOUCH) {
+      it(`${relativePath} lists ${path} as never-touch`, () => {
+        expect(
+          path.test(read(relativePath)),
+          `${relativePath} does not list ${path} in its Never touch table`,
+        ).toBe(true);
+      });
+    }
+  }
+});
+
+// AC-6: github-ops documents the change-record draft PR shape.
+describe("infra-engineer — S-010 AC-6: github-ops change-record PR shape", () => {
+  for (const relativePath of S010_CALLER_FILES.githubOps) {
+    it(`${relativePath} documents the ChangeId-cited change-record PR shape`, () => {
+      const content = read(relativePath);
+      expect(
+        /ChangeId/i.test(content),
+        `${relativePath} does not cite the ChangeId in the change-record PR shape`,
+      ).toBe(true);
+      expect(
+        /title prefix|prefix.*title/i.test(content),
+        `${relativePath} does not document the change-record title prefix`,
+      ).toBe(true);
+      expect(
+        /label/i.test(content),
+        `${relativePath} does not document the change-record label`,
+      ).toBe(true);
+    });
+  }
+});
+
+// AC-7: infra-engineer reverse-direction — researcher (conditional) + verifier stance.
+describe("infra-engineer — S-010 AC-7: reverse-direction routing", () => {
+  for (const relativePath of AGENT_VARIANTS) {
+    it(`${relativePath} conditionally invokes researcher for unfamiliar platform surface`, () => {
+      const content = read(relativePath);
+      expect(
+        /researcher/i.test(content) && CONDITIONAL_PATTERN.test(content),
+        `${relativePath} does not conditionally invoke researcher`,
+      ).toBe(true);
+    });
+
+    it(`${relativePath} states whether a verifier audit applies to infra/ deliverables`, () => {
+      const content = read(relativePath);
+      expect(
+        /verifier/i.test(content) && /infra\//.test(content),
+        `${relativePath} does not state the verifier-audit stance for infra/ deliverables`,
+      ).toBe(true);
+    });
+  }
+});
+
+// AC-8: workflow-chains.md gains the Infrastructure Change chain and conditional handoffs.
+describe("infra-engineer — S-010 AC-8: workflow-chains headings", () => {
+  const CHAINS = "docs/workflow-chains.md";
+
+  it("adds an Infrastructure Change chain heading", () => {
+    expect(
+      /Infrastructure Change/i.test(read(CHAINS)),
+      "docs/workflow-chains.md has no Infrastructure Change chain heading",
+    ).toBe(true);
+  });
+
+  it("shows the infra lifecycle steps in the chain", () => {
+    const content = read(CHAINS);
+    expect(
+      /discover.*plan.*approv.*apply.*verify.*record.*draft PR/is.test(content),
+      "docs/workflow-chains.md Infrastructure Change chain omits lifecycle steps",
+    ).toBe(true);
+  });
+
+  it("adds the conditional infra handoff to the Full Feature and Single GitHub Issue chains", () => {
+    const content = read(CHAINS);
+    expect(
+      /Full Feature/i.test(content) && /Single GitHub Issue/i.test(content),
+      "docs/workflow-chains.md is missing the Full Feature or Single GitHub Issue chain",
+    ).toBe(true);
+    expect(
+      /conditional.*infra|infra.*conditional|infra-engineer.*when|when.*infra-engineer/is.test(
+        content,
+      ),
+      "docs/workflow-chains.md does not show a conditional infra handoff in the existing chains",
+    ).toBe(true);
+  });
+});
+
+// ─── S-010 edge cases (Task 10.10) ───────────────────────────────────────────
+//
+// 1. An infra-shaped but local-only sub-task (e.g. a .env.example edit) stays
+//    with developer — the routing rule carves it out explicitly.
+// 2. A story with no infra scope invokes nothing — routing is conditional.
+// 3. A housekeeping run over a repo whose deploy workflow has a lint error
+//    leaves it alone — the never-touch rule is unconditional.
+
+describe("infra-engineer — S-010 edge case: local-only infra stays with developer", () => {
+  const DEVELOPER_AND_IMPLEMENT = [...S010_CALLER_FILES.developer, ...S010_CALLER_FILES.implement];
+  for (const relativePath of DEVELOPER_AND_IMPLEMENT) {
+    it(`${relativePath} carves out local-only .env.example edits`, () => {
+      const content = read(relativePath);
+      expect(
+        /\.env\.example/i.test(content),
+        `${relativePath} does not carve out a local-only .env.example edit from platform-write routing`,
+      ).toBe(true);
+    });
+  }
+});
+
+describe("infra-engineer — S-010 edge case: no-infra-scope invokes nothing", () => {
+  const CONDITIONAL_CALLERS = [
+    ...S010_CALLER_FILES.developer,
+    ...S010_CALLER_FILES.implement,
+    ...S010_CALLER_FILES.planner,
+    ...S010_CALLER_FILES.productEngineer,
+  ];
+  for (const relativePath of CONDITIONAL_CALLERS) {
+    it(`${relativePath} states the routing is conditional / never mandatory`, () => {
+      const content = read(relativePath);
+      expect(
+        /never mandatory|no infra scope|invokes nothing|invokes .*for nothing|conditional/i.test(
+          content,
+        ),
+        `${relativePath} does not state that infra routing is conditional`,
+      ).toBe(true);
+    });
+  }
+});
+
+describe("infra-engineer — S-010 edge case: housekeeping leaves deploy workflows alone", () => {
+  for (const relativePath of S010_CALLER_FILES.housekeeping) {
+    it(`${relativePath} refuses to fix a lint error in a deploy workflow`, () => {
+      const content = read(relativePath);
+      expect(
+        /lint or formatting error|even to fix|leave (them|the file)|even when a deploy workflow/i.test(
+          content,
+        ),
+        `${relativePath} does not state it leaves lint-erroring deploy workflows alone`,
+      ).toBe(true);
+    });
+  }
+});
