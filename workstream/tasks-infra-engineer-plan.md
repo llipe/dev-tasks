@@ -81,13 +81,13 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
 - [ ] 4.0 Implement Story S-004: supabase-ops skill
 
-  - [ ] 4.1 Run `researcher` on the Supabase Cloud log retrieval endpoint and per-plan retention; save `workstream/research-supabase-logs.md`
-  - [ ] 4.2 Extend `skill-parity-infra.test.ts` for `supabase-ops` including `db diff` plan, drift rule, no-MCP-write; confirm it fails
-  - [ ] 4.3 Write `.github/skills/supabase-ops/SKILL.md`: tool declaration, tier table, migration flow with confirmation and verification, drift rule, backup (`db dump` or PITR), discovery order with recorded path, inventory fields and findings, secrets rules, log table with retention caveat, cost and sweep
-  - [ ] 4.4 Copy to the other two trees
-  - [ ] 4.5 Verify Acceptance Criterion: AC-1 to AC-10 via the parity test
-  - [ ] 4.6 Manual verification: produce a `db diff` plan with one `DROP` against a non-production project; confirm itemization and the confirmation gate before push
-  - [ ] 4.7 Run Tests: `pnpm run test:unit`
+  - [x] 4.1 Run `researcher` on the Supabase Cloud log retrieval endpoint and per-plan retention; save `workstream/research-supabase-logs.md`
+  - [x] 4.2 Extend `skill-parity-infra.test.ts` for `supabase-ops` including `db diff` plan, drift rule, no-MCP-write; confirm it fails
+  - [x] 4.3 Write `.github/skills/supabase-ops/SKILL.md`: tool declaration, tier table, migration flow with confirmation and verification, drift rule, backup (`db dump` or PITR), discovery order with recorded path, inventory fields and findings, secrets rules, log table with retention caveat, cost and sweep
+  - [x] 4.4 Copy to the other two trees
+  - [x] 4.5 Verify Acceptance Criterion: AC-1 to AC-10 via the parity test
+  - [ ] 4.6 Manual verification: produce a `db diff` plan with one `DROP` against a non-production project; confirm itemization and the confirmation gate before push _(not run — requires user sandbox/credentials; repro: link a non-prod Supabase project, run `infra-engineer` on a schema change that drops a column, confirm the `DROP` is itemized separately in `plan.md` and `db push` waits for named approval)_
+  - [x] 4.7 Run Tests: `pnpm run test:unit`
 
 - [ ] 5.0 Implement Story S-005: redaction pattern set and security-negative test
 
