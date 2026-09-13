@@ -1,0 +1,19 @@
+# A filled (non-template) environments file for the script-contract tests.
+# Deliberately omits the `# status: template` sentinel so the scripts treat it
+# as a real, consumer-filled file. Mirrors templates/infra/environments.yaml.
+default_cost_threshold_usd: 20
+environments:
+  dev:
+    production: false
+    tier0_tool: none
+    fly: { org: test-org, app: test-app-dev }
+  prod:
+    production: true
+    tier0_tool: none
+    cost_threshold_usd: 20
+    fly: { org: test-org, app: test-app }
+  ambiguous:
+    production: false
+    tier0_tool: none
+    fly: { org: test-org, app: amb-app }
+    supabase: { project_ref: abcdefghijklmnop }
