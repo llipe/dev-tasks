@@ -11,6 +11,8 @@ developer: implement
 ```
 
 > `[researcher]` is conditional — invoked when the feature touches existing implementation, spans multiple modules, or the area is unfamiliar. Skipped for greenfield features.
+>
+> When the feature has infrastructure scope, `developer` routes the platform work conditionally to `infra-engineer` (see the Infrastructure Change chain below) rather than running any platform write itself. Skipped when the feature has no infra scope.
 
 ## Single GitHub Issue
 
@@ -21,6 +23,20 @@ developer: implement
 ```
 
 > `[researcher]` is conditional — invoked when the issue is multi-module, diagnostic, or unfamiliar. Skipped for trivial single-file changes.
+>
+> When the issue has infrastructure scope, `developer` routes the platform work conditionally to `infra-engineer` (see the Infrastructure Change chain below) rather than running any platform write itself. Skipped when the issue has no infra scope.
+
+## Infrastructure Change
+
+```text
+infra-engineer: discover → plan → per-step approval → apply → verify → record → draft PR
+                    ↑ [researcher]                                          ↓
+        (conditional, unfamiliar surface)                    github-ops: change-record draft PR
+```
+
+> Invoked conditionally by `developer`, `planner`, or `product-engineer` when a story, issue, or PRD carries a platform write — secrets, deploy, DNS, certificates, IAM policy, or a migration against a shared or cloud project. Never invoked when the scope has no infra work.
+>
+> Each step in the working loop is gated: `infra-engineer` presents one step, waits for per-step approval keyed to the `ChangeId`, backs up state when applicable, applies, verifies, and records (`plan.md`, append-only `commands.sh`, reverse-order `rollback.sh`, `result.md`). It runs no autonomous or batch mode. `[researcher]` is conditional — invoked only for an unfamiliar platform surface. When the loop completes, `infra-engineer` delegates a change-record draft PR to `github-ops` (title prefix `infra:`, body sections citing the `ChangeId`, `infra-change` label) and never self-merges it.
 
 ## Codebase Research (Standalone)
 

@@ -63,3 +63,10 @@ Log triage requires a bounded UTC `--since` or start/end window and stated scan 
 ## Handoff
 
 Outcomes are `applied`, `verified`, `failed`, `blocked`, `routed`, `reverted`, or `skipped(<reason>)` with remediation for blocked. Retry at most three attempts or fifteen minutes per step. Commit the ChangeId records on an issue/story branch with a Conventional Commit and have `github-ops` open a draft PR with plan, result, rollback, and validation evidence. Never merge the draft PR.
+
+
+## Reverse-direction routing
+
+You **MAY** conditionally invoke `researcher` when the platform surface is unfamiliar — an unknown account layout, an undocumented resource graph, or a provider feature you have not exercised — and consume its `/workstream/research-*.md` artifact before planning. This is conditional and never mandatory: a familiar surface invokes `researcher` for nothing.
+
+A `verifier` audit does **not** apply to `infra/` deliverables. `infra/` change records (`plan.md`, `commands.sh`, `rollback.sh`, `result.md`) and inventory are operational artifacts governed by the per-step approval, revert, and backup gates of this agent, not by the grey-box fidelity audit that `verifier` runs against feature code. The human review on the change-record draft PR is the gate for `infra/` work.
