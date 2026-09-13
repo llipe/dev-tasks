@@ -123,18 +123,20 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
   > Validation: `git-guard-tags.test.ts` passes 17/17 (block + allow matrices, plus exact-semver assertions for both release workflows); `pnpm run format:check` passes. git-guard rule 4 hook, exact-semver workflow filters, `github-ops` Tags section and `git-ops` tag procedure (three trees each) plus the `docs/technical-guidelines.md` Deployment line are committed with three-tree parity verified. 7.7 remains a live-session manual check (not run) — it needs an active Claude session with the git-guard hook.
 
-- [ ] 8.0 Implement Story S-008: deploy-ops skill and script templates
+- [x] 8.0 Implement Story S-008: deploy-ops skill and script templates
 
-  - [ ] 8.1 Create `test/fixtures/infra/bin/{aws,flyctl,supabase,yq,gh}` stubs that log argv, and `test/fixtures/infra/environments.yaml`; write `test/unit/infra-script-contract.test.ts` (`bash -n`, `--help`, exit 2 on missing or template file, dry-run command sequence, prod non-tag refusal, shellcheck when available else `SKIPPED`); confirm it fails
-  - [ ] 8.2 Write `templates/scripts/deploy.sh` with the eight ordered steps, exit codes 0/1/2/3, `--dry-run`, `yq`-based environment resolution, deploy-kind detection with refusal when ambiguous
-  - [ ] 8.3 Write `templates/scripts/deploy-verify.sh` (exit 3 prints the rollback invocation), `rollback.sh` (previous good version from `infra/changes/`, `--to`), `deploy-status.sh` (read-only)
-  - [ ] 8.4 Generalize `scripts/release.sh` into `templates/scripts/release.sh` with `--dry-run`; keep this repo's script behavior unchanged
-  - [ ] 8.5 Add the human-only guard: refuse `release` and `deploy.sh prod` when `CI` is set without `INFRA_HUMAN_APPROVED=1`, and in a non-interactive agent context
-  - [ ] 8.6 Write `.github/skills/deploy-ops/SKILL.md`: script contract, environment mapping table, tag policy summary, deploy-target framing with decision inputs, `package.json` wrapper generation for JS/TS repos, tools `yq` and `gh`; copy to the other two trees; extend `skill-parity-infra.test.ts`
-  - [ ] 8.7 Verify Acceptance Criterion: AC-2 to AC-9 (contract test), AC-1 and AC-10 (parity test)
-  - [ ] 8.8 Manual verification: `deploy.sh dev` against the throwaway fly app; force a failing health check; confirm exit 3 and run the printed rollback
-  - [ ] 8.9 Edge cases: dirty tree; lightweight tag; tag not on `main`; missing `yq`; two platform blocks without a deploy kind
-  - [ ] 8.10 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [x] 8.1 Create `test/fixtures/infra/bin/{aws,flyctl,supabase,yq,gh}` stubs that log argv, and `test/fixtures/infra/environments.yaml`; write `test/unit/infra-script-contract.test.ts` (`bash -n`, `--help`, exit 2 on missing or template file, dry-run command sequence, prod non-tag refusal, shellcheck when available else `SKIPPED`); confirm it fails
+  - [x] 8.2 Write `templates/scripts/deploy.sh` with the eight ordered steps, exit codes 0/1/2/3, `--dry-run`, `yq`-based environment resolution, deploy-kind detection with refusal when ambiguous
+  - [x] 8.3 Write `templates/scripts/deploy-verify.sh` (exit 3 prints the rollback invocation), `rollback.sh` (previous good version from `infra/changes/`, `--to`), `deploy-status.sh` (read-only)
+  - [x] 8.4 Generalize `scripts/release.sh` into `templates/scripts/release.sh` with `--dry-run`; keep this repo's script behavior unchanged
+  - [x] 8.5 Add the human-only guard: refuse `release` and `deploy.sh prod` when `CI` is set without `INFRA_HUMAN_APPROVED=1`, and in a non-interactive agent context
+  - [x] 8.6 Write `.github/skills/deploy-ops/SKILL.md`: script contract, environment mapping table, tag policy summary, deploy-target framing with decision inputs, `package.json` wrapper generation for JS/TS repos, tools `yq` and `gh`; copy to the other two trees; extend `skill-parity-infra.test.ts`
+  - [x] 8.7 Verify Acceptance Criterion: AC-2 to AC-9 (contract test), AC-1 and AC-10 (parity test)
+  - [ ] 8.8 Manual verification: `deploy.sh dev` against the throwaway fly app; force a failing health check; confirm exit 3 and run the printed rollback _(not run — requires live fly credentials and a throwaway app; repro: fill `infra/environments.yaml` with a non-prod fly `dev` env, run `bash templates/scripts/deploy.sh dev` against a throwaway fly app, force `deploy-verify.sh dev` to fail the health check, confirm exit 3 and the printed `rollback.sh dev` line, then run that rollback and confirm the app returns to the previous good release)_
+  - [x] 8.9 Edge cases: dirty tree; lightweight tag; tag not on `main`; missing `yq`; two platform blocks without a deploy kind (all covered in `infra-script-contract.test.ts`)
+  - [x] 8.10 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+
+  > Validation: `infra-script-contract.test.ts` passes 40/40 and `skill-parity-infra.test.ts` passes 87/87 (deploy-ops went from 13 failing to 0). Quality gates: `typecheck` PASS, `lint` PASS, `format:check` PASS; `pnpm run test` shows only the three documented pre-existing failures in `skill-parity-testing-layers.test.ts` (TESTING.md, left unchanged per scope), and `extract-openapi-route2/ladder` pass in the full run. `pnpm audit --prod` reports no known vulnerabilities. 8.8 is a live-fly manual check (not run) — needs fly credentials and a throwaway app.
 
 - [ ] 9.0 Implement Story S-009: GitHub Actions workflow templates and Phase 2 registration
   - [ ] 9.1 Write `test/unit/infra-workflow-templates.test.ts` (YAML parse, triggers, `environment: production`, no inline deploy calls, this repo's release workflows on exact semver); confirm it fails
