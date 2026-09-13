@@ -200,6 +200,19 @@ Rules:
 - The attribution value **MUST** identify the assisting system and version when available (for example, `GitHub Copilot v1`, `Claude Code v3`).
 - The `## Why` section **MUST** reference the appropriate issue (`Closes #<number>` or `Refs #<number>`). If no issue exists, it **MUST** reference the motivating commit (`Refs <sha>`).
 
+### Change-Record PR Shape (infra-engineer)
+
+When `infra-engineer` delegates its change-record draft PR (S-001 AC-11), the PR **MUST** follow this shape:
+
+- **Title prefix:** `infra:` — for example, `infra: apply <ChangeId> to <environment>`.
+- **Label:** `infra-change`.
+- **Body sections**, each citing the `ChangeId`:
+  - `## Change` — the `ChangeId`, target environment, and resolved identity.
+  - `## Plan` — a link or reference to the recorded `plan.md` for this `ChangeId`.
+  - `## Apply` — the applied steps (from `commands.sh`) and the `result.md` outcome.
+  - `## Revert` — the reverse-order `rollback.sh` reference and any backup id / restore command.
+- The draft PR is opened against the default branch and stays draft until a human reviews it; `infra-engineer` never self-merges it.
+
 ### Multi-Line Body Formatting
 
 Collapsed/mangled PR and issue bodies (headings, checklists, and paragraphs all flattened into one line) are a recurring failure mode. To prevent this, the following is **mandatory**, not a preference order:
