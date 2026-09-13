@@ -87,6 +87,14 @@ const CONTRACT_STATEMENTS: ReadonlyArray<{ label: string; pattern: RegExp }> = [
     pattern: /bounded.*UTC.*redaction.*inference.*labelled/is,
   },
   {
+    label: "mandatory redaction filter reference",
+    pattern: /redaction-patterns\.txt/i,
+  },
+  {
+    label: "raw output never written",
+    pattern: /raw output is never (written|persisted)/i,
+  },
+  {
     label: "Cloudflare DNS and certificates",
     pattern: /Cloudflare.*DNS.*certificate.*prior.*revert/is,
   },

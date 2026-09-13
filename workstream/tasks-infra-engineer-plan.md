@@ -91,13 +91,13 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
 - [ ] 5.0 Implement Story S-005: redaction pattern set and security-negative test
 
-  - [ ] 5.1 Write `test/fixtures/infra/redaction/secrets.txt` (synthetic AWS key pair, `sb_secret_*`, `sb_publishable_*`, `service_role` JWT, fly token, `ghp_` token, bearer header, `postgres://user:pass@`, `password=`, email) and `benign.txt`
-  - [ ] 5.2 Write `test/unit/infra-redaction.test.ts`: every secret line becomes `[REDACTED:<category>]`, benign lines unchanged, repository scan of `templates/`, the four agent files, and the four skills; confirm it fails
-  - [ ] 5.3 Write `templates/infra/redaction-patterns.txt` until the matrix passes
-  - [ ] 5.4 Add the mandatory-filter paragraph to the agent body (three variants); extend `infra-engineer-parity.test.ts`
-  - [ ] 5.5 Verify Acceptance Criterion: AC-1 to AC-5
-  - [ ] 5.6 Edge cases: two secrets on one line; secret inside JSON quotes; uppercase scheme; document multi-line tokens as out of scope
-  - [ ] 5.7 Run Tests: `pnpm run test:unit`
+  - [x] 5.1 Write `test/fixtures/infra/redaction/secrets.txt` (synthetic AWS key pair, `sb_secret_*`, `sb_publishable_*`, `service_role` JWT, fly token, `ghp_` token, bearer header, `postgres://user:pass@`, `password=`, email) and `benign.txt`
+  - [x] 5.2 Write `test/unit/infra-redaction.test.ts`: every secret line becomes `[REDACTED:<category>]`, benign lines unchanged, repository scan of `templates/`, the four agent files, and the four skills; confirm it fails
+  - [x] 5.3 Write `templates/infra/redaction-patterns.txt` until the matrix passes
+  - [x] 5.4 Add the mandatory-filter paragraph to the agent body (three variants); extend `infra-engineer-parity.test.ts`
+  - [x] 5.5 Verify Acceptance Criterion: AC-1 to AC-5
+  - [x] 5.6 Edge cases: two secrets on one line; secret inside JSON quotes; uppercase scheme; document multi-line tokens as out of scope
+  - [x] 5.7 Run Tests: `pnpm run test:unit`
 
 - [ ] 6.0 Implement Story S-006: Phase 1 registries, ADR-005, and bundle manifest
 
