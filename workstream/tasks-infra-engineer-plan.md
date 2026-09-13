@@ -63,12 +63,12 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
 - [ ] 2.0 Implement Story S-002: aws-ops skill
 
-  - [ ] 2.1 Create `test/unit/skill-parity-infra.test.ts` asserting three-tree identity and declared fields for `aws-ops` (floor, auth probe, backup, revert, log table, sweep categories); confirm it fails
-  - [ ] 2.2 Write `.github/skills/aws-ops/SKILL.md`: tool declaration with floor and remediation, command sets per change kind, tier table, cost guidance, backup and revert sources, AWS log table, sweep categories
-  - [ ] 2.3 Copy to `.claude/skills/aws-ops/SKILL.md` and `.kiro/skills/aws-ops/SKILL.md`
-  - [ ] 2.4 Verify Acceptance Criterion: AC-1 to AC-8 via the parity test
-  - [ ] 2.5 Manual verification: dry-run an "IAM policy create and attach" plan in a non-production account; confirm revert detaches and deletes
-  - [ ] 2.6 Run Tests: `pnpm run test:unit`
+  - [x] 2.1 Create `test/unit/skill-parity-infra.test.ts` asserting three-tree identity and declared fields for `aws-ops` (floor, auth probe, backup, revert, log table, sweep categories); confirm it fails
+  - [x] 2.2 Write `.github/skills/aws-ops/SKILL.md`: tool declaration with floor and remediation, command sets per change kind, tier table, cost guidance, backup and revert sources, AWS log table, sweep categories
+  - [x] 2.3 Copy to `.claude/skills/aws-ops/SKILL.md` and `.kiro/skills/aws-ops/SKILL.md`
+  - [x] 2.4 Verify Acceptance Criterion: AC-1 to AC-8 via the parity test
+  - [ ] 2.5 Manual verification: dry-run an "IAM policy create and attach" plan in a non-production account; confirm revert detaches and deletes _(not run — requires user sandbox/credentials; repro: fill `infra/environments.yaml` for a non-prod AWS account, invoke `infra-engineer` with an "IAM policy create and attach" change, confirm the plan pairs `create-policy`+`attach-role-policy` forward with `detach-role-policy`+`delete-policy` revert in reverse order)_
+  - [x] 2.6 Run Tests: `pnpm run test:unit`
 
 - [ ] 3.0 Implement Story S-003: fly-ops skill
 
