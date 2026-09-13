@@ -110,7 +110,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
   - [ ] 6.7 Manual verification: `dt install` into a scratch repo, fill `environments.yaml`, `dt update`, confirm the file is untouched
   - [ ] 6.8 Run Tests: `pnpm run validate`, `pnpm run audit`
 
-- [x] 7.0 Implement Story S-007: tag policy, git-guard rule 4, and exact-semver workflow filters
+- [ ] 7.0 Implement Story S-007: tag policy, git-guard rule 4, and exact-semver workflow filters
 
   - [x] 7.1 Write `test/unit/git-guard-tags.test.ts` piping `{"tool_input":{"command":"..."}}` into the hook: block matrix (`git tag v1.2.3`, `git tag -a`, `git tag -d`, `git push --tags`, a push of `refs/tags/v1`, a push naming `v1.2.3`, a push deleting a remote tag by ref, `gh release create`) and allow matrix (`git tag -l`, `git tag --list`, `git tag`, `git describe --tags`, a push of an `issue/` branch); confirm it fails
   - [x] 7.2 Add rule 4 to `.claude/hooks/git-guard.sh`; mirror in `.kiro/hooks/` if a git-guard equivalent exists there; update the header comment to four invariants
@@ -120,6 +120,8 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
   - [x] 7.6 Verify Acceptance Criterion: AC-1 to AC-6
   - [ ] 7.7 Manual verification: in a Claude session attempt `git tag v0.0.0-test` and confirm the block message _(not run — requires a live Claude session with the git-guard hook active; repro: in a Claude session run `git tag v0.0.0-test` and confirm git-guard rule 4 blocks it with the human-only tag message)_
   - [x] 7.8 Run Tests: `pnpm run test:unit`, `pnpm run format:check`
+
+  > Validation: `git-guard-tags.test.ts` passes 17/17 (block + allow matrices, plus exact-semver assertions for both release workflows); `pnpm run format:check` passes. git-guard rule 4 hook, exact-semver workflow filters, `github-ops` Tags section and `git-ops` tag procedure (three trees each) plus the `docs/technical-guidelines.md` Deployment line are committed with three-tree parity verified. 7.7 remains a live-session manual check (not run) — it needs an active Claude session with the git-guard hook.
 
 - [ ] 8.0 Implement Story S-008: deploy-ops skill and script templates
 
