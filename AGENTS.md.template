@@ -103,6 +103,7 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 | **aws-ops** | `skills/aws-ops/` | AWS CLI command sets, resource tiers, cost inputs, backup and revert sources, and the AWS log table | `infra-engineer` |
 | **fly-ops** | `skills/fly-ops/` | `flyctl` command sets, resource tiers, cost inputs, backup and revert sources, and the fly.io log table | `infra-engineer` |
 | **supabase-ops** | `skills/supabase-ops/` | Supabase CLI command sets, `db diff` migration flow, drift rule, backup and revert sources, inventory findings, and the Supabase Cloud log table | `infra-engineer` |
+| **deploy-ops** | `skills/deploy-ops/` | Deploy script contract, environment mapping, tag policy, deploy-target framing, and GitHub Actions workflow scaffolding (`templates/scripts/`, `templates/workflows/`) | `infra-engineer` |
 | **webapp-mockup** | `skills/webapp-mockup/` | Scaffold and generate React mockup apps for UX testing | `ux-engineer` |
 | **memo-cli-usage** | `skills/memo-cli-usage/` | Read and write architectural decisions to a shared Qdrant knowledge base for multi-session, multi-agent, and team-wide context continuity | `technical-writer`, `developer` |
 

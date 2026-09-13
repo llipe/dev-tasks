@@ -280,6 +280,7 @@ On-demand capabilities loaded only when invoked.
 | `aws-ops`                        | AWS CLI command sets, tiers, cost, backup/revert, logs  | `infra-engineer`                                    |
 | `fly-ops`                        | flyctl command sets, tiers, cost, backup/revert, logs   | `infra-engineer`                                    |
 | `supabase-ops`                   | Supabase CLI sets, `db diff` flow, drift rule, logs     | `infra-engineer`                                    |
+| `deploy-ops`                     | Deploy script contract, env mapping, tag policy, and workflow scaffolding (`templates/scripts/`, `templates/workflows/`) | `infra-engineer`                                    |
 | `ux-scaffold`                    | Template-aware mockup generation (lite/full)            | `ux-engineer`                                       |
 | `ux-theme-gen`                   | DESIGN.md → theme artifacts (CSS vars, Tailwind v4, RN) | `ux-engineer`, `developer`                          |
 | `activity-e2e-test-design`       | E2E black-box test scenario generation                  | `verifier`                                          |

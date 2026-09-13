@@ -69,6 +69,7 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.cla
 | aws-ops        | AWS CLI command sets, tiers, cost, backup/revert, log table | infra-engineer          |
 | fly-ops        | flyctl command sets, tiers, cost, backup/revert, log table  | infra-engineer          |
 | supabase-ops   | Supabase CLI command sets, `db diff` flow, drift rule, backup/revert, log table | infra-engineer |
+| deploy-ops     | Deploy script contract, environment mapping, tag policy, deploy-target framing, and GitHub Actions workflow scaffolding (`templates/scripts/`, `templates/workflows/`) | infra-engineer |
 | ux-scaffold    | Mockup project creation (html-lite, react-full)       | ux-engineer                 |
 | ux-theme-gen   | Generate theme artifacts from DESIGN.md               | ux-engineer, developer      |
 | memo-cli-usage | Read/write decisions to shared knowledge base         | technical-writer, developer |

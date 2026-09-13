@@ -213,7 +213,7 @@ Projects set numeric thresholds. The harness provides baseline/no-regression pol
 - Update all supported platform variants when changing shared behavior.
 - Require review for security, production, migration, dependency, and workflow-gate changes.
 - Preserve Conventional Commit conventions and feature-branch/PR discipline.
-- Canonical JS/TS scripts are `lint`, `format:check`, `typecheck`, `test`, `audit`, and `validate`, with specialized scripts such as `test:unit`, `test:integration`, `test:e2e`, and `test:mutation` where applicable.
+- Canonical JS/TS scripts are `lint`, `format:check`, `typecheck`, `test`, `audit`, and `validate`, with specialized scripts such as `test:unit`, `test:integration`, `test:e2e`, and `test:mutation` where applicable. Infrastructure repos that install `deploy-ops` also expose the deploy surface through canonical wrappers — `deploy`, `deploy:verify`, `deploy:rollback`, `deploy:status`, and `release` — each a thin delegation to the corresponding `templates/scripts/*.sh`.
 
 ## Deployment and DevOps
 

@@ -21,6 +21,31 @@ const TEMPLATE = "templates/infra/environments.yaml";
 const AGENT_VARIANTS = [COPILOT_AGENT, CLAUDE_AGENT, KIRO_AGENT] as const;
 const REQUIRED_FILES = [...AGENT_VARIANTS, COPILOT_ENTRY, TEMPLATE] as const;
 
+/**
+ * Planner variants that must name the post-integration deploy handoff to
+ * infra-engineer (Story S-009 AC-5b). Full caller wiring for other agents is
+ * Story S-010; this block is scoped to planner's deploy handoff only.
+ */
+const PLANNER_VARIANTS = [
+  ".kiro/agents/planner.md",
+  ".github/agents/planner.agent.md",
+  ".claude/commands/planner.md",
+] as const;
+
+/**
+ * Registry and documentation files that must register deploy-ops and the
+ * workflow templates (Story S-009 AC-5). workflow-chains.md is intentionally
+ * excluded here — its deploy-chain content lands in Story S-010 / Task 10.5.
+ */
+const REGISTRY_FILES = [
+  "AGENTS.md",
+  "AGENTS.md.template",
+  "CLAUDE.md",
+  "CLAUDE.md.template",
+  "README.md",
+  "docs/system-overview.md",
+] as const;
+
 /** Normative policy statements required in every platform variant. */
 const CONTRACT_STATEMENTS: ReadonlyArray<{ label: string; pattern: RegExp }> = [
   {
@@ -167,5 +192,77 @@ describe("infra-engineer — template status guard", () => {
     for (const relativePath of AGENT_VARIANTS) {
       expect(read(relativePath)).toMatch(/status: template.*missing.*blocks/is);
     }
+  });
+});
+
+
+// ─── S-009 AC-5b: planner post-integration deploy handoff (caller wiring) ────
+
+describe("infra-engineer — S-009 AC-5b: planner deploy handoff", () => {
+  for (const relativePath of PLANNER_VARIANTS) {
+    it(`${relativePath} exists`, () => {
+      expect(exists(relativePath), `missing planner variant: ${relativePath}`).toBe(true);
+    });
+
+    it(`${relativePath} names infra-engineer as the post-integration deploy owner`, () => {
+      const content = read(relativePath);
+      expect(
+        /infra-engineer/i.test(content),
+        `${relativePath} does not reference infra-engineer`,
+      ).toBe(true);
+      expect(
+        /post-integration deploy|deploy handoff/i.test(content),
+        `${relativePath} does not describe a post-integration deploy handoff`,
+      ).toBe(true);
+    });
+
+    it(`${relativePath} makes the handoff conditional on infra/deploy scope`, () => {
+      const content = read(relativePath);
+      expect(
+        /conditional|only when|when the merged scope/i.test(content),
+        `${relativePath} does not use conditional language for the deploy handoff`,
+      ).toBe(true);
+    });
+
+    it(`${relativePath} forbids planner from running platform/deploy commands itself`, () => {
+      const content = read(relativePath);
+      expect(
+        /never invokes .*deploy\.sh|MUST .*hand the deploy off|rather than running any platform/i.test(
+          content,
+        ),
+        `${relativePath} does not forbid planner from running deploy commands directly`,
+      ).toBe(true);
+    });
+  }
+});
+
+// ─── S-009 AC-5: deploy-ops and templates registered in docs/registries ──────
+
+describe("infra-engineer — S-009 AC-5: deploy-ops registry parity", () => {
+  for (const relativePath of REGISTRY_FILES) {
+    it(`${relativePath} registers deploy-ops`, () => {
+      expect(exists(relativePath), `missing registry file: ${relativePath}`).toBe(true);
+      expect(
+        /deploy-ops/.test(read(relativePath)),
+        `${relativePath} does not register the deploy-ops skill`,
+      ).toBe(true);
+    });
+  }
+
+  it("technical-guidelines lists the canonical deploy/release script names", () => {
+    const content = read("docs/technical-guidelines.md");
+    for (const script of ["deploy", "deploy:rollback", "release"]) {
+      expect(
+        new RegExp(`\`${script.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\``).test(content),
+        `technical-guidelines.md does not list the \`${script}\` canonical script`,
+      ).toBe(true);
+    }
+  });
+
+  it("system-overview skill count reconciles to twenty-five", () => {
+    expect(
+      /twenty-five skills/.test(read("docs/system-overview.md")),
+      "system-overview.md skill count was not reconciled to twenty-five (deploy-ops added)",
+    ).toBe(true);
   });
 });

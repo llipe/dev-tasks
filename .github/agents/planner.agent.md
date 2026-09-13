@@ -435,10 +435,11 @@ After all stories are merged into integration:
 5. Open one consolidated PR from integration branch to `main`.
 6. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
 7. Wait for the user to approve and merge the PR into `main`.
-8. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
+8. **Post-integration deploy handoff (conditional).** When the merged scope includes deployable changes and the repository declares environments in `infra/environments.yaml`, planner **MUST** hand the deploy off to `infra-engineer` rather than running any platform write or deploy command itself. This handoff is conditional — it applies only when infrastructure/deploy scope is present; a docs- or test-only integration triggers no deploy. Planner names `infra-engineer` as the owner of the post-integration deploy (dev on merge to `main`, production behind the protected-environment reviewer on the release tag via the `deploy-ops` workflow templates) and never invokes `deploy.sh`, `release.sh`, `flyctl`, `aws`, or `supabase` directly.
+9. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
    - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
    - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
-9. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
+10. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
 
 - consolidated PR URL
 - current CI/check status

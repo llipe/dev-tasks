@@ -76,7 +76,7 @@ JSON Schema 2020-12 documents validated with `ajv`: `component.schema.json`, `fl
 
 ### Harness content
 
-Eleven agents (`product-engineer`, `developer`, `planner`, `researcher`, `verifier`, `qa-engineer`, `ux-engineer`, `technical-writer`, `housekeeping`, `github-ops`, `infra-engineer`), twenty-four skills, and three scoped instruction/steering rules plus one always-loaded Kiro steering notice. Behavior is kept aligned across the three platform trees; file formats differ because platform schemas differ. See `AGENTS.md` for the authoritative registry and `docs/workflow-chains.md` for sequencing.
+Eleven agents (`product-engineer`, `developer`, `planner`, `researcher`, `verifier`, `qa-engineer`, `ux-engineer`, `technical-writer`, `housekeeping`, `github-ops`, `infra-engineer`), twenty-five skills, and three scoped instruction/steering rules plus one always-loaded Kiro steering notice. Behavior is kept aligned across the three platform trees; file formats differ because platform schemas differ. See `AGENTS.md` for the authoritative registry and `docs/workflow-chains.md` for sequencing. The `infra-engineer` deploy surface is carried by the `deploy-ops` skill plus the `templates/scripts/` and `templates/workflows/` templates (the GitHub Actions `deploy-dev`, `deploy-prod`, and `rollback` workflows).
 
 ## Integrations
 
