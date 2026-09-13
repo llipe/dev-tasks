@@ -28,6 +28,7 @@
     ".kiro/skills/",
     ".kiro/steering/",
     ".kiro/hooks/",
+    "templates/",
     "AGENTS.md",
     "CLAUDE.md",
     "DESIGN.md",

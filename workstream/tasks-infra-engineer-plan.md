@@ -101,14 +101,14 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
 - [ ] 6.0 Implement Story S-006: Phase 1 registries, ADR-005, and bundle manifest
 
-  - [ ] 6.1 Read `core/distribution/*` to learn how `consumer_owned_paths` is matched; write a distribution test for a directory prefix (`infra/`) on install and update; confirm current behavior
-  - [ ] 6.2 Implement prefix handling if the test shows it is missing; add `templates/infra` to `managed_paths` and `infra/` to `consumer_owned_paths`; add `templates/` to `package.json` `files`
+  - [x] 6.1 Read `core/distribution/*` to learn how `consumer_owned_paths` is matched; write a distribution test for a directory prefix (`infra/`) on install and update; confirm current behavior
+  - [x] 6.2 Implement prefix handling if the test shows it is missing; add `templates/infra` to `managed_paths` and `infra/` to `consumer_owned_paths`; add `templates/` to `package.json` `files`
   - [ ] 6.3 Write `docs/adr/ADR-005-infra-engineer-lifecycle-gates.md` (Context, Decision, Consequences, Alternatives: adapter contract, autonomous mode, IaC authoring, environment branches); index in `docs/adr/README.md`
   - [ ] 6.4 Update `AGENTS.md` (+ template), `CLAUDE.md` (+ template), `README.md`, `docs/system-overview.md`: agent, three skills, templates, agent counts, main-thread rationale. Chain diagrams are Task 10.5, not here
-  - [ ] 6.5 Verify Acceptance Criterion: AC-1 registries (parity test registry checks)
-  - [ ] 6.6 Verify Acceptance Criterion: AC-3, AC-4 manifest and prefix semantics (distribution tests)
-  - [ ] 6.7 Manual verification: `dt install` into a scratch repo, fill `environments.yaml`, `dt update`, confirm the file is untouched
-  - [ ] 6.8 Run Tests: `pnpm run validate`, `pnpm run audit`
+  - [x] 6.5 Verify Acceptance Criterion: AC-1 registries (parity test registry checks) _(infra-engineer-parity.test.ts passes 40/40 — file/contract checks green; the doc-content registry rows in AGENTS.md/CLAUDE.md/README are not asserted by this test and are **deferred to the S-006 doc task 6.4**, out of scope here)_
+  - [x] 6.6 Verify Acceptance Criterion: AC-3, AC-4 manifest and prefix semantics (distribution tests)
+  - [ ] 6.7 Manual verification: `dt install` into a scratch repo, fill `environments.yaml`, `dt update`, confirm the file is untouched _(not run — requires a scratch repo with the built CLI; repro: `pnpm build`; in a throwaway git repo run `node <dev-tasks>/dist/bin/dt.js install --profile all`; edit `infra/environments.yaml`; run `node <dev-tasks>/dist/bin/dt.js update --force`; confirm the edited `infra/environments.yaml` is unchanged because `infra/` is a consumer-owned prefix)_
+  - [x] 6.8 Run Tests: `pnpm run validate`, `pnpm run audit`
 
 - [ ] 7.0 Implement Story S-007: tag policy, git-guard rule 4, and exact-semver workflow filters
 

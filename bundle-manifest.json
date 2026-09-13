@@ -98,6 +98,12 @@
       "description": "Top-level metadata files",
       "pattern": "skills-lock.json",
       "recursive": false
+    },
+    {
+      "path": "templates/infra",
+      "description": "Infrastructure scaffolding templates (environments.yaml, redaction patterns)",
+      "pattern": "*",
+      "recursive": true
     }
   ],
   "consumer_owned_paths": [
@@ -107,7 +113,8 @@
     "TESTING.md",
     ".claude/settings.json",
     ".kiro/settings/mcp.json",
-    ".kiro/specs"
+    ".kiro/specs",
+    "infra/"
   ],
   "version_file": ".dev-tasks-version",
   "backup_dir": ".dev-tasks-backup",
