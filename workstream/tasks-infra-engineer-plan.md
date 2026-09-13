@@ -112,9 +112,9 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
 - [ ] 7.0 Implement Story S-007: tag policy, git-guard rule 4, and exact-semver workflow filters
 
-  - [ ] 7.1 Write `test/unit/git-guard-tags.test.ts` piping `{"tool_input":{"command":"..."}}` into the hook: block matrix (`git tag v1.2.3`, `git tag -a`, `git tag -d`, `git push --tags`, a push of `refs/tags/v1`, a push naming `v1.2.3`, a push deleting a remote tag by ref, `gh release create`) and allow matrix (`git tag -l`, `git tag --list`, `git tag`, `git describe --tags`, a push of an `issue/` branch); confirm it fails
-  - [ ] 7.2 Add rule 4 to `.claude/hooks/git-guard.sh`; mirror in `.kiro/hooks/` if a git-guard equivalent exists there; update the header comment to four invariants
-  - [ ] 7.3 Change the `tags` filter in `.github/workflows/publish-npm.yml` and `release-bundle.yml` to `v[0-9]+.[0-9]+.[0-9]+`; add an assertion for both files to the hook test file
+  - [x] 7.1 Write `test/unit/git-guard-tags.test.ts` piping `{"tool_input":{"command":"..."}}` into the hook: block matrix (`git tag v1.2.3`, `git tag -a`, `git tag -d`, `git push --tags`, a push of `refs/tags/v1`, a push naming `v1.2.3`, a push deleting a remote tag by ref, `gh release create`) and allow matrix (`git tag -l`, `git tag --list`, `git tag`, `git describe --tags`, a push of an `issue/` branch); confirm it fails
+  - [x] 7.2 Add rule 4 to `.claude/hooks/git-guard.sh`; mirror in `.kiro/hooks/` if a git-guard equivalent exists there; update the header comment to four invariants
+  - [x] 7.3 Change the `tags` filter in `.github/workflows/publish-npm.yml` and `release-bundle.yml` to `v[0-9]+.[0-9]+.[0-9]+`; add an assertion for both files to the hook test file
   - [ ] 7.4 Add the "Tags" section to `github-ops` (three trees): annotated `vX.Y.Z`, human-only, `main`-only, immutable, no prerelease in v1, milestone `vX.Y` closes on `vX.Y.0`
   - [ ] 7.5 Add the tag procedure and hotfix line to `git-ops` (three trees); add one line to `docs/technical-guidelines.md` Deployment section
   - [ ] 7.6 Verify Acceptance Criterion: AC-1 to AC-6
