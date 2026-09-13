@@ -29,7 +29,13 @@ const SCRIPTS_DIR = resolve(ROOT, "templates/scripts");
 const STUB_BIN = resolve(ROOT, "test/fixtures/infra/bin");
 const FIXTURE_ENV = resolve(ROOT, "test/fixtures/infra/environments.yaml");
 
-const SCRIPTS = ["deploy.sh", "deploy-verify.sh", "rollback.sh", "deploy-status.sh", "release.sh"] as const;
+const SCRIPTS = [
+  "deploy.sh",
+  "deploy-verify.sh",
+  "rollback.sh",
+  "deploy-status.sh",
+  "release.sh",
+] as const;
 
 function scriptPath(name: string): string {
   return resolve(SCRIPTS_DIR, name);
@@ -47,7 +53,12 @@ interface RunResult {
  * overrides are merged on top. A per-run stub log path is injected so argv
  * capture is isolated between cases.
  */
-function runScript(name: string, args: string[], env: Record<string, string> = {}, cwd?: string): RunResult {
+function runScript(
+  name: string,
+  args: string[],
+  env: Record<string, string> = {},
+  cwd?: string,
+): RunResult {
   const stubLog = resolve(mkdtempSync(resolve(tmpdir(), "infra-stub-")), "argv.log");
   const result = spawnSync("bash", [scriptPath(name), ...args], {
     encoding: "utf-8",
@@ -177,7 +188,10 @@ describe("deploy.sh dev — dry-run sequence (AC-3, AC-4)", () => {
     ];
     const lower = res.stdout.toLowerCase();
     const indices = steps.map((s) => lower.indexOf(s));
-    expect(indices.every((i) => i >= 0), `missing step in output:\n${res.stdout}`).toBe(true);
+    expect(
+      indices.every((i) => i >= 0),
+      `missing step in output:\n${res.stdout}`,
+    ).toBe(true);
     const sorted = [...indices].sort((a, b) => a - b);
     expect(indices).toEqual(sorted);
   });
@@ -217,15 +231,24 @@ describe("rollback.sh — resolves previous good version (AC-6)", () => {
   });
 
   it("resolves the previous good version from infra/changes/ with no manual lookup", () => {
-    writeFileSync(resolve(changesDir, "2024-01-01-dev-v1.0.0.md"), "env: dev\nversion: v1.0.0\nstatus: good\n");
-    writeFileSync(resolve(changesDir, "2024-01-02-dev-v1.1.0.md"), "env: dev\nversion: v1.1.0\nstatus: good\n");
+    writeFileSync(
+      resolve(changesDir, "2024-01-01-dev-v1.0.0.md"),
+      "env: dev\nversion: v1.0.0\nstatus: good\n",
+    );
+    writeFileSync(
+      resolve(changesDir, "2024-01-02-dev-v1.1.0.md"),
+      "env: dev\nversion: v1.1.0\nstatus: good\n",
+    );
     const res = runScript("rollback.sh", ["dev", "--dry-run"], { INFRA_CHANGES_DIR: changesDir });
     expect(res.status, res.stderr).toBe(0);
     expect(res.stdout).toMatch(/v1\.1\.0|v1\.0\.0/);
   });
 
   it("honors --to <version> as an override", () => {
-    writeFileSync(resolve(changesDir, "2024-01-01-dev-v1.0.0.md"), "env: dev\nversion: v1.0.0\nstatus: good\n");
+    writeFileSync(
+      resolve(changesDir, "2024-01-01-dev-v1.0.0.md"),
+      "env: dev\nversion: v1.0.0\nstatus: good\n",
+    );
     const res = runScript("rollback.sh", ["dev", "--to", "v0.9.0", "--dry-run"], {
       INFRA_CHANGES_DIR: changesDir,
     });
@@ -294,7 +317,6 @@ describe("human-only guard (business rule)", () => {
     expect(/approval|human/i.test(res.stdout + res.stderr)).toBe(true);
   });
 });
-
 
 // ─── AC-3 / AC-4 edge cases against a real throwaway git repo (8.9) ──────────
 //
