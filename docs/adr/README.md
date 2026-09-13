@@ -16,6 +16,7 @@ Durable records of architectural decisions for `dev-tasks`. One file per decisio
 | [ADR-002](ADR-002-exit-code-contract.md)                | Spec-aligned exit-code contract with deprecated aliases   | Accepted |
 | [ADR-003](ADR-003-qa-engineer-coverage-gate.md)         | `qa-engineer` coverage gate in the documented golden path | Accepted |
 | [ADR-004](ADR-004-researcher-pre-spec-research-step.md) | Pre-spec codebase research step via `researcher` agent    | Accepted |
+| [ADR-005](ADR-005-infra-engineer-lifecycle-gates.md)    | `infra-engineer` approval-gated infrastructure change lifecycle | Accepted |
 
 ## Naming
 

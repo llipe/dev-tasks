@@ -67,6 +67,7 @@ It ships with dev-tasks as a placeholder and is listed in `consumer_owned_paths`
 | **qa-engineer** | `qa-engineer.agent.md` | Quality agent — establishes the `/TESTING.md` standard, authors tests for layers the project lacks, and reports coverage and structural gaps. Invoked by `developer` at the completion gate, before the `verifier` audit |
 | **researcher** | `researcher.agent.md` | Codebase research agent — bounded, delegated investigation producing structured research artifacts. Invoked conditionally by `product-engineer`, `developer`, and `planner` |
 | **verifier** | `verifier.agent.md` | Verification agent — owns compliance test-plan design (`design` mode) and post-implementation grey-box fidelity auditing (`audit` mode) against codebase, `/workstream`, tests, and PRD/spec intent |
+| **infra-engineer** | `infra-engineer.agent.md` | Infrastructure agent — plans and applies infrastructure changes one approved, reversible, recorded step at a time across AWS, fly.io, Supabase, and Cloudflare. Human owns every approval and all production; no autonomous or batch mode. On Claude it runs as a `.claude/commands/` main-thread entry point (like `planner`/`product-engineer`) because per-step approval needs the main thread |
 
 ## Skills
 
@@ -99,6 +100,9 @@ Skills are on-demand capabilities invoked by agents — **not** loaded unless ex
 | Skill | Directory | Purpose | Primary Consumer |
 |---|---|---|---|
 | **git-ops** | `skills/git-ops/` | Branch management, rebase, merge, conflict resolution, recovery | `developer`, `planner` |
+| **aws-ops** | `skills/aws-ops/` | AWS CLI command sets, resource tiers, cost inputs, backup and revert sources, and the AWS log table | `infra-engineer` |
+| **fly-ops** | `skills/fly-ops/` | `flyctl` command sets, resource tiers, cost inputs, backup and revert sources, and the fly.io log table | `infra-engineer` |
+| **supabase-ops** | `skills/supabase-ops/` | Supabase CLI command sets, `db diff` migration flow, drift rule, backup and revert sources, inventory findings, and the Supabase Cloud log table | `infra-engineer` |
 | **webapp-mockup** | `skills/webapp-mockup/` | Scaffold and generate React mockup apps for UX testing | `ux-engineer` |
 | **memo-cli-usage** | `skills/memo-cli-usage/` | Read and write architectural decisions to a shared Qdrant knowledge base for multi-session, multi-agent, and team-wide context continuity | `technical-writer`, `developer` |
 
