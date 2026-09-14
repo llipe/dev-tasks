@@ -1,0 +1,16 @@
+# status: template
+default_cost_threshold_usd: 20
+environments:
+  dev:
+    production: false
+    tier0_tool: none # cdk | terraform | cloudformation | none
+    fly: { org: my-org, app: my-app-dev }
+    supabase: { project_ref: abcdefghijklmnop }
+  prod:
+    production: true
+    tier0_tool: none
+    cost_threshold_usd: 20
+    aws: { account_id: "123456789012", region: us-east-1, profile: prod }
+    fly: { org: my-org, app: my-app }
+    supabase: { project_ref: qrstuvwxyzabcdef }
+    cloudflare: { zone_id: 0123456789abcdef }

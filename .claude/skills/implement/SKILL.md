@@ -29,6 +29,14 @@ This activity assumes:
 
 ---
 
+## Platform-Write Routing
+
+- You **MUST NOT** emit or execute a platform write command (`aws`, `flyctl`, `supabase`, or Cloudflare API writes) while executing a task list.
+- When a sub-task's work is a platform write, you **MUST** route it to `infra-engineer` instead of running it yourself, so the approval, revert, and backup gates bind. The sub-task kinds that route are: **secrets**, **deploy**, **DNS**, **certificates**, **IAM policy**, and **migrations against a shared or cloud project**.
+- This routing is **conditional**, never mandatory: a story with no platform-write scope invokes nothing, and an infra-shaped but local-only sub-task — such as editing `.env.example` or a config template checked into the repo — stays with the implementing agent.
+
+---
+
 ## Before Starting Work
 
 1. You **MUST** confirm the GitHub Issue is open.

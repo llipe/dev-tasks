@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Test stub for `aws`. Logs argv to $INFRA_STUB_LOG and succeeds.
+set -euo pipefail
+if [ -n "${INFRA_STUB_LOG:-}" ]; then
+  printf 'aws %s\n' "$*" >>"$INFRA_STUB_LOG"
+fi
+case "${1:-} ${2:-}" in
+  "--version") printf 'aws-cli/2.15.0\n' ;;
+  "sts get-caller-identity") printf '{"Account":"123456789012","Arn":"arn:aws:iam::123456789012:user/test"}\n' ;;
+  *) : ;;
+esac
+exit 0

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Test stub for `gh`. Logs argv to $INFRA_STUB_LOG and succeeds.
+set -euo pipefail
+if [ -n "${INFRA_STUB_LOG:-}" ]; then
+  printf 'gh %s\n' "$*" >>"$INFRA_STUB_LOG"
+fi
+case "${1:-} ${2:-}" in
+  "--version") printf 'gh version 2.40.0\n' ;;
+  "auth status") : ;;
+  *) : ;;
+esac
+exit 0

@@ -213,11 +213,12 @@ Projects set numeric thresholds. The harness provides baseline/no-regression pol
 - Update all supported platform variants when changing shared behavior.
 - Require review for security, production, migration, dependency, and workflow-gate changes.
 - Preserve Conventional Commit conventions and feature-branch/PR discipline.
-- Canonical JS/TS scripts are `lint`, `format:check`, `typecheck`, `test`, `audit`, and `validate`, with specialized scripts such as `test:unit`, `test:integration`, `test:e2e`, and `test:mutation` where applicable.
+- Canonical JS/TS scripts are `lint`, `format:check`, `typecheck`, `test`, `audit`, and `validate`, with specialized scripts such as `test:unit`, `test:integration`, `test:e2e`, and `test:mutation` where applicable. Infrastructure repos that install `deploy-ops` also expose the deploy surface through canonical wrappers — `deploy`, `deploy:verify`, `deploy:rollback`, `deploy:status`, and `release` — each a thin delegation to the corresponding `templates/scripts/*.sh`.
 
 ## Deployment and DevOps
 
 - Releases are versioned bundles published through GitHub Releases.
+- Release tags are annotated, immutable, exact-semver (`v<major>.<minor>.<patch>`) tags created only by a human on `main`; agents never create, move, delete, or push tags (enforced by `git-guard` rule 4).
 - Build and smoke tests must verify managed files, checksums, profile contents, and installer/update behavior.
 - CI evidence should be attached to workflow runs or pull requests rather than committing volatile reports to the repository.
 - Durable plans, traceability records, concise verification summaries, and architectural decisions may be committed when they remain useful after a run.

@@ -745,6 +745,69 @@ describe("core/distribution/update — runUpdate()", () => {
       expect(result.skipped.length).toBe(2);
     });
 
+    it("protects a consumer-owned directory prefix from overwrite on update", async () => {
+      // A consumer-owned prefix (e.g. "infra/") must shield ALL files beneath
+      // it from being overwritten on update, even when the package ships a
+      // differing version and even with force=true. This is the directory
+      // -prefix semantic backing S-006 AC-3/AC-4: `templates/infra` is managed
+      // content the toolkit ships, but once scaffolded into a consumer repo as
+      // `infra/...` the consumer owns every file underneath it.
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const consumerEdited = "# environments.yaml — consumer filled this in\nprod: real-values\n";
+      const packageVersion = "# environments.yaml — package template\nprod: <unfilled>\n";
+
+      // Consumer has an infra file they edited; package ships a different one.
+      createFile(repoRoot, "infra/environments.yaml", consumerEdited);
+      createFile(packageRoot, "infra/environments.yaml", packageVersion);
+      // A nested infra change record the consumer also owns.
+      createFile(repoRoot, "infra/changes/2024-01-01-deploy.md", "# consumer change record\n");
+      createFile(packageRoot, "infra/changes/2024-01-01-deploy.md", "# package clobber\n");
+
+      writeManifest(repoRoot, {
+        version: "0.1.0",
+        pinned: "0.1.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: "infra/environments.yaml",
+            profile: "root",
+            // origin == package version → without prefix protection this would
+            // reconcile to "overwrite" and clobber the consumer's edits.
+            sha256: hashContent(consumerEdited),
+            origin_sha256: hashContent(packageVersion),
+          },
+          {
+            path: "infra/changes/2024-01-01-deploy.md",
+            profile: "root",
+            sha256: hashContent("# consumer change record\n"),
+            origin_sha256: hashContent("# package clobber\n"),
+          },
+        ],
+        extraction: {},
+      });
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: true,
+        version: "0.2.0",
+        consumerOwnedPaths: ["infra/"],
+      });
+
+      // Neither infra file may be overwritten — both are under the protected prefix.
+      expect(readFileSync(join(repoRoot, "infra/environments.yaml"), "utf-8")).toBe(consumerEdited);
+      expect(readFileSync(join(repoRoot, "infra/changes/2024-01-01-deploy.md"), "utf-8")).toBe(
+        "# consumer change record\n",
+      );
+      expect(result.updated.some((r) => r.path.startsWith("infra/"))).toBe(false);
+      expect(result.skipped.map((r) => r.path).sort()).toEqual([
+        "infra/changes/2024-01-01-deploy.md",
+        "infra/environments.yaml",
+      ]);
+    });
+
     it("does not scan platforms not present in the manifest", async () => {
       const repoRoot = setup();
       const packageRoot = join(repoRoot, "__pkg__");

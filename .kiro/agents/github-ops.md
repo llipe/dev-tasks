@@ -214,6 +214,19 @@ Rules:
 - The attribution value **MUST** identify the assisting system and version when available (for example, `GitHub Copilot v1`, `Claude Code v3`).
 - The `## Why` section **MUST** reference the appropriate issue (`Closes #<number>` or `Refs #<number>`). If no issue exists, it **MUST** reference the motivating commit (`Refs <sha>`).
 
+### Change-Record PR Shape (infra-engineer)
+
+When `infra-engineer` delegates its change-record draft PR (S-001 AC-11), the PR **MUST** follow this shape:
+
+- **Title prefix:** `infra:` — for example, `infra: apply <ChangeId> to <environment>`.
+- **Label:** `infra-change`.
+- **Body sections**, each citing the `ChangeId`:
+  - `## Change` — the `ChangeId`, target environment, and resolved identity.
+  - `## Plan` — a link or reference to the recorded `plan.md` for this `ChangeId`.
+  - `## Apply` — the applied steps (from `commands.sh`) and the `result.md` outcome.
+  - `## Revert` — the reverse-order `rollback.sh` reference and any backup id / restore command.
+- The draft PR is opened against the default branch and stays draft until a human reviews it; `infra-engineer` never self-merges it.
+
 ### Multi-Line Body Formatting
 
 Collapsed/mangled PR and issue bodies (headings, checklists, and paragraphs all flattened into one line) are a recurring failure mode. To prevent this, the following is **mandatory**, not a preference order:
@@ -253,17 +266,19 @@ Branch names **MUST** follow this pattern:
 | ------------- | -------------------------------- | ------------------------------------- |
 | `issue`       | Single GitHub Issue              | `issue/42-rate-limiting`              |
 | `story`       | PRD-driven user story            | `story/S-003-password-reset`          |
-| `fix`         | Bug fix                          | `fix/87-session-expiry`               |
-| `chore`       | Maintenance task                 | `chore/91-upgrade-node`               |
-| `docs`        | Documentation only               | `docs/45-api-reference`               |
 | `integration` | Multi-story consolidation branch | `integration/prd-auth-password-reset` |
 
 Rules:
 
 - **MUST** use lowercase and hyphens only (no underscores, no camelCase).
 - Short description **MUST** be 2–5 words, hyphen-separated.
-- Branches of type `issue`, `story`, `fix`, `chore`, and `docs` **MUST** include the issue or story number.
+- Branches of type `issue` and `story` **MUST** include the issue or story number.
 - Branches of type `integration` **MUST** identify the plan, PRD, or milestone being consolidated.
+
+## Branch-Type Merge Rules
+
+- Issue and story PRs **MUST** merge by squash with source-branch deletion. The planner merges them into an integration branch; the user merges them into `main`.
+- Integration PRs **MUST** merge into `main` by merge commit, and only the user may merge them.
 
 ---
 
@@ -329,6 +344,33 @@ Rules:
 - Every milestone **SHOULD** have a due date.
 - Issues **SHOULD** be assigned to the current or next milestone.
 - Completed milestones **MUST** be closed promptly.
+
+---
+
+## Tags
+
+Tags are the production deploy trigger. They **MUST** be trustworthy, so their creation is tightly constrained.
+
+### Format
+
+```
+v<major>.<minor>.<patch>
+```
+
+Example: `v1.4.0`
+
+Rules:
+
+- Tags **MUST** be annotated (`git tag -a`), never lightweight.
+- Tags **MUST** be created by a human. Agents **MUST NOT** create, move, delete, or push tags — this is enforced by `git-guard` rule 4.
+- A tag **MUST** point at a commit on `main`.
+- Tags **MUST** be immutable: once pushed, a tag is never moved, re-pointed, force-updated, or deleted.
+- Prerelease tags (e.g., `v1.0.0-rc.1`, `v1.0.0-beta`) **MUST NOT** be used in v1; only exact `v<major>.<minor>.<patch>` tags are valid.
+- A milestone `v<major>.<minor>` **MUST** be closed when its `v<major>.<minor>.0` tag exists.
+
+### Relationship to Milestones
+
+A milestone tracks the scope of a minor version (`vX.Y`); the tag `vX.Y.0` marks its release. Patch tags (`vX.Y.1`, `vX.Y.2`, …) do not open new milestones.
 
 ---
 

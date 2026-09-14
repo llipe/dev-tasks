@@ -1,0 +1,66 @@
+# templates/workflows/deploy-prod.yml
+#
+# Consumer-owned production deploy workflow, delivered by infra-engineer via
+# deploy-ops. Fires only on an exact-semver annotated release tag and runs
+# behind the GitHub `production` environment, whose required reviewer stops the
+# job until a human approves. It deploys by calling the canonical
+# templates/scripts/deploy.sh prod — no inline aws/flyctl/supabase deploy logic.
+#
+# Prune the tool setup steps your target does not use when you scaffold this.
+
+name: Deploy prod
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+# OIDC for AWS role assumption; no long-lived cloud keys in the repo.
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy-prod:
+    name: Deploy production environment
+    runs-on: ubuntu-latest
+    # Required reviewer on this environment holds the job until a human approves.
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # scripts assert the tag is annotated and on main
+
+      # ── Tool setup (version-pinned; prune what you do not use) ──────────────
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@v1
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Set up yq
+        uses: mikefarah/yq@v4
+
+      # ── Deploy via the canonical script only ────────────────────────────────
+      # The human-only guard requires INFRA_HUMAN_APPROVED=1; the protected
+      # environment reviewer approval is what authorizes this run.
+      - name: Deploy prod
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          INFRA_HUMAN_APPROVED: "1"
+        run: bash templates/scripts/deploy.sh prod

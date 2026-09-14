@@ -49,6 +49,25 @@ function getPackageRoot(): string {
   return process.cwd();
 }
 
+/**
+ * Read `consumer_owned_paths` from the package's bundle-manifest.json.
+ * These paths (exact files or directory prefixes ending in "/") are protected
+ * from overwrite during update. Returns an empty list if the manifest is
+ * missing or malformed.
+ */
+function getConsumerOwnedPaths(packageRoot: string): string[] {
+  try {
+    const raw = readFileSync(resolve(packageRoot, "bundle-manifest.json"), "utf-8");
+    const parsed = JSON.parse(raw) as { consumer_owned_paths?: unknown };
+    if (Array.isArray(parsed.consumer_owned_paths)) {
+      return parsed.consumer_owned_paths.filter((p): p is string => typeof p === "string");
+    }
+  } catch {
+    // No manifest or unreadable — no extra protection beyond hash reconciliation.
+  }
+  return [];
+}
+
 function printUsage(): void {
   const usage = `Usage: dev-tasks <command> [options]
 
@@ -225,6 +244,7 @@ async function main(): Promise<void> {
         sourceDir: packageRoot,
         force: args.flags.force,
         version: currentVersion,
+        consumerOwnedPaths: getConsumerOwnedPaths(packageRoot),
       });
 
       const hasConflicts = result.conflicts.length > 0;

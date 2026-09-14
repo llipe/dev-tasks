@@ -59,6 +59,32 @@ export interface UpdateOptions {
   force: boolean;
   /** Current package version */
   version: string;
+  /**
+   * Consumer-owned path entries from bundle-manifest.json. A file is protected
+   * from overwrite/install when its path equals an entry or falls under a
+   * directory-prefix entry (one ending in "/"). Defaults to none.
+   */
+  consumerOwnedPaths?: string[];
+}
+
+/**
+ * Decide whether a managed-file path is consumer-owned and therefore must not
+ * be overwritten or installed by update. An entry ending in "/" is treated as a
+ * directory prefix protecting every file beneath it; any other entry matches
+ * that exact path. Matching is prefix-segment aware so "infra/" protects
+ * "infra/x" but never "infrastructure/x".
+ */
+export function isConsumerOwned(filePath: string, consumerOwnedPaths: string[]): boolean {
+  for (const owned of consumerOwnedPaths) {
+    if (owned.endsWith("/")) {
+      if (filePath === owned.slice(0, -1) || filePath.startsWith(owned)) {
+        return true;
+      }
+    } else if (filePath === owned) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -88,6 +114,7 @@ async function fileExists(path: string): Promise<boolean> {
  */
 export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
   const { targetDir, sourceDir, force, version } = options;
+  const consumerOwnedPaths = options.consumerOwnedPaths ?? [];
   let manifest = await readManifest(targetDir);
   let autoMigrated = false;
 
@@ -136,6 +163,7 @@ export async function runUpdate(options: UpdateOptions): Promise<UpdateResult> {
       force,
       version: effectiveVersion,
       manifest,
+      consumerOwnedPaths,
     });
     return { ...result, resolvedVersion: effectiveVersion, fetched, autoMigrated };
   } finally {
@@ -151,6 +179,7 @@ interface ReconcileInput {
   force: boolean;
   version: string;
   manifest: Manifest;
+  consumerOwnedPaths: string[];
 }
 
 /**
@@ -159,7 +188,7 @@ interface ReconcileInput {
 async function runReconciliation(
   input: ReconcileInput,
 ): Promise<Omit<UpdateResult, "resolvedVersion" | "fetched" | "autoMigrated">> {
-  const { targetDir, sourceDir, force, version, manifest } = input;
+  const { targetDir, sourceDir, force, version, manifest, consumerOwnedPaths } = input;
 
   const conflicts: UpdateFileResult[] = [];
   const updated: UpdateFileResult[] = [];
@@ -173,6 +202,26 @@ async function runReconciliation(
     const localPath = join(targetDir, entry.path);
     // Source is the same relative path inside the package
     const packagePath = join(sourceDir, entry.path);
+
+    // Consumer-owned paths (exact or directory-prefix) are never overwritten or
+    // reinstalled: the consumer owns every file beneath the prefix. Skip before
+    // reconciliation so a differing package version cannot clobber local edits,
+    // even under force.
+    if (isConsumerOwned(entry.path, consumerOwnedPaths)) {
+      let localHash: string | null = null;
+      if (await fileExists(localPath)) {
+        localHash = await hashFile(localPath);
+      }
+      skipped.push({
+        path: entry.path,
+        profile: entry.profile,
+        action: "skip",
+        localHash,
+        originHash: entry.origin_sha256,
+        packageHash: entry.origin_sha256,
+      });
+      continue;
+    }
 
     // Compute local hash (null if file doesn't exist)
     let localHash: string | null = null;
@@ -266,6 +315,8 @@ async function runReconciliation(
       const newFiles = await discoverNewFiles(sourceDir, managedPath, trackedPaths);
       for (const relFile of newFiles) {
         const fullRelPath = join(managedPath.target, relFile);
+        // Never install into a consumer-owned prefix during discovery.
+        if (isConsumerOwned(fullRelPath, consumerOwnedPaths)) continue;
         const sourcePath = join(sourceDir, managedPath.source, relFile);
         const localPath = join(targetDir, fullRelPath);
 
@@ -292,6 +343,7 @@ async function runReconciliation(
   if (profilesInManifest.size > 0) {
     for (const rootFile of ROOT_FILES) {
       if (trackedPaths.has(rootFile)) continue;
+      if (isConsumerOwned(rootFile, consumerOwnedPaths)) continue;
       const sourcePath = join(sourceDir, rootFile);
       if (!(await fileExists(sourcePath))) continue;
 

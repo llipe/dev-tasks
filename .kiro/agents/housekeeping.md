@@ -52,6 +52,7 @@ Inform if any of these are missing or if you see other relevant tools (e.g. `pre
 | **Unit tests**        | Broken imports, wrong mock paths, outdated snapshots (re-gen only) | Assertions, test logic, coverage config  |
 | **Integration tests** | Broken imports, fixture paths, env variable references             | What is being tested, assertion outcomes |
 | **E2E tests**         | Broken imports, selector updates after non-logic renames           | Test flows, what interactions are tested |
+| **Infrastructure**    | Nothing — never touch                                              | `infra/`, `.github/workflows/deploy-*.yml`, `rollback.yml`, `templates/scripts/`, `templates/workflows/` — even to fix a lint or formatting error; leave them alone and route to `infra-engineer` |
 
 ## Hard Rules
 
@@ -62,6 +63,7 @@ Inform if any of these are missing or if you see other relevant tools (e.g. `pre
 5. You **MUST NOT** add new dependencies without asking first.
 6. You **MUST NOT** delete tests. Mark broken ones: `// TODO(housekeeping): escalate — [reason]`
 7. You **MUST NOT** edit config files: `eslint.config.*`, `tsconfig*.json`, `jest.config.*`, `vite.config.*`, `playwright.config.*`, lockfiles, or `package.json` — unless a package change was explicitly confirmed.
+8. You **MUST NOT** touch infrastructure paths — `infra/`, `.github/workflows/deploy-*.yml`, `rollback.yml`, `templates/scripts/`, `templates/workflows/` — even when a deploy workflow has a lint or formatting error. Leave the file as-is and, when a fix is warranted, route it to `infra-engineer` rather than editing it yourself.
 
 ## Decision Protocol
 

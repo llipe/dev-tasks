@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Test stub for `yq` (4.x-compatible surface).
+#
+# Logs its argv to $INFRA_STUB_LOG (if set), then emulates the narrow set of
+# queries the templated deploy scripts issue against an environments.yaml:
+#
+#   yq -r '.environments.<env>.production'      -> true | false | null
+#   yq -r '.environments.<env> | has("<key>")'  -> true | false
+#   yq -r '.environments | has("<env>")'        -> true | false
+#   yq --version                                -> a 4.x version string
+#
+# The emulation is intentionally line-oriented (not a real YAML engine); it only
+# needs to satisfy the deploy scripts' fixed query shapes.
+
+set -euo pipefail
+
+if [ -n "${INFRA_STUB_LOG:-}" ]; then
+  printf 'yq %s\n' "$*" >>"$INFRA_STUB_LOG"
+fi
+
+# Collect args: an optional -r/--raw flag, an expression, and a file.
+expr=""
+file=""
+for arg in "$@"; do
+  case "$arg" in
+    --version) printf 'yq (https://github.com/mikefarah/yq/) version v4.44.3\n'; exit 0 ;;
+    -r | --raw-output | -e | --exit-status) : ;;
+    -*) : ;;
+    *)
+      if [ -z "$expr" ]; then
+        expr="$arg"
+      else
+        file="$arg"
+      fi
+      ;;
+  esac
+done
+
+[ -f "$file" ] || { printf 'null\n'; exit 0; }
+
+# Extract the indented block for a given top-level environment name. Prints the
+# lines belonging to `.environments.<env>` (deeper-indented than the env key).
+env_block() {
+  local env="$1"
+  awk -v env="$env" '
+    $0 ~ "^  " env ":[[:space:]]*$" { inblk=1; next }
+    inblk && /^  [A-Za-z0-9_]+:/ { inblk=0 }
+    inblk { print }
+  ' "$file"
+}
+
+# .environments | has("<env>")
+if [[ "$expr" =~ ^\.environments\ *\|\ *has\(\"([^\"]+)\"\)$ ]]; then
+  env="${BASH_REMATCH[1]}"
+  if grep -qE "^  ${env}:[[:space:]]*$" "$file"; then printf 'true\n'; else printf 'false\n'; fi
+  exit 0
+fi
+
+# .environments.<env> | has("<key>")
+if [[ "$expr" =~ ^\.environments\.([A-Za-z0-9_]+)\ *\|\ *has\(\"([^\"]+)\"\)$ ]]; then
+  env="${BASH_REMATCH[1]}"
+  key="${BASH_REMATCH[2]}"
+  block="$(env_block "$env")"
+  if printf '%s\n' "$block" | grep -qE "^    ${key}:"; then printf 'true\n'; else printf 'false\n'; fi
+  exit 0
+fi
+
+# .environments.<env>.<field>  (e.g. .production)
+if [[ "$expr" =~ ^\.environments\.([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)$ ]]; then
+  env="${BASH_REMATCH[1]}"
+  field="${BASH_REMATCH[2]}"
+  block="$(env_block "$env")"
+  val="$(printf '%s\n' "$block" | grep -E "^    ${field}:" | head -1 | sed -E "s/^    ${field}:[[:space:]]*//" || true)"
+  if [ -z "$val" ]; then printf 'null\n'; else printf '%s\n' "$val"; fi
+  exit 0
+fi
+
+# Unknown expression: emit null so callers treat it as absent.
+printf 'null\n'
+exit 0

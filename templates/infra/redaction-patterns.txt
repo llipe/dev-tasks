@@ -1,0 +1,47 @@
+# infra-engineer redaction pattern set
+#
+# One `sed -E` substitution per line. Applied unconditionally to every log
+# excerpt before it reaches a transcript, a change record, or git history:
+#
+#   sed -E -f redaction-patterns.txt <input>
+#
+# Order matters: more specific patterns run before generic ones so a value is
+# labelled with its narrowest category. Each rule rewrites the secret to
+# [REDACTED:<category>]. Multi-line tokens are out of scope for v1 (sed is
+# line-oriented); tokens split across two lines are not matched.
+
+# AWS secret access key (the labelled key=value form must run before the AWS
+# access key id and the generic secret= rules).
+s/aws_secret_access_key[[:space:]]*=[[:space:]]*[A-Za-z0-9/+=]{20,}/[REDACTED:aws-secret-key]/g
+
+# AWS access key id (AKIA/ASIA/AROA/AIDA + 16 uppercase alphanumerics).
+s/(AKIA|ASIA|AROA|AIDA)[A-Z0-9]{16}/[REDACTED:aws-access-key-id]/g
+
+# Supabase secret key.
+s/sb_secret_[A-Za-z0-9]{20,}/[REDACTED:sb-secret-key]/g
+
+# Supabase publishable key.
+s/sb_publishable_[A-Za-z0-9]{20,}/[REDACTED:sb-publishable-key]/g
+
+# JWT (three base64url segments separated by dots) — before the bearer rule so
+# a bearer JWT is still labelled jwt.
+s/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/[REDACTED:jwt]/g
+
+# Fly.io tokens (fo1_, fm2_ prefixes).
+s/(fo1_|fm2_)[A-Za-z0-9_-]{20,}/[REDACTED:fly-token]/g
+
+# GitHub tokens (personal, OAuth, and fine-grained PAT prefixes).
+s/(ghp_|gho_|ghu_|ghs_|ghr_|github_pat_)[A-Za-z0-9_]{20,}/[REDACTED:github-token]/g
+
+# Bearer authorization header.
+s/[Bb]earer[[:space:]]+[A-Za-z0-9._~+/=-]{16,}/[REDACTED:bearer]/g
+
+# Postgres / postgresql connection URLs carrying credentials (case-insensitive
+# scheme). Redacts the whole URL up to a whitespace or quote boundary.
+s/[Pp][Oo][Ss][Tt][Gg][Rr][Ee][Ss][Qq]?[Ll]?:\/\/[^[:space:]"']*:[^[:space:]"'@]+@[^[:space:]"']+/[REDACTED:postgres-url]/g
+
+# Generic password= / secret= key-value pairs.
+s/(password|secret)[[:space:]]*=[[:space:]]*[^[:space:]"']+/[REDACTED:password]/g
+
+# Email addresses.
+s/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/[REDACTED:email]/g

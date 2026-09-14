@@ -52,6 +52,7 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 | `/housekeeping` | Fix lint/type/test-wiring issues. |
 | `/qa-engineer` | Establish `/TESTING.md`, author missing Layer 1-2 tests, and report `coverage_gate` plus risk-ranked gaps. |
 | `/researcher` | Bounded codebase investigation producing a structured research artifact at `/workstream/research-*.md`. |
+| `/infra-engineer` | **Interactive (main thread).** Plan and apply infrastructure changes one approved, reversible, recorded step at a time (AWS, fly.io, Supabase, Cloudflare); hands off a draft PR. Never merges. |
 | `/ux-engineer` | PRD/SPEC → React mockups + refinement handoff. |
 | `/verifier-design` | Generate a compliance test plan + traceability matrix from a spec/story (Design Mode). |
 | `/verifier-audit` | Grey-box fidelity audit of delivered work against requirements and PRD/spec intent (Audit Mode). |
@@ -64,12 +65,12 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 
 Claude Code subagents **cannot spawn other subagents** — the hierarchy is flat (main session → workers). dev-tasks is delegation-heavy, so:
 
-- **Orchestrators run in the main thread as commands** (`/product-engineer`, `/planner`), not as subagents, so they can delegate to leaf subagents *and* pause for the required user-approval gates.
+- **Orchestrators run in the main thread as commands** (`/product-engineer`, `/planner`), not as subagents, so they can delegate to leaf subagents *and* pause for the required user-approval gates. `/infra-engineer` runs in the main thread for the same reason — it pauses for one human approval per infrastructure step.
 - **Step-gated approval requires the main thread.** A subagent runs to completion and only returns a summary; it cannot pause mid-run for a "yes". Use `/developer` (main thread) for interactive step-gated work; the `developer` *subagent* is for `/planner`'s autonomous per-story delegation, which gates at the **story** boundary, not per sub-task.
 
 ### Skills (`.claude/skills/`)
 
-Activity skills: `activity-init`, `activity-refine`, `activity-codebase-research`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-e2e-test-implementation`, `activity-contract-test-design`, `activity-contract-validation`, `activity-edge-case-refinement`, `activity-random-test-tactics`, `activity-test-standards`, `activity-test-implementation`, `activity-integration-test-implementation`, `activity-coverage-gap-analysis`, `activity-drift-reconciliation` (routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates — used by `product-engineer`). Process skills: `plan`, `implement` (the single source of truth for task-list execution rules, including the mandatory `verifier` audit gate). Operational: `git-ops`, `ux-scaffold`, `ux-theme-gen`, `memo-cli-usage`.
+Activity skills: `activity-init`, `activity-refine`, `activity-codebase-research`, `activity-generate-spec`, `activity-generate-stories`, `activity-publish-github`, `activity-e2e-test-design`, `activity-e2e-test-implementation`, `activity-contract-test-design`, `activity-contract-validation`, `activity-edge-case-refinement`, `activity-random-test-tactics`, `activity-test-standards`, `activity-test-implementation`, `activity-integration-test-implementation`, `activity-coverage-gap-analysis`, `activity-drift-reconciliation` (routes `verifier` drift findings into task-list/checklist expansion, new issues, or human-confirmed PRD/spec changelog updates — used by `product-engineer`). Process skills: `plan`, `implement` (the single source of truth for task-list execution rules, including the mandatory `verifier` audit gate). Operational: `git-ops`, `aws-ops`, `fly-ops`, `supabase-ops`, `deploy-ops`, `ux-scaffold`, `ux-theme-gen`, `memo-cli-usage`.
 
 `plan` and `implement` were the always-loaded Copilot instructions; as skills they load on demand instead of consuming context every turn.
 

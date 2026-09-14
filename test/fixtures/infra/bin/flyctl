@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Test stub for `flyctl` / `fly`. Logs argv to $INFRA_STUB_LOG and succeeds.
+set -euo pipefail
+if [ -n "${INFRA_STUB_LOG:-}" ]; then
+  printf 'flyctl %s\n' "$*" >>"$INFRA_STUB_LOG"
+fi
+case "${1:-}" in
+  version | --version) printf 'flyctl v0.3.100\n' ;;
+  auth)
+    case "${2:-}" in
+      whoami) printf 'test-user@example.com\n' ;;
+      *) : ;;
+    esac
+    ;;
+  *) : ;;
+esac
+exit 0

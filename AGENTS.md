@@ -33,8 +33,9 @@ If `/DESIGN.md` is missing and scope includes UI work, agents **MUST** create a 
 | **qa-engineer**      | Testing standard, test authoring, coverage/gap reporting.                        |
 | **researcher**       | Bounded codebase investigation producing structured research artifacts.          |
 | **verifier**         | Compliance test-plan design and post-implementation fidelity audit.              |
+| **infra-engineer**   | Approval-gated, reversible, recorded infrastructure changes across AWS, fly.io, Supabase, and Cloudflare. |
 
-Platform coverage: `.github/agents/` and `.kiro/agents/` carry all ten. `.claude/agents/` carries eight — `planner` and `product-engineer` run as `.claude/commands/` (need user-approval gates).
+Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.claude/agents/` carries eight — `planner`, `product-engineer`, and `infra-engineer` run as `.claude/commands/` (they need main-thread human-approval gates: per-step for `infra-engineer`, per-phase for the two orchestrators).
 
 ## Skills
 
@@ -65,6 +66,10 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all ten. `.claude
 | Skill          | Purpose                                               | Consumer                    |
 | -------------- | ----------------------------------------------------- | --------------------------- |
 | git-ops        | Branch management, rebase, merge, conflict resolution | developer, planner          |
+| aws-ops        | AWS CLI command sets, tiers, cost, backup/revert, log table | infra-engineer          |
+| fly-ops        | flyctl command sets, tiers, cost, backup/revert, log table  | infra-engineer          |
+| supabase-ops   | Supabase CLI command sets, `db diff` flow, drift rule, backup/revert, log table | infra-engineer |
+| deploy-ops     | Deploy script contract, environment mapping, tag policy, deploy-target framing, and GitHub Actions workflow scaffolding (`templates/scripts/`, `templates/workflows/`) | infra-engineer |
 | ux-scaffold    | Mockup project creation (html-lite, react-full)       | ux-engineer                 |
 | ux-theme-gen   | Generate theme artifacts from DESIGN.md               | ux-engineer, developer      |
 | memo-cli-usage | Read/write decisions to shared knowledge base         | technical-writer, developer |

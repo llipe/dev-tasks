@@ -219,7 +219,7 @@ This system brings structure and clarity to AI-assisted development by:
 
 Agents are autonomous personas that orchestrate skills and activities.
 
-> **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). Copilot and Kiro define all 9 agents below. On Claude Code, the two orchestrators (`planner`, `product-engineer`) run in the main thread as `/commands` so they can pause for approval gates; the other 7 are subagents.
+> **Available for:** Copilot (`.github/agents/`), Claude Code (`.claude/agents/`), Kiro (`.kiro/agents/`). Copilot and Kiro define all 11 agents below. On Claude Code, the two orchestrators (`planner`, `product-engineer`) and `infra-engineer` run in the main thread as `/commands` so they can pause for approval gates (per-phase for the orchestrators, per-step for `infra-engineer`); the other 8 are subagents.
 
 ### `product-engineer`
 
@@ -260,6 +260,7 @@ Multi-story orchestration with checkpoint/resume:
 | `verifier`         | Compliance test-plan design and fidelity auditing                               |
 | `qa-engineer`      | Testing standard, missing test harnesses, coverage and gap reporting            |
 | `researcher`       | Bounded codebase investigation producing structured research artifacts          |
+| `infra-engineer`   | Approval-gated, reversible, recorded infrastructure changes (AWS, fly.io, Supabase, Cloudflare) |
 
 ---
 
@@ -276,6 +277,10 @@ On-demand capabilities loaded only when invoked.
 | `activity-publish-github`        | Stories → GitHub Issues                                 | `product-engineer`                                  |
 | `activity-drift-reconciliation`  | Routes verifier drift findings into remediation         | `product-engineer`                                  |
 | `git-ops`                        | Branch, rebase, merge, conflict resolution              | `developer`, `planner`                              |
+| `aws-ops`                        | AWS CLI command sets, tiers, cost, backup/revert, logs  | `infra-engineer`                                    |
+| `fly-ops`                        | flyctl command sets, tiers, cost, backup/revert, logs   | `infra-engineer`                                    |
+| `supabase-ops`                   | Supabase CLI sets, `db diff` flow, drift rule, logs     | `infra-engineer`                                    |
+| `deploy-ops`                     | Deploy script contract, env mapping, tag policy, and workflow scaffolding (`templates/scripts/`, `templates/workflows/`) | `infra-engineer`                                    |
 | `ux-scaffold`                    | Template-aware mockup generation (lite/full)            | `ux-engineer`                                       |
 | `ux-theme-gen`                   | DESIGN.md → theme artifacts (CSS vars, Tailwind v4, RN) | `ux-engineer`, `developer`                          |
 | `activity-e2e-test-design`       | E2E black-box test scenario generation                  | `verifier`                                          |
@@ -325,6 +330,7 @@ Copilot reads `.github/instructions/*.instructions.md`, Kiro reads `.kiro/steeri
 | `technical-writer`         | technical-writer | Documentation maintenance          |
 | `housekeeping`             | housekeeping     | Lint, type, test fixes             |
 | `qa-engineer`              | qa-engineer      | Testing standard and coverage gate |
+| `infra-engineer`           | infra-engineer   | Plan and apply infrastructure changes |
 | `verifier-design`          | verifier         | Generate compliance test plan      |
 | `verifier-audit`           | verifier         | Grey-box fidelity audit            |
 

@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # dev-tasks PreToolUse guard for Bash commands.
 #
-# Enforces three repository invariants deterministically (not left to the model):
+# Enforces four repository invariants deterministically (not left to the model):
 #   1. No agent may merge or push into the default branch `main`.
 #   2. `git commit` messages must follow Conventional Commits.
 #   3. `gh issue|pr create|edit|comment|review` must not pass a multi-line body
 #      inline via `--body`; `--body-file` (or stdin `--body-file -`) is required.
+#   4. Tags are human-only: no agent may create, move, delete, or push a tag,
+#      or cut a GitHub release. Reading tags (`git tag -l`, `git describe`) is
+#      allowed.
 #
 # Contract: receives the PreToolUse hook payload as JSON on stdin. Exit code 2
 # blocks the tool call and returns stderr to Claude as feedback; exit 0 allows.
@@ -90,6 +93,36 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +(issue|pr) +(create|edi
      && ! printf '%s' "$norm" | grep -Eq -- '--body-file'; then
     block "gh issue/pr create|edit|comment|review must not pass '--body' inline. Write the body to a file and pass '--body-file <path>' (or pipe into '--body-file -'). See github-ops 'Multi-Line Body Formatting'."
   fi
+fi
+
+# --- Rule 4: tags are human-only ---------------------------------------------
+# Agents may not create, move, delete, or force tags, push tags, or cut a
+# GitHub release. Reading tags is allowed: `git tag -l`, `git tag --list`,
+# `git tag -n`, `git tag` with no args, and `git describe --tags`.
+if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +tag([[:space:]]|$)'; then
+  # Allow pure list/read forms.
+  if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +tag +(-l|--list|-n[0-9]*)([[:space:]]|$)'; then
+    :
+  elif printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +tag[[:space:]]*$'; then
+    : # `git tag` with no further arguments lists tags.
+  else
+    block "creating, moving, deleting, or forcing a git tag is not allowed. Tags are human-only, annotated, and point at a 'main' commit. See github-ops 'Tags'."
+  fi
+fi
+
+# Block tag pushes: `--tags`, refs/tags/*, a bare vX.Y.Z ref, or a tag deletion
+# by ref (`:refs/tags/...`).
+if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +push'; then
+  if printf '%s' "$norm" | grep -Eq -- '--tags' \
+     || printf '%s' "$norm" | grep -Eq 'refs/tags/' \
+     || printf '%s' "$norm" | grep -Eq '(^|[[:space:]:])v[0-9]+\.[0-9]+\.[0-9]+([[:space:]]|$)'; then
+    block "pushing a tag is not allowed. Tags are created and pushed by a human only. See github-ops 'Tags'."
+  fi
+fi
+
+# Block `gh release create` (cutting a release implies creating a tag).
+if printf '%s' "$norm" | grep -Eq 'gh +release +create'; then
+  block "cutting a GitHub release is human-only (it creates a tag). See github-ops 'Tags'."
 fi
 
 exit 0

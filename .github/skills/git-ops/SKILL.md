@@ -34,7 +34,7 @@ git checkout -b <branch-name>
 
 - Story branches: `story/<story-id>-<short-description>`
 - Issue branches: `issue/<issue-number>-<short-description>`
-- Integration branches: `integrate/<milestone-or-prd-name>`
+- Integration branches: `integration/<plan-id>-<short-description>`
 
 ### 2. Create Branch from Integration Branch
 
@@ -93,11 +93,11 @@ Choose the appropriate strategy based on context:
 
 | Strategy         | When to Use                                                                         | Command                     |
 | ---------------- | ----------------------------------------------------------------------------------- | --------------------------- |
-| **Squash merge** | Story/issue PRs → integration or main branch. Produces clean single-commit history. | `gh pr merge <pr> --squash` |
-| **Merge commit** | Integration branch → main. Preserves the full story history.                        | `gh pr merge <pr> --merge`  |
-| **Rebase merge** | Small PRs with clean linear history. Avoid for multi-commit stories.                | `gh pr merge <pr> --rebase` |
+| **Squash merge** | Issue/story PRs → integration (planner) or `main` (user); delete the source branch. | `gh pr merge <pr> --squash --delete-branch` |
+| **Merge commit** | Integration PRs → `main` (user); preserve the story history.                         | `gh pr merge <pr> --merge`                 |
+| **Rebase merge** | Not part of the issue/story/integration policy; use only when explicitly approved.   | `gh pr merge <pr> --rebase`                |
 
-**Default**: Squash merge for story PRs, merge commit for integration PRs to main.
+**Default**: Issue/story PRs use squash with branch deletion; integration PRs use a merge commit. Planner handles integration targets, and the user handles `main`.
 
 ### 6. Resolve Merge Conflicts
 
@@ -191,6 +191,26 @@ git push --force-with-lease origin <branch-name>
 ```
 
 **Never use** `git push --force` without `--with-lease`.
+
+### 10. Tag Procedure (Human-Only)
+
+Tags are the production deploy trigger and are created **only by a human**. Agents **MUST NOT** create, move, delete, or push tags; `git-guard` rule 4 enforces this. This section documents the procedure a human follows — it is not an agent action.
+
+```bash
+# Ensure you are on main at the exact release commit
+git checkout main
+git pull origin main
+
+# Create an annotated, immutable release tag (exact semver only)
+git tag -a v<major>.<minor>.<patch> -m "Release v<major>.<minor>.<patch>"
+
+# Push the tag (triggers the production deploy workflow)
+git push origin v<major>.<minor>.<patch>
+```
+
+Rules: annotated tags only (never lightweight), exact `v<major>.<minor>.<patch>` (no prerelease suffixes in v1), tag a commit on `main`, and never move or delete a pushed tag.
+
+**Hotfix:** a hotfix ships as the next patch tag (`vX.Y.Z+1`) cut from `main` after the fix merges; never re-point or force-update an existing tag.
 
 ---
 

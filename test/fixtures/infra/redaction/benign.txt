@@ -1,0 +1,8 @@
+Deploying app my-app-dev to the dev environment.
+INFO release v1.4.0 created at 2026-09-11T14:02:11Z
+ECS service reached steady state with 3 running tasks.
+The bucket name is my-app-assets and versioning is enabled.
+GET /health returned 200 in 12ms
+password rotation policy requires review every 90 days
+Contact the on-call rotation for escalation guidance.
+Region us-east-1 has three availability zones.
