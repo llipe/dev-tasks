@@ -23,9 +23,9 @@ owner: qa-engineer
 - **Layer 1 must not:** open sockets or database connections, invoke real external services, read the wall clock without injection, depend on test order, or assert internal call counts as a proxy for behavior.
 - **Layer 2 must not:** replace the system under test at its own public entry point, reimplement production filtering or persistence in a fake, or claim provider behavior that was only tested against a double.
 - **Layer 2.5 must not:** mock the data layer or use application-level filtering as evidence of database/RLS policy.
-- **E2E must not:** assert internal state or implementation details; it must assert observable user-facing behavior.
-- **Contract validation must not:** test internal business logic; it checks API boundaries only.
-- **Escalation:** when a Layer 1 test needs a real dependency, move it to Layer 2 or 2.5 instead of growing a behavior-reimplementing double.
+- **E2E must not:** assert on internal state or implementation details; it must assert observable user-facing behavior.
+- **Contract validation must not:** test internal business logic; it checks the boundary/interface only.
+- **Escalation:** when a Layer 1 test needs a real dependency, move it to Layer 2 instead of growing a behavior-reimplementing double; when a Layer 2 test needs a real database, move it to Layer 2.5.
 
 ## Packages
 
