@@ -1,191 +1,102 @@
 ---
-version: alpha
+version: 1.0
 name: Testing Standard
-description: Canonical testing contract for this repository — declares what to test at which layer, which commands to run, and how coverage is judged.
-status: placeholder
+description: Canonical testing contract for dev-tasks — declares test layers, runners, commands, fixtures, and coverage policy.
+status: filled
+owner: qa-engineer
 ---
-
-<!--
-PLACEHOLDER. This file ships with dev-tasks as a section contract only — it
-deliberately asserts no project-specific values.
-
-Run `qa-engineer` to inspect this repository and fill it in. The agent detects
-the test framework, runner, script inventory, test locations, coverage tooling,
-and mocking approach per package, then replaces the `<!-- unfilled -->` markers
-
-below. Content you write here is preserved: this file is listed in
-`consumer_owned_paths`, so `dev-tasks update` will never overwrite it.
-
-Owned by `qa-engineer`. `developer` keeps it current when the testing contract
-changes. Agents that read it MUST treat an unfilled placeholder as "no standard
-established" rather than as permission.
--->
 
 ## Test Layers
 
-The layer taxonomy below is fixed. What belongs in each layer is project-specific.
-
-| Layer    | Name                      | Scope                                                                                 | Status            |
-| -------- | ------------------------- | ------------------------------------------------------------------------------------- | ----------------- |
-| 1        | Deterministic foundations | Unit tests, schema validation. No I/O, no network, no real database.                  | <!-- unfilled --> |
-| 2        | Constrained model/tool    | Backend component tests, mocked APIs, fixtures and gold datasets.                     | <!-- unfilled --> |
-| 2.5      | Integration               | Real database, real migrations, RLS policies, schema contracts. No mocked data layer. | <!-- unfilled --> |
-| E2E      | End-to-end                | Playwright CLI — committed browser automation, full-stack, scenario-driven.           | <!-- unfilled --> |
-| Contract | Contract validation       | API spec drift, breaking-change detection, consumer impact. `dt verify` family.       | <!-- unfilled --> |
-| 3        | Product evaluation        | Semantic, tone, groundedness, hallucination evals. Only for LLM features.             | <!-- unfilled --> |
-| 4        | Human evaluation          | Review gates, safeguards, risk alerts.                                                | <!-- unfilled --> |
-
-Integration, end-to-end, and contract validation layers are declared per project
-in the table below when they exist.
+| Layer | Name | Scope | Status |
+| --- | --- | --- | --- |
+| 1 | Deterministic foundations | Unit tests and schema/contract assertions with no network, database, or wall-clock dependency. | configured |
+| 2 | Constrained model/tool | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs. | configured |
+| 2.5 | Integration | Real database, migrations, RLS, and schema contracts without a mocked data layer. | not configured |
+| E2E | End-to-end | Playwright full-stack browser scenarios. | not configured |
+| Contract | Contract validation | `dt verify` API-spec diff, impact, and drift checks. | not configured; no repository API spec |
+| 3 | Product evaluation | Semantic or groundedness evaluation for LLM features. | not applicable |
+| 4 | Human evaluation | Human review and safeguard gates. | manual only |
 
 ### Layer boundaries
 
-State explicitly what must **not** be tested at each layer, so the boundary is
-enforceable rather than aspirational.
-
-- **Layer 1 must not:** <!-- unfilled -->
-- **Layer 2 must not:** <!-- unfilled -->
-- **Layer 2.5 must not:** mock the data layer. If the database is mocked, the test belongs at Layer 2. If the test hits a live external service over the network, it may belong at E2E or remote integration.
-- **E2E must not:** assert on internal state or implementation details. Assertions are on observable user-facing behavior only.
-- **Contract validation must not:** test internal business logic. It checks the boundary/interface only.
-- **Escalation rule** — when a Layer 1 test needs a real dependency, it moves up
-  a layer rather than growing a test double that reimplements the dependency.
-  When a Layer 2 test needs a real database, it moves to Layer 2.5.
+- **Layer 1 must not:** open sockets or database connections, invoke real external services, read the wall clock without injection, depend on test order, or assert internal call counts as a proxy for behavior.
+- **Layer 2 must not:** replace the system under test at its own public entry point, reimplement production filtering or persistence in a fake, or claim provider behavior that was only tested against a double.
+- **Layer 2.5 must not:** mock the data layer or use application-level filtering as evidence of database/RLS policy.
+- **E2E must not:** assert internal state or implementation details; it must assert observable user-facing behavior.
+- **Contract validation must not:** test internal business logic; it checks API boundaries only.
+- **Escalation:** when a Layer 1 test needs a real dependency, move it to Layer 2 or 2.5 instead of growing a behavior-reimplementing double.
 
 ## Packages
 
-One row per package. In a single-package repository this table has one row.
-A package's language determines its runner and commands — a non-JS package is
-described in its own terms, not forced into JavaScript script names.
+This is a single-package TypeScript repository; no workspace manifest or additional package was detected.
 
-| Package           | Language          | Runner            | Test command      | Test environment  | Coverage tooling  |
-| ----------------- | ----------------- | ----------------- | ----------------- | ----------------- | ----------------- |
-| <!-- unfilled --> | <!-- unfilled --> | <!-- unfilled --> | <!-- unfilled --> | <!-- unfilled --> | <!-- unfilled --> |
+| Package | Language | Runner | Test command | Test environment | Coverage tooling |
+| --- | --- | --- | --- | --- | --- |
+| `@llipe.com/dev-tasks` | TypeScript/ESM | Vitest 3.2.6 | `pnpm run test` | Node (`environment: "node"`) | V8 provider declared in `vitest.config.ts`, but no usable coverage command/provider package is installed |
+
+Tests live in `test/unit/` and `test/integration/` and use `*.test.ts`. `test/fixtures/` contains inert QA fixtures and is excluded from collection by `vitest.config.ts`.
 
 ### Test environment
 
-Each package declares the environment its tests run under, and why. A package
-rendering DOM components under a bare `node` environment is a defect, not a
-preference.
-
-<!-- unfilled -->
+The package is a CLI and filesystem toolkit, so Node is the correct environment; no DOM/browser component package was detected. Tests use temporary directories, fixture repositories, and subprocesses where required. No real database integration harness is configured.
 
 ### Runtime parity
 
-Record the runtime version used locally, in CI, and in production for each
-package. Divergence is a finding: tests that pass on one runtime prove nothing
-about another.
-
-<!-- unfilled -->
+- Local validation observed Node `v26.7.0`.
+- CI workflow `publish-npm.yml` uses Node `24`.
+- The package declares production engine `>=24`.
+- The local major version differs from the pinned CI major and is a harness defect until local and CI validation use the same supported major (or CI is changed to a tested range).
 
 ## Commands
 
-### JavaScript / TypeScript default
-
-Canonical script names for JS/TS packages. Prefer `pnpm`.
-
-| Script             | Purpose                                   | Required            |
-| ------------------ | ----------------------------------------- | ------------------- |
-| `lint`             | Static analysis                           | yes                 |
-| `lint:fix`         | Auto-fix lint findings                    | no                  |
-| `format`           | Write formatting                          | no                  |
-| `format:check`     | Verify formatting                         | yes                 |
-| `typecheck`        | Type analysis                             | yes                 |
-| `test`             | Aggregate — MUST reach every test package | yes                 |
-| `test:unit`        | Layer 1                                   | yes                 |
-| `test:integration` | Layer 2.5 — real database integration     | when present        |
-| `test:e2e`         | E2E layer — Playwright browser automation | when present        |
-| `test:contract`    | Contract validation — `dt verify` family  | when present        |
-| `test:coverage`    | Coverage measurement                      | when tooling exists |
-| `audit`            | Dependency vulnerability scan             | yes                 |
-| `validate`         | Aggregate quality gate                    | yes                 |
-
-### Non-JS packages
-
-Declare each non-JS package's equivalent commands here. The canonical names
-above are a JS/TS convention, not a cross-language requirement — what matters is
-that every package has a discoverable command per purpose and that the aggregate
-test command reaches it.
-
-| Package           | Purpose           | Command           |
-| ----------------- | ----------------- | ----------------- |
-| <!-- unfilled --> | <!-- unfilled --> | <!-- unfilled --> |
+| Script | Purpose | Status |
+| --- | --- | --- |
+| `lint` | ESLint static analysis | present |
+| `lint:fix` | ESLint auto-fix | present |
+| `format` | Prettier write | present |
+| `format:check` | Prettier verification | present |
+| `typecheck` | TypeScript analysis | present |
+| `test` | Aggregate Vitest run; reaches this package's unit and integration tests | present |
+| `test:unit` | Unit tests | present |
+| `test:integration` | Integration-directory tests; these are CLI/filesystem integration tests, not Layer 2.5 database tests | present |
+| `test:e2e` | Playwright tests | not configured; no Playwright setup |
+| `test:contract` | `dt verify` family | not configured; no repository API spec |
+| `test:coverage` | Coverage measurement | missing; no usable provider configured |
+| `audit` | Production dependency audit | present |
+| `validate` | `typecheck` → `lint` → `format:check` → aggregate `test` | present |
 
 ### Gate reachability
 
-The aggregate test command MUST reach every package that contains tests, and the
-CI and deploy quality gates MUST invoke that aggregate. A correctly named script
-that silently omits a package is the failure this section exists to prevent.
-
-- Aggregate test command: <!-- unfilled -->
-- Packages reached: <!-- unfilled -->
-- CI gate: <!-- unfilled -->
-- Deploy gate: <!-- unfilled -->
+- **Aggregate test command:** `pnpm run test` (`vitest run`), which includes `test/**/*.test.ts` and excludes `test/fixtures/**`; the single package is reached, including both `test/unit/` and `test/integration/`.
+- **CI gate:** `publish-npm.yml` invokes `pnpm run validate`, which reaches the aggregate test command, but only on its tag-triggered publish workflow. No general CI test workflow/job was detected.
+- **Deploy gate:** no deploy workflow was detected; deploy quality-gate status is not automatically enforced.
+- `release-bundle.yml` does not invoke `validate` or the aggregate test command.
 
 ## Coverage
 
 ### Thresholds and baseline policy
 
-Coverage percentages alone do not establish confidence — a suite can cover every
-line while asserting nothing meaningful. Thresholds are a floor, not a goal.
+- Measurement tool: V8 is declared in `vitest.config.ts`, but `test:coverage` is absent and the coverage provider is not available as a project dependency.
+- Threshold policy: no numeric threshold has been established.
+- Baseline: none recorded.
+- Regression policy: coverage must not be reported as measured until a provider and command are configured; structural gap analysis is mandatory meanwhile.
 
-- Measurement tool per package: <!-- unfilled -->
-- Threshold policy: <!-- unfilled -->
-- Baseline: <!-- unfilled -->
-- Regression policy: <!-- unfilled -->
-
-### When coverage cannot be measured
-
-If no coverage provider is configured, the gate reports
-`SKIPPED(<reason>)` — never a pass — and structural gap analysis runs instead:
-untested files and exported symbols are enumerated, source-to-test size ratios
-are reported per package, and gaps are ranked by size and risk. Absence of
-tooling is never reported as absence of gaps.
-
-Existing coverage artifacts are validated before being trusted. A stale report,
-or one whose measured scope is narrower than the package it claims to describe,
-is reported as misleading rather than used as evidence.
+When coverage cannot be measured, report `coverage_gate: SKIPPED(<non-empty reason>)` and enumerate untested or weakly tested surfaces, source-to-test ratios, exclusions, and limitations. Never infer zero coverage or a pass.
 
 ## Fixtures and Mocking
 
-### Strategy
+Tests primarily use deterministic fixture repositories under `test/fixtures/`, temporary directories rooted in the OS temp directory, and subprocess execution for CLI entry points. Fixture projects that intentionally model harness defects are excluded from Vitest collection. No duplicated token builders or client mocks were detected, and no global `fetch`/timer stubs were detected. Any future global stub must be restored explicitly.
 
-<!-- unfilled -->
-
-### Rules
-
-- Shared fixtures and helpers live in one place per package. Duplicating a token
-  builder or a client mock across test files is a defect.
-- A test double must not reimplement the logic it stands in for. When a mock
-  grows a copy of production behavior, the test validates the mock.
-- Stubbed globals are restored after each test. Rely on explicit restoration
-  rather than on worker isolation.
-- Placeholder assertions such as `expect(true)` are prohibited. They report
-  health without exercising anything.
-
-### Gold datasets
-
-Record where recorded responses and golden files live, how they were captured,
-and how to regenerate them.
-
-<!-- unfilled -->
+Gold or generated fixture files must record their source and regeneration path where applicable. Generated catalog outputs are test artifacts, not coverage evidence, and must not be used as durable validation without freshness and scope checks.
 
 ## Security-Negative Tests
 
-Required for every authentication and authorization code path. A suite that
-only asserts the behavior the implementation happens to have provides no
-security evidence.
+This package has no authentication or authorization implementation path in the analyzed scope. If one is added, tests are mandatory for invalid signature, expired credential, wrong issuer/audience, tampered claims, missing credential, insufficient permission, and cross-tenant access where applicable. Tests against a fake policy layer must state that production policy remains unverified.
 
-| Case                        | Required |
-| --------------------------- | -------- |
-| Invalid signature rejected  | yes      |
-| Expired credential rejected | yes      |
-| Wrong issuer or audience    | yes      |
-| Tampered claims rejected    | yes      |
-| Cross-tenant access denied  | yes      |
+## Harness defects to track
 
-Where isolation is asserted against test doubles rather than the real policy
-layer, record that limitation here — fake-based isolation is not evidence that
-the production policy holds.
-
-<!-- unfilled -->
+1. `vitest.config.ts`: `restoreMocks` is not enabled. Expected state: enable explicit mock restoration if mocks/stubs are introduced, and retain per-test cleanup for any global stubs.
+2. `package.json` and `vitest.config.ts`: V8 coverage is declared but no usable `test:coverage` command/provider is configured. Expected state: add the approved provider and canonical command in a separate approved change, then record thresholds and baseline; until then coverage is skipped.
+3. CI/deploy wiring: no general CI test job and no deploy workflow invoke the aggregate test command. Expected state: every CI test job and deploy quality gate must run `pnpm run test` or `pnpm run validate`.
+4. `publish-npm.yml` versus `package.json`: local Node 26 and CI Node 24 are not the same runtime major. Expected state: align the validation runtime or explicitly test the supported range.

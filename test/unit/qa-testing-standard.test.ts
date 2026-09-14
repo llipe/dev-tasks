@@ -252,12 +252,13 @@ describe("/TESTING.md — SC-10/SC-11/CT-5/CT-6: section contract", () => {
     });
   }
 
-  it("stays a placeholder — no project-specific threshold value asserted", () => {
+  it("records an established status without asserting a concrete threshold", () => {
     const contents = readIfExists(TESTING_CONTRACT);
     expect(contents.length, `missing or empty ${TESTING_CONTRACT}`).toBeGreaterThan(0);
+    expect(contents).toMatch(/^status:\s*(filled|present)\s*$/m);
     expect(
       /\b\d{2}%\s*(minimum|threshold|required)/i.test(contents),
-      "shipped placeholder must not assert a concrete coverage threshold",
+      "testing standard must not invent a concrete coverage threshold",
     ).toBe(false);
   });
 });
