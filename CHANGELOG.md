@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.12.0] - 2026-09-14
+
+### Added
+
+- feat(infra): wire housekeeping, planner, product-engineer, and github-ops to infra-engineer (#163)
+- feat(infra): route platform writes from developer and implement to infra-engineer (#163)
+- feat(infra): register deploy-ops + workflow templates and wire planner deploy handoff (#162)
+- feat(infra): register templates/scripts+workflows as managed, workflows consumer-owned (#162)
+- feat(infra): add GitHub Actions deploy/rollback workflow templates (#162)
+- feat(infra): add deploy-ops skill across three trees (#161)
+- feat(infra): add deploy-ops script templates (deploy, verify, rollback, status, release) (#161)
+- feat: enforce consumer-owned directory-prefix protection on update (#159)
+- feat(infra): add git-guard tag rule 4 and exact-semver workflow filters (#160)
+- feat(infra): add redaction pattern set and security-negative test (#158)
+- feat(infra): add supabase-ops skill and supabase log research (#157)
+- feat(infra): add fly-ops skill (#156)
+- feat(infra): add aws-ops skill and infra skill parity test (#155)
+- feat(infra): add agent contract and branch hygiene (#153 #154)
+
+### Fixed
+
+- fix(testing): align TESTING.md layer-boundary wording with issue-130 taxonomy contract
+- fix(infra): add non-interactive guard to deploy.sh prod to match release.sh (#161)
+- fix(deps): tighten fast-uri override to >=4.1.3 to clear high advisories
+- fix(infra): align parity assertions and branch tables (#153 #154)
+- fix: Update tools for orchestration agent
+
+### Changed
+
+- chore: md format fix
+- test(fixtures): update catalog index timestamps and generator version
+- Merge pull request #165 from llipe:fix/testing-md-taxonomy-phrasing
+- Merge pull request #164 from llipe:issue/153-branch-convention-hygiene
+- docs(testing): fill in QA testing standard with auto-detected configuration
+- docs(infra): add Infrastructure Change chain and infra-engineer reverse-direction routing (#163)
+- test(infra): add S-010 caller-wiring and reverse-direction parity block (#163)
+- docs(infra): mark S-009 checklist done (9.1-9.6, 9.5b, 9.8); 9.7 manual not-run (#162)
+- style(infra): apply prettier formatting to S-009 test files (#162)
+- test(infra): assert release.sh suggests bump from Conventional Commits (#161)
+- docs: mark S-008 subtasks complete in task plan (#161)
+- style(infra): apply prettier to deploy-ops contract test (#161)
+- test(infra): add ref-rule and dirty-tree edge cases for deploy.sh (#161)
+- test(infra): add deploy-ops script contract test and stub fixtures (#161)
+- docs: register infra-engineer and add ADR-005 (#159)
+- docs: sync S-007 checklist parent state with issue #160 (#160)
+- docs(infra): add tag policy to github-ops, git-ops, and technical-guidelines (#160)
+- docs: mark S-007 code subtasks 7.1-7.3 complete (#160)
+- Merge pull request #152 from llipe/claude/charming-edison-0lvhip
+- docs: correct the claim that quality-gate CI workflows exist
+- docs: add S-010 caller wiring story and Task 10 to infra-engineer plan
+- docs: add infra-engineer spec, user stories, and task list
+- docs: infra-engineer PRD v1.3 with trunk-based environment mapping
+- docs: infra-engineer PRD v1.2 with step-gated execution and pipeline ownership
+- docs: simplify infra-engineer PRD to three phases and one skill each
+- Merge pull request #151 from llipe:issue/143-infra-prd
+- docs: add infra-engineer PRD absorbing #143 #144 #145 #150
+- Update README with installation instructions
+
 ## [0.11.0] - 2026-08-25
 
 ### Added
