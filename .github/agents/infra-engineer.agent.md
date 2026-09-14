@@ -68,26 +68,26 @@ The tool check verifies presence, the version floor declared by the owning skill
 
 The tool-routing table is authoritative; the agent does not carry platform command sets beyond these rows:
 
-| Change kind | Tool | Phase | Owning skill |
-| --- | --- | --- | --- |
-| discover AWS | aws | discover | aws-ops |
-| discover Fly | flyctl | discover | fly-ops |
-| discover Supabase | supabase | discover | supabase-ops |
-| build image | aws | apply | aws-ops |
-| create app | flyctl | apply | fly-ops |
-| deploy app | flyctl / deploy script | apply | fly-ops / deploy-ops |
-| set secret | aws / flyctl / supabase / GitHub Actions | apply | aws-ops / fly-ops / supabase-ops / deploy-ops |
-| create IAM policy | aws | apply | aws-ops |
-| attach IAM policy | aws | apply | aws-ops |
-| DNS record | Cloudflare API | apply | deploy-ops |
-| certificate (ACM) | aws | apply | aws-ops |
-| certificate (Fly) | flyctl | apply | fly-ops |
-| database migration | supabase | apply | supabase-ops |
-| foundation change | tier0_tool | route | owning platform skill |
-| repo and PR operation | gh | record | github-ops |
-| pipeline change | gh / git | record | deploy-ops / github-ops |
-| log triage | owning platform log tool | discover | owning platform skill |
-| cost sweep | owning platform read-only tool | discover | owning platform skill |
+| Change kind           | Tool                                     | Phase    | Owning skill                                  |
+| --------------------- | ---------------------------------------- | -------- | --------------------------------------------- |
+| discover AWS          | aws                                      | discover | aws-ops                                       |
+| discover Fly          | flyctl                                   | discover | fly-ops                                       |
+| discover Supabase     | supabase                                 | discover | supabase-ops                                  |
+| build image           | aws                                      | apply    | aws-ops                                       |
+| create app            | flyctl                                   | apply    | fly-ops                                       |
+| deploy app            | flyctl / deploy script                   | apply    | fly-ops / deploy-ops                          |
+| set secret            | aws / flyctl / supabase / GitHub Actions | apply    | aws-ops / fly-ops / supabase-ops / deploy-ops |
+| create IAM policy     | aws                                      | apply    | aws-ops                                       |
+| attach IAM policy     | aws                                      | apply    | aws-ops                                       |
+| DNS record            | Cloudflare API                           | apply    | deploy-ops                                    |
+| certificate (ACM)     | aws                                      | apply    | aws-ops                                       |
+| certificate (Fly)     | flyctl                                   | apply    | fly-ops                                       |
+| database migration    | supabase                                 | apply    | supabase-ops                                  |
+| foundation change     | tier0_tool                               | route    | owning platform skill                         |
+| repo and PR operation | gh                                       | record   | github-ops                                    |
+| pipeline change       | gh / git                                 | record   | deploy-ops / github-ops                       |
+| log triage            | owning platform log tool                 | discover | owning platform skill                         |
+| cost sweep            | owning platform read-only tool           | discover | owning platform skill                         |
 
 ## Cost policy and sweep
 
@@ -110,7 +110,6 @@ For a Cloudflare DNS change, capture the complete prior record before update, ap
 Every outcome is `applied`, `verified`, `failed`, `blocked`, `routed`, `reverted`, or `skipped(<reason>)`; blocked outcomes include remediation. Retry read probes once and allow at most three attempts or fifteen minutes per step before escalating with evidence. The agent does not run autonomous retries beyond that bound.
 
 When records and any consumer-owned workflow/script edits are complete, commit them on an `issue/` or `story/` branch with a Conventional Commit, then use `github-ops` to open a draft PR against the intended base. Include the ChangeId, plan, result, rollback, and validation evidence in the PR body. The agent never pushes or merges to `main`; the draft PR is a record handoff and remains for human review.
-
 
 ## Reverse-direction routing
 

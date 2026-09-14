@@ -2,6 +2,7 @@
 name: fly-ops
 description: "flyctl command sets, resource tiers, cost inputs, backup and revert sources, and log table for infra-engineer. Use when planning or applying fly.io infrastructure changes."
 ---
+
 # Fly.io Operations (fly-ops)
 
 Per-surface mechanism skill for `infra-engineer`. It supplies the `flyctl` command sets, resource tiers, cost inputs, backup and revert sources, and the fly.io log table. It does not restate the agent's working loop, approval, revert, or backup rules — those live in the agent body. fly.io has release history (`fly releases`) that makes revert concrete and volume snapshots that make backup concrete, so it is the cheapest surface for the manual Phase 1 verification.
@@ -12,23 +13,23 @@ Per-surface mechanism skill for `infra-engineer`. It supplies the `flyctl` comma
 
 ## Tool declaration
 
-| Field         | Value                                                                                     |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| `name`        | `flyctl`                                                                                   |
-| `probe`       | `flyctl version`                                                                           |
-| `floor`       | Current major release channel; minimum `0.3`. An older channel is `below-floor`.           |
-| `auth_probe`  | `flyctl auth whoami`                                                                        |
+| Field         | Value                                                                                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | `flyctl`                                                                                                                                       |
+| `probe`       | `flyctl version`                                                                                                                               |
+| `floor`       | Current major release channel; minimum `0.3`. An older channel is `below-floor`.                                                               |
+| `auth_probe`  | `flyctl auth whoami`                                                                                                                           |
 | `remediation` | "Install `flyctl` from fly.io and run `flyctl auth login` (or export `FLY_API_TOKEN`); this skill never auto-installs and offers no fallback." |
 
 Use `--json` wherever `flyctl` supports it. Identity is asserted by comparing the authenticated org (from `flyctl auth whoami` / `flyctl orgs list --json`) with the target environment's `fly.org`; a mismatch is `wrong-identity` and blocks.
 
 ## Resource tiers
 
-| Tier            | Fly resources                                                       |
-| --------------- | ------------------------------------------------------------------- |
-| **foundation**  | org                                                                 |
-| **application** | app, machine, volume, secret, certificate                           |
-| **ephemeral**   | throwaway apps, which carry an `ExpiresAt` tag and a cleanup step   |
+| Tier            | Fly resources                                                     |
+| --------------- | ----------------------------------------------------------------- |
+| **foundation**  | org                                                               |
+| **application** | app, machine, volume, secret, certificate                         |
+| **ephemeral**   | throwaway apps, which carry an `ExpiresAt` tag and a cleanup step |
 
 An ephemeral app without an `ExpiresAt` is a finding. Foundation (org) changes are routed, never written by this agent.
 
@@ -110,12 +111,12 @@ Revert for a scale change is the prior count/size recorded before the step.
 
 Every query is time-bounded and its output passes through the redaction pattern set before it reaches a transcript or file.
 
-| Source          | Command                                    |
-| --------------- | ------------------------------------------ |
-| App logs        | `fly logs -a "$APP" --since "$START"`      |
-| App status      | `fly status -a "$APP" --json`              |
-| Machine status  | `fly machine status "$MACHINE" -a "$APP"`  |
-| Release history | `fly releases -a "$APP" --json`            |
+| Source          | Command                                   |
+| --------------- | ----------------------------------------- |
+| App logs        | `fly logs -a "$APP" --since "$START"`     |
+| App status      | `fly status -a "$APP" --json`             |
+| Machine status  | `fly machine status "$MACHINE" -a "$APP"` |
+| Release history | `fly releases -a "$APP" --json`           |
 
 ## Cost entries and sweep
 

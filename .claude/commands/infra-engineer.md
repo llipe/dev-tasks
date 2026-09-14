@@ -33,26 +33,26 @@ A missing `infra/environments.yaml` or a first line of `# status: template` is t
 
 The tool check verifies presence, skill-declared version floor, and authentication. Results are `ok`, `missing`, `below-floor`, `unauthenticated`, or `wrong-identity`; non-`ok` blocks with remediation. No auto-install and no fallback. Floors are AWS CLI `2.x`, flyctl current major, Supabase CLI `2.x`, gh `2.x`, and yq `4.x`. Identity assertion compares the target environment with these probes: `aws sts get-caller-identity`, `flyctl auth whoami`, `supabase projects list`, `gh auth status`, and the Cloudflare token verification endpoint; mismatch is `blocked`.
 
-| Change kind | Tool | Phase | Owning skill |
-| --- | --- | --- | --- |
-| discover AWS | aws | discover | aws-ops |
-| discover Fly | flyctl | discover | fly-ops |
-| discover Supabase | supabase | discover | supabase-ops |
-| build image | aws | apply | aws-ops |
-| create app | flyctl | apply | fly-ops |
-| deploy app | flyctl / deploy script | apply | fly-ops / deploy-ops |
-| set secret | aws / flyctl / supabase / GitHub Actions | apply | aws-ops / fly-ops / supabase-ops / deploy-ops |
-| create IAM policy | aws | apply | aws-ops |
-| attach IAM policy | aws | apply | aws-ops |
-| DNS record | Cloudflare API | apply | deploy-ops |
-| certificate (ACM) | aws | apply | aws-ops |
-| certificate (Fly) | flyctl | apply | fly-ops |
-| database migration | supabase | apply | supabase-ops |
-| foundation change | tier0_tool | route | owning platform skill |
-| repo and PR operation | gh | record | github-ops |
-| pipeline change | gh / git | record | deploy-ops / github-ops |
-| log triage | owning platform log tool | discover | owning platform skill |
-| cost sweep | owning platform read-only tool | discover | owning platform skill |
+| Change kind           | Tool                                     | Phase    | Owning skill                                  |
+| --------------------- | ---------------------------------------- | -------- | --------------------------------------------- |
+| discover AWS          | aws                                      | discover | aws-ops                                       |
+| discover Fly          | flyctl                                   | discover | fly-ops                                       |
+| discover Supabase     | supabase                                 | discover | supabase-ops                                  |
+| build image           | aws                                      | apply    | aws-ops                                       |
+| create app            | flyctl                                   | apply    | fly-ops                                       |
+| deploy app            | flyctl / deploy script                   | apply    | fly-ops / deploy-ops                          |
+| set secret            | aws / flyctl / supabase / GitHub Actions | apply    | aws-ops / fly-ops / supabase-ops / deploy-ops |
+| create IAM policy     | aws                                      | apply    | aws-ops                                       |
+| attach IAM policy     | aws                                      | apply    | aws-ops                                       |
+| DNS record            | Cloudflare API                           | apply    | deploy-ops                                    |
+| certificate (ACM)     | aws                                      | apply    | aws-ops                                       |
+| certificate (Fly)     | flyctl                                   | apply    | fly-ops                                       |
+| database migration    | supabase                                 | apply    | supabase-ops                                  |
+| foundation change     | tier0_tool                               | route    | owning platform skill                         |
+| repo and PR operation | gh                                       | record   | github-ops                                    |
+| pipeline change       | gh / git                                 | record   | deploy-ops / github-ops                       |
+| log triage            | owning platform log tool                 | discover | owning platform skill                         |
+| cost sweep            | owning platform read-only tool           | discover | owning platform skill                         |
 
 ## Costs, tags, secrets, logs, and certificates
 
@@ -63,7 +63,6 @@ Log triage requires a bounded UTC `--since` or start/end window and stated scan 
 ## Handoff
 
 Outcomes are `applied`, `verified`, `failed`, `blocked`, `routed`, `reverted`, or `skipped(<reason>)` with remediation for blocked. Retry at most three attempts or fifteen minutes per step. Commit the ChangeId records on an issue/story branch with a Conventional Commit and have `github-ops` open a draft PR with plan, result, rollback, and validation evidence. Never merge the draft PR.
-
 
 ## Reverse-direction routing
 

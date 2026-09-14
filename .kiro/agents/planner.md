@@ -483,10 +483,11 @@ After all stories are merged into integration:
    - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
    - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
 10. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
-   - consolidated PR URL
-   - current CI/check status
-   - exact required user actions: review, approve, and merge
-   - a post-merge follow-up action (for example, delete integration branch or run a verification command)
+
+- consolidated PR URL
+- current CI/check status
+- exact required user actions: review, approve, and merge
+- a post-merge follow-up action (for example, delete integration branch or run a verification command)
 
 Consolidated PR should include:
 

@@ -8,23 +8,23 @@ Per-surface mechanism skill for `infra-engineer`. It supplies the Supabase CLI c
 
 ## Tool declaration
 
-| Field         | Value                                                                                        |
-| ------------- | -------------------------------------------------------------------------------------------- |
-| `name`        | `supabase`                                                                                    |
-| `probe`       | `supabase --version` (expects `2.x`)                                                          |
-| `floor`       | Supabase CLI `2.x`; minimum `2.11`. A `1.x` install is `below-floor`.                          |
-| `auth_probe`  | `supabase projects list`                                                                       |
+| Field         | Value                                                                                                                                                                                                     |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | `supabase`                                                                                                                                                                                                |
+| `probe`       | `supabase --version` (expects `2.x`)                                                                                                                                                                      |
+| `floor`       | Supabase CLI `2.x`; minimum `2.11`. A `1.x` install is `below-floor`.                                                                                                                                     |
+| `auth_probe`  | `supabase projects list`                                                                                                                                                                                  |
 | `remediation` | "Install Supabase CLI v2 and run `supabase login` (or export `SUPABASE_ACCESS_TOKEN`); link the project with `supabase link --project-ref <ref>`. This skill never auto-installs and offers no fallback." |
 
 Identity is asserted by comparing the linked project ref (from `supabase projects list` / the linked `project_ref`) with the target environment's `supabase.project_ref`; a mismatch is `wrong-identity` and blocks.
 
 ## Resource tiers
 
-| Tier            | Supabase resources                                                            |
-| --------------- | ----------------------------------------------------------------------------- |
-| **foundation**  | project, plan, compute add-on, read replicas, PITR                            |
+| Tier            | Supabase resources                                                                    |
+| --------------- | ------------------------------------------------------------------------------------- |
+| **foundation**  | project, plan, compute add-on, read replicas, PITR                                    |
 | **application** | schema, migrations, RLS policies, roles, storage buckets, auth config, Edge Functions |
-| **ephemeral**   | preview branches, which carry an `ExpiresAt` tag and a cleanup step           |
+| **ephemeral**   | preview branches, which carry an `ExpiresAt` tag and a cleanup step                   |
 
 Foundation changes are routed to `tier0_tool`, never written by this agent. Project deletion is refused for a production-mapped project.
 
@@ -73,14 +73,14 @@ Retrieval, retention, and query bounds are grounded in `workstream/research-supa
 - **The Supabase CLI has no log command on Cloud.** The scriptable path is the Management API logs endpoint `GET /v1/projects/{ref}/analytics/endpoints/logs`, which runs a ClickHouse-dialect SQL/LQL query over a unified logs stream filtered by a `source` column; the Dashboard Logs Explorer is the interactive equivalent. `supabase inspect db ...` is Postgres diagnostics, not service logs.
 - **Time bounds are mandatory in practice:** the endpoint uses `iso_timestamp_start` / `iso_timestamp_end`, the window MUST be ≤ 24 hours, and an omitted range queries only the last minute — so every triage query states an explicit UTC window before it runs.
 
-| Service surface  | Source selector / collection                         | Retrieval path                          |
-| ---------------- | ---------------------------------------------------- | --------------------------------------- |
-| Postgres         | `source = postgres_logs`                             | Management API logs endpoint; Dashboard |
-| API (PostgREST)  | API Gateway collection                               | Management API logs endpoint; Dashboard |
-| Auth (GoTrue)    | Auth collection                                      | Management API logs endpoint; Dashboard |
-| Storage          | Storage collection                                   | Management API logs endpoint; Dashboard |
-| Realtime         | Realtime collection                                  | Management API logs endpoint; Dashboard |
-| Edge Functions   | `source = edge_logs` / `function_edge_logs` / `function_logs` | Management API logs endpoint; Dashboard |
+| Service surface | Source selector / collection                                  | Retrieval path                          |
+| --------------- | ------------------------------------------------------------- | --------------------------------------- |
+| Postgres        | `source = postgres_logs`                                      | Management API logs endpoint; Dashboard |
+| API (PostgREST) | API Gateway collection                                        | Management API logs endpoint; Dashboard |
+| Auth (GoTrue)   | Auth collection                                               | Management API logs endpoint; Dashboard |
+| Storage         | Storage collection                                            | Management API logs endpoint; Dashboard |
+| Realtime        | Realtime collection                                           | Management API logs endpoint; Dashboard |
+| Edge Functions  | `source = edge_logs` / `function_edge_logs` / `function_logs` | Management API logs endpoint; Dashboard |
 
 **Retention caveat (cite the research artifact, re-confirm at citation time):** built-in log retention is short and plan-gated — Free ≈ 1 day, Pro ≈ 7 days, Team ≈ 28 days, Enterprise ≈ 90 days. Because low-tier retention is short, logs MUST be captured at incident time; Log Drains (Team/Enterprise) is the long-retention path. Exact `source` strings for API/Auth/Storage/Realtime are UNCONFIRMED in the research and must be verified from the Logs Explorer source list before hardcoding. All log output passes through the redaction pattern set before it reaches a transcript or file.
 

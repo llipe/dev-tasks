@@ -91,11 +91,11 @@ Before merging any PR or branch, verify:
 
 Choose the appropriate strategy based on context:
 
-| Strategy         | When to Use                                                                         | Command                     |
-| ---------------- | ----------------------------------------------------------------------------------- | --------------------------- |
+| Strategy         | When to Use                                                                         | Command                                     |
+| ---------------- | ----------------------------------------------------------------------------------- | ------------------------------------------- |
 | **Squash merge** | Issue/story PRs → integration (planner) or `main` (user); delete the source branch. | `gh pr merge <pr> --squash --delete-branch` |
-| **Merge commit** | Integration PRs → `main` (user); preserve the story history.                         | `gh pr merge <pr> --merge`                 |
-| **Rebase merge** | Not part of the issue/story/integration policy; use only when explicitly approved.   | `gh pr merge <pr> --rebase`                |
+| **Merge commit** | Integration PRs → `main` (user); preserve the story history.                        | `gh pr merge <pr> --merge`                  |
+| **Rebase merge** | Not part of the issue/story/integration policy; use only when explicitly approved.  | `gh pr merge <pr> --rebase`                 |
 
 **Default**: Issue/story PRs use squash with branch deletion; integration PRs use a merge commit. Planner handles integration targets, and the user handles `main`.
 

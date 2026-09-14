@@ -41,26 +41,26 @@ Before discover and immediately before the first write, run identity probes: `aw
 
 The tool check verifies presence, the version floor declared by the owning skill, and authentication. Results are `ok`, `missing`, `below-floor`, `unauthenticated`, or `wrong-identity`; any non-`ok` blocks with the skill's remediation. No auto-install and no fallback. Floors are AWS CLI `2.x`, flyctl current major, Supabase CLI `2.x`, gh `2.x`, and yq `4.x`.
 
-| Change kind | Tool | Phase | Owning skill |
-| --- | --- | --- | --- |
-| discover AWS | aws | discover | aws-ops |
-| discover Fly | flyctl | discover | fly-ops |
-| discover Supabase | supabase | discover | supabase-ops |
-| build image | aws | apply | aws-ops |
-| create app | flyctl | apply | fly-ops |
-| deploy app | flyctl / deploy script | apply | fly-ops / deploy-ops |
-| set secret | aws / flyctl / supabase / GitHub Actions | apply | aws-ops / fly-ops / supabase-ops / deploy-ops |
-| create IAM policy | aws | apply | aws-ops |
-| attach IAM policy | aws | apply | aws-ops |
-| DNS record | Cloudflare API | apply | deploy-ops |
-| certificate (ACM) | aws | apply | aws-ops |
-| certificate (Fly) | flyctl | apply | fly-ops |
-| database migration | supabase | apply | supabase-ops |
-| foundation change | tier0_tool | route | owning platform skill |
-| repo and PR operation | gh | record | github-ops |
-| pipeline change | gh / git | record | deploy-ops / github-ops |
-| log triage | owning platform log tool | discover | owning platform skill |
-| cost sweep | owning platform read-only tool | discover | owning platform skill |
+| Change kind           | Tool                                     | Phase    | Owning skill                                  |
+| --------------------- | ---------------------------------------- | -------- | --------------------------------------------- |
+| discover AWS          | aws                                      | discover | aws-ops                                       |
+| discover Fly          | flyctl                                   | discover | fly-ops                                       |
+| discover Supabase     | supabase                                 | discover | supabase-ops                                  |
+| build image           | aws                                      | apply    | aws-ops                                       |
+| create app            | flyctl                                   | apply    | fly-ops                                       |
+| deploy app            | flyctl / deploy script                   | apply    | fly-ops / deploy-ops                          |
+| set secret            | aws / flyctl / supabase / GitHub Actions | apply    | aws-ops / fly-ops / supabase-ops / deploy-ops |
+| create IAM policy     | aws                                      | apply    | aws-ops                                       |
+| attach IAM policy     | aws                                      | apply    | aws-ops                                       |
+| DNS record            | Cloudflare API                           | apply    | deploy-ops                                    |
+| certificate (ACM)     | aws                                      | apply    | aws-ops                                       |
+| certificate (Fly)     | flyctl                                   | apply    | fly-ops                                       |
+| database migration    | supabase                                 | apply    | supabase-ops                                  |
+| foundation change     | tier0_tool                               | route    | owning platform skill                         |
+| repo and PR operation | gh                                       | record   | github-ops                                    |
+| pipeline change       | gh / git                                 | record   | deploy-ops / github-ops                       |
+| log triage            | owning platform log tool                 | discover | owning platform skill                         |
+| cost sweep            | owning platform read-only tool           | discover | owning platform skill                         |
 
 ## Costs, tags, secrets, logs, and Cloudflare
 
@@ -73,7 +73,6 @@ Log queries require a bounded UTC `--since` or explicit start/end window and sta
 ## Handoff and outcomes
 
 Outcomes are `applied`, `verified`, `failed`, `blocked`, `routed`, `reverted`, or `skipped(<reason>)`; blocked includes remediation. Retry read probes once and allow at most three attempts or fifteen minutes per step before escalating. Commit records on an issue/story branch with a Conventional Commit, then use `github-ops` to open a draft PR containing the ChangeId, plan, result, rollback, and validation evidence. The agent never merges a draft PR.
-
 
 ## Reverse-direction routing
 

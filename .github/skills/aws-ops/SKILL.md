@@ -8,22 +8,22 @@ Per-surface mechanism skill for `infra-engineer`. It supplies the AWS CLI comman
 
 ## Tool declaration
 
-| Field         | Value                                                                                   |
-| ------------- | --------------------------------------------------------------------------------------- |
-| `name`        | `aws`                                                                                    |
-| `probe`       | `aws --version` (expects `aws-cli/2.x`)                                                  |
-| `floor`       | AWS CLI `2.15` minimum; major `2.x` REQUIRED. A `1.x` install is `below-floor`.          |
-| `auth_probe`  | `aws sts get-caller-identity --output json`                                             |
+| Field         | Value                                                                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | `aws`                                                                                                                                                      |
+| `probe`       | `aws --version` (expects `aws-cli/2.x`)                                                                                                                    |
+| `floor`       | AWS CLI `2.15` minimum; major `2.x` REQUIRED. A `1.x` install is `below-floor`.                                                                            |
+| `auth_probe`  | `aws sts get-caller-identity --output json`                                                                                                                |
 | `remediation` | "Install AWS CLI v2 (`2.15`+) from the AWS docs and run `aws configure` or set a named profile; this skill never auto-installs and offers no v1 fallback." |
 
 Any non-`ok` tool-check result blocks the phase with the remediation string. All parseable output uses `--output json`. Identity is asserted by comparing `Account` from `sts get-caller-identity` with the target environment's `aws.account_id`; a mismatch is `wrong-identity` and blocks.
 
 ## Resource tiers
 
-| Tier            | AWS resources                                                                                                    |
+| Tier            | AWS resources                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------- |
-| **foundation**  | VPC, subnets, route tables, internet/NAT gateways, ECS cluster, ECR registry, IAM roles/trust, KMS keys          |
-| **application** | ECS service, task definition, target group, security group, Secrets Manager secret, ACM certificate, DNS record  |
+| **foundation**  | VPC, subnets, route tables, internet/NAT gateways, ECS cluster, ECR registry, IAM roles/trust, KMS keys         |
+| **application** | ECS service, task definition, target group, security group, Secrets Manager secret, ACM certificate, DNS record |
 
 Foundation resources are **discovery-only**: this skill provides no apply commands for them. A foundation change is routed to the environment's `tier0_tool` (cdk, terraform, cloudformation) with `status: routed-to-<tool>`; the agent never writes foundation resources directly.
 
@@ -112,12 +112,12 @@ Any resource at or above the environment cost threshold is marked `APPROVAL REQU
 
 ## Backup commands and revert sources
 
-| Change kind          | Backup command (production, touches state)                                  | Revert source                              |
-| -------------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
-| RDS schema/data      | `aws rds create-db-snapshot --db-instance-identifier "$DB" --db-snapshot-identifier "$SNAP"` | Restore snapshot to a new instance         |
-| S3 object change     | Confirm versioning: `aws s3api get-bucket-versioning --bucket "$B"`; require `Enabled` before overwrite | Previous object version id                 |
-| ECS deploy           | Record current task definition revision                                     | **Previous task definition revision**      |
-| Image deploy         | Record current image tag                                                    | **Previous image tag**                     |
+| Change kind      | Backup command (production, touches state)                                                              | Revert source                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| RDS schema/data  | `aws rds create-db-snapshot --db-instance-identifier "$DB" --db-snapshot-identifier "$SNAP"`            | Restore snapshot to a new instance    |
+| S3 object change | Confirm versioning: `aws s3api get-bucket-versioning --bucket "$B"`; require `Enabled` before overwrite | Previous object version id            |
+| ECS deploy       | Record current task definition revision                                                                 | **Previous task definition revision** |
+| Image deploy     | Record current image tag                                                                                | **Previous image tag**                |
 
 A production step with `touches state: yes` records the backup id and restore command in `result.md` before it applies.
 
@@ -125,15 +125,15 @@ A production step with `touches state: yes` records the backup id and restore co
 
 Every query is time-bounded and its output passes through the redaction pattern set before it reaches a transcript or file.
 
-| Source                | Command                                                                                       |
-| --------------------- | --------------------------------------------------------------------------------------------- |
-| CloudWatch Logs       | `aws logs tail "$LG" --since "$START" --format short`                                          |
-| ECS task failure      | `aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK" --query 'tasks[0].stoppedReason'`  |
-| ALB access logs       | Query the S3 access-log prefix for the bounded window                                          |
-| Logs Insights         | `aws logs start-query --log-group-name "$LG" --start-time "$S" --end-time "$E" --query-string ...` with a **bounded window** and stated scan scope before the billed query |
-| VPC Flow Logs         | Filtered by ENI and the bounded window                                                        |
-| CloudTrail            | `aws cloudtrail lookup-events --start-time "$S" --end-time "$E" --lookup-attributes ...`        |
-| GitHub Actions        | `gh run view "$RUN" --log-failed`                                                              |
+| Source           | Command                                                                                                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CloudWatch Logs  | `aws logs tail "$LG" --since "$START" --format short`                                                                                                                      |
+| ECS task failure | `aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK" --query 'tasks[0].stoppedReason'`                                                                             |
+| ALB access logs  | Query the S3 access-log prefix for the bounded window                                                                                                                      |
+| Logs Insights    | `aws logs start-query --log-group-name "$LG" --start-time "$S" --end-time "$E" --query-string ...` with a **bounded window** and stated scan scope before the billed query |
+| VPC Flow Logs    | Filtered by ENI and the bounded window                                                                                                                                     |
+| CloudTrail       | `aws cloudtrail lookup-events --start-time "$S" --end-time "$E" --lookup-attributes ...`                                                                                   |
+| GitHub Actions   | `gh run view "$RUN" --log-failed`                                                                                                                                          |
 
 ## Cost sweep categories (read-only)
 

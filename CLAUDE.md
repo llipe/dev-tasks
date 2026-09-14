@@ -46,20 +46,20 @@ This toolkit is exposed as **commands** (entry points you invoke with `/`), **su
 
 ### Commands (entry points)
 
-| Command             | Purpose                                                                                                                                                                                       |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/product-engineer` | **Orchestrator (main thread).** Init / Feature / Issue mode: refine → spec → stories → publish → plan. Hands off to `/developer` or `/planner`.                                               |
-| `/planner`          | **Orchestrator (main thread).** Multi-story execution with dependency ordering, per-story delegation to the `developer` subagent, checkpoint/resume (auto-detected), and one consolidated PR. |
-| `/developer`        | **Interactive (main thread).** Step-gated implementation of a task list, pausing for approval after each sub-task.                                                                            |
-| `/github-ops`       | Audit/standardize GitHub artifacts.                                                                                                                                                           |
-| `/technical-writer` | Sync `/docs` with the codebase.                                                                                                                                                               |
-| `/housekeeping`     | Fix lint/type/test-wiring issues.                                                                                                                                                             |
-| `/qa-engineer`      | Establish `/TESTING.md`, author missing Layer 1-2 tests, and report `coverage_gate` plus risk-ranked gaps.                                                                                    |
-| `/researcher`       | Bounded codebase investigation producing a structured research artifact at `/workstream/research-*.md`.                                                                                       |
+| Command             | Purpose                                                                                                                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/product-engineer` | **Orchestrator (main thread).** Init / Feature / Issue mode: refine → spec → stories → publish → plan. Hands off to `/developer` or `/planner`.                                                 |
+| `/planner`          | **Orchestrator (main thread).** Multi-story execution with dependency ordering, per-story delegation to the `developer` subagent, checkpoint/resume (auto-detected), and one consolidated PR.   |
+| `/developer`        | **Interactive (main thread).** Step-gated implementation of a task list, pausing for approval after each sub-task.                                                                              |
+| `/github-ops`       | Audit/standardize GitHub artifacts.                                                                                                                                                             |
+| `/technical-writer` | Sync `/docs` with the codebase.                                                                                                                                                                 |
+| `/housekeeping`     | Fix lint/type/test-wiring issues.                                                                                                                                                               |
+| `/qa-engineer`      | Establish `/TESTING.md`, author missing Layer 1-2 tests, and report `coverage_gate` plus risk-ranked gaps.                                                                                      |
+| `/researcher`       | Bounded codebase investigation producing a structured research artifact at `/workstream/research-*.md`.                                                                                         |
 | `/infra-engineer`   | **Interactive (main thread).** Plan and apply infrastructure changes one approved, reversible, recorded step at a time (AWS, fly.io, Supabase, Cloudflare); hands off a draft PR. Never merges. |
-| `/ux-engineer`      | PRD/SPEC → React mockups + refinement handoff.                                                                                                                                                |
-| `/verifier-design`  | Generate a compliance test plan + traceability matrix from a spec/story (Design Mode).                                                                                                        |
-| `/verifier-audit`   | Grey-box fidelity audit of delivered work against requirements and PRD/spec intent (Audit Mode).                                                                                              |
+| `/ux-engineer`      | PRD/SPEC → React mockups + refinement handoff.                                                                                                                                                  |
+| `/verifier-design`  | Generate a compliance test plan + traceability matrix from a spec/story (Design Mode).                                                                                                          |
+| `/verifier-audit`   | Grey-box fidelity audit of delivered work against requirements and PRD/spec intent (Audit Mode).                                                                                                |
 
 ### Subagents (`.claude/agents/`)
 

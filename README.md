@@ -251,15 +251,15 @@ Multi-story orchestration with checkpoint/resume:
 
 ### Other Agents
 
-| Agent              | Purpose                                                                         |
-| ------------------ | ------------------------------------------------------------------------------- |
-| `ux-engineer`      | PRD/SPEC-to-screen visualization (lite/full), DESIGN.md ownership, gap analysis |
-| `technical-writer` | Documentation maintenance                                                       |
-| `housekeeping`     | Lint, type, and test-wiring fixes                                               |
-| `github-ops`       | GitHub consistency — issues, PRs, branches, labels                              |
-| `verifier`         | Compliance test-plan design and fidelity auditing                               |
-| `qa-engineer`      | Testing standard, missing test harnesses, coverage and gap reporting            |
-| `researcher`       | Bounded codebase investigation producing structured research artifacts          |
+| Agent              | Purpose                                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| `ux-engineer`      | PRD/SPEC-to-screen visualization (lite/full), DESIGN.md ownership, gap analysis                 |
+| `technical-writer` | Documentation maintenance                                                                       |
+| `housekeeping`     | Lint, type, and test-wiring fixes                                                               |
+| `github-ops`       | GitHub consistency — issues, PRs, branches, labels                                              |
+| `verifier`         | Compliance test-plan design and fidelity auditing                                               |
+| `qa-engineer`      | Testing standard, missing test harnesses, coverage and gap reporting                            |
+| `researcher`       | Bounded codebase investigation producing structured research artifacts                          |
 | `infra-engineer`   | Approval-gated, reversible, recorded infrastructure changes (AWS, fly.io, Supabase, Cloudflare) |
 
 ---
@@ -268,29 +268,29 @@ Multi-story orchestration with checkpoint/resume:
 
 On-demand capabilities loaded only when invoked.
 
-| Skill                            | Purpose                                                 | Consumer                                            |
-| -------------------------------- | ------------------------------------------------------- | --------------------------------------------------- |
-| `activity-init`                  | Product context and technical guidelines                | `product-engineer`                                  |
-| `activity-refine`                | Issue refinement or PRD creation                        | `product-engineer`                                  |
-| `activity-generate-spec`         | PRD → technical specification                           | `product-engineer`                                  |
-| `activity-generate-stories`      | Spec → user stories with coverage validation            | `product-engineer`                                  |
-| `activity-publish-github`        | Stories → GitHub Issues                                 | `product-engineer`                                  |
-| `activity-drift-reconciliation`  | Routes verifier drift findings into remediation         | `product-engineer`                                  |
-| `git-ops`                        | Branch, rebase, merge, conflict resolution              | `developer`, `planner`                              |
-| `aws-ops`                        | AWS CLI command sets, tiers, cost, backup/revert, logs  | `infra-engineer`                                    |
-| `fly-ops`                        | flyctl command sets, tiers, cost, backup/revert, logs   | `infra-engineer`                                    |
-| `supabase-ops`                   | Supabase CLI sets, `db diff` flow, drift rule, logs     | `infra-engineer`                                    |
+| Skill                            | Purpose                                                                                                                  | Consumer                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| `activity-init`                  | Product context and technical guidelines                                                                                 | `product-engineer`                                  |
+| `activity-refine`                | Issue refinement or PRD creation                                                                                         | `product-engineer`                                  |
+| `activity-generate-spec`         | PRD → technical specification                                                                                            | `product-engineer`                                  |
+| `activity-generate-stories`      | Spec → user stories with coverage validation                                                                             | `product-engineer`                                  |
+| `activity-publish-github`        | Stories → GitHub Issues                                                                                                  | `product-engineer`                                  |
+| `activity-drift-reconciliation`  | Routes verifier drift findings into remediation                                                                          | `product-engineer`                                  |
+| `git-ops`                        | Branch, rebase, merge, conflict resolution                                                                               | `developer`, `planner`                              |
+| `aws-ops`                        | AWS CLI command sets, tiers, cost, backup/revert, logs                                                                   | `infra-engineer`                                    |
+| `fly-ops`                        | flyctl command sets, tiers, cost, backup/revert, logs                                                                    | `infra-engineer`                                    |
+| `supabase-ops`                   | Supabase CLI sets, `db diff` flow, drift rule, logs                                                                      | `infra-engineer`                                    |
 | `deploy-ops`                     | Deploy script contract, env mapping, tag policy, and workflow scaffolding (`templates/scripts/`, `templates/workflows/`) | `infra-engineer`                                    |
-| `ux-scaffold`                    | Template-aware mockup generation (lite/full)            | `ux-engineer`                                       |
-| `ux-theme-gen`                   | DESIGN.md → theme artifacts (CSS vars, Tailwind v4, RN) | `ux-engineer`, `developer`                          |
-| `activity-e2e-test-design`       | E2E black-box test scenario generation                  | `verifier`                                          |
-| `activity-contract-test-design`  | Consumer/provider contract testing                      | `verifier`                                          |
-| `activity-edge-case-refinement`  | Systematic edge-case discovery                          | `verifier`                                          |
-| `activity-random-test-tactics`   | Randomized, fuzz, and property-inspired tests           | `verifier`                                          |
-| `activity-test-standards`        | Establish and maintain `/TESTING.md`                    | `qa-engineer`                                       |
-| `activity-test-implementation`   | Author Layer 1-2 tests with enforced boundaries         | `qa-engineer`                                       |
-| `activity-coverage-gap-analysis` | Coverage measurement and risk-ranked gaps               | `qa-engineer`                                       |
-| `memo-cli-usage`                 | Shared architectural memory across sessions             | `product-engineer`, `developer`, `technical-writer` |
+| `ux-scaffold`                    | Template-aware mockup generation (lite/full)                                                                             | `ux-engineer`                                       |
+| `ux-theme-gen`                   | DESIGN.md → theme artifacts (CSS vars, Tailwind v4, RN)                                                                  | `ux-engineer`, `developer`                          |
+| `activity-e2e-test-design`       | E2E black-box test scenario generation                                                                                   | `verifier`                                          |
+| `activity-contract-test-design`  | Consumer/provider contract testing                                                                                       | `verifier`                                          |
+| `activity-edge-case-refinement`  | Systematic edge-case discovery                                                                                           | `verifier`                                          |
+| `activity-random-test-tactics`   | Randomized, fuzz, and property-inspired tests                                                                            | `verifier`                                          |
+| `activity-test-standards`        | Establish and maintain `/TESTING.md`                                                                                     | `qa-engineer`                                       |
+| `activity-test-implementation`   | Author Layer 1-2 tests with enforced boundaries                                                                          | `qa-engineer`                                       |
+| `activity-coverage-gap-analysis` | Coverage measurement and risk-ranked gaps                                                                                | `qa-engineer`                                       |
+| `memo-cli-usage`                 | Shared architectural memory across sessions                                                                              | `product-engineer`, `developer`, `technical-writer` |
 
 ---
 
@@ -317,22 +317,22 @@ Copilot reads `.github/instructions/*.instructions.md`, Kiro reads `.kiro/steeri
 
 > Copilot: `.github/prompts/*.prompt.md`. Claude Code: `.claude/commands/*.md`. Kiro: embedded in `.kiro/agents/*.md`.
 
-| Prompt                     | Agent            | Purpose                            |
-| -------------------------- | ---------------- | ---------------------------------- |
-| `product-engineer-init`    | product-engineer | Initialize foundation documents    |
-| `product-engineer-feature` | product-engineer | Design and plan a feature          |
-| `product-engineer-issue`   | product-engineer | Refine and plan a GitHub Issue     |
-| `developer-execute`        | developer        | Execute an existing task list      |
-| `planner`                  | planner          | Orchestrate multi-story execution  |
-| `planner-resume`           | planner          | Resume from checkpoint             |
-| `ux-engineer`              | ux-engineer      | Generate UX mockups                |
-| `github-ops`               | github-ops       | GitHub consistency                 |
-| `technical-writer`         | technical-writer | Documentation maintenance          |
-| `housekeeping`             | housekeeping     | Lint, type, test fixes             |
-| `qa-engineer`              | qa-engineer      | Testing standard and coverage gate |
+| Prompt                     | Agent            | Purpose                               |
+| -------------------------- | ---------------- | ------------------------------------- |
+| `product-engineer-init`    | product-engineer | Initialize foundation documents       |
+| `product-engineer-feature` | product-engineer | Design and plan a feature             |
+| `product-engineer-issue`   | product-engineer | Refine and plan a GitHub Issue        |
+| `developer-execute`        | developer        | Execute an existing task list         |
+| `planner`                  | planner          | Orchestrate multi-story execution     |
+| `planner-resume`           | planner          | Resume from checkpoint                |
+| `ux-engineer`              | ux-engineer      | Generate UX mockups                   |
+| `github-ops`               | github-ops       | GitHub consistency                    |
+| `technical-writer`         | technical-writer | Documentation maintenance             |
+| `housekeeping`             | housekeeping     | Lint, type, test fixes                |
+| `qa-engineer`              | qa-engineer      | Testing standard and coverage gate    |
 | `infra-engineer`           | infra-engineer   | Plan and apply infrastructure changes |
-| `verifier-design`          | verifier         | Generate compliance test plan      |
-| `verifier-audit`           | verifier         | Grey-box fidelity audit            |
+| `verifier-design`          | verifier         | Generate compliance test plan         |
+| `verifier-audit`           | verifier         | Grey-box fidelity audit               |
 
 ---
 

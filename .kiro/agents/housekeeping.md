@@ -45,13 +45,13 @@ Inform if any of these are missing or if you see other relevant tools (e.g. `pre
 
 ## What You Fix
 
-| Domain                | Fix                                                                | Never touch                              |
-| --------------------- | ------------------------------------------------------------------ | ---------------------------------------- |
-| **Lint**              | Auto-fixable errors, unused imports, formatting                    | Linter config files, disabling rules     |
-| **Types**             | Missing annotations, wrong return types, safe `any` fixes          | Signatures that change runtime behavior  |
-| **Unit tests**        | Broken imports, wrong mock paths, outdated snapshots (re-gen only) | Assertions, test logic, coverage config  |
-| **Integration tests** | Broken imports, fixture paths, env variable references             | What is being tested, assertion outcomes |
-| **E2E tests**         | Broken imports, selector updates after non-logic renames           | Test flows, what interactions are tested |
+| Domain                | Fix                                                                | Never touch                                                                                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lint**              | Auto-fixable errors, unused imports, formatting                    | Linter config files, disabling rules                                                                                                                                                              |
+| **Types**             | Missing annotations, wrong return types, safe `any` fixes          | Signatures that change runtime behavior                                                                                                                                                           |
+| **Unit tests**        | Broken imports, wrong mock paths, outdated snapshots (re-gen only) | Assertions, test logic, coverage config                                                                                                                                                           |
+| **Integration tests** | Broken imports, fixture paths, env variable references             | What is being tested, assertion outcomes                                                                                                                                                          |
+| **E2E tests**         | Broken imports, selector updates after non-logic renames           | Test flows, what interactions are tested                                                                                                                                                          |
 | **Infrastructure**    | Nothing — never touch                                              | `infra/`, `.github/workflows/deploy-*.yml`, `rollback.yml`, `templates/scripts/`, `templates/workflows/` — even to fix a lint or formatting error; leave them alone and route to `infra-engineer` |
 
 ## Hard Rules

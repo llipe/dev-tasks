@@ -8,12 +8,12 @@ Cross-surface mechanism skill for `infra-engineer`. It supplies the deploy **scr
 
 ## Tool declaration
 
-| Field         | Value                                                                                                                    |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Field         | Value                                                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `name`        | `yq`, `gh`                                                                                                                |
 | `probe`       | `yq --version`; `gh --version`                                                                                            |
-| `floor`       | `yq` 4.x (the mikefarah Go implementation); minimum `4.0`. A 3.x or Python `yq` is `below-floor`. `gh` any current 2.x.  |
-| `auth_probe`  | `gh auth status` (for release/PR operations); `yq` needs no auth.                                                        |
+| `floor`       | `yq` 4.x (the mikefarah Go implementation); minimum `4.0`. A 3.x or Python `yq` is `below-floor`. `gh` any current 2.x.   |
+| `auth_probe`  | `gh auth status` (for release/PR operations); `yq` needs no auth.                                                         |
 | `remediation` | "Install `yq` 4.x from mikefarah/yq and `gh` from cli.github.com; this skill never auto-installs and offers no fallback." |
 
 `yq` reads and resolves `infra/environments.yaml`; `gh` performs release and PR operations for the release flow. Every command references secrets by name, never by value, and every log or status query passes through the redaction pattern set before it reaches a transcript.
@@ -22,13 +22,13 @@ Cross-surface mechanism skill for `infra-engineer`. It supplies the deploy **scr
 
 The deploy surface is a fixed set of `bash` scripts under `templates/scripts/`. Each is `set -euo pipefail`, supports `--help`, reads the environment definition from `infra/environments.yaml` via `yq`, and contains no environment names or secrets of its own.
 
-| Script            | Purpose                                                    | Mutates? | `--dry-run` | Exit codes                        |
-| ----------------- | ---------------------------------------------------------- | -------- | ----------- | --------------------------------- |
-| `deploy.sh`       | Ordered deploy pipeline for one environment                | yes      | yes         | 0 ok · 1 error · 2 blocked · 3 verify-fail |
-| `deploy-verify.sh`| Post-deploy health check; prints the rollback line on fail | no       | no          | 0 healthy · 2 blocked · 3 fail    |
-| `rollback.sh`     | Roll back to the previous good version from `infra/changes/` | yes    | yes         | 0 ok · 1 error · 2 blocked        |
-| `deploy-status.sh`| Read-only current status of an environment                 | no       | n/a         | 0 ok · 2 blocked                  |
-| `release.sh`      | Generalized changelog/version/tag/push release automation  | yes      | yes         | 0 ok · 1 error · 2 blocked        |
+| Script             | Purpose                                                      | Mutates? | `--dry-run` | Exit codes                                 |
+| ------------------ | ------------------------------------------------------------ | -------- | ----------- | ------------------------------------------ |
+| `deploy.sh`        | Ordered deploy pipeline for one environment                  | yes      | yes         | 0 ok · 1 error · 2 blocked · 3 verify-fail |
+| `deploy-verify.sh` | Post-deploy health check; prints the rollback line on fail   | no       | no          | 0 healthy · 2 blocked · 3 fail             |
+| `rollback.sh`      | Roll back to the previous good version from `infra/changes/` | yes      | yes         | 0 ok · 1 error · 2 blocked                 |
+| `deploy-status.sh` | Read-only current status of an environment                   | no       | n/a         | 0 ok · 2 blocked                           |
+| `release.sh`       | Generalized changelog/version/tag/push release automation    | yes      | yes         | 0 ok · 1 error · 2 blocked                 |
 
 ### `deploy.sh` ordered steps
 
@@ -53,11 +53,11 @@ No `latest` mutable tag is ever a deploy target. The deploy kind is detected fro
 
 Environment names and platform blocks are read from `infra/environments.yaml` via `yq`. A missing or template-status (`# status: template`) file exits `2`.
 
-| Trigger / ref             | Environment | Rule                                                                    |
-| ------------------------- | ----------- | ----------------------------------------------------------------------- |
-| push to `main`            | `dev`       | non-production deploys `main` HEAD; artifact tagged `main-<short-sha>`   |
-| annotated tag `vX.Y.Z`    | `prod`      | production refuses any ref that is not an annotated tag on `main`       |
-| manual (`workflow_dispatch`) | any      | dev is optional; installed only when a `production: false` environment exists |
+| Trigger / ref                | Environment | Rule                                                                          |
+| ---------------------------- | ----------- | ----------------------------------------------------------------------------- |
+| push to `main`               | `dev`       | non-production deploys `main` HEAD; artifact tagged `main-<short-sha>`        |
+| annotated tag `vX.Y.Z`       | `prod`      | production refuses any ref that is not an annotated tag on `main`             |
+| manual (`workflow_dispatch`) | any         | dev is optional; installed only when a `production: false` environment exists |
 
 ## Tag policy summary
 
@@ -67,13 +67,13 @@ Tags are human-only and owned by the policy in `github-ops`: annotated `vX.Y.Z`,
 
 `deploy-ops` does not choose the platform for a consumer. It frames the decision so the operator (or `infra-engineer`) picks a **deploy target** deliberately, then records the choice in `infra/environments.yaml`.
 
-| Decision input           | Question the operator answers                                       |
-| ------------------------ | ------------------------------------------------------------------- |
-| compute platform         | fly.io app, AWS ECS service, or another target?                     |
-| data platform            | is there a Supabase (or other) migration step to sequence?          |
-| environment tier         | is this environment `production: true` or `false`?                  |
-| ref discipline           | does production consume an annotated tag, and does dev track `main`? |
-| rollback source          | is the previous good version recorded in `infra/changes/`?          |
+| Decision input   | Question the operator answers                                        |
+| ---------------- | -------------------------------------------------------------------- |
+| compute platform | fly.io app, AWS ECS service, or another target?                      |
+| data platform    | is there a Supabase (or other) migration step to sequence?           |
+| environment tier | is this environment `production: true` or `false`?                   |
+| ref discipline   | does production consume an annotated tag, and does dev track `main`? |
+| rollback source  | is the previous good version recorded in `infra/changes/`?           |
 
 When two platform blocks are present with no explicit `deploy_kind`, the deploy target is ambiguous and `deploy.sh` refuses until the operator sets `deploy_kind`.
 
@@ -98,8 +98,8 @@ For JavaScript/TypeScript repos only, `deploy-ops` generates thin `package.json`
     "deploy:verify": "bash templates/scripts/deploy-verify.sh",
     "deploy:rollback": "bash templates/scripts/rollback.sh",
     "deploy:status": "bash templates/scripts/deploy-status.sh",
-    "release": "bash templates/scripts/release.sh"
-  }
+    "release": "bash templates/scripts/release.sh",
+  },
 }
 ```
 

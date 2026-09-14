@@ -8,15 +8,15 @@ owner: qa-engineer
 
 ## Test Layers
 
-| Layer | Name | Scope | Status |
-| --- | --- | --- | --- |
-| 1 | Deterministic foundations | Unit tests and schema/contract assertions with no network, database, or wall-clock dependency. | configured |
-| 2 | Constrained model/tool | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs. | configured |
-| 2.5 | Integration | Real database, migrations, RLS, and schema contracts without a mocked data layer. | not configured |
-| E2E | End-to-end | Playwright full-stack browser scenarios. | not configured |
-| Contract | Contract validation | `dt verify` API-spec diff, impact, and drift checks. | not configured; no repository API spec |
-| 3 | Product evaluation | Semantic or groundedness evaluation for LLM features. | not applicable |
-| 4 | Human evaluation | Human review and safeguard gates. | manual only |
+| Layer    | Name                      | Scope                                                                                                                             | Status                                 |
+| -------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 1        | Deterministic foundations | Unit tests and schema/contract assertions with no network, database, or wall-clock dependency.                                    | configured                             |
+| 2        | Constrained model/tool    | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs. | configured                             |
+| 2.5      | Integration               | Real database, migrations, RLS, and schema contracts without a mocked data layer.                                                 | not configured                         |
+| E2E      | End-to-end                | Playwright full-stack browser scenarios.                                                                                          | not configured                         |
+| Contract | Contract validation       | `dt verify` API-spec diff, impact, and drift checks.                                                                              | not configured; no repository API spec |
+| 3        | Product evaluation        | Semantic or groundedness evaluation for LLM features.                                                                             | not applicable                         |
+| 4        | Human evaluation          | Human review and safeguard gates.                                                                                                 | manual only                            |
 
 ### Layer boundaries
 
@@ -31,8 +31,8 @@ owner: qa-engineer
 
 This is a single-package TypeScript repository; no workspace manifest or additional package was detected.
 
-| Package | Language | Runner | Test command | Test environment | Coverage tooling |
-| --- | --- | --- | --- | --- | --- |
+| Package                | Language       | Runner       | Test command    | Test environment             | Coverage tooling                                                                                         |
+| ---------------------- | -------------- | ------------ | --------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `@llipe.com/dev-tasks` | TypeScript/ESM | Vitest 3.2.6 | `pnpm run test` | Node (`environment: "node"`) | V8 provider declared in `vitest.config.ts`, but no usable coverage command/provider package is installed |
 
 Tests live in `test/unit/` and `test/integration/` and use `*.test.ts`. `test/fixtures/` contains inert QA fixtures and is excluded from collection by `vitest.config.ts`.
@@ -50,21 +50,21 @@ The package is a CLI and filesystem toolkit, so Node is the correct environment;
 
 ## Commands
 
-| Script | Purpose | Status |
-| --- | --- | --- |
-| `lint` | ESLint static analysis | present |
-| `lint:fix` | ESLint auto-fix | present |
-| `format` | Prettier write | present |
-| `format:check` | Prettier verification | present |
-| `typecheck` | TypeScript analysis | present |
-| `test` | Aggregate Vitest run; reaches this package's unit and integration tests | present |
-| `test:unit` | Unit tests | present |
-| `test:integration` | Integration-directory tests; these are CLI/filesystem integration tests, not Layer 2.5 database tests | present |
-| `test:e2e` | Playwright tests | not configured; no Playwright setup |
-| `test:contract` | `dt verify` family | not configured; no repository API spec |
-| `test:coverage` | Coverage measurement | missing; no usable provider configured |
-| `audit` | Production dependency audit | present |
-| `validate` | `typecheck` → `lint` → `format:check` → aggregate `test` | present |
+| Script             | Purpose                                                                                               | Status                                 |
+| ------------------ | ----------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `lint`             | ESLint static analysis                                                                                | present                                |
+| `lint:fix`         | ESLint auto-fix                                                                                       | present                                |
+| `format`           | Prettier write                                                                                        | present                                |
+| `format:check`     | Prettier verification                                                                                 | present                                |
+| `typecheck`        | TypeScript analysis                                                                                   | present                                |
+| `test`             | Aggregate Vitest run; reaches this package's unit and integration tests                               | present                                |
+| `test:unit`        | Unit tests                                                                                            | present                                |
+| `test:integration` | Integration-directory tests; these are CLI/filesystem integration tests, not Layer 2.5 database tests | present                                |
+| `test:e2e`         | Playwright tests                                                                                      | not configured; no Playwright setup    |
+| `test:contract`    | `dt verify` family                                                                                    | not configured; no repository API spec |
+| `test:coverage`    | Coverage measurement                                                                                  | missing; no usable provider configured |
+| `audit`            | Production dependency audit                                                                           | present                                |
+| `validate`         | `typecheck` → `lint` → `format:check` → aggregate `test`                                              | present                                |
 
 ### Gate reachability
 
