@@ -6,6 +6,8 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
 > Note: Task 0 is outside the PRD. It fixes branch-convention inconsistencies found while reviewing `github-ops`, `git-ops`, `developer`, and `implement`, so the conventions the new agent inherits are consistent before Phase 1 lands.
 
+> **Status (reconciled 2026-09-14):** All eleven parent tasks are complete and shipped in **v0.12.0**. Every story merged via its GitHub issue: chore #153, S-001 #154, S-002 #155, S-003 #156, S-004 #157, S-005 #158, S-006 #159, S-007 #160, S-008 #161, S-009 #162, S-010 #163 — all closed. The only sub-tasks left unchecked are the credential-gated manual verifications (1.7, 2.5, 3.5, 4.6, 6.7, 7.7, 8.8, 9.7, 10.9), each documented "not run" with a repro recipe because no safe non-production cloud target/credentials were available; and the two blocked test-run sub-tasks (0.6, 1.8), whose validation notes record that the achievable checks passed and the residual failure is a pre-existing, unrelated environment issue. These are intentionally deferred, not outstanding implementation work.
+
 ## Relevant Files
 
 - `.github/agents/infra-engineer.agent.md` - canonical agent body (Copilot)
@@ -37,7 +39,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
 ## Tasks
 
-- [ ] 0.0 Branch convention hygiene (chore, outside the PRD; open a `chore` issue via `github-ops` first so the branch and commit carry a number)
+- [x] 0.0 Branch convention hygiene (chore, outside the PRD; open a `chore` issue via `github-ops` first so the branch and commit carry a number)
 
   - [x] 0.1 In `git-ops` SKILL.md (three trees) replace `integrate/<milestone-or-prd-name>` with `integration/<plan-id>-<short-description>` to match `github-ops` and `planner`
   - [x] 0.2 In `github-ops` (three trees) drop the `fix`, `chore`, and `docs` branch types so the table matches the `issue/*` and `story/*` check in `developer` and `implement`; keep `issue`, `story`, `integration`
@@ -48,7 +50,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
   > Validation: branch-table and `integrate/` checks passed; `pnpm run format:check` passed. `pnpm run test:unit` is blocked before discovery by the pre-existing Node/Vitest/tinypool module-compatibility error.
 
-- [ ] 1.0 Implement Story S-001: infra-engineer agent contract and environment template
+- [x] 1.0 Implement Story S-001: infra-engineer agent contract and environment template
 
   - [x] 1.1 Write `test/unit/infra-engineer-parity.test.ts` with the four file paths, Kiro frontmatter checks, and the contract statement list from the spec; confirm it fails
   - [x] 1.2 Author `.github/agents/infra-engineer.agent.md`: working loop, step schema and state machine, revert rule, backup rule, two-tier model and destroy flow, identity assertion, tool check procedure, tool-routing table, cost rule and sweep, record and inventory formats, tagging, secrets, log-triage rules, Cloudflare DNS and certificate steps, draft-PR record handoff
@@ -61,7 +63,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
   > Validation: focused `pnpm exec vitest run test/unit/infra-engineer-parity.test.ts` passes 38/38. Full `pnpm run test:unit` remains blocked by unrelated pre-existing unit failures. `pnpm run typecheck` and `pnpm run format:check` pass. `pnpm run validate` is blocked at lint by invalid package metadata in the installed dependency tree. `pnpm run audit` reports four pre-existing high vulnerabilities in `fast-uri` through `ajv`. Manual throwaway-provider verification was not run because no safe non-production target/credentials were provided.
 
-- [ ] 2.0 Implement Story S-002: aws-ops skill
+- [x] 2.0 Implement Story S-002: aws-ops skill
 
   - [x] 2.1 Create `test/unit/skill-parity-infra.test.ts` asserting three-tree identity and declared fields for `aws-ops` (floor, auth probe, backup, revert, log table, sweep categories); confirm it fails
   - [x] 2.2 Write `.github/skills/aws-ops/SKILL.md`: tool declaration with floor and remediation, command sets per change kind, tier table, cost guidance, backup and revert sources, AWS log table, sweep categories
@@ -70,7 +72,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
   - [ ] 2.5 Manual verification: dry-run an "IAM policy create and attach" plan in a non-production account; confirm revert detaches and deletes _(not run — requires user sandbox/credentials; repro: fill `infra/environments.yaml` for a non-prod AWS account, invoke `infra-engineer` with an "IAM policy create and attach" change, confirm the plan pairs `create-policy`+`attach-role-policy` forward with `detach-role-policy`+`delete-policy` revert in reverse order)_
   - [x] 2.6 Run Tests: `pnpm run test:unit`
 
-- [ ] 3.0 Implement Story S-003: fly-ops skill
+- [x] 3.0 Implement Story S-003: fly-ops skill
 
   - [x] 3.1 Extend `skill-parity-infra.test.ts` for `fly-ops`; confirm it fails
   - [x] 3.2 Write `.github/skills/fly-ops/SKILL.md`: tool declaration, command sets (apps, deploy, secrets, volumes, certs, scale, machines, destroy), tier table, revert via `fly releases`, volume snapshot backup, log table, cost and sweep
@@ -79,7 +81,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
   - [ ] 3.5 Manual verification: full plan on a throwaway app (create, secret, deploy, cert, DNS), then run the generated `rollback.sh` to zero _(not run — requires user sandbox/credentials; repro: create a throwaway fly app in a non-prod org, run a full create→secret→deploy→cert→DNS plan through `infra-engineer`, then execute the generated `rollback.sh` and confirm the app is destroyed)_
   - [x] 3.6 Run Tests: `pnpm run test:unit`
 
-- [ ] 4.0 Implement Story S-004: supabase-ops skill
+- [x] 4.0 Implement Story S-004: supabase-ops skill
 
   - [x] 4.1 Run `researcher` on the Supabase Cloud log retrieval endpoint and per-plan retention; save `workstream/research-supabase-logs.md`
   - [x] 4.2 Extend `skill-parity-infra.test.ts` for `supabase-ops` including `db diff` plan, drift rule, no-MCP-write; confirm it fails
@@ -89,7 +91,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
   - [ ] 4.6 Manual verification: produce a `db diff` plan with one `DROP` against a non-production project; confirm itemization and the confirmation gate before push _(not run — requires user sandbox/credentials; repro: link a non-prod Supabase project, run `infra-engineer` on a schema change that drops a column, confirm the `DROP` is itemized separately in `plan.md` and `db push` waits for named approval)_
   - [x] 4.7 Run Tests: `pnpm run test:unit`
 
-- [ ] 5.0 Implement Story S-005: redaction pattern set and security-negative test
+- [x] 5.0 Implement Story S-005: redaction pattern set and security-negative test
 
   - [x] 5.1 Write `test/fixtures/infra/redaction/secrets.txt` (synthetic AWS key pair, `sb_secret_*`, `sb_publishable_*`, `service_role` JWT, fly token, `ghp_` token, bearer header, `postgres://user:pass@`, `password=`, email) and `benign.txt`
   - [x] 5.2 Write `test/unit/infra-redaction.test.ts`: every secret line becomes `[REDACTED:<category>]`, benign lines unchanged, repository scan of `templates/`, the four agent files, and the four skills; confirm it fails
@@ -110,7 +112,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
   - [ ] 6.7 Manual verification: `dt install` into a scratch repo, fill `environments.yaml`, `dt update`, confirm the file is untouched _(not run — requires a scratch repo with the built CLI; repro: `pnpm build`; in a throwaway git repo run `node <dev-tasks>/dist/bin/dt.js install --profile all`; edit `infra/environments.yaml`; run `node <dev-tasks>/dist/bin/dt.js update --force`; confirm the edited `infra/environments.yaml` is unchanged because `infra/` is a consumer-owned prefix)_
   - [x] 6.8 Run Tests: `pnpm run validate`, `pnpm run audit`
 
-- [ ] 7.0 Implement Story S-007: tag policy, git-guard rule 4, and exact-semver workflow filters
+- [x] 7.0 Implement Story S-007: tag policy, git-guard rule 4, and exact-semver workflow filters
 
   - [x] 7.1 Write `test/unit/git-guard-tags.test.ts` piping `{"tool_input":{"command":"..."}}` into the hook: block matrix (`git tag v1.2.3`, `git tag -a`, `git tag -d`, `git push --tags`, a push of `refs/tags/v1`, a push naming `v1.2.3`, a push deleting a remote tag by ref, `gh release create`) and allow matrix (`git tag -l`, `git tag --list`, `git tag`, `git describe --tags`, a push of an `issue/` branch); confirm it fails
   - [x] 7.2 Add rule 4 to `.claude/hooks/git-guard.sh`; mirror in `.kiro/hooks/` if a git-guard equivalent exists there; update the header comment to four invariants
@@ -151,7 +153,7 @@ Sequencing: 0 → 1 → (2, 3, 4, 5, 10) → 6 closes Phase 1. 7 has no dependen
 
   > Validation: `infra-workflow-templates.test.ts` passes 34/34; `infra-engineer-parity.test.ts` passes 60/60 (adds planner deploy-handoff caller wiring + deploy-ops registry checks); `distribution-install.test.ts` and `distribution-update.test.ts` pass (manifest managed/consumer-owned paths for `templates/scripts`, `templates/workflows`, and the three workflow files). Reconciled skill count to twenty-five (actual `.github/skills`/`.kiro/skills` count; `.claude/skills` = 27 includes `implement`/`plan` copies) in `docs/system-overview.md`. Gates: `typecheck` PASS, `lint` PASS, `format:check` PASS; `pnpm run test` shows only the three documented pre-existing failures in `skill-parity-testing-layers.test.ts` (issue-130 TESTING.md AC-4/5/6, TESTING.md left unchanged per scope); `pnpm audit --prod` reports no known vulnerabilities. The catalog fixture `test/fixtures/catalog/catalog/index.yaml` was regenerated by a test and reverted. 9.7 is a manual pipeline check (not run) — needs a real GitHub repo with Actions and a configured production reviewer.
 
-- [ ] 10.0 Implement Story S-010: Caller wiring and workflow chains
+- [x] 10.0 Implement Story S-010: Caller wiring and workflow chains
   - [x] 10.1 Add a caller-wiring block to `test/unit/infra-engineer-parity.test.ts` listing every caller file and asserting both a reference to `infra-engineer` and conditional language, modeled on the `AC-6` block in `test/unit/researcher-parity.test.ts`; confirm it fails
   - [x] 10.2 Edit `developer` in four files (`.github/agents/developer.agent.md`, `.kiro/agents/developer.md`, `.claude/agents/developer.md`, `.claude/commands/developer.md`): **MUST NOT** emit or execute a platform write command; name the sub-task kinds that route to `infra-engineer` (secrets, deploy, DNS, certificates, IAM policy, cloud migrations); narrow rule 19's "purely infrastructure/config" exemption so it cannot read as licence to run platform writes
   - [x] 10.3 Add the same routing rule to the `implement` skill in three trees (`.claude/skills/implement/SKILL.md`, `.github/instructions/implement.instructions.md`, `.kiro/steering/implement.md`), since it is the single source of truth for task-list execution
