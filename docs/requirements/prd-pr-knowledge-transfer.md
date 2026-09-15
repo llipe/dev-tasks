@@ -2,15 +2,25 @@
 
 ## Changelog
 
-| Version | Date       | Summary         | Author           |
-| ------- | ---------- | --------------- | ---------------- |
-| 1.0     | 2026-08-01 | Initial version | product-engineer |
+| Version | Date       | Summary                                                                                  | Author           |
+| ------- | ---------- | ---------------------------------------------------------------------------------------- | ---------------- |
+| 1.0     | 2026-08-01 | Initial version                                                                          | product-engineer |
+| 1.1     | 2026-09-14 | Registered the issue #141 MVP as Phase 1 (template-only subset); added Delivery Phasing. | product-engineer |
 
 ## Executive Summary
 
 Pull requests in `dev-tasks`-driven repositories today carry a minimal What / Why / How / Testing / Checklist body. That is enough for a reviewer to decide whether to approve a diff, but not enough for a human — or a future agent — to understand the product. Reviewers reconstruct business intent from code, and the reasoning that produced the change evaporates once the branch is merged.
 
 This feature redefines the pull request as the primary knowledge-transfer surface of the workflow. Every behavioral PR body will carry a human-readable explanation of **how** the change works and **why** it exists: the business logic it encodes, the files that hold the meaningful behavior, the key methods and variables, the endpoints and contracts that changed and how they now behave, the invariants and failure modes, and where a reviewer should look first. Factual claims are grounded in a deterministic change map extracted from the diff by the `dt` CLI, so the narrative cannot invent files, symbols, or endpoints. Durable understanding that outlives the PR is written back to repository documentation and the shared memo knowledge base.
+
+## Delivery Phasing
+
+This PRD describes the full target. Delivery is phased so value ships before the heavier machinery is built.
+
+- **Phase 1 — MVP (template-only), tracked by issue #141.** Extend the `github-ops` PR Description Template with three lightweight teaching sections (Context / How it works; What changed & why it matters; Examples), at **SHOULD** level, with Examples **REQUIRED** for user-visible or API/contract changes. Mirror across all three trees and guard with a parity test. **Explicitly excludes** the tiered contract (FR-7-9), the `dt changemap` extractor (FR-10-16), the `activity-pr-knowledge-transfer` skill (FR-17-22), enforcement/blocking (FR-23-27), and knowledge write-back (FR-28-32). Refinement: `workstream/issue-141-pr-teach-team-refinement.md`. This MVP is a deliberate de-scoping decision (see issue #148, simplicity prioritization); the template it ships is the seam the later phases extend rather than duplicate.
+- **Phase 2+ — Full contract.** The remainder of this PRD: depth tiers, deterministic grounding via `dt changemap`, the knowledge-transfer skill, blocking enforcement on behavioral PRs, and docs/memo write-back. Sequenced and scoped when Phase 1 has shipped and the appetite for the fuller feature is confirmed.
+
+The functional requirements, acceptance criteria, and open questions below describe the **full** feature (Phase 2+). Phase 1 implements only the subset named above.
 
 ## Feature Overview
 
