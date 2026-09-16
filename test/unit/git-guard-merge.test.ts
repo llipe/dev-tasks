@@ -22,6 +22,21 @@
  *   (`GIT_GUARD_STUB_PR_BASE_FOR_<KEY>`) lets a test give the named target a different
  *   base than the current-branch fallback, so it would catch a regression to that
  *   fallback behavior.
+ *
+ * Second-round independent audit (task 9.0, final scoped fix round):
+ *   Gap A — `strip_merge_ref_prefix()` handled `refs/heads/`, bare `remotes/<remote>/`,
+ *   and bare `<remote>/`, but not the fully-qualified `refs/remotes/<remote>/<branch>`
+ *   form, so `git merge refs/remotes/origin/story/1-x` bypassed the block.
+ *   Gap B — `git_merge_arg()` did naive "first non-dash token" scanning with no concept
+ *   of a flag that consumes a following value, so `git merge -m "merge note" story/1-x`
+ *   and `git merge --strategy-option theirs story/1-x` picked up the flag's VALUE
+ *   (`merge`, `theirs`) as "the merge argument" and never inspected the real target.
+ *   Gap C — the identical flag-value-confusion defect existed in `gh_pr_merge_number()`/
+ *   `gh_pr_merge_target()`: `gh pr merge --subject 99 42 --squash --delete-branch` picked
+ *   up `99` (the `--subject` value) as "the PR number" and verified the wrong PR, letting
+ *   an unsafe merge of the real target (42) through undetected. Also fixed as part of the
+ *   same rewrite: `gh pr merge --repo owner/repo 42 --squash` previously misattributed
+ *   `owner/repo` as the target and false-positive-blocked a legitimate command.
  */
 
 import { spawnSync } from "node:child_process";
@@ -166,6 +181,38 @@ describe("git-guard rule 1 — raw-git escape from story/issue into integration"
     const { status } = runHook("git merge origin/issue/1-x", { cwd: repo.cloneDir });
     expect(status).toBe(2);
   });
+
+  // Gap A (second-round audit): the fully-qualified `refs/remotes/<remote>/<branch>`
+  // form was not stripped, unlike `refs/heads/`, bare `remotes/<remote>/`, and bare
+  // `<remote>/`.
+  it("blocks `git merge refs/remotes/origin/story/1-x` while on an integration/* branch", () => {
+    const { status, stderr } = runHook("git merge refs/remotes/origin/story/1-x", {
+      cwd: repo.cloneDir,
+    });
+    expect(status).toBe(2);
+    expect(stderr).toContain("gh pr merge");
+  });
+
+  it("blocks `git merge refs/remotes/upstream/issue/42-x` while on an integration/* branch", () => {
+    const { status } = runHook("git merge refs/remotes/upstream/issue/42-x", {
+      cwd: repo.cloneDir,
+    });
+    expect(status).toBe(2);
+  });
+
+  // Gap B (second-round audit): a value-consuming flag's following token must not
+  // be mistaken for the merge target.
+  it('blocks `git merge -m "merge note" story/1-x` while on an integration/* branch', () => {
+    const { status } = runHook('git merge -m "merge note" story/1-x', { cwd: repo.cloneDir });
+    expect(status).toBe(2);
+  });
+
+  it("blocks `git merge --strategy-option theirs story/1-x` while on an integration/* branch", () => {
+    const { status } = runHook("git merge --strategy-option theirs story/1-x", {
+      cwd: repo.cloneDir,
+    });
+    expect(status).toBe(2);
+  });
 });
 
 describe("git-guard rule 3 — gh pr merge base resolution (real, not text-matched)", () => {
@@ -274,6 +321,40 @@ describe("git-guard rule 3 — gh pr merge base resolution (real, not text-match
       env: {
         GIT_GUARD_STUB_PR_BASE: "main",
         GIT_GUARD_STUB_PR_BASE_FOR_SOME_BRANCH: "integration/parity-plan",
+      },
+    });
+    expect(status).toBe(0);
+  });
+
+  // Gap C (second-round audit): `--subject`/`-t` (and other value-consuming flags)
+  // must not have their VALUE mistaken for the PR number/target. `99` here is the
+  // `--subject` value (a decoy that merely looks numeric); `42` is the real target.
+  it("resolves the real PR number past a `--subject` flag value, not the flag's value", () => {
+    const { status, stderr } = runHook("gh pr merge --subject 99 42 --squash --delete-branch", {
+      env: {
+        // Decoy PR 99's base (safe) — must NOT be what gets checked.
+        GIT_GUARD_STUB_PR_BASE_FOR_99: "integration/parity-plan",
+        // Real target PR 42's base (unsafe: the default branch).
+        GIT_GUARD_STUB_PR_BASE_FOR_42: "main",
+      },
+    });
+    expect(status).toBe(2);
+    expect(stderr).toContain("main");
+  });
+
+  it("resolves the real PR target past a `--body` flag value", () => {
+    const { status } = runHook('gh pr merge --body "some text" 42 --squash', {
+      env: {
+        GIT_GUARD_STUB_PR_BASE_FOR_42: "main",
+      },
+    });
+    expect(status).toBe(2);
+  });
+
+  it("allows `gh pr merge --repo owner/repo 42 --squash` when 42's base is safe (no false-positive block)", () => {
+    const { status } = runHook("gh pr merge --repo owner/repo 42 --squash", {
+      env: {
+        GIT_GUARD_STUB_PR_BASE_FOR_42: "integration/parity-plan",
       },
     });
     expect(status).toBe(0);

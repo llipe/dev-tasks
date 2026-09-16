@@ -29,6 +29,19 @@
 # merge) instead of open, because failing open here would let an unreviewed PR
 # merge into the default branch go through undetected. Every other rule in
 # this script keeps the global fail-open contract.
+#
+# Scope and limits: this is a best-effort, defense-in-depth LOCAL check over
+# shell command TEXT — a flag-aware tokenizer plus pattern matching, not a
+# real shell parser and not a completeness guarantee against every possible
+# flag/argument construction an agent (or a determined adversary) could type.
+# Rounds of independent audit against this file have repeatedly found and
+# closed specific bypasses (ref-qualified merge targets, value-consuming
+# flags whose value was mistaken for the real argument, etc.) — that pattern
+# is expected to continue: text-based command parsing can always be evaded by
+# a sufficiently creative future command form, in this script or any script
+# like it. Server-side branch protection on the remote (tracked separately,
+# outside this file) is the actual durable control; this hook narrows the
+# window and catches the common cases, it does not replace that control.
 
 set -uo pipefail
 
@@ -73,6 +86,17 @@ resolve_default_branch() {
   printf '%s' "$branch"
 }
 
+# Quote-aware token splitter: splits $1 into tokens honoring shell quoting so
+# a flag value containing an embedded space (e.g. `-m "merge note"` or
+# `--body "some text"`) becomes a single token instead of splitting on that
+# space — one token per output line. Built on `xargs -n1`, which only ever
+# passes each token through to `printf '%s\n'`; it never evaluates or
+# executes any part of the input, so untrusted command text cannot trigger
+# code execution through this path (unlike e.g. `eval`).
+tokenize() {
+  printf '%s' "$1" | xargs -n1 -- printf '%s\n' 2>/dev/null
+}
+
 # Does any `git push` destination token in $norm equal $1? Checks bare tokens
 # and the destination (right-hand) side of `src:dst` refspecs; strips a
 # leading `+` (force-push shorthand) before comparing. Flags are skipped.
@@ -92,30 +116,56 @@ push_targets_ref() {
   return 1
 }
 
-# First non-flag token after `git merge` (the ref being merged).
+# `git merge` flags (long or short) that consume a FOLLOWING token as their
+# value, per `git merge -h`: -s/--strategy, -X/--strategy-option, -m/--message,
+# -F/--file, --into-name, --cleanup. `--flag=value` joined forms need no
+# special handling here since they already arrive as a single token.
+_git_merge_value_flags="-s --strategy -X --strategy-option -m --message -F --file --into-name --cleanup"
+
+# First non-flag, non-flag-value token after `git merge` (the ref being
+# merged). Flag-aware: skips both a value-consuming flag and the token that
+# supplies its value, so e.g. `-m "merge note"` or `--strategy-option theirs`
+# don't cause the flag's VALUE to be misread as the merge target.
 git_merge_arg() {
-  local rest tok
+  local rest tok flag skip_next=0 is_value_flag
   rest="$(printf '%s' "$norm" | sed -n 's/.*git[[:space:]][[:space:]]*merge[[:space:]][[:space:]]*//p')"
-  for tok in $rest; do
+  while IFS= read -r tok; do
+    if [ "$skip_next" -eq 1 ]; then
+      skip_next=0
+      continue
+    fi
     case "$tok" in
-      -*) continue ;;
+      -*)
+        is_value_flag=0
+        for flag in $_git_merge_value_flags; do
+          if [ "$tok" = "$flag" ]; then
+            is_value_flag=1
+            break
+          fi
+        done
+        [ "$is_value_flag" -eq 1 ] && skip_next=1
+        continue
+        ;;
     esac
     printf '%s' "$tok"
     return 0
-  done
+  done < <(tokenize "$rest")
   printf ''
 }
 
-# Strip known ref-qualifying prefixes (`refs/heads/`, `remotes/<remote>/`, or
-# a bare `<remote>/` shorthand as in `origin/story/1-x`) from a merge argument
-# so the story/issue check recognizes the ref-qualified forms documented as
-# canonical merge syntax in .claude/skills/git-ops/SKILL.md (e.g. `git merge
-# origin/story/1-x`) identically to the bare `story/1-x` form. Without this,
-# `git merge origin/story/1-x`, `git merge remotes/origin/story/1-x`, and
-# `git merge refs/heads/story/1-x` all bypassed the rule 1b block entirely.
+# Strip known ref-qualifying prefixes (`refs/heads/`, fully-qualified
+# `refs/remotes/<remote>/`, bare `remotes/<remote>/`, or a bare `<remote>/`
+# shorthand as in `origin/story/1-x`) from a merge argument so the story/issue
+# check recognizes the ref-qualified forms documented as canonical merge
+# syntax in .claude/skills/git-ops/SKILL.md (e.g. `git merge origin/story/1-x`)
+# identically to the bare `story/1-x` form. Without this, `git merge
+# origin/story/1-x`, `git merge remotes/origin/story/1-x`, `git merge
+# refs/heads/story/1-x`, and `git merge refs/remotes/origin/story/1-x` all
+# bypassed the rule 1b block entirely.
 strip_merge_ref_prefix() {
   local ref="$1" candidate
   ref="${ref#refs/heads/}"
+  ref="${ref#refs/remotes/}"
   case "$ref" in
     remotes/*)
       ref="${ref#remotes/}"
@@ -134,13 +184,35 @@ strip_merge_ref_prefix() {
   printf '%s' "$ref"
 }
 
-# Extract a `gh pr merge` PR number: a digit-only token right after `merge`,
-# or a `#123` reference anywhere in the command. Empty if none given (the
-# command then targets the current branch's PR).
+# `gh pr merge` flags (long or short) that consume a FOLLOWING token as their
+# value, per `gh help pr merge`: -A/--author-email, -b/--body, -F/--body-file,
+# --match-head-commit, -t/--subject, -R/--repo. `--flag=value` joined forms
+# need no special handling here since they already arrive as a single token.
+_gh_pr_merge_value_flags="-A --author-email -b --body -F --body-file --match-head-commit -t --subject -R --repo"
+
+# True (0) if $1 is one of the gh-pr-merge value-consuming flags above.
+_gh_pr_merge_is_value_flag() {
+  local tok="$1" flag
+  for flag in $_gh_pr_merge_value_flags; do
+    [ "$tok" = "$flag" ] && return 0
+  done
+  return 1
+}
+
+# Extract a `gh pr merge` PR number: a digit-only token right after `merge`
+# (skipping flags and their values), or a `#123` reference anywhere in the
+# command. Empty if none given (the command then targets the current
+# branch's PR). Flag-aware: skips both a value-consuming flag and the token
+# that supplies its value, so e.g. `--subject 99 42` doesn't misread the
+# `--subject` value `99` as the PR number instead of the real target `42`.
 gh_pr_merge_number() {
-  local rest tok
+  local rest tok skip_next=0
   rest="$(printf '%s' "$norm" | sed -n 's/.*gh[[:space:]][[:space:]]*pr[[:space:]][[:space:]]*merge[[:space:]][[:space:]]*//p')"
-  for tok in $rest; do
+  while IFS= read -r tok; do
+    if [ "$skip_next" -eq 1 ]; then
+      skip_next=0
+      continue
+    fi
     case "$tok" in
       [0-9]*)
         printf '%s' "${tok%%[!0-9]*}"
@@ -150,31 +222,44 @@ gh_pr_merge_number() {
         printf '%s' "${tok#\#}"
         return 0
         ;;
-      -*) continue ;;
+      -*)
+        _gh_pr_merge_is_value_flag "$tok" && skip_next=1
+        continue
+        ;;
       *) break ;;
     esac
-  done
+  done < <(tokenize "$rest")
   printf ''
 }
 
-# First non-flag token after `gh pr merge`, whatever its shape: a bare PR
-# number, a `#123` reference, a branch name, or a PR URL. `gh pr merge` (and
-# `gh pr view`) accept all four as a valid target. Empty if none given (the
-# command then targets the current branch's PR). Used as a fail-closed
-# fallback so a branch-name or URL target is verified directly via `gh pr
-# view <target>` instead of silently falling back to checking the CURRENT
-# branch's PR — which would let a crafted `gh pr merge <other-branch-or-url>`
-# merge a different, unverified PR while the guard checks the wrong one.
+# First non-flag, non-flag-value token after `gh pr merge`, whatever its
+# shape: a bare PR number, a `#123` reference, a branch name, or a PR URL.
+# `gh pr merge` (and `gh pr view`) accept all four as a valid target. Empty if
+# none given (the command then targets the current branch's PR). Used as a
+# fail-closed fallback so a branch-name or URL target is verified directly
+# via `gh pr view <target>` instead of silently falling back to checking the
+# CURRENT branch's PR — which would let a crafted `gh pr merge
+# <other-branch-or-url>` merge a different, unverified PR while the guard
+# checks the wrong one. Flag-aware like gh_pr_merge_number(): skips both a
+# value-consuming flag and the token supplying its value (e.g. `--repo
+# owner/repo`), so the flag's value is never misread as the target.
 gh_pr_merge_target() {
-  local rest tok
+  local rest tok skip_next=0
   rest="$(printf '%s' "$norm" | sed -n 's/.*gh[[:space:]][[:space:]]*pr[[:space:]][[:space:]]*merge[[:space:]][[:space:]]*//p')"
-  for tok in $rest; do
+  while IFS= read -r tok; do
+    if [ "$skip_next" -eq 1 ]; then
+      skip_next=0
+      continue
+    fi
     case "$tok" in
-      -*) continue ;;
+      -*)
+        _gh_pr_merge_is_value_flag "$tok" && skip_next=1
+        continue
+        ;;
     esac
     printf '%s' "$tok"
     return 0
-  done
+  done < <(tokenize "$rest")
   printf ''
 }
 
