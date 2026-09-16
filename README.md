@@ -309,7 +309,7 @@ Copilot reads `.github/instructions/*.instructions.md`, Kiro reads `.kiro/steeri
 
 ### Hooks
 
-`git-guard` blocks pushes and merges to `main`, non-Conventional commit messages, and inline `gh --body`. `branch-guard` blocks write operations while on the default branch. Both are best-effort; human PR review is the actual gate.
+`git-guard` blocks pushes and merges into the default branch (resolved dynamically — `master`/`trunk` repos are protected identically to `main`), including `gh pr merge` with its base resolved via `gh pr view` and the raw-git escape of merging a story/issue branch straight into an integration branch, plus non-Conventional commit messages and inline `gh --body`. `branch-guard` blocks write operations while on the default branch. Both are best-effort; human PR review is the actual gate.
 
 ---
 

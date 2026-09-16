@@ -87,7 +87,7 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.cla
 
 | Hook         | Purpose                                                                      |
 | ------------ | ---------------------------------------------------------------------------- |
-| git-guard    | Blocks pushes/merges to `main`, non-Conventional commits, inline `gh --body` |
+| git-guard    | Blocks pushes/merges into the default branch (resolved dynamically, not hardcoded to `main`) — including `gh pr merge` with its base resolved via `gh pr view`, and the raw-git escape of merging a story/issue branch into an integration branch — plus non-Conventional commits and inline `gh --body` |
 | branch-guard | Blocks write operations on default branch                                    |
 
 Hook enforcement is best-effort. Human PR review is the actual gate.
