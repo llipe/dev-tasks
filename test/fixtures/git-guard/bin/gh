@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Stub `gh` for git-guard-merge.test.ts. Never touches the network — every
+# response is a canned value driven by env vars so rule 3's base-resolution
+# and fail-closed paths are deterministic in CI.
+#
+#   GIT_GUARD_STUB_PR_BASE       - stdout for `gh pr view [n] --json baseRefName -q .baseRefName`
+#                                  when called with NO argument, OR as the fallback
+#                                  when a per-argument override (below) is not set.
+#   GIT_GUARD_STUB_PR_BASE_FOR_<KEY> - per-argument override: stdout for `gh pr view <arg>
+#                                  --json baseRefName -q .baseRefName` when <arg> sanitizes
+#                                  to <KEY> (non-alnum chars -> `_`, uppercased). Lets a test
+#                                  give a different base for a NAMED target (a PR number,
+#                                  branch name, or URL) than for the bare no-argument call
+#                                  (which resolves the CURRENT branch's PR) — this is what
+#                                  catches a bug class where the guard falls back to checking
+#                                  the current branch's PR instead of the one actually named.
+#   GIT_GUARD_STUB_PR_BASE_EXIT  - exit code for that same call (default 0; non-zero simulates
+#                                  an unauthenticated session or a network/lookup failure)
+#   GIT_GUARD_STUB_DEFAULT_BRANCH - stdout for `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`
+set -uo pipefail
+
+sanitize_key() {
+  printf '%s' "$1" | tr -c 'A-Za-z0-9' '_' | tr 'a-z' 'A-Z'
+}
+
+if [ "${1:-}" = "pr" ] && [ "${2:-}" = "view" ]; then
+  exit_code="${GIT_GUARD_STUB_PR_BASE_EXIT:-0}"
+  if [ "$exit_code" != "0" ]; then
+    exit "$exit_code"
+  fi
+  arg="${3:-}"
+  case "$arg" in
+    -*|"") arg="" ;;
+  esac
+  if [ -n "$arg" ]; then
+    key="GIT_GUARD_STUB_PR_BASE_FOR_$(sanitize_key "$arg")"
+    val="$(eval "printf '%s' \"\${$key:-}\"")"
+    if [ -n "$val" ]; then
+      printf '%s\n' "$val"
+      exit 0
+    fi
+  fi
+  printf '%s\n' "${GIT_GUARD_STUB_PR_BASE:-}"
+  exit 0
+fi
+
+if [ "${1:-}" = "repo" ] && [ "${2:-}" = "view" ]; then
+  printf '%s\n' "${GIT_GUARD_STUB_DEFAULT_BRANCH:-main}"
+  exit 0
+fi
+
+exit 0

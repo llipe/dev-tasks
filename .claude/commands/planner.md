@@ -417,7 +417,7 @@ For each completed story PR:
 10. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test and quality-gate results) and approve it.
 11. Merge PR into integration branch using one consistent strategy (default: `squash`).
 12. Confirm integration branch is green after merge before moving to next story.
-13. **Write checkpoint** — update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table.
+13. **Verify the merge actually happened, then write checkpoint.** Before writing `✅ Merged` to the state file, confirm observed GitHub state — run `gh pr view <n> --json state,mergedAt` and require `state` to be `MERGED` and `mergedAt` to be non-null. If the check fails or errors, do **not** write `✅ Merged`; mark the story blocked, report the exact `gh pr view` output, and stop rather than guessing at the outcome. Only once this is confirmed: update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table.
 
 If any merge gate fails, stop and report exact blocker and PR link.
 
