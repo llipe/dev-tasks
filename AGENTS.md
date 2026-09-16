@@ -85,10 +85,12 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.cla
 
 ## Hooks
 
-| Hook         | Purpose                                                                      |
-| ------------ | ---------------------------------------------------------------------------- |
-| git-guard    | Blocks pushes/merges into the default branch (resolved dynamically, not hardcoded to `main`) — including `gh pr merge` with its base resolved via `gh pr view` (not a `--base` text check), `gh pr merge --admin` (blocked outright), `gh pr merge --auto` when the resolved base is the default branch, and the raw-git escape of merging a story/issue branch into an integration branch — plus non-Conventional commits, inline `gh --body`, and human-only tags |
-| branch-guard | Blocks write operations on default branch                                    |
+Kiro (`.kiro/hooks/`) and Claude Code (`.claude/hooks/`, wired via `.claude/settings.json`) both ship these two `PreToolUse` hooks; Copilot has no hook system, so its enforcement is prompt-level only.
+
+| Hook         | Matcher (Claude Code)   | Purpose                                                                      |
+| ------------ | ------------------------ | ---------------------------------------------------------------------------- |
+| git-guard    | `Bash`                   | Blocks pushes/merges into the default branch (resolved dynamically, not hardcoded to `main`) — including `gh pr merge` with its base resolved via `gh pr view` (not a `--base` text check), `gh pr merge --admin` (blocked outright), `gh pr merge --auto` when the resolved base is the default branch, and the raw-git escape of merging a story/issue branch into an integration branch — plus non-Conventional commits, inline `gh --body`, and human-only tags |
+| branch-guard | `Edit\|Write\|NotebookEdit` | Blocks write operations on default branch                                    |
 
 Hook enforcement is best-effort and fails open on unexpected errors, with one exception: if `git-guard` cannot verify a `gh pr merge`'s base branch (the `gh pr view` lookup fails — `gh` missing, unauthenticated, or a network error), it fails **closed** and blocks the merge, since an unverified base could be the default branch. Human PR review remains the actual gate.
 
