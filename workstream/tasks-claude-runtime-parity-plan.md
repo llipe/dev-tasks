@@ -4,7 +4,9 @@ Source: two review passes over `.claude/` (tooling/guardrails/token profile, the
 
 **Theme:** every finding here has one root cause. The `.claude` tree's *contracts* are at parity with Kiro and Copilot; its *runtime bindings* are not. Enforcement Claude expresses through a consumer-owned file (`.claude/settings.json`, `CLAUDE.md`) is undeliverable, while Kiro expresses the same things through managed paths and ships them working. Task 1 is the unblocker: tasks 2 and 6 produce nothing a consumer can use until it lands.
 
-Sequencing: 1 → 2, 1 → 6b. Tasks 3, 4, 5, 7 are independent and may run in any order. Task 8 depends on 1, 2, and 3 because it asserts their installed state.
+Sequencing: 1 → 2, 1 → 6b, 1 → 9 → 10. Task 11 is prompt-level and independent, but should land with or after 9 so its guidance matches the corrected guard. Tasks 3, 4, 5, 7 are independent and may run in any order. Task 8 depends on 1, 2, and 3 because it asserts their installed state.
+
+**Tasks 9-11 were added after a reported `/planner` symptom:** story branches arriving on the integration branch with no PR review trail. Root cause confirmed — `git-guard.sh` blocks the merge command `planner` is mandated to run, and permits the unreviewed alternative. They are the highest-priority items in this list after task 1.
 
 Each parent task is one PR on an `issue/*` branch. Per repository default, every parent task begins with a failing test.
 
@@ -13,14 +15,17 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
 > - **Developer-subagent gate ownership** (original blocking defect #1). The `developer` subagent declares no `Task` tool (`.claude/agents/developer.md:4`) but carries seven MUST-level rules to invoke `verifier`, `qa-engineer`, `technical-writer`, `github-ops`, and `researcher`. Under `/planner` delegation those gates cannot execute, and `planner`'s merge gate (`.claude/commands/planner.md:413`) validates a `verifier_audit: run` string the developer writes about itself. This is a design change to where gates are owned, not a binding fix. **Task 7 collides with it — see the decision point there.**
 > - **Wiring `dt ctx assemble` into the agents.** A design question, not a defect.
 
-> **Note — task 2.4 is an addition.** The `gh pr merge --base` guard defect was blocking defect #3 in the first review but was not part of the requested 2-4 sequence. It is included because it lives in the same file as the branch-guard work and currently blocks `/planner`'s autonomous story-PR merges. Strike 2.4 and its AC if you want this list held to the exact original scope.
+> **Note — the `gh pr merge` guard defect was promoted out of task 2.** It began as an optional addition and is now **task 9**, confirmed as the cause of an observed `/planner` failure. Task 2 covers `branch-guard` only.
 
 ## Relevant Files
 
 - `templates/claude/settings.json` - new; the PreToolUse hook wiring and permission allowlist a consumer install must deliver
 - `.claude/settings.json` - this repo's own copy; kept in sync with the template
 - `.claude/hooks/branch-guard.sh` - new; port of `.kiro/hooks/scripts/branch-guard.sh`
-- `.claude/hooks/git-guard.sh` - rule 3 (`gh pr merge`) correction
+- `.claude/hooks/git-guard.sh` - rule 3 base resolution, raw-git escape, `--admin`/`--auto`, dynamic default branch, rule 4 false positive
+- `.claude/commands/planner.md` - post-merge verification, blocked-guard error handling
+- `.claude/agents/github-ops.md` - MCP equivalents for mutating operations, merge authority
+- `.claude/skills/activity-init/SKILL.md` - branch protection as a setup step
 - `.kiro/hooks/scripts/branch-guard.sh`, `.kiro/hooks/git-guard.json` - port source and wiring reference
 - `core/distribution/profiles.ts` - `PROFILE_PATHS`, `ROOT_FILES`, install-if-absent set
 - `core/distribution/install.ts` - root-file and template install semantics
@@ -67,12 +72,9 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 2.1 Write `test/unit/claude-hooks-wiring.test.ts`: assert `templates/claude/settings.json` registers `git-guard.sh` on `Bash` and `branch-guard.sh` on `Edit|Write|NotebookEdit`, and that both scripts exist and are executable; confirm it fails
   - [ ] 2.2 Port `.kiro/hooks/scripts/branch-guard.sh` to `.claude/hooks/branch-guard.sh`, preserving fail-open behaviour on a missing/unavailable git repo. Drop the Kiro-specific `toolArgs` limitation comment; the script depends only on the current branch
   - [ ] 2.3 Register both hooks in `templates/claude/settings.json` and in this repo's `.claude/settings.json`
-  - [ ] 2.4 **(Addition — see scope note.)** Fix `git-guard.sh:55-66` rule 3. The guard refuses any `gh pr merge` lacking `--base`, but the repository's own canonical merge commands carry no such flag (`.claude/skills/git-ops/SKILL.md:101`, `.claude/agents/github-ops.md:49`), and `gh pr merge` does not accept `--base` — confirm against the installed `gh` before editing. Replace the flag check with a base-branch determination that does not depend on a non-existent flag (resolve the PR's actual base, block only when it is `main`), and correct the block message
-  - [ ] 2.5 Write `test/unit/git-guard-merge.test.ts` covering rules 1 and 3, which have no coverage today (only rule 4 / tags is tested in `test/unit/git-guard-tags.test.ts`): pushes to `main`, merges while on `main`, a story-PR merge into an integration branch (must pass), a PR merge into `main` (must block)
-  - [ ] 2.6 Verify Acceptance Criterion: an `Edit` or `Write` attempted while on `main` is blocked with the branch-guard message; the same call on an `issue/*` branch passes
-  - [ ] 2.7 Verify Acceptance Criterion: `planner`'s documented story-PR merge command into an integration branch is permitted; a merge into `main` is blocked
-  - [ ] 2.8 Verify Acceptance Criterion: `AGENTS.md` and `README.md` hook tables describe the shipped Claude state accurately
-  - [ ] 2.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [ ] 2.4 Verify Acceptance Criterion: an `Edit` or `Write` attempted while on `main` is blocked with the branch-guard message; the same call on an `issue/*` branch passes
+  - [ ] 2.5 Verify Acceptance Criterion: `AGENTS.md` and `README.md` hook tables describe the shipped Claude state accurately
+  - [ ] 2.6 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 3.0 Deliver Claude root context to consumers
 
@@ -156,6 +158,50 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 8.6 Verify Acceptance Criterion: the test fails if a hook script is shipped without a matching trigger registration
   - [ ] 8.7 Verify Acceptance Criterion: the test passes for all three profiles and for `--profile all`
   - [ ] 8.8 Run Tests: `pnpm run test:integration`, `pnpm run validate`
+
+- [ ] 9.0 Fix the `planner` merge path (depends on 1.0) — **confirmed live defect**
+
+  > Note: observed symptom — story branches land on the integration branch with no PR review trail. Cause: `git-guard.sh:60-66` blocks any `gh pr merge` lacking `--base`; `gh pr merge` has no `--base` flag (it belongs to `gh pr create`), and the repository's own canonical merge commands carry none (`.claude/skills/git-ops/SKILL.md:101`, `.claude/agents/github-ops.md:49`). So `planner`'s mandated merge command is unconditionally blocked, while `git checkout integration && git merge story/… && git push origin integration` is fully permitted — rule 1 only blocks `git merge` when HEAD is `main`, and the push is not to `main`. **The guard blocks the reviewable path and permits the unreviewable one.** A `--squash` raw merge also rewrites commits, so GitHub never marks the PR merged: the state file records `✅ Merged` while the PR sits open. That divergence is the diagnostic signature.
+
+  - [ ] 9.1 Write `test/unit/git-guard-merge.test.ts` covering rules 1 and 3, which have no coverage today (only rule 4 / tags is tested): a story-PR merge into an integration branch (must pass), a PR merge into `main` (must block), a `git merge` of a `story/*` branch into `integration/*` (must block after 9.4), a push to `main` (must block). Confirm it fails
+  - [ ] 9.2 Replace the `--base` flag check in rule 3 with real base resolution: extract the PR number from the command (or resolve the current branch's PR when omitted) and read the base via `gh pr view <n> --json baseRefName -q .baseRefName`. Block only when the base is the default branch. Confirm `gh pr merge`'s actual flag set against the installed `gh` before editing
+  - [ ] 9.3 **Decision — failure mode on base lookup.** The script's header contract is global fail-open. For this rule, recommend **fail-closed**: when the base cannot be determined (no `gh`, unauthenticated, network error), block with a message naming the verification command, because failing open here permits an unreviewed merge into `main`. Record the exception in the script header so the contract stays honest
+  - [ ] 9.4 Close the raw-git escape: block `git merge` of a `story/*` or `issue/*` branch into an `integration/*` branch, with a message naming `gh pr merge <n> --squash --delete-branch` as the permitted path. The policy is that story work reaches integration through a reviewed PR; the guard must enforce the same thing the prompt mandates
+  - [ ] 9.5 Block `gh pr merge --admin` outright (it bypasses branch protection) and block `--auto` on a PR whose base is the default branch (it defers an unapproved merge rather than preventing one)
+  - [ ] 9.6 Replace the hardcoded `main` throughout `git-guard.sh` with a resolved default branch (`git symbolic-ref refs/remotes/origin/HEAD`, falling back to `gh repo view --json defaultBranchRef`, then to `main`). dev-tasks installs into other people's repositories; a repo on `master` or `trunk` currently gets no protection at all from any of the four rules
+  - [ ] 9.7 Fix the rule-4 tag-push false positive: `v[0-9]+\.[0-9]+\.[0-9]+` matches anywhere in the command, so pushing a branch named `issue/42-bump-v1.2.3` is blocked as a tag push. Anchor the pattern to a ref position
+  - [ ] 9.8 Add a `planner` post-merge verification step to `.claude/commands/planner.md` merge gate 13: before writing `✅ Merged` to the state file, confirm `gh pr view <n> --json state,mergedAt` reports merged. The checkpoint must record observed GitHub state, not planner's belief — this is what let the state file and GitHub diverge silently
+  - [ ] 9.9 Verify Acceptance Criterion: `planner`'s documented story-PR merge into an integration branch succeeds end to end, and the PR shows as merged on GitHub
+  - [ ] 9.10 Verify Acceptance Criterion: every route into the default branch is blocked — `gh pr merge`, `--admin`, `--auto`, `git merge` while on it, `git push` to it
+  - [ ] 9.11 Verify Acceptance Criterion: a repository whose default branch is `master` receives identical protection
+  - [ ] 9.12 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+
+- [ ] 10.0 Close the MCP bypass and establish the durable gate (depends on 9.0)
+
+  > Note: `.claude/settings.json` matches `"Bash"` only. `github-ops.md:49` explicitly offers `merge_pull_request` as the MCP equivalent of `gh pr merge`, and `CLAUDE.md:35` states that where a GitHub MCP server is configured, "agents may use it instead." **All four git-guard invariants — merge/push to the default branch, Conventional Commits, inline `--body`, tag operations — are bypassed completely on the MCP path.** Any consumer with the GitHub MCP server enabled has no enforcement whatsoever, whatever the hook says.
+  >
+  > Pushing back on the architecture: regex-matching shell command strings is the wrong primary gate for this. It has already produced one blocked-correct-path, one permitted-wrong-path, one false positive (9.7), one hardcoded-branch gap (9.6), and a total bypass. `AGENTS.md:93` already concedes "hook enforcement is best-effort." The durable gate for "no agent merges into the default branch" is a **GitHub branch protection rule** — server-side, unbypassable by any tool surface, Bash or MCP. Sub-task 10.4 is the one that actually closes this; the hook work is fast local feedback, not the control.
+
+  - [ ] 10.1 Write a test asserting the hook matcher covers the mutating GitHub MCP tool names as well as `Bash`; confirm it fails
+  - [ ] 10.2 Extend the `PreToolUse` matcher in `templates/claude/settings.json` to cover the mutating MCP surface — `mcp__github__merge_pull_request`, `enable_pr_auto_merge`, `push_files`, `create_or_update_file`, `delete_file`, `create_branch` — and add a guard branch that reads `tool_input` rather than a command string for those calls
+  - [ ] 10.3 Reconcile the policy text: either `github-ops.md` stops offering unguarded MCP equivalents for mutating operations, or the guard covers them. Do not leave the table advertising a bypass
+  - [ ] 10.4 **Document branch protection as the required control**, not an optional hardening step: on the default branch require a PR, at least one approving review, and passing status checks, with force-push and deletion disabled. Add it to the README install section and to `activity-init` as a setup step, so consumers configure it when they adopt dev-tasks. State plainly in `AGENTS.md` that hooks are advisory and branch protection is the gate
+  - [ ] 10.5 Verify Acceptance Criterion: an attempted merge into the default branch via the MCP tool is blocked by the hook
+  - [ ] 10.6 Verify Acceptance Criterion: with branch protection configured, the same merge fails server-side even with every hook disabled
+  - [ ] 10.7 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+
+- [ ] 11.0 Never route around a blocked guard — behavioural rules
+
+  > Note: the deepest lesson from this defect is not the regex. An agent under a **MUST** instruction, whose mandated command is blocked, will find another way to satisfy the instruction. That is rational behaviour given the prompt, and no amount of guard-patching prevents the next instance. Two structural rules prevent the whole class: a blocked guard must be terminal, and every block message must name the permitted path.
+
+  - [ ] 11.1 Add to `CLAUDE.md` General Agent Guidelines: when a hook blocks a tool call, the agent **MUST** surface the block verbatim and stop that line of work. It **MUST NOT** attempt an alternative command, tool surface, or sequence that achieves the same effect. A blocked guard is a decision, not an obstacle
+  - [ ] 11.2 Mirror the rule into `AGENTS.md` General Agent Guidelines so all three platforms carry it
+  - [ ] 11.3 Audit all four `git-guard.sh` block messages: each **MUST** name the permitted alternative, or state plainly that the action is human-only. Rule 3's current message names a flag that does not exist — the direct cause of the route-around
+  - [ ] 11.4 Add an Error Handling row to `.claude/commands/planner.md`: *merge command blocked by git-guard* → report the block verbatim, mark the story blocked, write the checkpoint, ask the user. Never attempt an alternative merge path
+  - [ ] 11.5 Add the same row to the `developer` agent and command for the commit and PR paths
+  - [ ] 11.6 Verify Acceptance Criterion: a `/planner` run against a deliberately blocked merge stops and reports, leaving the integration branch untouched
+  - [ ] 11.7 Verify Acceptance Criterion: every guard block message names a permitted path or an owner
+  - [ ] 11.8 Run Tests: `pnpm run test:unit`, `pnpm run format:check`
 
 ## Completion
 
