@@ -87,10 +87,10 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.cla
 
 | Hook         | Purpose                                                                      |
 | ------------ | ---------------------------------------------------------------------------- |
-| git-guard    | Blocks pushes/merges into the default branch (resolved dynamically, not hardcoded to `main`) — including `gh pr merge` with its base resolved via `gh pr view`, and the raw-git escape of merging a story/issue branch into an integration branch — plus non-Conventional commits and inline `gh --body` |
+| git-guard    | Blocks pushes/merges into the default branch (resolved dynamically, not hardcoded to `main`) — including `gh pr merge` with its base resolved via `gh pr view` (not a `--base` text check), `gh pr merge --admin` (blocked outright), `gh pr merge --auto` when the resolved base is the default branch, and the raw-git escape of merging a story/issue branch into an integration branch — plus non-Conventional commits, inline `gh --body`, and human-only tags |
 | branch-guard | Blocks write operations on default branch                                    |
 
-Hook enforcement is best-effort. Human PR review is the actual gate.
+Hook enforcement is best-effort and fails open on unexpected errors, with one exception: if `git-guard` cannot verify a `gh pr merge`'s base branch (the `gh pr view` lookup fails — `gh` missing, unauthenticated, or a network error), it fails **closed** and blocks the merge, since an unverified base could be the default branch. Human PR review remains the actual gate.
 
 ## General Agent Guidelines
 
