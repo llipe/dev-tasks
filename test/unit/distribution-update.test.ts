@@ -848,4 +848,121 @@ describe("core/distribution/update — runUpdate()", () => {
       expect(existsSync(join(repoRoot, ".claude/agents/qa-engineer.md"))).toBe(false);
     });
   });
+
+  /**
+   * `.claude/settings.json` install-if-absent delivery via `update` (issue #169,
+   * task 1.0). A consumer who installed before this feature landed has a
+   * manifest with a "claude" entry but no `.claude/settings.json` entry;
+   * running `update` must deliver it (mirroring fresh `install`) without ever
+   * overwriting a copy that already exists on disk.
+   */
+  describe("install-if-absent settings delivery (#169)", () => {
+    const TEMPLATE = '{\n  "hooks": {\n    "PreToolUse": []\n  }\n}\n';
+
+    it("delivers .claude/settings.json when the claude profile is tracked but the file is absent", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const existingContent = "# Claude Dev";
+      createFile(repoRoot, ".claude/agents/developer.md", existingContent);
+      createFile(packageRoot, ".claude/agents/developer.md", existingContent);
+      createFile(packageRoot, "templates/claude/settings.json", TEMPLATE);
+
+      writeManifest(repoRoot, {
+        version: "0.8.0",
+        pinned: "0.8.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".claude/agents/developer.md",
+            profile: "claude",
+            sha256: hashContent(existingContent),
+            origin_sha256: hashContent(existingContent),
+          },
+        ],
+        extraction: {},
+      });
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      expect(existsSync(join(repoRoot, ".claude/settings.json"))).toBe(true);
+      expect(readFileSync(join(repoRoot, ".claude/settings.json"), "utf-8")).toBe(TEMPLATE);
+      expect(result.installed.some((f) => f.path === ".claude/settings.json")).toBe(true);
+    });
+
+    it("never overwrites a consumer-modified .claude/settings.json that already exists", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const existingContent = "# Claude Dev";
+      const consumerCustom = '{\n  "permissions": { "allow": ["git status"] }\n}\n';
+      createFile(repoRoot, ".claude/agents/developer.md", existingContent);
+      createFile(repoRoot, ".claude/settings.json", consumerCustom);
+      createFile(packageRoot, ".claude/agents/developer.md", existingContent);
+      createFile(packageRoot, "templates/claude/settings.json", TEMPLATE);
+
+      writeManifest(repoRoot, {
+        version: "0.8.0",
+        pinned: "0.8.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".claude/agents/developer.md",
+            profile: "claude",
+            sha256: hashContent(existingContent),
+            origin_sha256: hashContent(existingContent),
+          },
+        ],
+        extraction: {},
+      });
+
+      await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      expect(readFileSync(join(repoRoot, ".claude/settings.json"), "utf-8")).toBe(consumerCustom);
+    });
+
+    it("does not deliver .claude/settings.json when the claude profile is not tracked", async () => {
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const existingContent = "# Kiro Dev";
+      createFile(repoRoot, ".kiro/agents/developer.md", existingContent);
+      createFile(packageRoot, ".kiro/agents/developer.md", existingContent);
+      createFile(packageRoot, "templates/claude/settings.json", TEMPLATE);
+
+      writeManifest(repoRoot, {
+        version: "0.8.0",
+        pinned: "0.8.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".kiro/agents/developer.md",
+            profile: "kiro",
+            sha256: hashContent(existingContent),
+            origin_sha256: hashContent(existingContent),
+          },
+        ],
+        extraction: {},
+      });
+
+      await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: false,
+        version: "0.9.0",
+      });
+
+      expect(existsSync(join(repoRoot, ".claude/settings.json"))).toBe(false);
+    });
+  });
 });

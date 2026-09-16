@@ -64,6 +64,35 @@ export const ROOT_FILES: readonly string[] = ["DESIGN.md", "TESTING.md"] as cons
  */
 export const ROOT_PROFILE_TAG = "root";
 
+/** An install-if-absent file entry: source path in the package, target path in the consumer repo. */
+export interface InstallIfAbsentFile {
+  /** Relative path inside the package (source). */
+  source: string;
+  /** Relative path in the consumer repo (target). */
+  target: string;
+  /** Platform this file belongs to. */
+  platform: Platform;
+}
+
+/**
+ * Files delivered with install-if-absent semantics: written when the target
+ * is missing, never overwritten once present — distinct from `ROOT_FILES`
+ * (unconditional overwrite on every `install`) and from the standard
+ * managed-directory files under `PROFILE_PATHS` (always re-synced).
+ *
+ * `.claude/settings.json` wires the shipped Claude hook scripts and carries a
+ * consumer's `permissions.allow` entries and any local hooks; those must
+ * survive `install` and `update`, so the file is delivered once and then
+ * fully consumer-owned. See docs/adr/ADR-006-claude-settings-ownership.md.
+ *
+ * Source and target intentionally differ here (`templates/claude/settings.json`
+ * -> `.claude/settings.json`) — the one respect in which this category is not
+ * a bare-directory mirror like `PROFILE_PATHS`.
+ */
+export const INSTALL_IF_ABSENT_FILES: readonly InstallIfAbsentFile[] = [
+  { source: "templates/claude/settings.json", target: ".claude/settings.json", platform: "claude" },
+] as const;
+
 /** Valid profile values for CLI validation. */
 export const VALID_PROFILES: readonly Profile[] = [
   "copilot",

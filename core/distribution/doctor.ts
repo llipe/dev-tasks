@@ -3,7 +3,7 @@
  * Checks: Node >= 24, git >= 2.37, cache dir writable, version skew.
  */
 
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, writeFile, rm, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
 import { readManifest } from "./manifest.js";
@@ -153,6 +153,84 @@ export function checkVersionSkew(installed: string | null, pinned: string | null
 }
 
 /**
+ * Check that every `.claude/hooks/*.sh` script is wired into a `PreToolUse`
+ * entry in `.claude/settings.json`.
+ *
+ * `.claude/settings.json` is delivered with install-if-absent semantics
+ * (docs/adr/ADR-006-claude-settings-ownership.md): it is never force-synced
+ * to match newly shipped hook scripts, so a repo can legitimately end up with
+ * hook scripts on disk that nothing wires. This check surfaces that drift by
+ * name instead of leaving the hooks silently inert.
+ */
+export async function checkClaudeHooksWiring(repoRoot: string): Promise<DoctorCheck> {
+  const hooksDir = join(repoRoot, ".claude", "hooks");
+  let scripts: string[] = [];
+  try {
+    const entries = await readdir(hooksDir, { withFileTypes: true });
+    scripts = entries
+      .filter((e) => e.isFile() && e.name.endsWith(".sh"))
+      .map((e) => e.name)
+      .sort();
+  } catch {
+    scripts = [];
+  }
+
+  if (scripts.length === 0) {
+    return {
+      name: "claude-hooks-wiring",
+      pass: true,
+      message: "No .claude/hooks/*.sh scripts found; nothing to wire.",
+    };
+  }
+
+  const settingsPath = join(repoRoot, ".claude", "settings.json");
+  let settingsRaw: string;
+  try {
+    settingsRaw = await readFile(settingsPath, "utf-8");
+  } catch {
+    return {
+      name: "claude-hooks-wiring",
+      pass: false,
+      message: `.claude/settings.json is missing; unwired hook script(s): ${scripts.join(", ")}`,
+    };
+  }
+
+  let wiredCommands: string;
+  try {
+    const parsed = JSON.parse(settingsRaw) as {
+      hooks?: { PreToolUse?: Array<{ hooks?: Array<{ command?: string }> }> };
+    };
+    const preToolUse = parsed.hooks?.PreToolUse ?? [];
+    wiredCommands = preToolUse
+      .flatMap((entry) => entry.hooks ?? [])
+      .map((h) => h.command ?? "")
+      .join("\n");
+  } catch {
+    return {
+      name: "claude-hooks-wiring",
+      pass: false,
+      message: `.claude/settings.json is not valid JSON; cannot verify hook wiring for: ${scripts.join(", ")}`,
+    };
+  }
+
+  const unwired = scripts.filter((script) => !wiredCommands.includes(script));
+
+  if (unwired.length > 0) {
+    return {
+      name: "claude-hooks-wiring",
+      pass: false,
+      message: `Unwired hook script(s) in .claude/hooks not referenced by any PreToolUse entry in .claude/settings.json: ${unwired.join(", ")}`,
+    };
+  }
+
+  return {
+    name: "claude-hooks-wiring",
+    pass: true,
+    message: `All .claude/hooks/*.sh scripts (${scripts.join(", ")}) are wired in .claude/settings.json PreToolUse`,
+  };
+}
+
+/**
  * Get the default cache directory.
  * Uses $XDG_CACHE_HOME/dev-tasks or ~/.cache/dev-tasks.
  */
@@ -178,6 +256,7 @@ export async function runDoctor(options: DoctorOptions): Promise<DoctorCheck[]> 
     checkGitVersion(),
     await checkCacheDir(cacheDir),
     checkVersionSkew(installed, pinned),
+    await checkClaudeHooksWiring(repoRoot),
   ];
 
   return checks;
