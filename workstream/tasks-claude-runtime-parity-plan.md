@@ -67,16 +67,16 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [x] 1.11 Verify Acceptance Criterion: `doctor` warns on a hooks-present / settings-absent repo and is silent on a correctly wired one
   - [x] 1.12 Run Tests: `pnpm run test:unit`, `pnpm run test:integration`, `pnpm run validate`
 
-- [ ] 2.0 Restore deterministic enforcement on Claude (depends on 1.0) — [#170](https://github.com/llipe/dev-tasks/issues/170)
+- [x] 2.0 Restore deterministic enforcement on Claude (depends on 1.0) — [#170](https://github.com/llipe/dev-tasks/issues/170)
 
   > Note: `.claude/settings.json` currently matches `Bash` only. Claude Code writes files through `Edit`/`Write`, never the shell, so `git-guard.sh` never observes a single file write. `AGENTS.md:91` and `README.md:312` both document `branch-guard` as active; it exists only under `.kiro/`. Writes on `main` are today defended by prompt language alone — precisely the bypass the hook was written to backstop.
 
-  - [ ] 2.1 Write `test/unit/claude-hooks-wiring.test.ts`: assert `templates/claude/settings.json` registers `git-guard.sh` on `Bash` and `branch-guard.sh` on `Edit|Write|NotebookEdit`, and that both scripts exist and are executable; confirm it fails
-  - [ ] 2.2 Port `.kiro/hooks/scripts/branch-guard.sh` to `.claude/hooks/branch-guard.sh`, preserving fail-open behaviour on a missing/unavailable git repo. Drop the Kiro-specific `toolArgs` limitation comment; the script depends only on the current branch
-  - [ ] 2.3 Register both hooks in `templates/claude/settings.json` and in this repo's `.claude/settings.json`
-  - [ ] 2.4 Verify Acceptance Criterion: an `Edit` or `Write` attempted while on `main` is blocked with the branch-guard message; the same call on an `issue/*` branch passes
-  - [ ] 2.5 Verify Acceptance Criterion: `AGENTS.md` and `README.md` hook tables describe the shipped Claude state accurately
-  - [ ] 2.6 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [x] 2.1 Write `test/unit/claude-hooks-wiring.test.ts`: assert `templates/claude/settings.json` registers `git-guard.sh` on `Bash` and `branch-guard.sh` on `Edit|Write|NotebookEdit`, and that both scripts exist and are executable; confirm it fails
+  - [x] 2.2 Port `.kiro/hooks/scripts/branch-guard.sh` to `.claude/hooks/branch-guard.sh`, preserving fail-open behaviour on a missing/unavailable git repo. Drop the Kiro-specific `toolArgs` limitation comment; the script depends only on the current branch
+  - [x] 2.3 Register both hooks in `templates/claude/settings.json` and in this repo's `.claude/settings.json`
+  - [x] 2.4 Verify Acceptance Criterion: an `Edit` or `Write` attempted while on `main` is blocked with the branch-guard message; the same call on an `issue/*` branch passes
+  - [x] 2.5 Verify Acceptance Criterion: `AGENTS.md` and `README.md` hook tables describe the shipped Claude state accurately
+  - [x] 2.6 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 3.0 Deliver Claude root context to consumers — [#171](https://github.com/llipe/dev-tasks/issues/171)
 
