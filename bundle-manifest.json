@@ -100,6 +100,12 @@
       "recursive": false
     },
     {
+      "path": "templates/claude",
+      "description": "Claude Code settings.json template (install-if-absent; wires hook scripts)",
+      "pattern": "*",
+      "recursive": true
+    },
+    {
       "path": "templates/infra",
       "description": "Infrastructure scaffolding templates (environments.yaml, redaction patterns)",
       "pattern": "*",
@@ -123,7 +129,6 @@
     "CLAUDE.md",
     "DESIGN.md",
     "TESTING.md",
-    ".claude/settings.json",
     ".kiro/settings/mcp.json",
     ".kiro/specs",
     "infra/",

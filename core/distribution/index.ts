@@ -21,7 +21,16 @@ export {
   checkGitVersion,
   checkCacheDir,
   checkVersionSkew,
+  checkClaudeHooksWiring,
 } from "./doctor.js";
 export type { DoctorCheck, DoctorOptions } from "./doctor.js";
-export { resolveProfile, isValidProfile, PROFILE_PATHS, VALID_PROFILES } from "./profiles.js";
-export type { Profile, Platform, ManagedPath } from "./profiles.js";
+export {
+  resolveProfile,
+  isValidProfile,
+  PROFILE_PATHS,
+  VALID_PROFILES,
+  INSTALL_IF_ABSENT_FILES,
+} from "./profiles.js";
+export type { Profile, Platform, ManagedPath, InstallIfAbsentFile } from "./profiles.js";
+export { deliverInstallIfAbsentFiles } from "./install-if-absent.js";
+export type { InstallIfAbsentResult } from "./install-if-absent.js";

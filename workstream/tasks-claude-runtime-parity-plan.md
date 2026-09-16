@@ -48,22 +48,24 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
 
 ## Tasks
 
-- [ ] 1.0 Make `.claude/settings.json` deliverable (unblocker for tasks 2 and 6b) — [#169](https://github.com/llipe/dev-tasks/issues/169)
+- [x] 1.0 Make `.claude/settings.json` deliverable (unblocker for tasks 2 and 6b) — [#169](https://github.com/llipe/dev-tasks/issues/169)
 
   > Note: `PROFILE_PATHS.claude` installs `.claude/hooks/` (the scripts) but `.claude/settings.json` — which wires them — is listed in `bundle-manifest.json:126` `consumer_owned_paths`. It is never installed, has no template, and `doctor` does not check it. The `kiro` profile installs `.kiro/hooks/` recursively, which includes `git-guard.json`, the wiring. Result: Kiro consumers get two live hooks; Claude consumers get two inert shell scripts that look installed. Copilot has no hook system at all, so Kiro is currently the only platform with working deterministic enforcement.
+  >
+  > **Scope note (execution):** per explicit direction at execution time, `templates/claude/settings.json` ships with a valid, empty-but-documented structure (`hooks.PreToolUse: []`, `permissions.allow: []`) in this task. The `PreToolUse` wiring content and `permissions.allow` contents are populated by tasks 2.0 and 6.0 (6b) respectively, not here. AC 1.9's literal "wires every shipped hook script" is therefore satisfied at the delivery-mechanism level by this task; the wiring *content* lands with task 2.0.
 
-  - [ ] 1.1 Write `test/unit/distribution-profiles.test.ts` additions asserting the Claude profile resolves a settings source and that `.claude/settings.json` is no longer in `consumer_owned_paths`; confirm it fails
-  - [ ] 1.2 Decide and record the ownership semantics in `docs/adr/ADR-006-claude-settings-ownership.md`: **install-if-absent**, not managed-overwrite. Rationale: a consumer's `permissions.allow` and any local hooks must survive `install` and `update`, so the unconditional-overwrite behaviour used for `ROOT_FILES` is wrong here. Include Context / Decision / Consequences / Alternatives per `AGENTS.md`
-  - [ ] 1.3 Create `templates/claude/settings.json` containing the `PreToolUse` wiring for both hooks (see task 2) and an empty-but-documented `permissions.allow` array (populated in task 6b)
-  - [ ] 1.4 Add `templates/claude` to `bundle-manifest.json` `managed_paths`, alongside the existing `templates/infra`, `templates/scripts`, `templates/workflows` entries
-  - [ ] 1.5 Implement install-if-absent in `core/distribution/install.ts`: a new path category that writes the target only when it does not already exist, distinct from `ROOT_FILES` (which overwrites). Wire `templates/claude/settings.json` → `.claude/settings.json` for the `claude` profile
-  - [ ] 1.6 Remove `.claude/settings.json` from `consumer_owned_paths`; confirm `update` still never clobbers a consumer-modified copy under the new semantics
-  - [ ] 1.7 Add a `doctor` check in `core/distribution/doctor.ts`: when `.claude/hooks/*.sh` exist but `.claude/settings.json` declares no matching `PreToolUse` entry, report a warning naming the unwired scripts
-  - [ ] 1.8 Add `templates/` coverage to `package.json` `files[]` if not already complete for the new directory
-  - [ ] 1.9 Verify Acceptance Criterion: `dev-tasks install --profile claude` into an empty temp dir produces a `.claude/settings.json` that wires every shipped hook script
-  - [ ] 1.10 Verify Acceptance Criterion: re-running `install` and running `update` against a consumer-modified `.claude/settings.json` leaves it byte-identical
-  - [ ] 1.11 Verify Acceptance Criterion: `doctor` warns on a hooks-present / settings-absent repo and is silent on a correctly wired one
-  - [ ] 1.12 Run Tests: `pnpm run test:unit`, `pnpm run test:integration`, `pnpm run validate`
+  - [x] 1.1 Write `test/unit/distribution-profiles.test.ts` additions asserting the Claude profile resolves a settings source and that `.claude/settings.json` is no longer in `consumer_owned_paths`; confirm it fails
+  - [x] 1.2 Decide and record the ownership semantics in `docs/adr/ADR-006-claude-settings-ownership.md`: **install-if-absent**, not managed-overwrite. Rationale: a consumer's `permissions.allow` and any local hooks must survive `install` and `update`, so the unconditional-overwrite behaviour used for `ROOT_FILES` is wrong here. Include Context / Decision / Consequences / Alternatives per `AGENTS.md`
+  - [x] 1.3 Create `templates/claude/settings.json` with a valid, empty-but-documented structure (`PreToolUse`/`permissions.allow` populated in tasks 2.0/6b, not here)
+  - [x] 1.4 Add `templates/claude` to `bundle-manifest.json` `managed_paths`, alongside the existing `templates/infra`, `templates/scripts`, `templates/workflows` entries
+  - [x] 1.5 Implement install-if-absent in `core/distribution/install.ts`: a new path category that writes the target only when it does not already exist, distinct from `ROOT_FILES` (which overwrites). Wire `templates/claude/settings.json` → `.claude/settings.json` for the `claude` profile
+  - [x] 1.6 Remove `.claude/settings.json` from `consumer_owned_paths`; confirm `update` still never clobbers a consumer-modified copy under the new semantics
+  - [x] 1.7 Add a `doctor` check in `core/distribution/doctor.ts`: when `.claude/hooks/*.sh` exist but `.claude/settings.json` declares no matching `PreToolUse` entry, report a warning naming the unwired scripts
+  - [x] 1.8 Add `templates/` coverage to `package.json` `files[]` if not already complete for the new directory (already complete — `templates/` covers `templates/claude/`)
+  - [x] 1.9 Verify Acceptance Criterion: `dev-tasks install --profile claude` into an empty temp dir produces a `.claude/settings.json` that wires every shipped hook script (delivery mechanism verified; wiring content lands with task 2.0 per scope note above)
+  - [x] 1.10 Verify Acceptance Criterion: re-running `install` and running `update` against a consumer-modified `.claude/settings.json` leaves it byte-identical
+  - [x] 1.11 Verify Acceptance Criterion: `doctor` warns on a hooks-present / settings-absent repo and is silent on a correctly wired one
+  - [x] 1.12 Run Tests: `pnpm run test:unit`, `pnpm run test:integration`, `pnpm run validate`
 
 - [ ] 2.0 Restore deterministic enforcement on Claude (depends on 1.0) — [#170](https://github.com/llipe/dev-tasks/issues/170)
 

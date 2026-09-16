@@ -22,10 +22,12 @@ import {
   PROFILE_PATHS,
   ROOT_FILES,
   ROOT_PROFILE_TAG,
+  INSTALL_IF_ABSENT_FILES,
   type Platform,
   type ManagedPath,
 } from "./profiles.js";
 import { runMigration } from "./migrate.js";
+import { deliverInstallIfAbsentFiles } from "./install-if-absent.js";
 
 export interface UpdateFileResult {
   path: string;
@@ -339,6 +341,29 @@ async function runReconciliation(
     }
   }
 
+  // Deliver install-if-absent files (e.g. .claude/settings.json) for every
+  // platform already tracked in the manifest — mirrors `install`, so a
+  // consumer who installed before this file existed still receives it on
+  // their next `update`. Never overwrites an existing file, and — like the
+  // `install` path — never tracked in the manifest; see
+  // core/distribution/install-if-absent.ts for the rationale.
+  if (platformsToScan.length > 0) {
+    const delivered = await deliverInstallIfAbsentFiles(sourceDir, targetDir, platformsToScan);
+    for (const result of delivered) {
+      if (!result.delivered) continue;
+      if (isConsumerOwned(result.path, consumerOwnedPaths)) continue;
+      const packageHash = await hashFile(join(sourceDir, result.source));
+      installed.push({
+        path: result.path,
+        profile: result.profile,
+        action: "install",
+        localHash: null,
+        originHash: packageHash,
+        packageHash,
+      });
+    }
+  }
+
   // Scan root files if the manifest has any platform entries (root files are profile-agnostic)
   if (profilesInManifest.size > 0) {
     for (const rootFile of ROOT_FILES) {
@@ -368,9 +393,13 @@ async function runReconciliation(
 
   // Update manifest with new hashes for installed/updated files, and add newly discovered files
   if (installed.length > 0 || updated.length > 0) {
+    // Install-if-absent files (e.g. .claude/settings.json) are deliberately
+    // never tracked in the manifest — see core/distribution/install-if-absent.ts.
+    const installIfAbsentTargets = new Set(INSTALL_IF_ABSENT_FILES.map((f) => f.target));
+
     // Build the new entries for discovered files (those not in the original manifest)
     const newEntries: ManagedFileEntry[] = installed
-      .filter((r) => !trackedPaths.has(r.path))
+      .filter((r) => !trackedPaths.has(r.path) && !installIfAbsentTargets.has(r.path))
       .map((r) => ({
         path: r.path,
         profile: r.profile,

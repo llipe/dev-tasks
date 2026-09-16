@@ -95,6 +95,57 @@ describe("core/distribution/profiles", () => {
 });
 
 /**
+ * `.claude/settings.json` deliverability (issue #169, task 1.0).
+ *
+ * The file that wires the shipped Claude hook scripts was listed in
+ * `bundle-manifest.json` `consumer_owned_paths` and never installed by any
+ * profile, so a `--profile claude` consumer got two inert shell scripts with
+ * nothing wiring them. `PROFILE_PATHS.claude` models directories only, so a
+ * single templated file with a different source/target relative path
+ * (`templates/claude/settings.json` -> `.claude/settings.json`) needs its own
+ * registry, distinct from `ROOT_FILES` (unconditional overwrite): a
+ * consumer's `permissions.allow` entries and any local hooks must survive
+ * both `install` and `update`, so the correct semantics are install-if-absent.
+ *
+ * See docs/adr/ADR-006-claude-settings-ownership.md.
+ */
+describe("core/distribution/profiles — install-if-absent settings source (#169)", () => {
+  it("exports INSTALL_IF_ABSENT_FILES", async () => {
+    const mod = (await import("#core/distribution/profiles.js")) as Record<string, unknown>;
+    expect(
+      mod.INSTALL_IF_ABSENT_FILES,
+      "profiles.ts must export INSTALL_IF_ABSENT_FILES so the Claude profile resolves a settings source",
+    ).toBeDefined();
+    expect(Array.isArray(mod.INSTALL_IF_ABSENT_FILES)).toBe(true);
+  });
+
+  it("resolves a settings source for the claude platform", async () => {
+    const mod = (await import("#core/distribution/profiles.js")) as {
+      INSTALL_IF_ABSENT_FILES: ReadonlyArray<{ source: string; target: string; platform: string }>;
+    };
+    const claudeSettings = mod.INSTALL_IF_ABSENT_FILES.find(
+      (f) => f.target === ".claude/settings.json",
+    );
+    expect(
+      claudeSettings,
+      "no install-if-absent entry resolves .claude/settings.json for the claude platform",
+    ).toBeDefined();
+    expect(claudeSettings?.source).toBe("templates/claude/settings.json");
+    expect(claudeSettings?.platform).toBe("claude");
+  });
+
+  it("keeps .claude/settings.json out of bundle-manifest.json consumer_owned_paths", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const raw = await readFile("bundle-manifest.json", "utf-8");
+    const parsed = JSON.parse(raw) as { consumer_owned_paths?: string[] };
+    expect(
+      parsed.consumer_owned_paths ?? [],
+      ".claude/settings.json must not be consumer-owned — install-if-absent semantics deliver it instead",
+    ).not.toContain(".claude/settings.json");
+  });
+});
+
+/**
  * Root-file (platform-agnostic) distribution — issue #123 AC-10.
  *
  * `PROFILE_PATHS` only models platform directories, so a repo-root contract file
