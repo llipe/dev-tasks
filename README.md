@@ -41,6 +41,17 @@ dev-tasks install --profile kiro          # .kiro/ only
 dev-tasks install --profile both          # copilot + claude only
 ```
 
+**What each profile delivers, beyond the platform-specific agent/skill/command directories:**
+
+| Profile        | Root context files delivered                                                                                                                                                                                                                                   |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `copilot`      | `DESIGN.md`, `TESTING.md` (install-if-absent for consumer-owned files not covered here — see below)                                                                                                                                                            |
+| `claude`       | `DESIGN.md`, `TESTING.md`, plus `CLAUDE.md` and `AGENTS.md` — project memory Claude Code loads on every turn, and the shared agent/skill registry it imports. Delivered install-if-absent: written on a fresh install, never overwritten once you fill them in |
+| `kiro`         | `DESIGN.md`, `TESTING.md` — Kiro's equivalent standing guidance ships as always-on steering (`.kiro/steering/git-guard-notice.md`) rather than a root file                                                                                                     |
+| `both` / `all` | Union of the profiles above                                                                                                                                                                                                                                    |
+
+`DESIGN.md` and `TESTING.md` install unconditionally on every run (they are canonical contract documents, not consumer-authored memory). `CLAUDE.md`, `AGENTS.md`, and `.claude/settings.json` use install-if-absent semantics instead: delivered once, then fully consumer-owned, so `install` and `update` never clobber content you've customized.
+
 ### 3. Initialize your project context
 
 Invoke the `product-engineer` agent in Init Mode (via `@product-engineer` or the `product-engineer-init` prompt). This creates:

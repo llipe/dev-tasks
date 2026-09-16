@@ -136,6 +136,7 @@ All AI coding agents working in this repository **MUST**:
 - Use Conventional Commits (`feat`, `fix`, `chore`, `docs`, etc.)
 - Create PRs for review — never self-merge into `main`
 - **PRs targeting `main` require user approval** — no agent may merge into the default branch
+- `gh issue`/`pr create|edit|comment|review` **MUST** use `--body-file`, never inline `--body`, so multi-line content renders correctly
 - Follow testing, linting, and documentation standards from `technical-guidelines.md`
 - Reference GitHub Issues in branch names and commits
 - Treat `/DESIGN.md` as the source of truth for visual tokens, components, and design guidance
