@@ -78,18 +78,18 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [x] 2.5 Verify Acceptance Criterion: `AGENTS.md` and `README.md` hook tables describe the shipped Claude state accurately
   - [x] 2.6 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 3.0 Deliver Claude root context to consumers — [#171](https://github.com/llipe/dev-tasks/issues/171)
+- [x] 3.0 Deliver Claude root context to consumers — [#171](https://github.com/llipe/dev-tasks/issues/171)
 
   > Note: `ROOT_FILES` is `["DESIGN.md", "TESTING.md"]` (`core/distribution/profiles.ts:56`). Nothing in `core/`, `adapters/`, `bin/`, or the README installs `CLAUDE.md` or `AGENTS.md`, and the `.template` files do not ship in `package.json` `files[]`. Kiro's equivalent always-on layer, `.kiro/steering/git-guard-notice.md` (`inclusion: always`), is a managed path and installs automatically. A Claude consumer therefore gets no project memory at all: no agent guidelines, no branch discipline, no workflow map. This is invisible from inside this repo because `CLAUDE.md` is checked in here.
 
-  - [ ] 3.1 Write `test/integration/install-parity.test.ts` (first slice): assert `install --profile claude` into a temp dir produces a `CLAUDE.md`; confirm it fails
-  - [ ] 3.2 Ship `CLAUDE.md.template` and `AGENTS.md.template` in `package.json` `files[]`
-  - [ ] 3.3 Install `CLAUDE.md` (from `CLAUDE.md.template`) and `AGENTS.md` (from `AGENTS.md.template`) using the install-if-absent category built in 1.5, so a consumer's filled-in copy is never overwritten
-  - [ ] 3.4 Confirm both templates carry the git invariants that `.kiro/steering/git-guard-notice.md` provides always-on, so the two platforms deliver equivalent standing guidance
-  - [ ] 3.5 Update the README install section to state what each profile delivers, including the root context files
-  - [ ] 3.6 Verify Acceptance Criterion: a fresh `install --profile claude` yields a repo where Claude Code loads project memory on the first turn
-  - [ ] 3.7 Verify Acceptance Criterion: an existing consumer `CLAUDE.md` survives `install` and `update` unchanged
-  - [ ] 3.8 Run Tests: `pnpm run test:integration`, `pnpm run validate`
+  - [x] 3.1 Write `test/integration/install-parity.test.ts` (first slice): assert `install --profile claude` into a temp dir produces a `CLAUDE.md`; confirm it fails
+  - [x] 3.2 Ship `CLAUDE.md.template` and `AGENTS.md.template` in `package.json` `files[]`
+  - [x] 3.3 Install `CLAUDE.md` (from `CLAUDE.md.template`) and `AGENTS.md` (from `AGENTS.md.template`) using the install-if-absent category built in 1.5, so a consumer's filled-in copy is never overwritten
+  - [x] 3.4 Confirm both templates carry the git invariants that `.kiro/steering/git-guard-notice.md` provides always-on, so the two platforms deliver equivalent standing guidance
+  - [x] 3.5 Update the README install section to state what each profile delivers, including the root context files
+  - [x] 3.6 Verify Acceptance Criterion: a fresh `install --profile claude` yields a repo where Claude Code loads project memory on the first turn
+  - [x] 3.7 Verify Acceptance Criterion: an existing consumer `CLAUDE.md` survives `install` and `update` unchanged
+  - [x] 3.8 Run Tests: `pnpm run test:integration`, `pnpm run validate`
 
 - [ ] 4.0 Resolve the Next.js conventions parity claim — [#172](https://github.com/llipe/dev-tasks/issues/172)
 

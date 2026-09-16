@@ -15,6 +15,7 @@ All work in this repository **MUST**:
 - Always create feature branches — never commit directly to the default branch (`main`).
 - Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`).
 - Open PRs for review — **never self-merge into `main`**. PRs targeting `main` require **user** approval and the **user** merges them. No agent may merge into `main`.
+- `gh issue`/`pr create|edit|comment|review` **MUST** use `--body-file`, never inline `--body`, so multi-line content renders correctly.
 - Follow testing, linting, and documentation standards from `docs/technical-guidelines.md`.
 - Reference GitHub Issues in branch names and commits; follow the `github-ops` conventions for all GitHub artifacts (issues, PRs, branches, labels, milestones, comments).
 - Treat `/DESIGN.md` as the source of truth for visual tokens, components, and design guidance; update it whenever UI contracts change.
@@ -24,7 +25,7 @@ All work in this repository **MUST**:
 - The `verifier` audit (`audit` mode) is a mandatory, non-skippable step triggered automatically by `developer` (per issue, pre-PR-ready) and `planner` (per story and PRD-level rollup). Drift findings are non-blocking to PR/issue completion and route to `product-engineer`'s `activity-drift-reconciliation` skill for write-back into task lists, GitHub issues, or PRD/spec changelogs.
 - **Test-first design is the default:** `product-engineer` recommends `verifier` Design Mode after planning to produce a compliance test plan; `developer` writes tests before implementation code for each behavioral sub-task; `planner` checks for test plans and enforces test-first in developer handoffs.
 
-These mirror the General Agent Guidelines in `AGENTS.md`. The "no merge to `main`" and Conventional Commits rules are additionally enforced deterministically by hooks in `.claude/settings.json`.
+These mirror the General Agent Guidelines in `AGENTS.md`. The "no merge to `main`", Conventional Commits, and `--body-file` rules are additionally enforced deterministically by hooks in `.claude/settings.json`.
 
 ## GitHub Operations
 
