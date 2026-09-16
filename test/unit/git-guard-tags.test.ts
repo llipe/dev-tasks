@@ -40,6 +40,12 @@ const ALLOW_MATRIX: readonly string[] = [
   "git tag",
   "git describe --tags",
   "git push -u origin issue/1-x",
+  // Rule-4 anchoring fix (task 9.7): a branch name that merely contains a
+  // semver-shaped substring must not be misdetected as a tag push — only an
+  // exact `vX.Y.Z` ref (bare or as a refspec destination) is a tag push.
+  "git push -u origin issue/42-bump-v1.2.3",
+  "git push origin story/9-release-v1.2.3-notes",
+  "git push origin feature-branch:issue/42-bump-v1.2.3",
 ];
 
 describe("git-guard rule 4 — blocks agent tag operations", () => {

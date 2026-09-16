@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Stub `gh` for git-guard-merge.test.ts. Never touches the network — every
+# response is a canned value driven by env vars so rule 3's base-resolution
+# and fail-closed paths are deterministic in CI.
+#
+#   GIT_GUARD_STUB_PR_BASE       - stdout for `gh pr view [n] --json baseRefName -q .baseRefName`
+#   GIT_GUARD_STUB_PR_BASE_EXIT  - exit code for that same call (default 0; non-zero simulates
+#                                  an unauthenticated session or a network/lookup failure)
+#   GIT_GUARD_STUB_DEFAULT_BRANCH - stdout for `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`
+set -uo pipefail
+
+if [ "${1:-}" = "pr" ] && [ "${2:-}" = "view" ]; then
+  exit_code="${GIT_GUARD_STUB_PR_BASE_EXIT:-0}"
+  if [ "$exit_code" != "0" ]; then
+    exit "$exit_code"
+  fi
+  printf '%s\n' "${GIT_GUARD_STUB_PR_BASE:-}"
+  exit 0
+fi
+
+if [ "${1:-}" = "repo" ] && [ "${2:-}" = "view" ]; then
+  printf '%s\n' "${GIT_GUARD_STUB_DEFAULT_BRANCH:-main}"
+  exit 0
+fi
+
+exit 0
