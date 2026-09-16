@@ -82,7 +82,7 @@ Activity skills: `activity-init`, `activity-refine`, `activity-codebase-research
 
 ## Domain-Specific Conventions
 
-Copilot's `applyTo`-scoped instructions have no direct Claude Code equivalent (there is no glob-scoped auto-load). The Next.js/React conventions (scoped to `**/*.tsx`) are preserved as a nested `CLAUDE.md` inside each React app's root directory when that app exists, so they load only while working in that subtree. When generating UI, follow those conventions and `/DESIGN.md`.
+Copilot's `applyTo`-scoped instructions have no direct Claude Code equivalent (there is no glob-scoped auto-load), and there is no automatic Claude delivery mechanism that scaffolds a nested `CLAUDE.md` for the Next.js/React conventions (scoped to `**/*.tsx`) — no code in this repository creates one. Consumers who want those conventions to load only while working inside a React app's subtree **MUST** do it manually: copying the conventions into their app's nested `CLAUDE.md`. When generating UI, follow those conventions (wherever placed) and `/DESIGN.md`.
 
 ---
 

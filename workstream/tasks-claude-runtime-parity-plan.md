@@ -45,6 +45,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
 - `test/unit/claude-tool-declaration-parity.test.ts` - new; agents declare the tools their prompts require
 - `test/integration/install-parity.test.ts` - new; per-profile installed-state equivalence
 - `test/unit/distribution-install.test.ts`, `test/unit/distribution-update.test.ts`, `test/unit/distribution-profiles.test.ts` - extend for the new path category
+- `test/unit/nextjs-claude-parity-claim.test.ts` - new; CP-04 repo-wide scan that the withdrawn Next.js/Claude scaffolding claim is not repeated anywhere
 
 ## Tasks
 
@@ -91,17 +92,17 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [x] 3.7 Verify Acceptance Criterion: an existing consumer `CLAUDE.md` survives `install` and `update` unchanged
   - [x] 3.8 Run Tests: `pnpm run test:integration`, `pnpm run validate`
 
-- [ ] 4.0 Resolve the Next.js conventions parity claim — [#172](https://github.com/llipe/dev-tasks/issues/172)
+- [x] 4.0 Resolve the Next.js conventions parity claim — [#172](https://github.com/llipe/dev-tasks/issues/172)
 
   > Note: Copilot delivers these via `applyTo`, Kiro via `fileMatch`. `CLAUDE.md` claims they are "preserved as a nested `CLAUDE.md` inside each React app's root directory when that app exists" — grep across `core/`, `adapters/`, `templates/`, and `.claude/` finds no code that creates it. The claim documents a feature that does not exist.
   >
   > **Decided 2026-09-16: withdraw.** Building real detection ("each React app root" in an arbitrary consumer monorepo — single app, `apps/*`, Turborepo/Nx workspaces, `next` dependency vs. `next.config.js` detection, keeping scaffolded copies in sync with the source instructions file over time) is a distinct feature with its own design questions, not a one-task fix, and it doesn't belong bundled into a parity milestone whose other nine tasks are mechanical enforcement-delivery fixes. The harm today is the false claim, not the missing feature; withdrawing removes that harm immediately and doesn't foreclose a future standalone feature request for real scaffolding.
 
   - [x] 4.1 ~~Decide: scaffold a nested `CLAUDE.md` during `install` when a Next.js app root is detected, **or** withdraw the claim and document the platform limitation explicitly.~~ Decided: withdraw
-  - [ ] 4.2 Correct the "Domain-Specific Conventions" section of `CLAUDE.md` and `CLAUDE.md.template` to state that the Next.js conventions have no automatic Claude delivery, and give consumers the one-line manual step (copy the conventions into their app's nested `CLAUDE.md`)
-  - [ ] 4.4 Reflect the outcome in the `AGENTS.md` Instructions table, which currently lists `nextjs-pages-components` without noting the Claude gap
-  - [ ] 4.5 Verify Acceptance Criterion: no file in the repository claims a Claude delivery mechanism that does not exist
-  - [ ] 4.6 Run Tests: `pnpm run test:unit`, `pnpm run format:check`
+  - [x] 4.2 Correct the "Domain-Specific Conventions" section of `CLAUDE.md` and `CLAUDE.md.template` to state that the Next.js conventions have no automatic Claude delivery, and give consumers the one-line manual step (copy the conventions into their app's nested `CLAUDE.md`)
+  - [x] 4.4 Reflect the outcome in the `AGENTS.md` Instructions table, which currently lists `nextjs-pages-components` without noting the Claude gap
+  - [x] 4.5 Verify Acceptance Criterion: no file in the repository claims a Claude delivery mechanism that does not exist
+  - [x] 4.6 Run Tests: `pnpm run test:unit`, `pnpm run format:check`
 
 - [ ] 5.0 Remove the Kiro-ism and collapse the `developer` command duplication — [#173](https://github.com/llipe/dev-tasks/issues/173)
 

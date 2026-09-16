@@ -83,6 +83,8 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.cla
 | nextjs-pages-components | `**/app/**/*.tsx`          | Next.js + React conventions                        |
 | git-guard-notice        | Always (Kiro)              | Git invariants reminder                            |
 
+`nextjs-pages-components` has a Claude gap: there is no automatic Claude delivery mechanism (no glob-scoped auto-load, no nested-`CLAUDE.md` scaffolding) — Claude Code consumers must manually copy the conventions into their app's nested `CLAUDE.md`. See `CLAUDE.md`'s "Domain-Specific Conventions" section.
+
 ## Hooks
 
 Kiro (`.kiro/hooks/`) and Claude Code (`.claude/hooks/`, wired via `.claude/settings.json`) both ship these two `PreToolUse` hooks; Copilot has no hook system, so its enforcement is prompt-level only.
