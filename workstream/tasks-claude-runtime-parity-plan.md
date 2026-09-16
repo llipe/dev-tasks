@@ -48,7 +48,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
 
 ## Tasks
 
-- [ ] 1.0 Make `.claude/settings.json` deliverable (unblocker for tasks 2 and 6b)
+- [ ] 1.0 Make `.claude/settings.json` deliverable (unblocker for tasks 2 and 6b) — [#169](https://github.com/llipe/dev-tasks/issues/169)
 
   > Note: `PROFILE_PATHS.claude` installs `.claude/hooks/` (the scripts) but `.claude/settings.json` — which wires them — is listed in `bundle-manifest.json:126` `consumer_owned_paths`. It is never installed, has no template, and `doctor` does not check it. The `kiro` profile installs `.kiro/hooks/` recursively, which includes `git-guard.json`, the wiring. Result: Kiro consumers get two live hooks; Claude consumers get two inert shell scripts that look installed. Copilot has no hook system at all, so Kiro is currently the only platform with working deterministic enforcement.
 
@@ -65,7 +65,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 1.11 Verify Acceptance Criterion: `doctor` warns on a hooks-present / settings-absent repo and is silent on a correctly wired one
   - [ ] 1.12 Run Tests: `pnpm run test:unit`, `pnpm run test:integration`, `pnpm run validate`
 
-- [ ] 2.0 Restore deterministic enforcement on Claude (depends on 1.0)
+- [ ] 2.0 Restore deterministic enforcement on Claude (depends on 1.0) — [#170](https://github.com/llipe/dev-tasks/issues/170)
 
   > Note: `.claude/settings.json` currently matches `Bash` only. Claude Code writes files through `Edit`/`Write`, never the shell, so `git-guard.sh` never observes a single file write. `AGENTS.md:91` and `README.md:312` both document `branch-guard` as active; it exists only under `.kiro/`. Writes on `main` are today defended by prompt language alone — precisely the bypass the hook was written to backstop.
 
@@ -76,7 +76,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 2.5 Verify Acceptance Criterion: `AGENTS.md` and `README.md` hook tables describe the shipped Claude state accurately
   - [ ] 2.6 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 3.0 Deliver Claude root context to consumers
+- [ ] 3.0 Deliver Claude root context to consumers — [#171](https://github.com/llipe/dev-tasks/issues/171)
 
   > Note: `ROOT_FILES` is `["DESIGN.md", "TESTING.md"]` (`core/distribution/profiles.ts:56`). Nothing in `core/`, `adapters/`, `bin/`, or the README installs `CLAUDE.md` or `AGENTS.md`, and the `.template` files do not ship in `package.json` `files[]`. Kiro's equivalent always-on layer, `.kiro/steering/git-guard-notice.md` (`inclusion: always`), is a managed path and installs automatically. A Claude consumer therefore gets no project memory at all: no agent guidelines, no branch discipline, no workflow map. This is invisible from inside this repo because `CLAUDE.md` is checked in here.
 
@@ -89,18 +89,19 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 3.7 Verify Acceptance Criterion: an existing consumer `CLAUDE.md` survives `install` and `update` unchanged
   - [ ] 3.8 Run Tests: `pnpm run test:integration`, `pnpm run validate`
 
-- [ ] 4.0 Resolve the Next.js conventions parity claim
+- [ ] 4.0 Resolve the Next.js conventions parity claim — [#172](https://github.com/llipe/dev-tasks/issues/172)
 
-  > Note: Copilot delivers these via `applyTo`, Kiro via `fileMatch`. `CLAUDE.md` claims they are "preserved as a nested `CLAUDE.md` inside each React app's root directory when that app exists" — grep across `core/`, `adapters/`, `templates/`, and `.claude/` finds no code that creates it. The claim documents a feature that does not exist. Either build it or withdraw it; do not leave it asserted.
+  > Note: Copilot delivers these via `applyTo`, Kiro via `fileMatch`. `CLAUDE.md` claims they are "preserved as a nested `CLAUDE.md` inside each React app's root directory when that app exists" — grep across `core/`, `adapters/`, `templates/`, and `.claude/` finds no code that creates it. The claim documents a feature that does not exist.
+  >
+  > **Decided 2026-09-16: withdraw.** Building real detection ("each React app root" in an arbitrary consumer monorepo — single app, `apps/*`, Turborepo/Nx workspaces, `next` dependency vs. `next.config.js` detection, keeping scaffolded copies in sync with the source instructions file over time) is a distinct feature with its own design questions, not a one-task fix, and it doesn't belong bundled into a parity milestone whose other nine tasks are mechanical enforcement-delivery fixes. The harm today is the false claim, not the missing feature; withdrawing removes that harm immediately and doesn't foreclose a future standalone feature request for real scaffolding.
 
-  - [ ] 4.1 Decide: scaffold a nested `CLAUDE.md` during `install` when a Next.js app root is detected, **or** withdraw the claim and document the platform limitation explicitly. Recommendation: withdraw for now — detection heuristics for "each React app root" are a larger job than this list, and an honest gap beats a false claim
-  - [ ] 4.2 If withdrawing: correct the "Domain-Specific Conventions" section of `CLAUDE.md` and `CLAUDE.md.template` to state that the Next.js conventions have no automatic Claude delivery, and give consumers the one-line manual step (copy the conventions into their app's nested `CLAUDE.md`)
-  - [ ] 4.3 If scaffolding: add the detection and write path to `core/distribution/install.ts`, source the content from the Copilot instruction file, and cover it in `test/integration/install-parity.test.ts`
+  - [x] 4.1 ~~Decide: scaffold a nested `CLAUDE.md` during `install` when a Next.js app root is detected, **or** withdraw the claim and document the platform limitation explicitly.~~ Decided: withdraw
+  - [ ] 4.2 Correct the "Domain-Specific Conventions" section of `CLAUDE.md` and `CLAUDE.md.template` to state that the Next.js conventions have no automatic Claude delivery, and give consumers the one-line manual step (copy the conventions into their app's nested `CLAUDE.md`)
   - [ ] 4.4 Reflect the outcome in the `AGENTS.md` Instructions table, which currently lists `nextjs-pages-components` without noting the Claude gap
   - [ ] 4.5 Verify Acceptance Criterion: no file in the repository claims a Claude delivery mechanism that does not exist
   - [ ] 4.6 Run Tests: `pnpm run test:unit`, `pnpm run format:check`
 
-- [ ] 5.0 Remove the Kiro-ism and collapse the `developer` command duplication
+- [ ] 5.0 Remove the Kiro-ism and collapse the `developer` command duplication — [#173](https://github.com/llipe/dev-tasks/issues/173)
 
   > Note: `.claude/agents/developer.md:53-55` carries a "Steering Context Check" instructing the agent to "load the implement steering by opening the relevant task file first." That is Kiro `fileMatch` semantics; on Claude, opening a file loads no skill. The instruction is inert and tells the agent a mechanism exists that does not. It appears in the agent but not the command — one instance of a broader drift: `.claude/commands/developer.md` (21.8 KB) is a near-verbatim copy of `.claude/agents/developer.md` (23.9 KB), 81 differing lines across ~600, and they have already diverged (the agent has the hard branch gate at step 4 and the `--scope related` memo search; the command has neither). `/github-ops` is 681 bytes and is the right shape.
 
@@ -114,7 +115,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 5.8 Verify Acceptance Criterion: existing `developer` parity tests still pass against the reduced command file
   - [ ] 5.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 6.0 Cost controls: subagent models and permission allowlist
+- [ ] 6.0 Cost controls: subagent models and permission allowlist — [#174](https://github.com/llipe/dev-tasks/issues/174)
 
   > Note: none of the eight `.claude/agents/*.md` declares `model:`, so every delegated run — including mechanical ones — inherits the main-thread model. And `.claude/settings.json` has no `permissions` block, so every `git status`, `pnpm test`, and `gh pr view` raises a prompt, which is what makes "pre-approved autonomous sequential" feel non-autonomous. 6b depends on task 1.
 
@@ -128,11 +129,11 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 6.8 Verify Acceptance Criterion: the hook guards still block their four invariants with the allowlist active
   - [ ] 6.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 7.0 Tool-declaration parity test — **contains a decision point**
+- [ ] 7.0 Tool-declaration parity test — **contains a decision point** — [#175](https://github.com/llipe/dev-tasks/issues/175)
 
   > Note: `test/unit/qa-engineer-parity.test.ts:162` and `test/unit/researcher-parity.test.ts:139` assert only that a `tools:` line *exists*, never which tools. Nothing mechanically catches an agent whose prompt requires a capability its frontmatter withholds. The invariant — *every agent whose prompt instructs it to invoke a subagent must declare `Task`* — is four lines and would have caught the `developer` defect at authoring time.
   >
-  > **It cannot pass today.** `developer` violates it, and the real fix is the excluded gate-ownership change. Resolve 7.1 before writing the assertions.
+  > **It cannot pass today.** `developer` violates it. The full gate-ownership redesign (relocating every `developer` MUST-level delegation rule) stays excluded — see the top-of-file note — but this task now also closes the one hole 7.1(a) would otherwise open: once `developer`-as-subagent stops self-certifying `verifier_audit`/`coverage_gate`, nothing else runs those gates per-story under `/planner` unless `planner` triggers them itself (see 7.6). Resolve 7.1 before writing the assertions.
 
   - [ ] 7.1 **Decision.** Choose one:
         **(a) Recommended — make the prompt honest.** Strip the impossible invocation claims from `.claude/agents/developer.md` (rules 10, 18, 22 and the `researcher` troubleshooting path), have the subagent emit `verifier_audit: not-run(no-delegation)` and `coverage_gate: SKIPPED(no-delegation)`, and note in the file that these gates are owned by the caller. This is a small, self-contained subset of the excluded fix; it makes the test green honestly and stops `/planner` from merging on a self-certified string. It does **not** by itself relocate the gates to `planner` — that remains open.
@@ -141,12 +142,14 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 7.2 Write `test/unit/claude-tool-declaration-parity.test.ts`: parse each `.claude/agents/*.md`, extract the declared `tools:` list, scan the body for instructions to invoke a named subagent, and assert `Task` is declared whenever such an instruction is present
   - [ ] 7.3 Extend it with the inverse check: no agent declares a tool its prompt never uses, to keep tool grants minimal
   - [ ] 7.4 Apply the 7.1 outcome to `.claude/agents/developer.md`
-  - [ ] 7.5 If 7.1(a): update `.claude/commands/planner.md` merge gate 6 so it no longer treats `verifier_audit: run` as sufficient evidence, and record the residual risk in the tracking issue for the excluded fix
-  - [ ] 7.6 Verify Acceptance Criterion: the test fails when `Task` is removed from an agent whose prompt requires it
-  - [ ] 7.7 Verify Acceptance Criterion: the suite is green, or the single expected failure is documented and linked (per 7.1)
-  - [ ] 7.8 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [ ] 7.5 If 7.1(a): update `.claude/commands/planner.md` merge gate 6 so it no longer treats `verifier_audit: run` as sufficient evidence
+  - [ ] 7.6 **Scoped gate-ownership fix (decided in place of a separate tracking issue).** Once `developer`-as-subagent honestly reports `not-run`/`SKIPPED` (7.1a), the mandatory per-story `qa-engineer` coverage check and `verifier` audit stop happening anywhere in the `/planner` path — Phase 5's PRD-level rollup is the only remaining real invocation. `planner` is the only actor in this path that holds the `Task` tool (it runs in the main thread; `developer`-as-subagent does not and structurally cannot invoke another subagent). Close this gap — without taking on the excluded full gate-ownership redesign — by editing `.claude/commands/planner.md`'s per-story merge management rule (Phase 4) so that, after each story's `developer` subagent reports its closeout payload, `planner` itself invokes `qa-engineer` and `verifier` (Audit Mode) directly, scoped to that story's diff/branch/PR, and records their actual results. Merge gates 5 and 6 then check the result `planner` itself obtained, not a self-reported field
+  - [ ] 7.7 Verify Acceptance Criterion: the test fails when `Task` is removed from an agent whose prompt requires it
+  - [ ] 7.8 Verify Acceptance Criterion: the suite is green, or the single expected failure is documented and linked (per 7.1)
+  - [ ] 7.9 Verify Acceptance Criterion: a `/planner` dry run against a story shows `qa-engineer` and `verifier` invoked directly by `planner` per story, not merely reported by `developer`
+  - [ ] 7.10 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 8.0 Installed-state parity test (depends on 1.0, 2.0, 3.0)
+- [ ] 8.0 Installed-state parity test (depends on 1.0, 2.0, 3.0) — [#176](https://github.com/llipe/dev-tasks/issues/176)
 
   > Note: every existing parity test asserts files exist *in this repository*. None asserts that `install --profile claude` produces an install functionally equivalent to `install --profile kiro`. That is the exact blind spot all four delivery gaps fell through — each platform's files were present and correct in-tree, and only the installed result diverged.
 
@@ -159,7 +162,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 8.7 Verify Acceptance Criterion: the test passes for all three profiles and for `--profile all`
   - [ ] 8.8 Run Tests: `pnpm run test:integration`, `pnpm run validate`
 
-- [ ] 9.0 Fix the `planner` merge path (depends on 1.0) — **confirmed live defect**
+- [ ] 9.0 Fix the `planner` merge path (depends on 1.0) — **confirmed live defect** — [#177](https://github.com/llipe/dev-tasks/issues/177)
 
   > Note: observed symptom — story branches land on the integration branch with no PR review trail. Cause: `git-guard.sh:60-66` blocks any `gh pr merge` lacking `--base`; `gh pr merge` has no `--base` flag (it belongs to `gh pr create`), and the repository's own canonical merge commands carry none (`.claude/skills/git-ops/SKILL.md:101`, `.claude/agents/github-ops.md:49`). So `planner`'s mandated merge command is unconditionally blocked, while `git checkout integration && git merge story/… && git push origin integration` is fully permitted — rule 1 only blocks `git merge` when HEAD is `main`, and the push is not to `main`. **The guard blocks the reviewable path and permits the unreviewable one.** A `--squash` raw merge also rewrites commits, so GitHub never marks the PR merged: the state file records `✅ Merged` while the PR sits open. That divergence is the diagnostic signature.
 
@@ -176,7 +179,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 9.11 Verify Acceptance Criterion: a repository whose default branch is `master` receives identical protection
   - [ ] 9.12 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 10.0 Close the MCP bypass and establish the durable gate (depends on 9.0)
+- [ ] 10.0 Close the MCP bypass and establish the durable gate (depends on 9.0) — [#178](https://github.com/llipe/dev-tasks/issues/178)
 
   > Note: `.claude/settings.json` matches `"Bash"` only. `github-ops.md:49` explicitly offers `merge_pull_request` as the MCP equivalent of `gh pr merge`, and `CLAUDE.md:35` states that where a GitHub MCP server is configured, "agents may use it instead." **All four git-guard invariants — merge/push to the default branch, Conventional Commits, inline `--body`, tag operations — are bypassed completely on the MCP path.** Any consumer with the GitHub MCP server enabled has no enforcement whatsoever, whatever the hook says.
   >
@@ -190,7 +193,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 10.6 Verify Acceptance Criterion: with branch protection configured, the same merge fails server-side even with every hook disabled
   - [ ] 10.7 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 11.0 Never route around a blocked guard — behavioural rules
+- [ ] 11.0 Never route around a blocked guard — behavioural rules — [#179](https://github.com/llipe/dev-tasks/issues/179)
 
   > Note: the deepest lesson from this defect is not the regex. An agent under a **MUST** instruction, whose mandated command is blocked, will find another way to satisfy the instruction. That is rational behaviour given the prompt, and no amount of guard-patching prevents the next instance. Two structural rules prevent the whole class: a blocked guard must be terminal, and every block message must name the permitted path.
 
@@ -209,4 +212,4 @@ Per `AGENTS.md`, before any parent task's PR is marked ready: quality gates (`te
 
 ## GitHub sync
 
-The `plan` skill requires this checklist to be mirrored onto a GitHub Issue, and no issue exists for this work. Confirm whether to create one (or a milestone with one issue per parent task) before implementation starts.
+Resolved 2026-09-16: milestone [`v0.13 — Claude runtime parity and enforcement delivery`](https://github.com/llipe/dev-tasks/milestone/2) created with one issue per parent task (#169–#179, mapping above). Priority labels applied per the sequencing/urgency called out in this plan (task 1 as `priority: critical` unblocker; tasks 9–11 as the confirmed live-defect chain). Dependency relationships are cross-linked as issue comments.
