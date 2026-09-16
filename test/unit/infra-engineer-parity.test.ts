@@ -274,11 +274,14 @@ describe("infra-engineer — S-009 AC-5: deploy-ops registry parity", () => {
 
 /** Caller files, grouped by agent, that must route to infra-engineer. */
 const S010_CALLER_FILES = {
+  // `.claude/commands/developer.md` is intentionally excluded: per issue #173
+  // it is a thin wrapper that points at `.claude/agents/developer.md` rather
+  // than restating the contract. See test/unit/developer-command-collapse.test.ts
+  // for the checks that apply to the command file specifically.
   developer: [
     ".github/agents/developer.agent.md",
     ".kiro/agents/developer.md",
     ".claude/agents/developer.md",
-    ".claude/commands/developer.md",
   ],
   implement: [
     ".claude/skills/implement/SKILL.md",
