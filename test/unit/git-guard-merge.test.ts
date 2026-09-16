@@ -10,6 +10,18 @@
  * The hook receives the PreToolUse payload as JSON on stdin; exit code 2 blocks the
  * command, exit 0 allows it. `gh` is stubbed via PATH (test/fixtures/git-guard/bin/gh)
  * so base-branch resolution never touches the network.
+ *
+ * PR #181 independent-audit follow-up fixes (task 9.0 continued):
+ *   Fix 1 — the rule 1b raw-git-escape check only matched a bare `story/*`/`issue/*`
+ *   merge argument, so `git merge origin/story/1-x`, `git merge remotes/origin/story/1-x`,
+ *   and `git merge refs/heads/story/1-x` — all canonical ref-qualified forms per
+ *   .claude/skills/git-ops/SKILL.md — bypassed the block entirely.
+ *   Fix 2 — `gh_pr_merge_number()` only recognized a numeric token or `#123`; a branch
+ *   name or PR URL target silently fell back to checking the CURRENT branch's PR
+ *   instead of the one actually named. The stub's per-argument lookup table
+ *   (`GIT_GUARD_STUB_PR_BASE_FOR_<KEY>`) lets a test give the named target a different
+ *   base than the current-branch fallback, so it would catch a regression to that
+ *   fallback behavior.
  */
 
 import { spawnSync } from "node:child_process";
@@ -128,6 +140,32 @@ describe("git-guard rule 1 — raw-git escape from story/issue into integration"
     });
     expect(status).toBe(0);
   });
+
+  // Fix 1 (issue #177, PR #181 audit): the raw-git escape check only matched a
+  // bare `story/*`/`issue/*` merge argument. `git merge origin/story/1-x`,
+  // `git merge remotes/origin/story/1-x`, and `git merge refs/heads/story/1-x`
+  // are all canonical ref-qualified forms (see .claude/skills/git-ops/SKILL.md
+  // lines 61, 70) and previously bypassed the block entirely.
+  it("blocks `git merge origin/story/1-x` while on an integration/* branch", () => {
+    const { status, stderr } = runHook("git merge origin/story/1-x", { cwd: repo.cloneDir });
+    expect(status).toBe(2);
+    expect(stderr).toContain("gh pr merge");
+  });
+
+  it("blocks `git merge remotes/origin/story/1-x` while on an integration/* branch", () => {
+    const { status } = runHook("git merge remotes/origin/story/1-x", { cwd: repo.cloneDir });
+    expect(status).toBe(2);
+  });
+
+  it("blocks `git merge refs/heads/story/1-x` while on an integration/* branch", () => {
+    const { status } = runHook("git merge refs/heads/story/1-x", { cwd: repo.cloneDir });
+    expect(status).toBe(2);
+  });
+
+  it("blocks `git merge origin/issue/1-x` while on an integration/* branch", () => {
+    const { status } = runHook("git merge origin/issue/1-x", { cwd: repo.cloneDir });
+    expect(status).toBe(2);
+  });
 });
 
 describe("git-guard rule 3 — gh pr merge base resolution (real, not text-matched)", () => {
@@ -192,6 +230,51 @@ describe("git-guard rule 3 — gh pr merge base resolution (real, not text-match
   it("allows `--auto` when the resolved base is an integration branch", () => {
     const { status } = runHook("gh pr merge 42 --auto --squash", {
       env: { GIT_GUARD_STUB_PR_BASE: "integration/parity-plan" },
+    });
+    expect(status).toBe(0);
+  });
+
+  // Fix 2 (issue #177, PR #181 audit): a branch name or PR URL is a valid
+  // `gh pr merge` target too, not just a number or `#123`. The old code
+  // silently fell back to the CURRENT branch's PR for either, so a crafted
+  // `gh pr merge <other-branch-or-url>` could merge a different, unsafe PR
+  // while the guard verified the wrong one. The stub's per-argument lookup
+  // table (GIT_GUARD_STUB_PR_BASE_FOR_<KEY>) lets the fallback base and the
+  // real target's base differ, so this test would pass falsely if the guard
+  // still resolved the current branch's PR instead of the named target.
+  it("resolves a branch-name target directly, not the current branch's PR", () => {
+    const { status, stderr } = runHook("gh pr merge some-branch --squash --delete-branch", {
+      env: {
+        // What the CURRENT branch's PR would resolve to (safe) — must be
+        // ignored in favor of the actual named target.
+        GIT_GUARD_STUB_PR_BASE: "integration/parity-plan",
+        // What `some-branch`'s PR actually targets (unsafe: the default branch).
+        GIT_GUARD_STUB_PR_BASE_FOR_SOME_BRANCH: "main",
+      },
+    });
+    expect(status).toBe(2);
+    expect(stderr).toContain("main");
+  });
+
+  it("resolves a PR-URL target directly, not the current branch's PR", () => {
+    const { status } = runHook(
+      "gh pr merge https://github.com/o/r/pull/99 --squash --delete-branch",
+      {
+        env: {
+          GIT_GUARD_STUB_PR_BASE: "integration/parity-plan",
+          GIT_GUARD_STUB_PR_BASE_FOR_HTTPS___GITHUB_COM_O_R_PULL_99: "main",
+        },
+      },
+    );
+    expect(status).toBe(2);
+  });
+
+  it("allows a branch-name target whose resolved base is an integration branch", () => {
+    const { status } = runHook("gh pr merge some-branch --squash --delete-branch", {
+      env: {
+        GIT_GUARD_STUB_PR_BASE: "main",
+        GIT_GUARD_STUB_PR_BASE_FOR_SOME_BRANCH: "integration/parity-plan",
+      },
     });
     expect(status).toBe(0);
   });

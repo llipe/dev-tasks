@@ -106,6 +106,34 @@ git_merge_arg() {
   printf ''
 }
 
+# Strip known ref-qualifying prefixes (`refs/heads/`, `remotes/<remote>/`, or
+# a bare `<remote>/` shorthand as in `origin/story/1-x`) from a merge argument
+# so the story/issue check recognizes the ref-qualified forms documented as
+# canonical merge syntax in .claude/skills/git-ops/SKILL.md (e.g. `git merge
+# origin/story/1-x`) identically to the bare `story/1-x` form. Without this,
+# `git merge origin/story/1-x`, `git merge remotes/origin/story/1-x`, and
+# `git merge refs/heads/story/1-x` all bypassed the rule 1b block entirely.
+strip_merge_ref_prefix() {
+  local ref="$1" candidate
+  ref="${ref#refs/heads/}"
+  case "$ref" in
+    remotes/*)
+      ref="${ref#remotes/}"
+      ref="${ref#*/}"
+      ;;
+  esac
+  case "$ref" in
+    story/*|issue/*) : ;;
+    */*)
+      candidate="${ref#*/}"
+      case "$candidate" in
+        story/*|issue/*) ref="$candidate" ;;
+      esac
+      ;;
+  esac
+  printf '%s' "$ref"
+}
+
 # Extract a `gh pr merge` PR number: a digit-only token right after `merge`,
 # or a `#123` reference anywhere in the command. Empty if none given (the
 # command then targets the current branch's PR).
@@ -125,6 +153,27 @@ gh_pr_merge_number() {
       -*) continue ;;
       *) break ;;
     esac
+  done
+  printf ''
+}
+
+# First non-flag token after `gh pr merge`, whatever its shape: a bare PR
+# number, a `#123` reference, a branch name, or a PR URL. `gh pr merge` (and
+# `gh pr view`) accept all four as a valid target. Empty if none given (the
+# command then targets the current branch's PR). Used as a fail-closed
+# fallback so a branch-name or URL target is verified directly via `gh pr
+# view <target>` instead of silently falling back to checking the CURRENT
+# branch's PR — which would let a crafted `gh pr merge <other-branch-or-url>`
+# merge a different, unverified PR while the guard checks the wrong one.
+gh_pr_merge_target() {
+  local rest tok
+  rest="$(printf '%s' "$norm" | sed -n 's/.*gh[[:space:]][[:space:]]*pr[[:space:]][[:space:]]*merge[[:space:]][[:space:]]*//p')"
+  for tok in $rest; do
+    case "$tok" in
+      -*) continue ;;
+    esac
+    printf '%s' "$tok"
+    return 0
   done
   printf ''
 }
@@ -153,7 +202,7 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +merge([[:space:]]|$)';
   # 1b. Raw-git escape: merging a story/issue branch directly into an
   # integration branch bypasses PR review entirely. This is the confirmed
   # live defect's unreviewable path — block it and name the reviewable one.
-  merge_arg="$(git_merge_arg)"
+  merge_arg="$(strip_merge_ref_prefix "$(git_merge_arg)")"
   case "$current_branch" in
     integration/*)
       case "$merge_arg" in
@@ -176,8 +225,21 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +pr +merge([[:space:]]|$
   fi
 
   pr_num="$(gh_pr_merge_number)"
+  pr_target="$(gh_pr_merge_target)"
   if [ -n "$pr_num" ]; then
-    verify_cmd="gh pr view $pr_num --json baseRefName -q .baseRefName"
+    # Bare number or `#123` reference.
+    view_arg="$pr_num"
+  elif [ -n "$pr_target" ]; then
+    # Non-numeric token: a branch name or PR URL. Both are valid `gh pr view`
+    # arguments — pass the target straight through rather than falling back
+    # to the current branch's PR (see gh_pr_merge_target header).
+    view_arg="$pr_target"
+  else
+    view_arg=""
+  fi
+
+  if [ -n "$view_arg" ]; then
+    verify_cmd="gh pr view $view_arg --json baseRefName -q .baseRefName"
   else
     verify_cmd="gh pr view --json baseRefName -q .baseRefName"
   fi
@@ -185,8 +247,8 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +pr +merge([[:space:]]|$
   base=""
   lookup_ok=0
   if command -v gh >/dev/null 2>&1; then
-    if [ -n "$pr_num" ]; then
-      base="$(gh pr view "$pr_num" --json baseRefName -q .baseRefName 2>/dev/null)" && lookup_ok=1
+    if [ -n "$view_arg" ]; then
+      base="$(gh pr view "$view_arg" --json baseRefName -q .baseRefName 2>/dev/null)" && lookup_ok=1
     else
       base="$(gh pr view --json baseRefName -q .baseRefName 2>/dev/null)" && lookup_ok=1
     fi
