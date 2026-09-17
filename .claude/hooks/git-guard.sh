@@ -170,7 +170,12 @@ case "$tool_name" in
     fi
     new_branch="$(printf '%s' "$payload" | jq -r '.tool_input.branch // empty' 2>/dev/null || true)"
     default_branch="$(resolve_default_branch)"
-    if [ -n "$new_branch" ] && [ "$new_branch" = "$default_branch" ]; then
+    # Case-fold both sides: a branch named e.g. 'Main' or 'MAIN' is just as
+    # unsafe as an exact 'main' match on case-insensitive-aware remotes/tools
+    # and must be blocked identically.
+    new_branch_lc="$(printf '%s' "$new_branch" | tr '[:upper:]' '[:lower:]')"
+    default_branch_lc="$(printf '%s' "$default_branch" | tr '[:upper:]' '[:lower:]')"
+    if [ -n "$new_branch" ] && [ "$new_branch_lc" = "$default_branch_lc" ]; then
       mcp_block "creating a branch named '$default_branch' (the default branch) via the MCP tool is not allowed."
     fi
     exit 0

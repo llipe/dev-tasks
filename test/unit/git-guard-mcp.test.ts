@@ -270,6 +270,15 @@ describe("git-guard MCP rule — mcp__github__create_branch", () => {
     );
     expect(status).toBe(0);
   });
+
+  it("blocks creating a branch that is a case-varied match of the default branch", () => {
+    const { status } = runMcpHook(
+      "mcp__github__create_branch",
+      { owner: "llipe", repo: "dev-tasks", branch: "Main" },
+      { cwd: repo.cloneDir },
+    );
+    expect(status).toBe(2);
+  });
 });
 
 // --- Negative / edge: non-mutating MCP calls are never blocked ---------------
