@@ -52,7 +52,30 @@ dev-tasks install --profile both          # copilot + claude only
 
 `DESIGN.md` and `TESTING.md` install unconditionally on every run (they are canonical contract documents, not consumer-authored memory). `CLAUDE.md`, `AGENTS.md`, and `.claude/settings.json` use install-if-absent semantics instead: delivered once, then fully consumer-owned, so `install` and `update` never clobber content you've customized.
 
-### 3. Initialize your project context
+### 3. Configure branch protection (required, not optional)
+
+The `git-guard`/`branch-guard` hooks (Claude Code) and their Kiro equivalents are **advisory, best-effort, local checks** — defense-in-depth, not the actual gate. They are text/JSON pattern matching over a tool call and can always be evaded by a sufficiently creative command or tool-input shape; Copilot has no hook system at all. The only control that is server-side and unbypassable by any tool surface (`gh` CLI, raw `git`, or an MCP server) is a **GitHub branch protection rule** on the repository's default branch. Configure it before relying on any agent to work in this repository:
+
+- Require a pull request before merging
+- Require at least 1 approving review
+- Require status checks to pass before merging
+- Disable force-pushes to the default branch
+- Disable branch deletion for the default branch
+
+```bash
+gh api repos/<owner>/<repo>/branches/<default-branch>/protection \
+  --method PUT \
+  -f required_pull_request_reviews.required_approving_review_count=1 \
+  -F required_status_checks='{"strict":true,"contexts":[]}' \
+  -F enforce_admins=true \
+  -F restrictions=null \
+  -F allow_force_pushes=false \
+  -F allow_deletions=false
+```
+
+Or configure it via **Settings → Branches → Branch protection rules** in the GitHub UI. Run this once per repository, immediately after installing dev-tasks.
+
+### 4. Initialize your project context
 
 Invoke the `product-engineer` agent in Init Mode (via `@product-engineer` or the `product-engineer-init` prompt). This creates:
 
@@ -61,7 +84,7 @@ Invoke the `product-engineer` agent in Init Mode (via `@product-engineer` or the
 
 Run this once per project.
 
-### 4. Build a feature
+### 5. Build a feature
 
 ```text
 a) Invoke @product-engineer with a feature description or GitHub issue number
@@ -71,7 +94,7 @@ b) Invoke @developer with the task list path
    → implements, tests, and opens a PR
 ```
 
-### 5. Keep files up to date
+### 6. Keep files up to date
 
 ```bash
 dev-tasks update            # reconcile with hash-based conflict detection

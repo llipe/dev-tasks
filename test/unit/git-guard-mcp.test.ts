@@ -293,3 +293,44 @@ describe("git-guard MCP rule — non-mutating MCP tool calls pass through untouc
     expect(status).toBe(0);
   });
 });
+
+// --- Policy-text reconciliation (task 10.3) ----------------------------------
+
+describe("github-ops.md — table/guard agreement (#178 task 10.3)", () => {
+  const CONTENT = readFileSync(resolve(ROOT, ".claude/agents/github-ops.md"), "utf-8");
+
+  it("still lists merge_pull_request as the MCP equivalent for Merge PR", () => {
+    expect(CONTENT).toContain("`merge_pull_request`");
+  });
+
+  it("documents that the MCP merge/write surface is covered by git-guard.sh, not advertised as an unguarded bypass", () => {
+    expect(CONTENT).toContain("mcp__github__merge_pull_request");
+    expect(CONTENT).toMatch(/git-guard\.sh/);
+    expect(CONTENT).toMatch(/issue #178|#178/);
+  });
+});
+
+// --- Branch protection documentation (task 10.4) -----------------------------
+
+describe("branch protection is documented as the required control, not optional hardening (#178 task 10.4)", () => {
+  it("README's install section documents configuring branch protection", () => {
+    const content = readFileSync(resolve(ROOT, "README.md"), "utf-8");
+    expect(content).toMatch(/branch protection/i);
+    expect(content).toMatch(/require.*pull request/i);
+    expect(content).toMatch(/force-push/i);
+  });
+
+  it("activity-init SKILL.md documents branch protection as a setup step", () => {
+    const content = readFileSync(
+      resolve(ROOT, ".claude/skills/activity-init/SKILL.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/branch protection/i);
+  });
+
+  it("AGENTS.md states plainly that hooks are advisory and branch protection is the gate", () => {
+    const content = readFileSync(resolve(ROOT, "AGENTS.md"), "utf-8");
+    expect(content).toMatch(/hooks are advisory/i);
+    expect(content).toMatch(/branch protection/i);
+  });
+});
