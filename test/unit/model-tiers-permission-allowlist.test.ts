@@ -19,6 +19,20 @@
  *      still blocks a disallowed command (exit 2) — the allowlist is a
  *      Claude Code host-level permission-prompt suppression, not a bypass
  *      of the deterministic hook guard.
+ *
+ * NOTE (verifier audit fix, issue #174): the issue's original 6.4 text named
+ * `git branch` as one of the eleven read-only commands, but Claude Code's
+ * `Bash(<prefix>:*)` permission pattern is a plain prefix match with no
+ * subcommand/flag awareness, so `Bash(git branch:*)` also silently
+ * pre-approved `git branch -D <name>` (delete) and `git branch -m <old>
+ * <new>` (rename) — real write operations with no confirmation prompt and
+ * no `git-guard.sh` backstop (that hook has no branch delete/rename rule).
+ * There is no narrower Claude Code pattern that admits bare/listing
+ * invocations while excluding `-D`/`-m` within a single prefix rule, so
+ * `git branch` was dropped from the allowlist entirely rather than
+ * mis-scoped; branch state remains visible via the already-allowed `git
+ * status` and `git rev-parse --abbrev-ref HEAD`. See
+ * `workstream/fidelity-report-174.md` (D-1) for the full drift writeup.
  */
 
 import { spawnSync } from "node:child_process";
@@ -107,7 +121,6 @@ const EXPECTED_ALLOWLIST = [
   "Bash(git diff:*)",
   "Bash(git log:*)",
   "Bash(git rev-parse:*)",
-  "Bash(git branch:*)",
   "Bash(pnpm run lint:*)",
   "Bash(pnpm run test:*)",
   "Bash(pnpm run typecheck:*)",
@@ -141,6 +154,27 @@ function loadAllowlist(relPath: string): string[] {
   return parsed.permissions?.allow ?? [];
 }
 
+/**
+ * Reproduces Claude Code's permission-pattern matching for a single
+ * `Bash(...)` allowlist entry against a literal shell command string.
+ *
+ * `Bash(<prefix>:*)` is a prefix match: it allows `<prefix>` itself and any
+ * command starting with `<prefix> ` (space-separated continuation), which is
+ * exactly the mechanism that let `Bash(git branch:*)` silently pre-approve
+ * `git branch -D <name>` (delete) and `git branch -m <old> <new>` (rename)
+ * alongside the intended bare listing form — see issue #174 fidelity report.
+ * `Bash(<literal>)` with no `:*` suffix is an exact match only.
+ */
+function allowlistEntryMatches(entry: string, command: string): boolean {
+  const inner = entry.match(/^Bash\((.*)\)$/)?.[1];
+  if (inner === undefined) return false;
+  if (inner.endsWith(":*")) {
+    const prefix = inner.slice(0, -2);
+    return command === prefix || command.startsWith(`${prefix} `);
+  }
+  return command === inner;
+}
+
 describe.each([["templates/claude/settings.json"], [".claude/settings.json"]])(
   "permission allowlist — %s",
   (relPath) => {
@@ -159,6 +193,26 @@ describe.each([["templates/claude/settings.json"], [".claude/settings.json"]])(
           ).toBe(false);
         }
       }
+    });
+
+    it("does not pre-approve `git branch -D <name>` (branch delete) via any entry", () => {
+      const allow = loadAllowlist(relPath);
+      const command = "git branch -D some-branch";
+      const matches = allow.filter((entry) => allowlistEntryMatches(entry, command));
+      expect(
+        matches,
+        `${relPath}: "${command}" matched allowlist entr${matches.length === 1 ? "y" : "ies"} [${matches.join(", ")}] — a prefix-matched "git branch:*" entry silently pre-approves delete, not just listing`,
+      ).toEqual([]);
+    });
+
+    it("does not pre-approve `git branch -m <old> <new>` (branch rename) via any entry", () => {
+      const allow = loadAllowlist(relPath);
+      const command = "git branch -m old-name new-name";
+      const matches = allow.filter((entry) => allowlistEntryMatches(entry, command));
+      expect(
+        matches,
+        `${relPath}: "${command}" matched allowlist entr${matches.length === 1 ? "y" : "ies"} [${matches.join(", ")}] — a prefix-matched "git branch:*" entry silently pre-approves rename, not just listing`,
+      ).toEqual([]);
     });
   },
 );
