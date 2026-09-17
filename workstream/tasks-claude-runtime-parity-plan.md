@@ -164,18 +164,18 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [ ] 7.9 Verify Acceptance Criterion: a `/planner` dry run against a story shows `qa-engineer` and `verifier` invoked directly by `planner` per story, not merely reported by `developer` — **not executable from within this `developer` subagent run** (no `Task` tool; this is literally the scenario this task documents). Requires a live `/planner` main-thread dry run by the user/reviewer; left unchecked as a manual validation step, see Known Limitations
   - [x] 7.10 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 8.0 Installed-state parity test (depends on 1.0, 2.0, 3.0) — [#176](https://github.com/llipe/dev-tasks/issues/176)
+- [x] 8.0 Installed-state parity test (depends on 1.0, 2.0, 3.0) — [#176](https://github.com/llipe/dev-tasks/issues/176)
 
   > Note: every existing parity test asserts files exist *in this repository*. None asserts that `install --profile claude` produces an install functionally equivalent to `install --profile kiro`. That is the exact blind spot all four delivery gaps fell through — each platform's files were present and correct in-tree, and only the installed result diverged.
 
-  - [ ] 8.1 Complete `test/integration/install-parity.test.ts`: install each profile into a separate temp dir and compare *enforcement surface*, not file counts
-  - [ ] 8.2 Assert per profile: hooks present **and wired** to a runtime trigger; always-on context present (`CLAUDE.md` for Claude, `inclusion: always` steering for Kiro); scoped execution rules reachable (`implement` and `plan`, by whatever mechanism the platform uses)
-  - [ ] 8.3 Assert the documented intentional asymmetries hold and do not silently widen: `infra-engineer`, `planner`, and `product-engineer` as Claude commands rather than agents; `verifier` as two commands; the merged `planner-resume` and three `product-engineer` entry points
-  - [ ] 8.4 Assert every consumer-owned path is either installed from a template or explicitly documented as consumer-supplied, so nothing else can fall into the settings.json trap
-  - [ ] 8.5 Verify Acceptance Criterion: the test fails if `.claude/settings.json` is removed from the install path
-  - [ ] 8.6 Verify Acceptance Criterion: the test fails if a hook script is shipped without a matching trigger registration
-  - [ ] 8.7 Verify Acceptance Criterion: the test passes for all three profiles and for `--profile all`
-  - [ ] 8.8 Run Tests: `pnpm run test:integration`, `pnpm run validate`
+  - [x] 8.1 Complete `test/integration/install-parity.test.ts`: install each profile into a separate temp dir and compare *enforcement surface*, not file counts
+  - [x] 8.2 Assert per profile: hooks present **and wired** to a runtime trigger; always-on context present (`CLAUDE.md` for Claude, `inclusion: always` steering for Kiro); scoped execution rules reachable (`implement` and `plan`, by whatever mechanism the platform uses)
+  - [x] 8.3 Assert the documented intentional asymmetries hold and do not silently widen: `infra-engineer`, `planner`, and `product-engineer` as Claude commands rather than agents; `verifier` as two commands; the merged `planner-resume` and three `product-engineer` entry points
+  - [x] 8.4 Assert every consumer-owned path is either installed from a template or explicitly documented as consumer-supplied, so nothing else can fall into the settings.json trap
+  - [x] 8.5 Verify Acceptance Criterion: the test fails if `.claude/settings.json` is removed from the install path
+  - [x] 8.6 Verify Acceptance Criterion: the test fails if a hook script is shipped without a matching trigger registration
+  - [x] 8.7 Verify Acceptance Criterion: the test passes for all three profiles and for `--profile all`
+  - [x] 8.8 Run Tests: `pnpm run test:integration`, `pnpm run validate`
 
 - [x] 9.0 Fix the `planner` merge path (depends on 1.0) — **confirmed live defect** — [#177](https://github.com/llipe/dev-tasks/issues/177)
 
