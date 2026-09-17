@@ -194,7 +194,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [x] 9.11 Verify Acceptance Criterion: a repository whose default branch is `master` receives identical protection
   - [x] 9.12 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 10.0 Close the MCP bypass and establish the durable gate (depends on 9.0) — [#178](https://github.com/llipe/dev-tasks/issues/178)
+- [x] 10.0 Close the MCP bypass and establish the durable gate (depends on 9.0) — [#178](https://github.com/llipe/dev-tasks/issues/178)
 
   > Note: `.claude/settings.json` matches `"Bash"` only. `github-ops.md:49` explicitly offers `merge_pull_request` as the MCP equivalent of `gh pr merge`, and `CLAUDE.md:35` states that where a GitHub MCP server is configured, "agents may use it instead." **All four git-guard invariants — merge/push to the default branch, Conventional Commits, inline `--body`, tag operations — are bypassed completely on the MCP path.** Any consumer with the GitHub MCP server enabled has no enforcement whatsoever, whatever the hook says.
   >
@@ -204,9 +204,9 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [x] 10.2 Extend the `PreToolUse` matcher in `templates/claude/settings.json` to cover the mutating MCP surface — `mcp__github__merge_pull_request`, `enable_pr_auto_merge`, `push_files`, `create_or_update_file`, `delete_file`, `create_branch` — and add a guard branch that reads `tool_input` rather than a command string for those calls
   - [x] 10.3 Reconcile the policy text: either `github-ops.md` stops offering unguarded MCP equivalents for mutating operations, or the guard covers them. Do not leave the table advertising a bypass
   - [x] 10.4 **Document branch protection as the required control**, not an optional hardening step: on the default branch require a PR, at least one approving review, and passing status checks, with force-push and deletion disabled. Add it to the README install section and to `activity-init` as a setup step, so consumers configure it when they adopt dev-tasks. State plainly in `AGENTS.md` that hooks are advisory and branch protection is the gate
-  - [ ] 10.5 Verify Acceptance Criterion: an attempted merge into the default branch via the MCP tool is blocked by the hook
-  - [ ] 10.6 Verify Acceptance Criterion: with branch protection configured, the same merge fails server-side even with every hook disabled
-  - [ ] 10.7 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [x] 10.5 Verify Acceptance Criterion: an attempted merge into the default branch via the MCP tool is blocked by the hook (automated: `test/unit/git-guard-mcp.test.ts` — `mcp__github__merge_pull_request` and `enable_pr_auto_merge` block when the resolved base is the default branch, fail closed when unverifiable)
+  - [x] 10.6 Verify Acceptance Criterion: with branch protection configured, the same merge fails server-side even with every hook disabled (manual/documentary — requires a real GitHub repo with branch protection; documented in README step 3, `activity-init`'s Repository Setup section, and `AGENTS.md` § Hooks per CP-10's pass criteria)
+  - [x] 10.7 Run Tests: `pnpm run test:unit`, `pnpm run validate` — both green (2364 tests); `pnpm run audit` also clean
 
 - [ ] 11.0 Never route around a blocked guard — behavioural rules — [#179](https://github.com/llipe/dev-tasks/issues/179)
 

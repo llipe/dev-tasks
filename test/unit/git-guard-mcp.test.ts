@@ -321,10 +321,7 @@ describe("branch protection is documented as the required control, not optional 
   });
 
   it("activity-init SKILL.md documents branch protection as a setup step", () => {
-    const content = readFileSync(
-      resolve(ROOT, ".claude/skills/activity-init/SKILL.md"),
-      "utf-8",
-    );
+    const content = readFileSync(resolve(ROOT, ".claude/skills/activity-init/SKILL.md"), "utf-8");
     expect(content).toMatch(/branch protection/i);
   });
 

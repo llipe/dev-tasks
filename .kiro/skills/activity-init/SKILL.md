@@ -17,6 +17,19 @@ Guide an AI assistant in establishing the foundational documents for a project: 
 
 Run this activity **once per project** (or when a major strategic or technical pivot occurs).
 
+## Repository Setup — Branch Protection (Required)
+
+Before or alongside establishing the foundation documents, verify the repository's default branch has GitHub branch protection configured. This is not optional hardening — it is the actual gate for "no agent merges into the default branch." Every hook shipped with dev-tasks (`git-guard.sh`, `branch-guard.sh`, and their Kiro equivalents) is a best-effort, advisory, local check that can be evaded by a sufficiently creative command or tool-input shape, and Copilot has no hook system at all; only a server-side branch protection rule is unbypassable by any tool surface.
+
+Check with `gh api repos/<owner>/<repo>/branches/<default-branch>/protection` (a 404 means it is not configured). If missing, tell the user and offer to configure it:
+
+- Require a pull request before merging
+- Require at least 1 approving review
+- Require status checks to pass before merging
+- Disable force-pushes and branch deletion on the default branch
+
+See the README "Configure branch protection" step for the exact `gh api` invocation. You **MUST NOT** proceed to treat the project as fully initialized while branch protection remains unconfigured without the user's explicit acknowledgment.
+
 ## Document Changelog Convention
 
 Every document produced by this activity **MUST** include a **Changelog** table as the **first section** after the document title. The changelog tracks the version history of the document.
