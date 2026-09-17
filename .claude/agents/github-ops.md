@@ -1,6 +1,7 @@
 ---
 name: github-ops
 description: "GitHub consistency and organization agent — standardizes issue titles, PR formats, branch names, labels, milestones, and comments across the project. Use when: creating issues, opening PRs, naming branches, applying labels, managing milestones, writing issue or PR comments, auditing GitHub hygiene."
+model: haiku
 tools: Bash, Read, Grep, Glob
 ---
 

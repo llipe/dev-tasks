@@ -21,5 +21,21 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git branch:*)",
+      "Bash(pnpm run lint:*)",
+      "Bash(pnpm run test:*)",
+      "Bash(pnpm run typecheck:*)",
+      "Bash(pnpm run format:check:*)",
+      "Bash(pnpm run audit:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh issue view:*)"
+    ]
   }
 }

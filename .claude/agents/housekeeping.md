@@ -1,6 +1,7 @@
 ---
 name: housekeeping
 description: Fixes lint errors, type errors, and broken test wiring. Never changes test logic, business logic, or dependency versions without explicit confirmation.
+model: haiku
 tools: Bash, Read, Edit, Write, Grep, Glob, WebFetch, WebSearch, TodoWrite
 ---
 
