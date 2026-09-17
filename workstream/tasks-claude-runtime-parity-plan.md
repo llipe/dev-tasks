@@ -34,6 +34,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
 - `package.json` - `files[]` (ship templates)
 - `CLAUDE.md.template`, `AGENTS.md.template` - consumer-facing root context, currently unshipped
 - `.claude/agents/developer.md` - remove the Kiro-ism; closeout-payload honesty (task 7)
+- `.claude/agents/verifier.md` - reworded an "Out of Scope" bullet from "delegate to" to "owned by" for consistency with its siblings, surfaced by task 7's new parity test
 - `.claude/commands/developer.md` - collapse to a thin wrapper
 - `.claude/agents/{github-ops,housekeeping,technical-writer,researcher}.md` - `model:` frontmatter
 - `.claude/skills/implement/SKILL.md` - explicit skill-invocation step
@@ -141,25 +142,27 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [x] 6.8 Verify Acceptance Criterion: the hook guards still block their four invariants with the allowlist active
   - [x] 6.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 7.0 Tool-declaration parity test — **contains a decision point** — [#175](https://github.com/llipe/dev-tasks/issues/175)
+- [x] 7.0 Tool-declaration parity test — **contains a decision point** — [#175](https://github.com/llipe/dev-tasks/issues/175)
 
   > Note: `test/unit/qa-engineer-parity.test.ts:162` and `test/unit/researcher-parity.test.ts:139` assert only that a `tools:` line *exists*, never which tools. Nothing mechanically catches an agent whose prompt requires a capability its frontmatter withholds. The invariant — *every agent whose prompt instructs it to invoke a subagent must declare `Task`* — is four lines and would have caught the `developer` defect at authoring time.
   >
   > **It cannot pass today.** `developer` violates it. The full gate-ownership redesign (relocating every `developer` MUST-level delegation rule) stays excluded — see the top-of-file note — but this task now also closes the one hole 7.1(a) would otherwise open: once `developer`-as-subagent stops self-certifying `verifier_audit`/`coverage_gate`, nothing else runs those gates per-story under `/planner` unless `planner` triggers them itself (see 7.6). Resolve 7.1 before writing the assertions.
 
-  - [ ] 7.1 **Decision.** Choose one:
+  - [x] 7.1 **Decision.** Choose one:
         **(a) Recommended — make the prompt honest.** Strip the impossible invocation claims from `.claude/agents/developer.md` (rules 10, 18, 22 and the `researcher` troubleshooting path), have the subagent emit `verifier_audit: not-run(no-delegation)` and `coverage_gate: SKIPPED(no-delegation)`, and note in the file that these gates are owned by the caller. This is a small, self-contained subset of the excluded fix; it makes the test green honestly and stops `/planner` from merging on a self-certified string. It does **not** by itself relocate the gates to `planner` — that remains open.
         **(b) Land the test as a documented expected failure** tied to a tracking issue for the gate-ownership change. Keeps scope tight; leaves a red test in the suite.
         Do not write the test until this is decided — option (b) changes what the file asserts.
-  - [ ] 7.2 Write `test/unit/claude-tool-declaration-parity.test.ts`: parse each `.claude/agents/*.md`, extract the declared `tools:` list, scan the body for instructions to invoke a named subagent, and assert `Task` is declared whenever such an instruction is present
-  - [ ] 7.3 Extend it with the inverse check: no agent declares a tool its prompt never uses, to keep tool grants minimal
-  - [ ] 7.4 Apply the 7.1 outcome to `.claude/agents/developer.md`
-  - [ ] 7.5 If 7.1(a): update `.claude/commands/planner.md` merge gate 6 so it no longer treats `verifier_audit: run` as sufficient evidence
-  - [ ] 7.6 **Scoped gate-ownership fix (decided in place of a separate tracking issue).** Once `developer`-as-subagent honestly reports `not-run`/`SKIPPED` (7.1a), the mandatory per-story `qa-engineer` coverage check and `verifier` audit stop happening anywhere in the `/planner` path — Phase 5's PRD-level rollup is the only remaining real invocation. `planner` is the only actor in this path that holds the `Task` tool (it runs in the main thread; `developer`-as-subagent does not and structurally cannot invoke another subagent). Close this gap — without taking on the excluded full gate-ownership redesign — by editing `.claude/commands/planner.md`'s per-story merge management rule (Phase 4) so that, after each story's `developer` subagent reports its closeout payload, `planner` itself invokes `qa-engineer` and `verifier` (Audit Mode) directly, scoped to that story's diff/branch/PR, and records their actual results. Merge gates 5 and 6 then check the result `planner` itself obtained, not a self-reported field
-  - [ ] 7.7 Verify Acceptance Criterion: the test fails when `Task` is removed from an agent whose prompt requires it
-  - [ ] 7.8 Verify Acceptance Criterion: the suite is green, or the single expected failure is documented and linked (per 7.1)
-  - [ ] 7.9 Verify Acceptance Criterion: a `/planner` dry run against a story shows `qa-engineer` and `verifier` invoked directly by `planner` per story, not merely reported by `developer`
-  - [ ] 7.10 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+
+        **Decision recorded: (a).** Applied as described, plus a "Main-Thread Mode Addendum" section preserving the same invocation behavior for the separate `.claude/commands/developer.md` interactive entry point, which reuses this contract file in a main-thread session where `Task` genuinely is available.
+  - [x] 7.2 Write `test/unit/claude-tool-declaration-parity.test.ts`: parse each `.claude/agents/*.md`, extract the declared `tools:` list, scan the body for instructions to invoke a named subagent, and assert `Task` is declared whenever such an instruction is present
+  - [x] 7.3 Extend it with the inverse check: no agent declares a tool its prompt never uses, to keep tool grants minimal
+  - [x] 7.4 Apply the 7.1 outcome to `.claude/agents/developer.md`
+  - [x] 7.5 If 7.1(a): update `.claude/commands/planner.md` merge gate 6 so it no longer treats `verifier_audit: run` as sufficient evidence
+  - [x] 7.6 **Scoped gate-ownership fix (decided in place of a separate tracking issue).** Once `developer`-as-subagent honestly reports `not-run`/`SKIPPED` (7.1a), the mandatory per-story `qa-engineer` coverage check and `verifier` audit stop happening anywhere in the `/planner` path — Phase 5's PRD-level rollup is the only remaining real invocation. `planner` is the only actor in this path that holds the `Task` tool (it runs in the main thread; `developer`-as-subagent does not and structurally cannot invoke another subagent). Close this gap — without taking on the excluded full gate-ownership redesign — by editing `.claude/commands/planner.md`'s per-story merge management rule (Phase 4) so that, after each story's `developer` subagent reports its closeout payload, `planner` itself invokes `qa-engineer` and `verifier` (Audit Mode) directly, scoped to that story's diff/branch/PR, and records their actual results. Merge gates 5 and 6 then check the result `planner` itself obtained, not a self-reported field
+  - [x] 7.7 Verify Acceptance Criterion: the test fails when `Task` is removed from an agent whose prompt requires it
+  - [x] 7.8 Verify Acceptance Criterion: the suite is green, or the single expected failure is documented and linked (per 7.1) — suite is green (16/16 new tests, 2101/2101 unit, 2312/2312 validate)
+  - [ ] 7.9 Verify Acceptance Criterion: a `/planner` dry run against a story shows `qa-engineer` and `verifier` invoked directly by `planner` per story, not merely reported by `developer` — **not executable from within this `developer` subagent run** (no `Task` tool; this is literally the scenario this task documents). Requires a live `/planner` main-thread dry run by the user/reviewer; left unchecked as a manual validation step, see Known Limitations
+  - [x] 7.10 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 8.0 Installed-state parity test (depends on 1.0, 2.0, 3.0) — [#176](https://github.com/llipe/dev-tasks/issues/176)
 

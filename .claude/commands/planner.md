@@ -372,7 +372,7 @@ workstream_files:
 - audit: PASS | FAIL | NOT RUN
   coverage_gate: PASS | FAIL | SKIPPED(<reason>)
   checklist_sync: synced | mismatch-fixed | blocked
-  verifier_audit: run | blocked
+  verifier_audit: run | not-run(no-delegation) | blocked
   fidelity_verdict: High | Medium | Low | none
   highest_drift_impact: Critical | Major | Minor | None
   drift_findings: <count-or-none>
@@ -409,8 +409,8 @@ For each completed story PR:
 2. Verify required checks are successful.
 3. Verify delegated closeout payload reports `docs_drift_status` as `clean` or `drift-fixed`.
 4. Verify delegated quality gates are all `PASS` (`test`, `lint`, `format:check`, `typecheck`, `audit`).
-5. Verify the delegated closeout payload reports `coverage_gate` with a value of `PASS`, `FAIL`, or `SKIPPED(<reason>)` carrying a non-empty reason. An omitted field means the QA gate was never reached — treat the story as incomplete. A `FAIL` or `SKIPPED` value does **NOT** block the merge; only omission does.
-6. Verify the delegated closeout payload reports `verifier_audit: run` — this confirms `developer` invoked the mandatory `verifier` audit for this story. This check is a merge gate on trigger evidence only; the audit's drift findings (`fidelity_verdict`/`highest_drift_impact`/`drift_findings`) **MUST NOT** block the merge.
+5. **Invoke `qa-engineer` directly** — scoped to this story's diff/branch/PR — immediately after receiving the `developer` subagent's closeout payload. The `developer` subagent structurally lacks the `Task` tool (see `.claude/agents/developer.md`'s Operating Context) and may honestly self-report `coverage_gate: SKIPPED(no-delegation)`; that is expected in this path, not a red flag. Record the result of *planner's own* `qa-engineer` invocation and verify it is `PASS`, `FAIL`, or `SKIPPED(<reason>)` carrying a non-empty reason. An omitted result means the QA gate was never reached — treat the story as incomplete. A `FAIL` or `SKIPPED` value does **NOT** block the merge; only omission does.
+6. **Invoke `verifier` in Audit Mode directly** — scoped to this story's diff/branch/PR — immediately after step 5, and post its human-readable summary to the story PR via `github-ops` comment conventions. A bare developer-reported `verifier_audit: run` string is one signal but is **NOT sufficient evidence on its own** — `verifier_audit: not-run(no-delegation)` is a valid, expected self-report from the `developer` subagent in this path (it structurally cannot invoke `verifier`), not a red flag. This merge gate checks the result of *planner's own* `verifier` invocation, not the self-reported field. The audit's drift findings (`fidelity_verdict`/`highest_drift_impact`/`drift_findings`) **MUST NOT** block the merge.
 7. For migration-bearing stories, verify explicit user confirmation was recorded before migration apply.
 8. Verify branch is up to date with integration branch (update/rebase if required by policy). Use the `git-ops` skill for rebase and conflict resolution.
 9. Detect merge conflicts before attempting merge. If conflicts are found, invoke the `git-ops` skill to resolve them.
@@ -507,7 +507,7 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 - All GitHub outputs are in English.
 - Final user-facing local branch state **MUST** be the integration branch for the current run, or planner **MUST** explicitly report verification failure and provide the exact checkout command.
 - Planner **MUST** end a successful run with explicit PR directives for the user (review/approve/merge) and **MUST NOT** mark the run complete before that handoff is emitted.
-- Planner **MUST** verify `verifier_audit: run` in every story's closeout payload before merging that story's PR into the integration branch, and **MUST** invoke `verifier` in `audit` mode for a PRD-level rollup audit before/alongside the consolidated PR — both triggers are mandatory and non-skippable, and neither trigger's drift findings block the corresponding merge/handoff.
+- Planner **MUST** invoke `qa-engineer` and `verifier` (Audit Mode) directly, scoped to each story's diff/branch/PR, before merging that story's PR into the integration branch (merge gates 5 and 6) — a story's self-reported `coverage_gate`/`verifier_audit` fields are supporting context only, never sufficient evidence on their own, and `not-run(no-delegation)`/`SKIPPED(no-delegation)` are valid, expected self-reports from the `developer` subagent, not red flags. Planner **MUST** also invoke `verifier` in `audit` mode for a PRD-level rollup audit before/alongside the consolidated PR. All these triggers are mandatory and non-skippable, and none of their drift findings block the corresponding merge/handoff.
 
 ---
 

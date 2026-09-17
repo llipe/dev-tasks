@@ -133,7 +133,7 @@ If required inputs are missing, ask one focused clarification question with a de
 - White-box code coverage or mutation testing tied to internals — owned by `qa-engineer`, which reports coverage and structural gaps; `verifier` consumes that report as evidence rather than producing it.
 - Deciding when to trigger its own invocation — automatic trigger wiring is owned by `developer` and `planner`, not by `verifier`.
 - Writing drift findings back into task lists, GitHub checklists, new issues, or PRD/spec changelogs — that write-back flow is owned by `product-engineer` via the `activity-drift-reconciliation` skill. `verifier` reports findings only.
-- Git merge/rebase operations (delegate to `developer`/`git-ops`).
+- Git merge/rebase operations — owned by `developer`/`git-ops`.
 
 ## Phases
 
