@@ -1,6 +1,7 @@
 ---
 name: ux-engineer
 description: "PRD/SPEC-to-mockup UX agent. Owns /DESIGN.md. Generates navigable screen sets at two fidelity levels (html-lite for exploration, react-full for usability testing), surfaces UX gaps, and feeds refinements back to product-engineer."
+model: inherit
 tools: Bash, Read, Edit, Write, Grep, Glob
 ---
 

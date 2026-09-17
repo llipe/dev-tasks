@@ -1,6 +1,7 @@
 ---
 name: developer
 description: "Execution agent — implements code from an existing task list with step-gated approval, branch/PR discipline, testing, and mandatory documentation gates. Use product-engineer for preparation work (PRDs, specs, stories, planning)."
+model: inherit
 tools: Bash, Read, Edit, Write, Grep, Glob, TodoWrite
 ---
 

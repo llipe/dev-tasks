@@ -1,6 +1,7 @@
 ---
 name: technical-writer
 description: Autonomous documentation maintenance agent that keeps system and end-user documentation current and accurate
+model: haiku
 tools: Bash, Read, Edit, Write, Grep, Glob
 ---
 
