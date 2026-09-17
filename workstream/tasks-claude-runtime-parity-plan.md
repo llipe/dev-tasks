@@ -46,6 +46,8 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
 - `test/integration/install-parity.test.ts` - new; per-profile installed-state equivalence
 - `test/unit/distribution-install.test.ts`, `test/unit/distribution-update.test.ts`, `test/unit/distribution-profiles.test.ts` - extend for the new path category
 - `test/unit/nextjs-claude-parity-claim.test.ts` - new; CP-04 repo-wide scan that the withdrawn Next.js/Claude scaffolding claim is not repeated anywhere
+- `test/unit/developer-command-collapse.test.ts` - new; CP-05 size-cap and no-restatement checks for the collapsed `.claude/commands/developer.md`, plus Kiro-activation-marker absence checks on the `developer` agent/command pair
+- `test/unit/architecture-change-parity.test.ts`, `test/unit/cross-repo-partitioning-parity.test.ts`, `test/unit/infra-engineer-parity.test.ts`, `test/unit/qa-testing-standard.test.ts` - updated; `.claude/commands/developer.md` is no longer asserted to carry the full agent contract text, only a pointer to it
 
 ## Tasks
 
@@ -104,19 +106,21 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [x] 4.5 Verify Acceptance Criterion: no file in the repository claims a Claude delivery mechanism that does not exist
   - [x] 4.6 Run Tests: `pnpm run test:unit`, `pnpm run format:check`
 
-- [ ] 5.0 Remove the Kiro-ism and collapse the `developer` command duplication — [#173](https://github.com/llipe/dev-tasks/issues/173)
+- [x] 5.0 Remove the Kiro-ism and collapse the `developer` command duplication — [#173](https://github.com/llipe/dev-tasks/issues/173)
 
   > Note: `.claude/agents/developer.md:53-55` carries a "Steering Context Check" instructing the agent to "load the implement steering by opening the relevant task file first." That is Kiro `fileMatch` semantics; on Claude, opening a file loads no skill. The instruction is inert and tells the agent a mechanism exists that does not. It appears in the agent but not the command — one instance of a broader drift: `.claude/commands/developer.md` (21.8 KB) is a near-verbatim copy of `.claude/agents/developer.md` (23.9 KB), 81 differing lines across ~600, and they have already diverged (the agent has the hard branch gate at step 4 and the `--scope related` memo search; the command has neither). `/github-ops` is 681 bytes and is the right shape.
 
-  - [ ] 5.1 Write a test asserting `.claude/commands/developer.md` stays under a size cap and contains no restatement of the Non-Negotiable Operating Rules; confirm it fails
-  - [ ] 5.2 Delete the "Steering Context Check" block from `.claude/agents/developer.md`
-  - [ ] 5.3 Add an explicit skill invocation as step 0 of the developer execution flow — invoke the `implement` skill directly rather than relying on file-open activation — in both the agent and the command
-  - [ ] 5.4 Collapse `.claude/commands/developer.md` to a thin wrapper on the pattern of `.claude/commands/github-ops.md`: frontmatter, `$ARGUMENTS`, step-gated default, and a pointer to the `developer` agent contract plus the `implement` skill
-  - [ ] 5.5 Audit the remaining agent/command pairs for the same duplication and confirm none other restates its agent body
-  - [ ] 5.6 Verify Acceptance Criterion: `/developer` and the `developer` subagent resolve to one behavioural contract with no divergent copy
-  - [ ] 5.7 Verify Acceptance Criterion: no `.claude` file references Kiro steering, `fileMatch`, or `applyTo` activation semantics
-  - [ ] 5.8 Verify Acceptance Criterion: existing `developer` parity tests still pass against the reduced command file
-  - [ ] 5.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  > Scope note (5.7): `.claude/commands/product-engineer.md:68` carries its own separate "Steering Context Check" block. It is not in this task's Relevant Files and is out of scope for #173 — narrowed per explicit instruction to keep this task confined to the `developer` duplication issue. 5.7 is verified against `.claude/agents/developer.md` and `.claude/commands/developer.md` only.
+
+  - [x] 5.1 Write a test asserting `.claude/commands/developer.md` stays under a size cap and contains no restatement of the Non-Negotiable Operating Rules; confirm it fails
+  - [x] 5.2 Delete the "Steering Context Check" block from `.claude/agents/developer.md`
+  - [x] 5.3 Add an explicit skill invocation as step 0 of the developer execution flow — invoke the `implement` skill directly rather than relying on file-open activation — in both the agent and the command
+  - [x] 5.4 Collapse `.claude/commands/developer.md` to a thin wrapper on the pattern of `.claude/commands/github-ops.md`: frontmatter, `$ARGUMENTS`, step-gated default, and a pointer to the `developer` agent contract plus the `implement` skill
+  - [x] 5.5 Audit the remaining agent/command pairs for the same duplication and confirm none other restates its agent body
+  - [x] 5.6 Verify Acceptance Criterion: `/developer` and the `developer` subagent resolve to one behavioural contract with no divergent copy
+  - [x] 5.7 Verify Acceptance Criterion: no `.claude` file references Kiro steering, `fileMatch`, or `applyTo` activation semantics (scoped to `developer` agent/command per scope note above)
+  - [x] 5.8 Verify Acceptance Criterion: existing `developer` parity tests still pass against the reduced command file
+  - [x] 5.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 6.0 Cost controls: subagent models and permission allowlist — [#174](https://github.com/llipe/dev-tasks/issues/174)
 

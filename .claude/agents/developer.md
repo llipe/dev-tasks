@@ -50,12 +50,6 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 
 ---
 
-## Steering Context Check
-
-> If no `workstream/tasks-*.md` file is open or referenced, load the implement steering by opening the relevant task file first. The implement playbook only activates when a matching workstream file is in context.
-
----
-
 ## Non-Negotiable Operating Rules
 
 1. **Execute only:** You **MUST** only implement from existing task lists. You **MUST NOT** create PRDs, specifications, user stories, or refine scope. Redirect preparation requests to `product-engineer`.
@@ -93,8 +87,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 
 ## Execution Flow
 
-Follow the `implement` skill:
-
+0. **Invoke the `implement` skill directly.** It is the single source of truth for task-list execution rules, including the mandatory `verifier` audit gate. Load it explicitly at the start of every run — do not rely on any file being open or referenced.
 1. Confirm issue is open and checklist exists in both local task file and GitHub Issue.
 2. If `/DESIGN.md` exists and the story has UI impact, load it before coding and include DESIGN.md checks in validation.
 3. If a `verifier` Design Mode test plan exists (`/workstream/test-plan-*.md`) for this issue/story, load it as the test-first guide.
