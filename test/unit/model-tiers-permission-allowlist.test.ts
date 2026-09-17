@@ -20,19 +20,45 @@
  *      Claude Code host-level permission-prompt suppression, not a bypass
  *      of the deterministic hook guard.
  *
- * NOTE (verifier audit fix, issue #174): the issue's original 6.4 text named
- * `git branch` as one of the eleven read-only commands, but Claude Code's
- * `Bash(<prefix>:*)` permission pattern is a plain prefix match with no
- * subcommand/flag awareness, so `Bash(git branch:*)` also silently
- * pre-approved `git branch -D <name>` (delete) and `git branch -m <old>
- * <new>` (rename) — real write operations with no confirmation prompt and
- * no `git-guard.sh` backstop (that hook has no branch delete/rename rule).
- * There is no narrower Claude Code pattern that admits bare/listing
+ * NOTE (verifier audit fix, issue #174, round 2): the issue's original 6.4
+ * text named `git branch` as one of the eleven read-only commands, but
+ * Claude Code's `Bash(<prefix>:*)` permission pattern is a plain prefix
+ * match with no subcommand/flag awareness, so `Bash(git branch:*)` also
+ * silently pre-approved `git branch -D <name>` (delete) and `git branch -m
+ * <old> <new>` (rename) — real write operations with no confirmation prompt
+ * and no `git-guard.sh` backstop (that hook has no branch delete/rename
+ * rule). There is no narrower Claude Code pattern that admits bare/listing
  * invocations while excluding `-D`/`-m` within a single prefix rule, so
  * `git branch` was dropped from the allowlist entirely rather than
  * mis-scoped; branch state remains visible via the already-allowed `git
  * status` and `git rev-parse --abbrev-ref HEAD`. See
  * `workstream/fidelity-report-174.md` (D-1) for the full drift writeup.
+ *
+ * NOTE (verifier audit fix, issue #174, round 3): the SAME class of bug was
+ * found in a different entry, `Bash(pnpm run lint:*)`. `package.json`
+ * defines both `"lint"` (read-only: `eslint . --max-warnings 0`) and
+ * `"lint:fix"` (mutates files: `eslint . --fix`). The literal string
+ * `pnpm run lint:fix` starts with the literal string `pnpm run lint` (there
+ * is no space between "lint" and the colon), so the entry silently
+ * pre-approved the file-mutating variant too, with zero backstop —
+ * `git-guard.sh` has no rules for pnpm/npm commands at all. Fixed the same
+ * way as `git branch`: dropped `Bash(pnpm run lint:*)` from
+ * `permissions.allow` in both settings files.
+ *
+ * This round also fixed a bug in `allowlistEntryMatches()` itself: it
+ * required a literal space right after the prefix before treating a longer
+ * command as a valid continuation (`command === prefix || command.startsWith(
+ * prefix + " ")`). That space requirement is why the round-2 regression
+ * tests caught the space-separated `git branch -D`/`-m` case but completely
+ * missed the colon-glued `pnpm run lint:fix` case — false confidence. Claude
+ * Code's actual `Bash(<prefix>:*)` permission rule has no boundary
+ * requirement at all; it is a true raw string-prefix match. The helper now
+ * matches that (`command.startsWith(prefix)`), and a generic sweep test
+ * below cross-references every `pnpm run <x>:*` allowlist prefix against
+ * every actual `package.json` script name so this whole class of bug is
+ * caught mechanically going forward, not just the two instances found by
+ * hand so far. See `workstream/fidelity-report-174.md` (D-1, D-3) for the
+ * full drift writeup.
  */
 
 import { spawnSync } from "node:child_process";
@@ -121,7 +147,6 @@ const EXPECTED_ALLOWLIST = [
   "Bash(git diff:*)",
   "Bash(git log:*)",
   "Bash(git rev-parse:*)",
-  "Bash(pnpm run lint:*)",
   "Bash(pnpm run test:*)",
   "Bash(pnpm run typecheck:*)",
   "Bash(pnpm run format:check:*)",
@@ -158,11 +183,23 @@ function loadAllowlist(relPath: string): string[] {
  * Reproduces Claude Code's permission-pattern matching for a single
  * `Bash(...)` allowlist entry against a literal shell command string.
  *
- * `Bash(<prefix>:*)` is a prefix match: it allows `<prefix>` itself and any
- * command starting with `<prefix> ` (space-separated continuation), which is
- * exactly the mechanism that let `Bash(git branch:*)` silently pre-approve
- * `git branch -D <name>` (delete) and `git branch -m <old> <new>` (rename)
- * alongside the intended bare listing form — see issue #174 fidelity report.
+ * `Bash(<prefix>:*)` is a TRUE raw string-prefix match: it allows any
+ * command whose text starts with `<prefix>`, with no space, colon, or word
+ * boundary requirement of any kind. This is exactly the mechanism that let
+ * `Bash(git branch:*)` silently pre-approve `git branch -D <name>` (delete)
+ * and `git branch -m <old> <new>` (rename) alongside the intended bare
+ * listing form, AND the mechanism that let `Bash(pnpm run lint:*)` silently
+ * pre-approve `pnpm run lint:fix` (mutates files) alongside the intended
+ * read-only `pnpm run lint` — see issue #174 fidelity report.
+ *
+ * NOTE (round 3 fix): an earlier version of this helper required a literal
+ * space right after the prefix (`command === prefix || command.startsWith(
+ * prefix + " ")`). That extra boundary requirement caught the
+ * space-separated `git branch -D` case but missed the colon-glued
+ * `pnpm run lint:fix` case entirely — a modeling bug that produced false
+ * confidence. There is no boundary requirement in Claude Code's actual
+ * behavior, so this helper has none either.
+ *
  * `Bash(<literal>)` with no `:*` suffix is an exact match only.
  */
 function allowlistEntryMatches(entry: string, command: string): boolean {
@@ -170,7 +207,7 @@ function allowlistEntryMatches(entry: string, command: string): boolean {
   if (inner === undefined) return false;
   if (inner.endsWith(":*")) {
     const prefix = inner.slice(0, -2);
-    return command === prefix || command.startsWith(`${prefix} `);
+    return command.startsWith(prefix);
   }
   return command === inner;
 }
@@ -213,6 +250,86 @@ describe.each([["templates/claude/settings.json"], [".claude/settings.json"]])(
         matches,
         `${relPath}: "${command}" matched allowlist entr${matches.length === 1 ? "y" : "ies"} [${matches.join(", ")}] — a prefix-matched "git branch:*" entry silently pre-approves rename, not just listing`,
       ).toEqual([]);
+    });
+
+    it("does not pre-approve `pnpm run lint:fix` (lint autofix, mutates files) via any entry", () => {
+      const allow = loadAllowlist(relPath);
+      const command = "pnpm run lint:fix";
+      const matches = allow.filter((entry) => allowlistEntryMatches(entry, command));
+      expect(
+        matches,
+        `${relPath}: "${command}" matched allowlist entr${matches.length === 1 ? "y" : "ies"} [${matches.join(", ")}] — the literal string "pnpm run lint:fix" starts with the literal string "pnpm run lint" (no space between "lint" and the colon), so a prefix-matched "pnpm run lint:*" entry silently pre-approves the mutating autofix variant, not just the read-only lint check`,
+      ).toEqual([]);
+    });
+  },
+);
+
+/**
+ * Classifies a `package.json` script as write-capable (mutates the
+ * filesystem) purely from its command text, recursing into any `pnpm run
+ * <other>` it invokes. This intentionally does NOT flag `test:unit`/
+ * `test:integration` as unsafe siblings of `test:*` — running tests isn't a
+ * write — while still flagging `lint:fix` (`--fix`), `format` (`--write`),
+ * and `build`/`prepublishOnly` (bare `tsc`, which emits `dist/`, unlike
+ * `typecheck`'s `tsc --noEmit`).
+ */
+function isWriteCapableScript(
+  name: string,
+  scripts: Record<string, string>,
+  seen: Set<string> = new Set(),
+): boolean {
+  if (seen.has(name)) return false;
+  seen.add(name);
+  const command = scripts[name];
+  if (!command) return false;
+  if (command.includes("--fix") || command.includes("--write")) return true;
+  if (/\btsc\b/.test(command) && !command.includes("--noEmit")) return true;
+  const referenced = [...command.matchAll(/pnpm run (\S+)/g)].map((m) => m[1]);
+  return referenced.some((ref) => isWriteCapableScript(ref, scripts, seen));
+}
+
+/**
+ * Generic, forward-looking sweep: rather than relying on hand-found
+ * instances, cross-reference every `pnpm run <x>:*` allowlist prefix
+ * against every write-capable script name in `package.json`. Claude Code's
+ * `Bash(<prefix>:*)` rule is a true raw string-prefix match (see
+ * `allowlistEntryMatches` above), so any allowlist prefix that is itself a
+ * literal string-prefix of a *different, write-capable* script name
+ * silently pre-approves that mutating script too. This is the general form
+ * of the `git branch` (D-1) and `pnpm run lint:fix` (D-3) bugs, and catches
+ * the whole class mechanically going forward instead of one instance at a
+ * time. (Read-only siblings, like `test:unit` under `pnpm run test:*`, are
+ * not a defect and must not be flagged.)
+ */
+describe.each([["templates/claude/settings.json"], [".claude/settings.json"]])(
+  "permission allowlist — %s: pnpm run prefixes have no write-capable sibling-script collision",
+  (relPath) => {
+    const packageJson = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8")) as {
+      scripts?: Record<string, string>;
+    };
+    const scripts = packageJson.scripts ?? {};
+    const scriptNames = Object.keys(scripts);
+
+    it("finds at least one known write-capable script (sanity check on the classifier)", () => {
+      const writeCapable = scriptNames.filter((name) => isWriteCapableScript(name, scripts));
+      expect(writeCapable).toEqual(expect.arrayContaining(["lint:fix", "format", "build"]));
+    });
+
+    it("has no pnpm run allowlist prefix that is a raw string-prefix of a write-capable sibling script", () => {
+      const allow = loadAllowlist(relPath);
+      for (const entry of allow) {
+        const match = entry.match(/^Bash\(pnpm run (.+):\*\)$/);
+        if (!match) continue;
+        const prefix = match[1];
+        const collisions = scriptNames.filter(
+          (name) =>
+            name !== prefix && name.startsWith(prefix) && isWriteCapableScript(name, scripts),
+        );
+        expect(
+          collisions,
+          `${relPath} entry "${entry}" (prefix "${prefix}") is a raw string-prefix of write-capable sibling script(s) [${collisions.join(", ")}] in package.json — Claude Code's Bash(<prefix>:*) pattern has no colon/word-boundary awareness, so this entry silently pre-approves those mutating scripts too`,
+        ).toEqual([]);
+      }
     });
   },
 );
