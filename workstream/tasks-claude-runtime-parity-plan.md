@@ -48,6 +48,7 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
 - `test/unit/nextjs-claude-parity-claim.test.ts` - new; CP-04 repo-wide scan that the withdrawn Next.js/Claude scaffolding claim is not repeated anywhere
 - `test/unit/developer-command-collapse.test.ts` - new; CP-05 size-cap and no-restatement checks for the collapsed `.claude/commands/developer.md`, plus Kiro-activation-marker absence checks on the `developer` agent/command pair
 - `test/unit/architecture-change-parity.test.ts`, `test/unit/cross-repo-partitioning-parity.test.ts`, `test/unit/infra-engineer-parity.test.ts`, `test/unit/qa-testing-standard.test.ts` - updated; `.claude/commands/developer.md` is no longer asserted to carry the full agent contract text, only a pointer to it
+- `test/unit/model-tiers-permission-allowlist.test.ts` - new; CP-06 `model:` frontmatter set/tier assertions, `permissions.allow` content and write-pattern scan, guard-still-blocks-with-allowlist-active check (task 6.0)
 
 ## Tasks
 
@@ -126,15 +127,15 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
 
   > Note: none of the eight `.claude/agents/*.md` declares `model:`, so every delegated run — including mechanical ones — inherits the main-thread model. And `.claude/settings.json` has no `permissions` block, so every `git status`, `pnpm test`, and `gh pr view` raises a prompt, which is what makes "pre-approved autonomous sequential" feel non-autonomous. 6b depends on task 1.
 
-  - [ ] 6.1 Write a test asserting every `.claude/agents/*.md` declares a `model:` value from the allowed set; confirm it fails
-  - [ ] 6.2 Add `model:` frontmatter to the four mechanical agents — `github-ops`, `housekeeping`, `technical-writer`, `researcher` — selecting a smaller model per agent. Leave `developer`, `verifier`, `qa-engineer`, and `ux-engineer` on the inherited model, where judgement quality dominates cost
-  - [ ] 6.3 Confirm the model identifiers used are current and valid before committing; do not carry a model name into any other repository artifact
-  - [ ] 6.4 **(6b — depends on 1.0)** Populate `permissions.allow` in `templates/claude/settings.json` with read-only and quality-gate commands the workflow runs constantly: `git status`, `git diff`, `git log`, `git rev-parse`, `git branch`, `pnpm run lint`, `pnpm run test`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run audit`, `gh pr view`, `gh issue view`. Exclude every write path so the guards still bind
-  - [ ] 6.5 Mirror the allowlist into this repo's `.claude/settings.json`
-  - [ ] 6.6 Verify Acceptance Criterion: a delegated `github-ops` or `researcher` run executes on the smaller model
-  - [ ] 6.7 Verify Acceptance Criterion: no allowlisted command can push, merge, commit, tag, or write a file
-  - [ ] 6.8 Verify Acceptance Criterion: the hook guards still block their four invariants with the allowlist active
-  - [ ] 6.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [x] 6.1 Write a test asserting every `.claude/agents/*.md` declares a `model:` value from the allowed set; confirm it fails
+  - [x] 6.2 Add `model:` frontmatter to the four mechanical agents — `github-ops`, `housekeeping`, `technical-writer`, `researcher` — selecting a smaller model per agent. Leave `developer`, `verifier`, `qa-engineer`, and `ux-engineer` on the inherited model, where judgement quality dominates cost
+  - [x] 6.3 Confirm the model identifiers used are current and valid before committing; do not carry a model name into any other repository artifact
+  - [x] 6.4 **(6b — depends on 1.0)** Populate `permissions.allow` in `templates/claude/settings.json` with read-only and quality-gate commands the workflow runs constantly: `git status`, `git diff`, `git log`, `git rev-parse`, `git branch`, `pnpm run lint`, `pnpm run test`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run audit`, `gh pr view`, `gh issue view`. Exclude every write path so the guards still bind
+  - [x] 6.5 Mirror the allowlist into this repo's `.claude/settings.json`
+  - [ ] 6.6 Verify Acceptance Criterion: a delegated `github-ops` or `researcher` run executes on the smaller model (manual/observational — see PR #186 known limitations; not assertable by a unit test per test-plan CP-06)
+  - [x] 6.7 Verify Acceptance Criterion: no allowlisted command can push, merge, commit, tag, or write a file
+  - [x] 6.8 Verify Acceptance Criterion: the hook guards still block their four invariants with the allowlist active
+  - [x] 6.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 7.0 Tool-declaration parity test — **contains a decision point** — [#175](https://github.com/llipe/dev-tasks/issues/175)
 
