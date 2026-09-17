@@ -488,6 +488,7 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 | Integration tests fail             | Report failures and ask whether to proceed or fix first                                    |
 | Consolidated PR creation fails     | Return generated title/body and ask to retry                                               |
 | Story payload base mismatch        | Mark story blocked; require retargeting PR base to integration branch before merge         |
+| Merge command blocked by git-guard | Report the block message verbatim; mark the story blocked; write the checkpoint; ask the user. Never attempt an alternative merge command, tool surface, or sequence to achieve the same effect — a blocked guard is a decision, not an obstacle |
 
 ---
 

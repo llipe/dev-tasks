@@ -122,7 +122,7 @@ case "$tool_name" in
     repo_name="$(printf '%s' "$payload" | jq -r '.tool_input.repo // empty' 2>/dev/null || true)"
 
     if [ -z "$pr_number" ]; then
-      mcp_block "could not identify the pull request (missing 'pullNumber' in tool_input). Refusing (fail-closed): an unidentified PR could target the default branch."
+      mcp_block "could not identify the pull request (missing 'pullNumber' in tool_input). Refusing (fail-closed): an unidentified PR could target the default branch. Do not retry with a different tool or command to work around this — stop and ask the user to supply the PR number, or merge it themselves."
     fi
 
     base=""
@@ -136,7 +136,7 @@ case "$tool_name" in
     fi
 
     if [ "$lookup_ok" -ne 1 ] || [ -z "$base" ]; then
-      mcp_block "could not verify PR #$pr_number's base branch via 'gh pr view' (gh missing, unauthenticated, or a network error). Refusing to proceed (fail-closed): an unverified base could be the default branch."
+      mcp_block "could not verify PR #$pr_number's base branch via 'gh pr view' (gh missing, unauthenticated, or a network error). Refusing to proceed (fail-closed): an unverified base could be the default branch. Do not fall back to an unverified merge path — stop and ask the user to check 'gh auth status'/network access, or merge it themselves."
     fi
 
     default_branch="$(resolve_default_branch)"
@@ -176,7 +176,7 @@ case "$tool_name" in
     new_branch_lc="$(printf '%s' "$new_branch" | tr '[:upper:]' '[:lower:]')"
     default_branch_lc="$(printf '%s' "$default_branch" | tr '[:upper:]' '[:lower:]')"
     if [ -n "$new_branch" ] && [ "$new_branch_lc" = "$default_branch_lc" ]; then
-      mcp_block "creating a branch named '$default_branch' (the default branch) via the MCP tool is not allowed."
+      mcp_block "creating a branch named '$default_branch' (the default branch) via the MCP tool is not allowed. Create a feature branch instead (e.g. 'issue/<n>-short-description' or 'story/<id>-short-description')."
     fi
     exit 0
     ;;
@@ -459,7 +459,7 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +pr +merge([[:space:]]|$
   if [ "$lookup_ok" -ne 1 ] || [ -z "$base" ]; then
     # Fail-closed exception to this script's default fail-open contract —
     # see header. An unverifiable base must not be treated as safe.
-    block "could not verify the PR's base branch via '$verify_cmd' (gh missing, unauthenticated, or a network error). Refusing to merge (fail-closed): an unverified base could be the default branch."
+    block "could not verify the PR's base branch via '$verify_cmd' (gh missing, unauthenticated, or a network error). Refusing to merge (fail-closed): an unverified base could be the default branch. Do not fall back to an unverified merge path or a different tool surface — stop and ask the user to check 'gh auth status'/network access, or merge it themselves."
   fi
 
   default_branch="$(resolve_default_branch)"
