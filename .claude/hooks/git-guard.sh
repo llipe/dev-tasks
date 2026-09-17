@@ -423,7 +423,7 @@ fi
 if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +pr +merge([[:space:]]|$)'; then
   # `--admin` bypasses branch protection outright; never allowed for agents.
   if printf '%s' "$norm" | grep -Eq -- '(^|[[:space:]])--admin([[:space:]]|$)'; then
-    block "'gh pr merge --admin' bypasses branch protection and is not allowed for agents."
+    block "'gh pr merge --admin' bypasses branch protection and is not allowed for agents. Only the user may merge with --admin, or via GitHub's UI/API directly."
   fi
 
   pr_num="$(gh_pr_merge_number)"
