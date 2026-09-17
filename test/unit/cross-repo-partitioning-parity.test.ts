@@ -107,10 +107,13 @@ describe("cross-repo partitioning — product-engineer parity", () => {
 });
 
 describe("cross-repo partitioning — developer parity", () => {
+  // `.claude/commands/developer.md` is intentionally excluded from the full
+  // agent-body checks: per issue #173 it is a thin wrapper pointing at
+  // `.claude/agents/developer.md` rather than restating the contract. See
+  // test/unit/developer-command-collapse.test.ts.
   const kiro = readAgent(".kiro/agents/developer.md");
   const github = readAgent(".github/agents/developer.agent.md");
   const claudeAgent = readAgent(".claude/agents/developer.md");
-  const claudeCmd = readAgent(".claude/commands/developer.md");
 
   const expectedRule = "Cross-repo sub-task scope (RF-63):** When executing a per-repo sub-task";
 
@@ -126,12 +129,13 @@ describe("cross-repo partitioning — developer parity", () => {
     expect(claudeAgent).toContain(expectedRule);
   });
 
-  it("claude developer command contains the cross-repo scope rule", () => {
-    expect(claudeCmd).toContain(expectedRule);
+  it("claude developer command points at the developer agent contract", () => {
+    const claudeCmd = readAgent(".claude/commands/developer.md");
+    expect(claudeCmd).toContain(".claude/agents/developer.md");
   });
 
   it("all developer agents reference contract-based acceptance", () => {
-    const agents = [kiro, github, claudeAgent, claudeCmd];
+    const agents = [kiro, github, claudeAgent];
     for (const agent of agents) {
       expect(agent).toContain("boundary contract");
       expect(agent).toContain("not the foreign repo's implementation");
@@ -139,7 +143,7 @@ describe("cross-repo partitioning — developer parity", () => {
   });
 
   it("all developer agents reference low-payload blocking", () => {
-    const agents = [kiro, github, claudeAgent, claudeCmd];
+    const agents = [kiro, github, claudeAgent];
     for (const agent of agents) {
       expect(agent).toContain("`payload_confidence: low`");
       expect(agent).toContain("raised to `medium`");

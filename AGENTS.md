@@ -83,14 +83,20 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.cla
 | nextjs-pages-components | `**/app/**/*.tsx`          | Next.js + React conventions                        |
 | git-guard-notice        | Always (Kiro)              | Git invariants reminder                            |
 
+`nextjs-pages-components` has a Claude gap: there is no automatic Claude delivery mechanism (no glob-scoped auto-load, no nested-`CLAUDE.md` scaffolding) — Claude Code consumers must manually copy the conventions into their app's nested `CLAUDE.md`. See `CLAUDE.md`'s "Domain-Specific Conventions" section.
+
 ## Hooks
 
-| Hook         | Purpose                                                                      |
-| ------------ | ---------------------------------------------------------------------------- |
-| git-guard    | Blocks pushes/merges to `main`, non-Conventional commits, inline `gh --body` |
-| branch-guard | Blocks write operations on default branch                                    |
+Kiro (`.kiro/hooks/`) and Claude Code (`.claude/hooks/`, wired via `.claude/settings.json`) both ship these two `PreToolUse` hooks; Copilot has no hook system, so its enforcement is prompt-level only.
 
-Hook enforcement is best-effort. Human PR review is the actual gate.
+| Hook         | Matcher (Claude Code)   | Purpose                                                                      |
+| ------------ | ------------------------ | ---------------------------------------------------------------------------- |
+| git-guard    | `Bash`, plus (issue #178) the mutating GitHub MCP tool surface — `mcp__github__merge_pull_request`, `enable_pr_auto_merge`, `push_files`, `create_or_update_file`, `delete_file`, `create_branch` | Blocks pushes/merges/writes into the default branch (resolved dynamically, not hardcoded to `main`) — including `gh pr merge` with its base resolved via `gh pr view` (not a `--base` text check), `gh pr merge --admin` (blocked outright), `gh pr merge --auto` when the resolved base is the default branch, the raw-git escape of merging a story/issue branch into an integration branch, and the equivalent MCP-tool-call forms of all of the above (base/branch resolved from structured `tool_input` fields, not a command string) — plus non-Conventional commits, inline `gh --body`, and human-only tags |
+| branch-guard | `Edit\|Write\|NotebookEdit` | Blocks write operations on default branch                                    |
+
+Hook enforcement is best-effort and fails open on unexpected errors, with one exception: if `git-guard` cannot verify a `gh pr merge`'s (or its MCP equivalent's) base branch — the `gh pr view` lookup fails (`gh` missing, unauthenticated, or a network error), or an MCP merge/auto-merge call omits enough `tool_input` to identify the PR at all — it fails **closed** and blocks the call, since an unverified base could be the default branch.
+
+**Hooks are advisory, not the gate.** Every hook in this table is a best-effort, local, pattern-matching check over a command string or a structured tool-input shape — not a real parser, and not a completeness guarantee against every future command form or tool surface (a new MCP server, a future first-party tool) that could reopen the same class of gap. **GitHub branch protection on the default branch — require a PR, require ≥1 approving review, require passing status checks, disable force-push and branch deletion — is the actual, server-side, unbypassable-by-any-tool-surface control.** Hooks narrow the window and catch the common cases; they do not replace branch protection. Configure it per the README "Configure branch protection" step and `activity-init`'s Repository Setup section.
 
 ## General Agent Guidelines
 
@@ -108,6 +114,7 @@ All agents **MUST**:
 - Run `verifier` audit (mandatory, non-skippable) before PR is ready; drift findings route to `product-engineer`
 - Follow test-first design: write tests before implementation code
 - If `memo-cli` is available: read/write entries per role
+- Treat a blocked guard as a decision, not an obstacle: when a hook blocks a tool call, surface the block verbatim, stop that line of work, and **MUST NOT** attempt an alternative command, tool surface, or sequence that achieves the same effect the block just prevented. Using a legitimate alternate mechanism for an unrelated, non-triggering purpose (e.g. `Read` instead of `grep`, `Write` instead of a shell heredoc) is not a route-around and remains allowed
 
 ---
 

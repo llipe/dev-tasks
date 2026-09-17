@@ -822,3 +822,112 @@ describe("bundle-manifest — infra template path registration (#162, S-009 AC-4
     expect(owned).toContain("infra/");
   });
 });
+
+/**
+ * `.claude/settings.json` install-if-absent delivery (issue #169, task 1.0).
+ *
+ * `PROFILE_PATHS.claude` installs `.claude/hooks/*.sh` but nothing wires
+ * them: `.claude/settings.json` was consumer-owned and never installed by any
+ * profile. This category writes the target only when absent — a consumer's
+ * `permissions.allow` entries and any local hooks must survive both `install`
+ * and `update` (docs/adr/ADR-006-claude-settings-ownership.md).
+ */
+describe("core/distribution/install — install-if-absent settings delivery (#169)", () => {
+  let tmpDir: string;
+  let targetDir: string;
+  let sourceDir: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), "dev-tasks-settings-iia-"));
+    targetDir = join(tmpDir, "target-repo");
+    sourceDir = join(tmpDir, "package-source");
+    mkdirSync(targetDir, { recursive: true });
+    mkdirSync(sourceDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function write(basePath: string, relPath: string, content: string): void {
+    const fullPath = join(basePath, relPath);
+    mkdirSync(join(fullPath, ".."), { recursive: true });
+    writeFileSync(fullPath, content, "utf-8");
+  }
+
+  const TEMPLATE = '{\n  "hooks": {\n    "PreToolUse": []\n  }\n}\n';
+
+  it("AC-1: an empty target repo receives .claude/settings.json under --profile claude", async () => {
+    write(sourceDir, "templates/claude/settings.json", TEMPLATE);
+    write(sourceDir, ".claude/hooks/git-guard.sh", "#!/bin/bash");
+
+    await installFiles({ sourceDir, targetDir, version: "0.1.0", pin: "0.1.0", profile: "claude" });
+
+    const installedPath = join(targetDir, ".claude/settings.json");
+    expect(existsSync(installedPath)).toBe(true);
+    expect(readFileSync(installedPath, "utf-8")).toBe(TEMPLATE);
+  });
+
+  it("does not deliver .claude/settings.json for a profile that excludes claude", async () => {
+    write(sourceDir, "templates/claude/settings.json", TEMPLATE);
+    write(sourceDir, ".github/agents/developer.agent.md", "# GH Dev");
+
+    await installFiles({
+      sourceDir,
+      targetDir,
+      version: "0.1.0",
+      pin: "0.1.0",
+      profile: "copilot",
+    });
+
+    expect(existsSync(join(targetDir, ".claude/settings.json"))).toBe(false);
+  });
+
+  it("AC-2: re-running install never overwrites a consumer-modified .claude/settings.json", async () => {
+    write(sourceDir, "templates/claude/settings.json", TEMPLATE);
+
+    await installFiles({ sourceDir, targetDir, version: "0.1.0", pin: "0.1.0", profile: "claude" });
+
+    const consumerCustom = '{\n  "hooks": {},\n  "permissions": { "allow": ["git status"] }\n}\n';
+    write(targetDir, ".claude/settings.json", consumerCustom);
+
+    await installFiles({ sourceDir, targetDir, version: "0.2.0", pin: "0.2.0", profile: "claude" });
+
+    expect(readFileSync(join(targetDir, ".claude/settings.json"), "utf-8")).toBe(consumerCustom);
+  });
+
+  it("does not fail install when the package ships no settings template", async () => {
+    write(sourceDir, ".claude/agents/developer.md", "# Claude Dev");
+    await expect(
+      installFiles({ sourceDir, targetDir, version: "0.1.0", pin: "0.1.0", profile: "claude" }),
+    ).resolves.toBeDefined();
+    expect(existsSync(join(targetDir, ".claude/settings.json"))).toBe(false);
+  });
+});
+
+/**
+ * `templates/claude` registration in bundle-manifest.json (issue #169, task 1.4).
+ */
+describe("bundle-manifest — templates/claude managed path registration (#169)", () => {
+  const repoRoot = resolve(__dirname, "../..");
+
+  interface ManagedPath {
+    path: string;
+    pattern?: string;
+    recursive?: boolean;
+  }
+  interface BundleManifest {
+    managed_paths?: ManagedPath[];
+  }
+
+  it("registers templates/claude alongside templates/infra, templates/scripts, templates/workflows", () => {
+    const manifest = JSON.parse(
+      readFileSync(join(repoRoot, "bundle-manifest.json"), "utf-8"),
+    ) as BundleManifest;
+    const managed = manifest.managed_paths ?? [];
+    expect(
+      managed.some((m) => m.path === "templates/claude"),
+      "templates/claude missing from managed_paths",
+    ).toBe(true);
+  });
+});

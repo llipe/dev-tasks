@@ -112,10 +112,12 @@ describe("architecture-change task type — product-engineer parity", () => {
 });
 
 describe("architecture-change task type — developer parity", () => {
+  // `.claude/commands/developer.md` is intentionally excluded: per issue #173
+  // it is a thin wrapper pointing at `.claude/agents/developer.md` rather than
+  // restating the contract. See test/unit/developer-command-collapse.test.ts.
   const kiro = readAgent(".kiro/agents/developer.md");
   const github = readAgent(".github/agents/developer.agent.md");
   const claudeAgent = readAgent(".claude/agents/developer.md");
-  const claudeCmd = readAgent(".claude/commands/developer.md");
 
   const expectedRule =
     "Meta-repo write restriction (RF-64):** You **MUST NOT** write to the meta-repo outside the `architecture-change` task type";
@@ -132,8 +134,9 @@ describe("architecture-change task type — developer parity", () => {
     expect(claudeAgent).toContain(expectedRule);
   });
 
-  it("claude developer command contains the meta-repo write restriction", () => {
-    expect(claudeCmd).toContain(expectedRule);
+  it("claude developer command points at the developer agent contract", () => {
+    const claudeCmd = readAgent(".claude/commands/developer.md");
+    expect(claudeCmd).toContain(".claude/agents/developer.md");
   });
 });
 

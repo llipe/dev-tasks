@@ -1,151 +1,185 @@
-
 # dev-tasks
 
-> **Sizing guidance:** See [`docs/agents-md-guidelines.md`](docs/agents-md-guidelines.md) for recommended AGENTS.md size and content rules.
+Portable, repo-installed workflow harness for structured, PRD-driven AI-assisted development. Agents orchestrate the workflow end-to-end with branch discipline, test-first design, and GitHub-as-source-of-truth.
 
-A set of agents, skills, and instructions for GitHub Copilot, Claude Code, Kiro, and other AI coding agents to run structured, PRD-driven development workflows.
+## Contracts
 
-## Core Idea
+| File          | Owner         | Purpose                                        |
+| ------------- | ------------- | ---------------------------------------------- |
+| `/DESIGN.md`  | `ux-engineer` | Canonical design-system tokens and UI guidance |
+| `/TESTING.md` | `qa-engineer` | Layer taxonomy, runners, thresholds, fixtures  |
 
-This system brings structure and clarity to AI-assisted development by:
+If `/DESIGN.md` is missing and scope includes UI work, agents **MUST** create a baseline before finalizing design-dependent outputs. An unfilled `/TESTING.md` placeholder means "no standard established", never permission.
 
-- Defining scope with Product Requirements Documents (PRDs)
-- Breaking requirements into actionable, implementation-ready tasks
-- Guiding the AI to tackle one task at a time with checkpoints for review
-- Providing specialized **agents** that orchestrate the workflow end-to-end
-- Enforcing documentation, branch discipline, and GitHub-as-source-of-truth
-- Standardizing visual design decisions through `/DESIGN.md` as the canonical UI contract
-- **Test-first design as the default**: `verifier` (Design Mode) produces compliance test plans before implementation, and `developer` writes tests before code
+## Taxonomy
 
-## Design Standard Contract (DESIGN.md)
-
-`/DESIGN.md` is the canonical design-system artifact for this repository.
-
-- `ux-engineer` **MUST** use `/DESIGN.md` as the primary style source for mockups.
-- `product-engineer` **MUST** reference `/DESIGN.md` for UI-impacting specs and stories.
-- `developer` **MUST** validate UI changes against `/DESIGN.md` and update it when the visual contract changes.
-- `planner` **MUST** require DESIGN.md compliance in UI-impacting delegated runs.
-
-If `/DESIGN.md` is missing and the requested scope includes UI work, agents **MUST** create a baseline DESIGN.md before finalizing design-dependent outputs.
-
----
-
-## Testing Standard Contract (TESTING.md)
-
-`/TESTING.md` is the canonical testing contract for a repository. It declares the layer taxonomy and what belongs at each layer, the per-package runner and commands, coverage thresholds and baseline policy, the fixture and mocking strategy, and the mandatory security-negative cases.
-
-- `qa-engineer` **OWNS** `/TESTING.md` and fills it per project via `activity-test-standards`.
-- `developer` **MUST** keep it current when the testing contract changes.
-- Agents that read it **MUST** treat an unfilled placeholder as "no standard established", never as permission.
-- The contract is **per-package**: a repository mixing languages (for example vitest and pytest) **MUST** be describable without forcing every package into one language's script names.
-
-It ships with dev-tasks as a placeholder and is listed in `consumer_owned_paths`, so `dev-tasks update` never overwrites a filled version.
-
----
-
-## Taxonomy: Agent vs Skill vs Instruction
-
-| Concept | Purpose | Loaded When |
-|---------|---------|-------------|
-| **Agent** | Autonomous role with decision-making and handoff discipline | Invoked by name (`@agent`) |
-| **Skill** | Reusable on-demand capability (procedures/activities) | On demand (invoked by agent) |
-| **Instruction** | Scoped rule enforced automatically for matching context | Auto-applied by runtime |
-
----
+| Concept         | Purpose                                      | Loaded When             |
+| --------------- | -------------------------------------------- | ----------------------- |
+| **Agent**       | Autonomous role with decisions and handoffs  | Invoked by name         |
+| **Skill**       | Reusable on-demand procedure                 | On demand by agent      |
+| **Instruction** | Scoped rule auto-applied to matching context | Auto-applied by runtime |
 
 ## Agents
 
-| Agent | File | Purpose |
-|---|---|---|
-| **product-engineer** | `product-engineer.agent.md` | Preparation agent — owns the full pre-coding chain: PRD, spec, stories, plan. Owns drift-reconciliation (`activity-drift-reconciliation`) for findings handed off by `developer`/`planner`. Hands off to `developer` or `planner` for execution. |
-| **developer** | `developer.agent.md` | Execution agent — implements code from an existing task list. Runs `implement`, including a mandatory, non-skippable `verifier` audit before every PR is marked ready. |
-| **planner** | `planner.agent.md` | Multi-story orchestration — dependency-ordered sequential execution with checkpoint/resume, a mandatory per-story and PRD-level rollup `verifier` audit gate, and one consolidated integration PR. |
-| **technical-writer** | `technical-writer.agent.md` | Autonomous documentation maintenance |
-| **housekeeping** | `housekeeping.agent.md` | Lint, type, and test-wiring fixes |
-| **github-ops** | `github-ops.agent.md` | GitHub consistency — standardizes issues, PRs, branches, labels, milestones, comments, and enforces merge authority policy |
-| **ux-engineer** | `ux-engineer.agent.md` | UX prototyping and gap analysis — turns PRD/SPEC into testable mockups and feeds refinements back to `product-engineer` |
-| **qa-engineer** | `qa-engineer.agent.md` | Quality agent — establishes the `/TESTING.md` standard, authors tests for layers the project lacks, and reports coverage and structural gaps. Invoked by `developer` at the completion gate, before the `verifier` audit |
-| **researcher** | `researcher.agent.md` | Codebase research agent — bounded, delegated investigation producing structured research artifacts. Invoked conditionally by `product-engineer`, `developer`, and `planner` |
-| **verifier** | `verifier.agent.md` | Verification agent — owns compliance test-plan design (`design` mode) and post-implementation grey-box fidelity auditing (`audit` mode) against codebase, `/workstream`, tests, and PRD/spec intent |
-| **infra-engineer** | `infra-engineer.agent.md` | Infrastructure agent — plans and applies infrastructure changes one approved, reversible, recorded step at a time across AWS, fly.io, Supabase, and Cloudflare. Human owns every approval and all production; no autonomous or batch mode. On Claude it runs as a `.claude/commands/` main-thread entry point (like `planner`/`product-engineer`) because per-step approval needs the main thread |
+| Agent                | Purpose                                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
+| **product-engineer** | Preparation — PRD, spec, stories, plan. Owns drift-reconciliation.                                        |
+| **developer**        | Execution — implements from task lists with mandatory verifier audit pre-PR.                              |
+| **planner**          | Multi-story orchestration with dependency ordering and integration PR.                                    |
+| **technical-writer** | Autonomous documentation maintenance.                                                                     |
+| **housekeeping**     | Lint, type, and test-wiring fixes.                                                                        |
+| **github-ops**       | GitHub consistency — issues, PRs, branches, labels, milestones, merge authority.                          |
+| **ux-engineer**      | UX prototyping, DESIGN.md ownership, mockup generation.                                                   |
+| **qa-engineer**      | Testing standard, test authoring, coverage/gap reporting.                                                 |
+| **researcher**       | Bounded codebase investigation producing structured research artifacts.                                   |
+| **verifier**         | Compliance test-plan design and post-implementation fidelity audit.                                       |
+| **infra-engineer**   | Approval-gated, reversible, recorded infrastructure changes across AWS, fly.io, Supabase, and Cloudflare. |
+
+Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.claude/agents/` carries eight — `planner`, `product-engineer`, and `infra-engineer` run as `.claude/commands/` (they need main-thread human-approval gates: per-step for `infra-engineer`, per-phase for the two orchestrators).
 
 ## Skills
 
-Skills are on-demand capabilities invoked by agents — **not** loaded unless explicitly referenced.
-
 ### Activity Skills
 
-| Skill | Directory | Purpose | Primary Consumer |
-|---|---|---|---|
-| **activity-init** | `skills/activity-init/` | Establish product context and technical guidelines | `product-engineer` |
-| **activity-refine** | `skills/activity-refine/` | Clarify scope — issue refinement or full PRD creation | `product-engineer` |
-| **activity-codebase-research** | `skills/activity-codebase-research/` | Bounded codebase investigation with structured artifact | `researcher` |
-| **activity-generate-spec** | `skills/activity-generate-spec/` | Transform PRD into technical specification | `product-engineer` |
-| **activity-generate-stories** | `skills/activity-generate-stories/` | Break spec into user stories with coverage validation | `product-engineer` |
-| **activity-publish-github** | `skills/activity-publish-github/` | Publish stories as GitHub Issues via MCP | `product-engineer` |
-| **activity-e2e-test-design** | `skills/activity-e2e-test-design/` | End-to-end black-box test scenario generation from spec/stories | `verifier` |
-| **activity-contract-test-design** | `skills/activity-contract-test-design/` | Consumer/provider contract and schema compatibility test strategy | `verifier` |
-| **activity-edge-case-refinement** | `skills/activity-edge-case-refinement/` | Systematic edge-case discovery by category with concrete examples | `verifier` |
-| **activity-random-test-tactics** | `skills/activity-random-test-tactics/` | Randomized, fuzz, and property-inspired test generation with reproducibility | `verifier` |
-| **activity-test-standards**       | `skills/activity-test-standards/`       | Establish and maintain `/TESTING.md`, detect harness defects, verify test-script and CI/deploy gate reachability          | `qa-engineer`      |
-| **activity-test-implementation**  | `skills/activity-test-implementation/`  | Author Layer 1-2 tests with enforceable boundaries and a mandatory security-negative category                            | `qa-engineer`      |
-| **activity-integration-test-implementation** | `skills/activity-integration-test-implementation/` | Author integration tests (Layer 2.5) against real databases — local via testcontainers/docker-compose/Supabase CLI, remote via testing environments | `qa-engineer` |
-| **activity-e2e-test-implementation** | `skills/activity-e2e-test-implementation/` | Author Playwright end-to-end tests from verifier scenario tables. Covers auth, state reset, CI config, and scenario-to-spec traceability | `qa-engineer` |
-| **activity-contract-validation**  | `skills/activity-contract-validation/`  | Validate API contracts against implementation using dt verify (contract-diff, impact, drift). Detects breaking changes and spec-to-code staleness | `qa-engineer` |
-| **activity-coverage-gap-analysis** | `skills/activity-coverage-gap-analysis/` | Measure coverage against a baseline, or run risk-ranked structural gap analysis when no provider exists                 | `qa-engineer`      |
-| **activity-drift-reconciliation** | `skills/activity-drift-reconciliation/` | Routes verifier drift findings into task-list/checklist expansion, new issues, or PRD/spec changelog write-back (human-confirmed) | `product-engineer` |
+| Skill                                    | Purpose                                                   | Consumer         |
+| ---------------------------------------- | --------------------------------------------------------- | ---------------- |
+| activity-init                            | Establish product context and technical guidelines        | product-engineer |
+| activity-refine                          | Issue refinement or full PRD creation                     | product-engineer |
+| activity-codebase-research               | Bounded codebase investigation with structured artifact   | researcher       |
+| activity-generate-spec                   | PRD to technical specification                            | product-engineer |
+| activity-generate-stories                | Spec to user stories with coverage validation             | product-engineer |
+| activity-publish-github                  | Publish stories as GitHub Issues                          | product-engineer |
+| activity-e2e-test-design                 | E2E scenario generation from spec/stories                 | verifier         |
+| activity-contract-test-design            | Contract and schema compatibility test strategy           | verifier         |
+| activity-edge-case-refinement            | Systematic edge-case discovery                            | verifier         |
+| activity-random-test-tactics             | Randomized/fuzz/property test generation                  | verifier         |
+| activity-test-standards                  | Establish/maintain TESTING.md, detect harness defects     | qa-engineer      |
+| activity-test-implementation             | Author Layer 1-2 tests with security-negative category    | qa-engineer      |
+| activity-integration-test-implementation | Layer 2.5 tests against real databases                    | qa-engineer      |
+| activity-e2e-test-implementation         | Playwright E2E from verifier scenario tables              | qa-engineer      |
+| activity-contract-validation             | API contract drift/breaking-change detection              | qa-engineer      |
+| activity-coverage-gap-analysis           | Coverage measurement or structural gap analysis           | qa-engineer      |
+| activity-drift-reconciliation            | Route drift findings to task expansion or spec write-back | product-engineer |
 
 ### Operational Skills
 
-| Skill | Directory | Purpose | Primary Consumer |
-|---|---|---|---|
-| **git-ops** | `skills/git-ops/` | Branch management, rebase, merge, conflict resolution, recovery | `developer`, `planner` |
-| **aws-ops** | `skills/aws-ops/` | AWS CLI command sets, resource tiers, cost inputs, backup and revert sources, and the AWS log table | `infra-engineer` |
-| **fly-ops** | `skills/fly-ops/` | `flyctl` command sets, resource tiers, cost inputs, backup and revert sources, and the fly.io log table | `infra-engineer` |
-| **supabase-ops** | `skills/supabase-ops/` | Supabase CLI command sets, `db diff` migration flow, drift rule, backup and revert sources, inventory findings, and the Supabase Cloud log table | `infra-engineer` |
-| **deploy-ops** | `skills/deploy-ops/` | Deploy script contract, environment mapping, tag policy, deploy-target framing, and GitHub Actions workflow scaffolding (`templates/scripts/`, `templates/workflows/`) | `infra-engineer` |
-| **webapp-mockup** | `skills/webapp-mockup/` | Scaffold and generate React mockup apps for UX testing | `ux-engineer` |
-| **memo-cli-usage** | `skills/memo-cli-usage/` | Read and write architectural decisions to a shared Qdrant knowledge base for multi-session, multi-agent, and team-wide context continuity | `technical-writer`, `developer` |
+| Skill          | Purpose                                                                                                                                                                | Consumer                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| git-ops        | Branch management, rebase, merge, conflict resolution                                                                                                                  | developer, planner          |
+| aws-ops        | AWS CLI command sets, tiers, cost, backup/revert, log table                                                                                                            | infra-engineer              |
+| fly-ops        | flyctl command sets, tiers, cost, backup/revert, log table                                                                                                             | infra-engineer              |
+| supabase-ops   | Supabase CLI command sets, `db diff` flow, drift rule, backup/revert, log table                                                                                        | infra-engineer              |
+| deploy-ops     | Deploy script contract, environment mapping, tag policy, deploy-target framing, and GitHub Actions workflow scaffolding (`templates/scripts/`, `templates/workflows/`) | infra-engineer              |
+| ux-scaffold    | Mockup project creation (html-lite, react-full)                                                                                                                        | ux-engineer                 |
+| ux-theme-gen   | Generate theme artifacts from DESIGN.md                                                                                                                                | ux-engineer, developer      |
+| memo-cli-usage | Read/write decisions to shared knowledge base                                                                                                                          | technical-writer, developer |
 
-### Third-Party Skills
+## Instructions
 
-None vendored by default. Third-party skills, when added, are installed under each platform's skills directory alongside the skills above.
+| Instruction             | Scope                      | Purpose                                            |
+| ----------------------- | -------------------------- | -------------------------------------------------- |
+| plan                    | `workstream/**`            | Convert stories/issues into task lists             |
+| implement               | `workstream/**/tasks-*.md` | Execute task list with branching and PR discipline |
+| nextjs-pages-components | `**/app/**/*.tsx`          | Next.js + React conventions                        |
+| git-guard-notice        | Always (Kiro)              | Git invariants reminder                            |
 
-## Instructions (Scoped)
+`nextjs-pages-components` has a Claude gap: there is no automatic Claude delivery mechanism (no glob-scoped auto-load, no nested-`CLAUDE.md` scaffolding) — Claude Code consumers must manually copy the conventions into their app's nested `CLAUDE.md`. See `CLAUDE.md`'s "Domain-Specific Conventions" section.
 
-Instructions are scoped via `applyTo`/`fileMatchPattern` and auto-applied to matching files. Claude Code has no scoped-instruction mechanism, so `plan` and `implement` ship there as skills instead.
+## Hooks
 
-| Instruction | File | Scope | Purpose |
-|---|---|---|---|
-| **plan** | `plan.instructions.md` (Copilot) / `plan.md` (Kiro steering) / `skills/plan/` (Claude) | `workstream/**` | Convert stories or refined issues into execution-ready task lists |
-| **implement** | `implement.instructions.md` (Copilot) / `implement.md` (Kiro steering) / `skills/implement/` (Claude) | `workstream/**/tasks-*.md` | Execute task list with step-gated approval, branching, and PR discipline |
-| **nextjs-pages-components** | `domain/nextjs-pages-components.instructions.md` (Copilot) / `nextjs-pages-components.md` (Kiro steering) | `**/app/**/*.tsx` | Next.js + React conventions |
-| **git-guard-notice** | `git-guard-notice.md` (Kiro steering) | Always loaded | Restates the three git invariants: no push/merge to `main`, Conventional Commits, `--body-file` for `gh` bodies |
+Kiro (`.kiro/hooks/`) and Claude Code (`.claude/hooks/`, wired via `.claude/settings.json`) both ship these two `PreToolUse` hooks; Copilot has no hook system, so its enforcement is prompt-level only.
 
-## Prompts
+| Hook         | Matcher (Claude Code)   | Purpose                                                                      |
+| ------------ | ------------------------ | ---------------------------------------------------------------------------- |
+| git-guard    | `Bash`, plus (issue #178) the mutating GitHub MCP tool surface — `mcp__github__merge_pull_request`, `enable_pr_auto_merge`, `push_files`, `create_or_update_file`, `delete_file`, `create_branch` | Blocks pushes/merges/writes into the default branch (resolved dynamically, not hardcoded to `main`) — including `gh pr merge` with its base resolved via `gh pr view` (not a `--base` text check), `gh pr merge --admin` (blocked outright), `gh pr merge --auto` when the resolved base is the default branch, the raw-git escape of merging a story/issue branch into an integration branch, and the equivalent MCP-tool-call forms of all of the above (base/branch resolved from structured `tool_input` fields, not a command string) — plus non-Conventional commits, inline `gh --body`, and human-only tags |
+| branch-guard | `Edit\|Write\|NotebookEdit` | Blocks write operations on default branch                                    |
 
-See individual agent files for invocation modes and entry points. Reference: Copilot (`.github/prompts/`), Claude Code (`.claude/commands/`), Kiro (embedded in `.kiro/agents/`).
+Hook enforcement is best-effort and fails open on unexpected errors, with one exception: if `git-guard` cannot verify a `gh pr merge`'s (or its MCP equivalent's) base branch — the `gh pr view` lookup fails (`gh` missing, unauthenticated, or a network error), or an MCP merge/auto-merge call omits enough `tool_input` to identify the PR at all — it fails **closed** and blocks the call, since an unverified base could be the default branch.
 
----
+**Hooks are advisory, not the gate.** Every hook in this table is a best-effort, local, pattern-matching check over a command string or a structured tool-input shape — not a real parser, and not a completeness guarantee against every future command form or tool surface (a new MCP server, a future first-party tool) that could reopen the same class of gap. **GitHub branch protection on the default branch — require a PR, require ≥1 approving review, require passing status checks, disable force-push and branch deletion — is the actual, server-side, unbypassable-by-any-tool-surface control.** Hooks narrow the window and catch the common cases; they do not replace branch protection. Configure it per the README "Configure branch protection" step and `activity-init`'s Repository Setup section.
 
 ## General Agent Guidelines
 
-All AI coding agents working in this repository **MUST**:
+All agents **MUST**:
 
-- Always create feature branches — never commit to the default branch
+- Create feature branches — never commit to default branch
 - Use Conventional Commits (`feat`, `fix`, `chore`, `docs`, etc.)
-- Create PRs for review — never self-merge into `main`
-- **PRs targeting `main` require user approval** — no agent may merge into the default branch
-- Follow testing, linting, and documentation standards from `technical-guidelines.md`
+- Create PRs for review — never self-merge into `main`; PRs targeting `main` require user approval
+- Follow standards from `technical-guidelines.md`
 - Reference GitHub Issues in branch names and commits
-- Treat `/DESIGN.md` as the source of truth for visual tokens, components, and design guidance
-- Prefer `pnpm` over `npm` for JS/TS workflows
-- Use canonical script names: `lint`, `format:check`, `typecheck`, `test`, `audit`, `validate`
-- Enforce quality gates before completion: `test`, `lint`, `format:check`, `typecheck`, `audit`
-- Use the `git-ops` skill for branch management, rebase, and conflict resolution
-- `qa-engineer` runs at the completion gate, before the `verifier` audit, and records `coverage_gate`. It **MAY** be skipped only as `SKIPPED(<reason>)` with a non-empty reason; omitting the field is treated as incomplete.
-- The `verifier` audit is mandatory and non-skippable before every PR is marked ready. Drift findings are non-blocking and route to `product-engineer`'s `activity-drift-reconciliation`.
-- **Test-first design is the default:** `product-engineer` recommends `verifier` Design Mode after planning; `developer` writes tests before implementation code; `planner` checks for test plans and enforces test-first in developer handoffs
-- If `memo-cli` is installed and configured: agents **MUST** read/write entries per their role (see agent files for details)
+- Prefer `pnpm` over `npm`; use canonical scripts: `lint`, `format:check`, `typecheck`, `test`, `audit`, `validate`
+- Enforce quality gates before completion
+- Use `git-ops` for complex branch operations
+- Run `qa-engineer` at completion gate (record `coverage_gate: PASS | FAIL | SKIPPED(<reason>)`)
+- Run `verifier` audit (mandatory, non-skippable) before PR is ready; drift findings route to `product-engineer`
+- Follow test-first design: write tests before implementation code
+- If `memo-cli` is available: read/write entries per role
+- Treat a blocked guard as a decision, not an obstacle: when a hook blocks a tool call, surface the block verbatim, stop that line of work, and **MUST NOT** attempt an alternative command, tool surface, or sequence that achieves the same effect the block just prevented. Using a legitimate alternate mechanism for an unrelated, non-triggering purpose (e.g. `Read` instead of `grep`, `Write` instead of a shell heredoc) is not a route-around and remains allowed
 
-For workflow chains and sequencing diagrams, see [`docs/workflow-chains.md`](docs/workflow-chains.md).
+---
+
+## Task Types
+
+### architecture-change
+
+The only mode granting write authority to the meta-repo. Agents **MUST NOT** write to the meta-repo outside this task type — applies to `product-engineer`, `developer`, `planner`, `housekeeping`, and all others.
+
+#### Write Scope (RF-62)
+
+**MAY** modify: `architecture.md`, `domains.md`, `glossary.md`, `conventions.md`, `catalog/flows/`.
+
+**MUST NOT** modify: `catalog/components/*.json`, `catalog/index.yaml` — generated by CI (`dt extract` and `dt catalog build`), never hand-edited or agent-edited.
+
+#### Generated-File Prohibition
+
+`catalog/components/*.json` and `catalog/index.yaml` are generated by CI pipelines. No agent or human may edit these files directly.
+
+#### ADR Requirement
+
+Before opening any meta-repo PR under this task type, the agent **MUST** produce an Architecture Decision Record (ADR) containing: **Context** (why), **Decision** (what), **Consequences** (impact), and **Alternatives considered** (rejected approaches). The ADR **MUST** be committed as part of the PR.
+
+#### Human Approval Gate
+
+PRs from this task type targeting the meta-repo **REQUIRE** explicit human review and approval. No agent may auto-merge an `architecture-change` PR into the default branch.
+
+#### Exclusion Rule (RF-64)
+
+Agents **MUST NOT** write to the meta-repo outside the `architecture-change` task type. Refuse with:
+
+> "Meta-repo writes require the `architecture-change` task type. Create an architecture-change task to modify these files."
+
+---
+
+## Cross-Repo Partitioning (RF-63)
+
+When a scoping step identifies more than one `primary` component, the feature spans multiple repositories and the agent **MUST** partition the work into per-repo sub-tasks.
+
+### Partitioning Procedure
+
+1. **Detection:** If `scope.primary` contains >1 component, partition is **REQUIRED**.
+2. **One sub-task per repo:** Each `primary` component becomes its own sub-task, scoped exclusively to that component's repository.
+3. **Partition proposal:** When a partition proposal is available from `dt scope gate` (G1 abort, exit 7), the agent **SHOULD** use it as the basis for the partition. When no proposal exists, the agent **MUST** apply the same rules manually.
+
+### Contract-as-Interface
+
+Each sub-task uses the **boundary contract** (with a target version) as its interface. Acceptance criteria **MUST** reference the contract definition, **not** the foreign repo's internal implementation.
+
+### Ordering Rule
+
+Sub-tasks **MUST** be ordered producer-before-consumers: the provider (producer) implements its contract first. Consumer sub-tasks implement adaptation to the contract after the provider sub-task is complete.
+
+### Low-Payload Elevation Guard
+
+A boundary contract with `payload_confidence: low` **MUST** be raised to at least `medium` before use as an acceptance boundary. This is achieved by Re-running extraction (`dt extract`) with improved source hints, or Manual confirmation of the payload shape by a human reviewer.
+
+Until elevated, the agent **MUST NOT** use it as an acceptance interface and **MUST** block the sub-task with:
+
+> "Boundary contract `<contract-id>` has `payload_confidence: low`. Re-run extraction or manually confirm the payload shape before using it as an acceptance boundary."
+
+### Single-Primary — No Partition
+
+When `scope.primary` contains exactly 1 component, no partitioning is needed. The feature is single-repo and proceeds normally.
+
+---
+
+For workflow chains: [`docs/workflow-chains.md`](docs/workflow-chains.md). For architecture and invariants: [`docs/system-overview.md`](docs/system-overview.md). Full docs index: [`docs/README.md`](docs/README.md).

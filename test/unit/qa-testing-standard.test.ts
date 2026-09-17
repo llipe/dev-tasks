@@ -27,9 +27,10 @@ import { describe, it, expect } from "vitest";
 const ROOT = resolve(__dirname, "../..");
 
 /**
- * Pre-implementation hash of `developer` rule 19, captured 2026-08-18 across all
- * four platform variants. AC-7 requires rule 19 to remain byte-identical: the
- * agent that authors tests must not quietly delegate that duty to `qa-engineer`.
+ * Pre-implementation hash of `developer` rule 19, captured 2026-08-18 across the
+ * three full agent contract variants (see DEVELOPER_VARIANTS). AC-7 requires rule
+ * 19 to remain byte-identical: the agent that authors tests must not quietly
+ * delegate that duty to `qa-engineer`.
  */
 const RULE_19_BASELINE_SHA256 = "27aa0238fc7fa29bf3f68a50fdd3a0f744e96a660cc609fc36462c5567d66876";
 
@@ -45,11 +46,16 @@ const NEW_SKILLS = [
 
 const SKILL_TREES = [".kiro/skills", ".github/skills", ".claude/skills"] as const;
 
+/**
+ * The three full behavioral contracts for `developer`. `.claude/commands/developer.md`
+ * is intentionally excluded: per issue #173 it is a thin wrapper that points at
+ * `.claude/agents/developer.md` rather than restating the contract — see
+ * test/unit/developer-command-collapse.test.ts for its structural checks.
+ */
 const DEVELOPER_VARIANTS = [
   ".kiro/agents/developer.md",
   ".github/agents/developer.agent.md",
   ".claude/agents/developer.md",
-  ".claude/commands/developer.md",
 ] as const;
 
 const PLANNER_VARIANTS = [
@@ -271,7 +277,7 @@ describe("developer — SC-19/SC-21/AC-7: five touchpoints, no duplicated proced
   ];
 
   for (const touchpoint of touchpoints) {
-    it(`declares "${touchpoint.label}" in all four variants`, () => {
+    it(`declares "${touchpoint.label}" in all three variants`, () => {
       const missing = DEVELOPER_VARIANTS.filter(
         (relPath) => !touchpoint.pattern.test(readIfExists(relPath)),
       );
@@ -317,7 +323,7 @@ describe("developer — SC-20/AC-7: rule 19 is unchanged", () => {
     });
   }
 
-  it("keeps rule 19 identical across all four variants", () => {
+  it("keeps rule 19 identical across all three variants", () => {
     const hashes = DEVELOPER_VARIANTS.map((relPath) =>
       sha256(`${extractRule19(read(relPath)) ?? ""}\n`),
     );

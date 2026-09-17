@@ -16,6 +16,7 @@ import {
   type Platform,
   type ManagedPath,
 } from "./profiles.js";
+import { deliverInstallIfAbsentFiles } from "./install-if-absent.js";
 
 export interface InstallOptions {
   /** Path to the package source directory (contains .github/, .claude/, .kiro/) */
@@ -139,6 +140,11 @@ export async function installFiles(options: InstallOptions): Promise<InstallResu
       }
     }
   }
+
+  // Install-if-absent files (e.g. .claude/settings.json): delivered once,
+  // never overwritten, and never tracked in the manifest — see
+  // core/distribution/install-if-absent.ts for the rationale.
+  await deliverInstallIfAbsentFiles(sourceDir, targetDir, platforms);
 
   // Root files belong to no platform: install once per run, not once per platform.
   for (const relFile of ROOT_FILES) {

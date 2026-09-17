@@ -1,6 +1,7 @@
 ---
 name: researcher
 description: "Codebase research agent that performs bounded, delegated investigation and emits a structured research artifact. Use when downstream agents need grounded, file-level evidence without pulling the search transcript into their own context."
+model: haiku
 tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

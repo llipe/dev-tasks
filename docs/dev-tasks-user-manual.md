@@ -46,6 +46,16 @@ Some managed files belong to no platform. They are installed at the repository r
 
 `TESTING.md` is listed in `consumer_owned_paths`, so `dev-tasks update` never overwrites a version you have filled in.
 
+### Install-If-Absent Files
+
+Some managed files must survive customization more strictly than a `consumer_owned_paths` entry provides: `dev-tasks update` never overwrites a `consumer_owned_paths` file, but a plain re-run of `dev-tasks install` still would, since `install` writes root files and managed-directory files unconditionally. Install-if-absent files are written only when the target path does not already exist — by either `install` or `update` — and, once present, are never touched again by either command.
+
+| File                    | Purpose                                                                                                                                          | Delivered under                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| `.claude/settings.json` | Wires the shipped Claude hook scripts (`.claude/hooks/*.sh`) into Claude Code's `PreToolUse` lifecycle; carries your `permissions.allow` entries | `--profile claude` / `both` / `all` |
+
+Unlike root files and managed-directory files, install-if-absent files are **not** recorded in `.dev-tasks/manifest.json` — see [ADR-006](adr/ADR-006-claude-settings-ownership.md) for the rationale. `dev-tasks doctor` separately checks that every installed `.claude/hooks/*.sh` script is wired into `.claude/settings.json` and warns by script name if not.
+
 ### Manifest
 
 Every installation writes `.dev-tasks/manifest.json` — the source of truth for what's installed:
@@ -123,11 +133,12 @@ dev-tasks install --json                   # Machine-readable output
 2. For each platform, collects all files from the package's managed directories
 3. Copies each file to the target repo at its native path
 4. Copies root files (see [Root Files](#root-files)) once per run, regardless of profile
-5. Computes SHA-256 hash per file
-6. Reads the existing manifest (if any) and merges:
+5. Delivers install-if-absent files (see [Install-If-Absent Files](#install-if-absent-files)) for each platform being installed, skipping any that already exist
+6. Computes SHA-256 hash per file
+7. Reads the existing manifest (if any) and merges:
    - Preserves entries from profiles **not** being installed
    - Replaces entries for the profiles being installed, plus the `root` tag
-7. Writes the updated manifest to `.dev-tasks/manifest.json`
+8. Writes the updated manifest to `.dev-tasks/manifest.json`
 
 #### Flags
 
@@ -291,12 +302,13 @@ dev-tasks doctor --json  # Machine-readable output
 
 #### Checks performed
 
-| Check           | Requirement                                          |
-| --------------- | ---------------------------------------------------- |
-| Node.js version | >= 24                                                |
-| Git version     | >= 2.37                                              |
-| Cache directory | `~/.dev-tasks/cache/` is writable                    |
-| Version skew    | Installed version matches pinned version (if pinned) |
+| Check               | Requirement                                                                                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Node.js version     | >= 24                                                                                                                                                                                |
+| Git version         | >= 2.37                                                                                                                                                                              |
+| Cache directory     | `~/.dev-tasks/cache/` is writable                                                                                                                                                    |
+| Version skew        | Installed version matches pinned version (if pinned)                                                                                                                                 |
+| Claude hooks wiring | Every `.claude/hooks/*.sh` script is referenced by a `PreToolUse` entry in `.claude/settings.json` (warns by script name otherwise; silent when there are no hooks or all are wired) |
 
 ---
 

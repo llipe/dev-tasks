@@ -31,6 +31,8 @@
     "templates/",
     "AGENTS.md",
     "CLAUDE.md",
+    "AGENTS.md.template",
+    "CLAUDE.md.template",
     "DESIGN.md",
     "TESTING.md",
     "bundle-manifest.json",

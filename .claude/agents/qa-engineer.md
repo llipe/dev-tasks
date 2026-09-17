@@ -1,6 +1,7 @@
 ---
 name: qa-engineer
 description: "Quality agent that establishes the testing standard, authors tests for layers the project lacks, and reports coverage and structural gaps. Use when a project needs its /TESTING.md contract filled, a missing test harness built, or a coverage and gap report produced."
+model: inherit
 tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

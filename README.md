@@ -41,7 +41,41 @@ dev-tasks install --profile kiro          # .kiro/ only
 dev-tasks install --profile both          # copilot + claude only
 ```
 
-### 3. Initialize your project context
+**What each profile delivers, beyond the platform-specific agent/skill/command directories:**
+
+| Profile        | Root context files delivered                                                                                                                                                                                                                                   |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `copilot`      | `DESIGN.md`, `TESTING.md` (install-if-absent for consumer-owned files not covered here — see below)                                                                                                                                                            |
+| `claude`       | `DESIGN.md`, `TESTING.md`, plus `CLAUDE.md` and `AGENTS.md` — project memory Claude Code loads on every turn, and the shared agent/skill registry it imports. Delivered install-if-absent: written on a fresh install, never overwritten once you fill them in |
+| `kiro`         | `DESIGN.md`, `TESTING.md` — Kiro's equivalent standing guidance ships as always-on steering (`.kiro/steering/git-guard-notice.md`) rather than a root file                                                                                                     |
+| `both` / `all` | Union of the profiles above                                                                                                                                                                                                                                    |
+
+`DESIGN.md` and `TESTING.md` install unconditionally on every run (they are canonical contract documents, not consumer-authored memory). `CLAUDE.md`, `AGENTS.md`, and `.claude/settings.json` use install-if-absent semantics instead: delivered once, then fully consumer-owned, so `install` and `update` never clobber content you've customized.
+
+### 3. Configure branch protection (required, not optional)
+
+The `git-guard`/`branch-guard` hooks (Claude Code) and their Kiro equivalents are **advisory, best-effort, local checks** — defense-in-depth, not the actual gate. They are text/JSON pattern matching over a tool call and can always be evaded by a sufficiently creative command or tool-input shape; Copilot has no hook system at all. The only control that is server-side and unbypassable by any tool surface (`gh` CLI, raw `git`, or an MCP server) is a **GitHub branch protection rule** on the repository's default branch. Configure it before relying on any agent to work in this repository:
+
+- Require a pull request before merging
+- Require at least 1 approving review
+- Require status checks to pass before merging
+- Disable force-pushes to the default branch
+- Disable branch deletion for the default branch
+
+```bash
+gh api repos/<owner>/<repo>/branches/<default-branch>/protection \
+  --method PUT \
+  -f required_pull_request_reviews.required_approving_review_count=1 \
+  -F required_status_checks='{"strict":true,"contexts":[]}' \
+  -F enforce_admins=true \
+  -F restrictions=null \
+  -F allow_force_pushes=false \
+  -F allow_deletions=false
+```
+
+Or configure it via **Settings → Branches → Branch protection rules** in the GitHub UI. Run this once per repository, immediately after installing dev-tasks.
+
+### 4. Initialize your project context
 
 Invoke the `product-engineer` agent in Init Mode (via `@product-engineer` or the `product-engineer-init` prompt). This creates:
 
@@ -50,7 +84,7 @@ Invoke the `product-engineer` agent in Init Mode (via `@product-engineer` or the
 
 Run this once per project.
 
-### 4. Build a feature
+### 5. Build a feature
 
 ```text
 a) Invoke @product-engineer with a feature description or GitHub issue number
@@ -60,7 +94,7 @@ b) Invoke @developer with the task list path
    → implements, tests, and opens a PR
 ```
 
-### 5. Keep files up to date
+### 6. Keep files up to date
 
 ```bash
 dev-tasks update            # reconcile with hash-based conflict detection
@@ -309,7 +343,7 @@ Copilot reads `.github/instructions/*.instructions.md`, Kiro reads `.kiro/steeri
 
 ### Hooks
 
-`git-guard` blocks pushes and merges to `main`, non-Conventional commit messages, and inline `gh --body`. `branch-guard` blocks write operations while on the default branch. Both are best-effort; human PR review is the actual gate.
+Kiro (`.kiro/hooks/`) and Claude Code (`.claude/hooks/`, wired via `.claude/settings.json`) both ship two deterministic `PreToolUse` hooks; Copilot has no hook system. `git-guard` matches shell (`Bash`/terminal) commands and blocks pushes and merges into the default branch (resolved dynamically — `master`/`trunk` repos are protected identically to `main`), including `gh pr merge` with its base resolved via `gh pr view` (not a `--base` text check, which doesn't exist on that subcommand), `gh pr merge --admin` (blocked outright), `gh pr merge --auto` when the resolved base is the default branch, and the raw-git escape of merging a story/issue branch straight into an integration branch, plus non-Conventional commit messages, inline `gh --body`, and human-only tags. `branch-guard` matches file-write tools (`Edit`/`Write`/`NotebookEdit` on Claude Code) and blocks write operations while on the default branch. Both hooks fail open on unexpected errors — except `git-guard`'s PR-base lookup, which fails **closed** (blocks the merge) if `gh pr view` can't verify the base, since an unverified base could be the default branch. Human PR review is the actual gate.
 
 ---
 
