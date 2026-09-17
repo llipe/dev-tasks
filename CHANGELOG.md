@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.13.0] - 2026-09-17
+
+### Added
+
+- feat(claude): deliver runtime parity and enforcement (v0.13) (#193)
+
+### Changed
+
+- chore: format
+- Merge pull request #168 from llipe:claude/tasks-implementation-review-txyjhu
+- docs(workstream): add planner merge-path, MCP bypass, and guard-routing fixes
+- docs(workstream): add Claude runtime parity and enforcement task list
+- Merge pull request #167 from llipe:issue/141-pr-teach-team-mvp
+- docs(pr-kt): refine issue #141 as MVP and add compliance test plan
+- Merge pull request #166 from llipe:chore/reconcile-infra-engineer-tasklist
+- docs(infra): reconcile task-list checkboxes with merged v0.12.0 state
+
 ## [0.12.0] - 2026-09-14
 
 ### Added
