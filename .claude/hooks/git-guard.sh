@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# dev-tasks PreToolUse guard for Bash commands.
+# dev-tasks PreToolUse guard for Bash commands AND the mutating GitHub MCP
+# tool surface (see Rule 5 below).
 #
-# Enforces four repository invariants deterministically (not left to the model):
+# Enforces five repository invariants deterministically (not left to the model):
 #   1. No agent may merge or push into the repository's default branch (resolved
 #      dynamically — see resolve_default_branch() below; falls back to `main`).
 #      This covers `git push`, `git merge` while HEAD is the default branch,
@@ -18,34 +19,163 @@
 #      allowed. The tag-push detector matches an exact `vX.Y.Z` ref position
 #      (bare token or refspec destination), not any substring, so a branch
 #      named e.g. `issue/42-bump-v1.2.3` is not misdetected as a tag push.
+#   5. (Issue #178) The same "no write to the default branch" invariant as
+#      rule 1, enforced on the mutating GitHub MCP tool surface, not just
+#      `Bash`. Before this rule, `.claude/settings.json` matched `"Bash"`
+#      only, so any consumer with the GitHub MCP server enabled had NO
+#      enforcement whatsoever on `mcp__github__merge_pull_request`,
+#      `enable_pr_auto_merge`, `push_files`, `create_or_update_file`,
+#      `delete_file`, or `create_branch` — a total bypass of rules 1-4 on
+#      that tool surface. This rule is dispatched on the PreToolUse payload's
+#      structured `tool_name` field (an exact match against the six names
+#      above) and reads the matching structured `tool_input` fields directly
+#      (`pullNumber`, `owner`, `repo`, `branch`) — never a regex over a
+#      stringified `tool_input` blob, since MCP calls arrive as real JSON,
+#      not a shell command string that needs tokenizing.
 #
 # Contract: receives the PreToolUse hook payload as JSON on stdin. Exit code 2
 # blocks the tool call and returns stderr to Claude as feedback; exit 0 allows.
 # Any unexpected error exits 0 (fail-open) so the guard never wedges a session.
 #
-# Fail-open exception (rule 1 only): resolving a `gh pr merge`'s base branch
-# requires calling `gh pr view`. If that lookup fails for any reason — `gh`
-# missing, unauthenticated, network error — this rule fails CLOSED (blocks the
-# merge) instead of open, because failing open here would let an unreviewed PR
-# merge into the default branch go through undetected. Every other rule in
-# this script keeps the global fail-open contract.
+# Fail-open exception (rules 1 and 5 only): resolving a `gh pr merge` (or
+# `mcp__github__merge_pull_request` / `enable_pr_auto_merge`) PR's base
+# branch requires calling `gh pr view`. If that lookup fails for any reason —
+# `gh` missing, unauthenticated, network error, or (rule 5 only) the MCP
+# payload not carrying enough information to identify the PR at all — this
+# rule fails CLOSED (blocks the call) instead of open, because failing open
+# here would let an unreviewed PR merge into the default branch go through
+# undetected. Every other rule in this script keeps the global fail-open
+# contract. Rule 5's jq dependency is a further, narrower fail-open
+# exception: MCP `tool_input` is structured JSON with fields that can
+# legitimately contain arbitrary text (commit messages, file contents), so
+# unlike rule 1-4's flat command-string parsing, correctly reading them
+# requires a real JSON parser — if `jq` is unavailable, rule 5 fails open
+# (skips its checks) rather than falling back to a regex over stringified
+# JSON, which was rejected as unsafe for exactly this task's fields.
 #
 # Scope and limits: this is a best-effort, defense-in-depth LOCAL check over
-# shell command TEXT — a flag-aware tokenizer plus pattern matching, not a
-# real shell parser and not a completeness guarantee against every possible
-# flag/argument construction an agent (or a determined adversary) could type.
-# Rounds of independent audit against this file have repeatedly found and
-# closed specific bypasses (ref-qualified merge targets, value-consuming
-# flags whose value was mistaken for the real argument, etc.) — that pattern
-# is expected to continue: text-based command parsing can always be evaded by
-# a sufficiently creative future command form, in this script or any script
-# like it. Server-side branch protection on the remote (tracked separately,
-# outside this file) is the actual durable control; this hook narrows the
-# window and catches the common cases, it does not replace that control.
+# shell command TEXT (rules 1-4) and structured tool_input JSON (rule 5) — a
+# flag-aware tokenizer plus pattern matching for the former, direct field
+# access for the latter — not a real shell parser and not a completeness
+# guarantee against every possible flag/argument/payload construction an
+# agent (or a determined adversary) could produce. Rounds of independent
+# audit against this file have repeatedly found and closed specific bypasses
+# (ref-qualified merge targets, value-consuming flags whose value was
+# mistaken for the real argument, the MCP bypass rule 5 now closes, etc.) —
+# that pattern is expected to continue: text-based command parsing can
+# always be evaded by a sufficiently creative future command form, in this
+# script or any script like it, and a new mutating tool surface (a different
+# MCP server, a future first-party tool) can always reopen the same class of
+# gap rule 5 closes today. Server-side branch protection on the remote
+# (tracked separately, outside this file) is the actual durable control;
+# this hook narrows the window and catches the common cases, it does not
+# replace that control.
 
 set -uo pipefail
 
 payload="$(cat 2>/dev/null || true)"
+
+# --- Rule 5 dispatch: mutating GitHub MCP tool surface -----------------------
+# Extract tool_name. Prefer jq; fall back to a permissive grep (tool_name is
+# always a flat top-level string, so the grep fallback is safe here — unlike
+# the richer tool_input fields rule 5 needs below, which require jq).
+if command -v jq >/dev/null 2>&1; then
+  tool_name="$(printf '%s' "$payload" | jq -r '.tool_name // empty' 2>/dev/null || true)"
+else
+  tool_name="$(printf '%s' "$payload" | grep -o '"tool_name"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"tool_name"[[:space:]]*:[[:space:]]*"//; s/"$//')"
+fi
+
+mcp_block() {
+  printf 'BLOCKED by dev-tasks git-guard (rule 5, MCP): %s\n' "$1" >&2
+  exit 2
+}
+
+# Resolve the repository's default branch. Cached in $__default_branch_cache
+# so repeated calls in one invocation only do the work once. Order: local
+# symbolic-ref (no network) -> `gh repo view` (network, only if needed) ->
+# literal fallback "main". Defined here (ahead of the rule 5 dispatch below,
+# which needs it) rather than down near rule 1 — both rules share it.
+__default_branch_cache=""
+resolve_default_branch() {
+  if [ -n "$__default_branch_cache" ]; then
+    printf '%s' "$__default_branch_cache"
+    return 0
+  fi
+  local ref branch
+  ref="$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || true)"
+  branch="${ref##*/}"
+  if [ -z "$branch" ] && command -v gh >/dev/null 2>&1; then
+    branch="$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || true)"
+  fi
+  [ -z "$branch" ] && branch="main"
+  __default_branch_cache="$branch"
+  printf '%s' "$branch"
+}
+
+case "$tool_name" in
+  mcp__github__merge_pull_request | mcp__github__enable_pr_auto_merge)
+    if ! command -v jq >/dev/null 2>&1; then
+      exit 0 # fail-open: cannot safely read structured tool_input without jq.
+    fi
+    pr_number="$(printf '%s' "$payload" | jq -r '.tool_input.pullNumber // .tool_input.pull_number // empty' 2>/dev/null || true)"
+    owner="$(printf '%s' "$payload" | jq -r '.tool_input.owner // empty' 2>/dev/null || true)"
+    repo_name="$(printf '%s' "$payload" | jq -r '.tool_input.repo // empty' 2>/dev/null || true)"
+
+    if [ -z "$pr_number" ]; then
+      mcp_block "could not identify the pull request (missing 'pullNumber' in tool_input). Refusing (fail-closed): an unidentified PR could target the default branch."
+    fi
+
+    base=""
+    lookup_ok=0
+    if command -v gh >/dev/null 2>&1; then
+      if [ -n "$owner" ] && [ -n "$repo_name" ]; then
+        base="$(gh pr view "$pr_number" --repo "$owner/$repo_name" --json baseRefName -q .baseRefName 2>/dev/null)" && lookup_ok=1
+      else
+        base="$(gh pr view "$pr_number" --json baseRefName -q .baseRefName 2>/dev/null)" && lookup_ok=1
+      fi
+    fi
+
+    if [ "$lookup_ok" -ne 1 ] || [ -z "$base" ]; then
+      mcp_block "could not verify PR #$pr_number's base branch via 'gh pr view' (gh missing, unauthenticated, or a network error). Refusing to proceed (fail-closed): an unverified base could be the default branch."
+    fi
+
+    default_branch="$(resolve_default_branch)"
+    if [ "$base" = "$default_branch" ]; then
+      if [ "$tool_name" = "mcp__github__enable_pr_auto_merge" ]; then
+        mcp_block "enabling auto-merge on a PR targeting '$default_branch' is not allowed. Only the user may merge into $default_branch."
+      fi
+      mcp_block "merging a PR into '$default_branch' via the MCP tool is not allowed. Only the user may merge into $default_branch."
+    fi
+    exit 0
+    ;;
+  mcp__github__push_files | mcp__github__create_or_update_file | mcp__github__delete_file)
+    if ! command -v jq >/dev/null 2>&1; then
+      exit 0 # fail-open: cannot safely read structured tool_input without jq.
+    fi
+    target_branch="$(printf '%s' "$payload" | jq -r '.tool_input.branch // empty' 2>/dev/null || true)"
+    default_branch="$(resolve_default_branch)"
+    # A missing/empty `branch` is not a safe "not the default branch" case:
+    # the GitHub Contents/push-files API commits directly to the repository's
+    # default branch when `branch` is omitted, so an absent value is exactly
+    # as unsafe as an explicit match and must be blocked identically.
+    if [ -z "$target_branch" ] || [ "$target_branch" = "$default_branch" ]; then
+      display="${target_branch:-$default_branch (implicit — no 'branch' given)}"
+      mcp_block "$tool_name would write to '$default_branch' (target: '$display'). Only the user may commit directly to $default_branch; write to a feature branch and open a PR."
+    fi
+    exit 0
+    ;;
+  mcp__github__create_branch)
+    if ! command -v jq >/dev/null 2>&1; then
+      exit 0 # fail-open: cannot safely read structured tool_input without jq.
+    fi
+    new_branch="$(printf '%s' "$payload" | jq -r '.tool_input.branch // empty' 2>/dev/null || true)"
+    default_branch="$(resolve_default_branch)"
+    if [ -n "$new_branch" ] && [ "$new_branch" = "$default_branch" ]; then
+      mcp_block "creating a branch named '$default_branch' (the default branch) via the MCP tool is not allowed."
+    fi
+    exit 0
+    ;;
+esac
 
 # Extract the command string. Prefer jq; fall back to a permissive grep.
 if command -v jq >/dev/null 2>&1; then
@@ -65,26 +195,8 @@ block() {
   exit 2
 }
 
-# Resolve the repository's default branch. Cached in $__default_branch_cache
-# so repeated calls in one invocation only do the work once. Order: local
-# symbolic-ref (no network) -> `gh repo view` (network, only if needed) ->
-# literal fallback "main".
-__default_branch_cache=""
-resolve_default_branch() {
-  if [ -n "$__default_branch_cache" ]; then
-    printf '%s' "$__default_branch_cache"
-    return 0
-  fi
-  local ref branch
-  ref="$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || true)"
-  branch="${ref##*/}"
-  if [ -z "$branch" ] && command -v gh >/dev/null 2>&1; then
-    branch="$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || true)"
-  fi
-  [ -z "$branch" ] && branch="main"
-  __default_branch_cache="$branch"
-  printf '%s' "$branch"
-}
+# resolve_default_branch() is defined above, ahead of the rule 5 MCP
+# dispatch block, since both rule 1 (below) and rule 5 share it.
 
 # Quote-aware token splitter: splits $1 into tokens honoring shell quoting so
 # a flag value containing an embedded space (e.g. `-m "merge note"` or
