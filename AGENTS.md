@@ -114,6 +114,7 @@ All agents **MUST**:
 - Run `verifier` audit (mandatory, non-skippable) before PR is ready; drift findings route to `product-engineer`
 - Follow test-first design: write tests before implementation code
 - If `memo-cli` is available: read/write entries per role
+- Treat a blocked guard as a decision, not an obstacle: when a hook blocks a tool call, surface the block verbatim, stop that line of work, and **MUST NOT** attempt an alternative command, tool surface, or sequence that achieves the same effect the block just prevented. Using a legitimate alternate mechanism for an unrelated, non-triggering purpose (e.g. `Read` instead of `grep`, `Write` instead of a shell heredoc) is not a route-around and remains allowed
 
 ---
 

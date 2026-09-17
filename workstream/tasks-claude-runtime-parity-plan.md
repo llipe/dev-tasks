@@ -50,6 +50,8 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
 - `test/unit/developer-command-collapse.test.ts` - new; CP-05 size-cap and no-restatement checks for the collapsed `.claude/commands/developer.md`, plus Kiro-activation-marker absence checks on the `developer` agent/command pair
 - `test/unit/architecture-change-parity.test.ts`, `test/unit/cross-repo-partitioning-parity.test.ts`, `test/unit/infra-engineer-parity.test.ts`, `test/unit/qa-testing-standard.test.ts` - updated; `.claude/commands/developer.md` is no longer asserted to carry the full agent contract text, only a pointer to it
 - `test/unit/model-tiers-permission-allowlist.test.ts` - new; CP-06 `model:` frontmatter set/tier assertions, `permissions.allow` content and write-pattern scan, guard-still-blocks-with-allowlist-active check (task 6.0)
+- `test/unit/git-guard-messages.test.ts` - new; CP-11 mechanical check every `git-guard.sh` `block()`/`mcp_block()` message names a permitted alternative or states human-only, plus a regression guard against the confirmed task 9.0 `--base` defect (task 11.0)
+- `test/unit/blocked-guard-is-terminal.test.ts` - new; CP-11 textual-contract check for the "blocked guard is a decision, not an obstacle" rule in `CLAUDE.md`, `AGENTS.md`, `.claude/commands/planner.md`'s Error Handling table, and `.claude/agents/developer.md` (task 11.0)
 
 ## Tasks
 
@@ -208,18 +210,18 @@ Each parent task is one PR on an `issue/*` branch. Per repository default, every
   - [x] 10.6 Verify Acceptance Criterion: with branch protection configured, the same merge fails server-side even with every hook disabled (manual/documentary — requires a real GitHub repo with branch protection; documented in README step 3, `activity-init`'s Repository Setup section, and `AGENTS.md` § Hooks per CP-10's pass criteria)
   - [x] 10.7 Run Tests: `pnpm run test:unit`, `pnpm run validate` — both green (2364 tests); `pnpm run audit` also clean
 
-- [ ] 11.0 Never route around a blocked guard — behavioural rules — [#179](https://github.com/llipe/dev-tasks/issues/179)
+- [x] 11.0 Never route around a blocked guard — behavioural rules — [#179](https://github.com/llipe/dev-tasks/issues/179)
 
   > Note: the deepest lesson from this defect is not the regex. An agent under a **MUST** instruction, whose mandated command is blocked, will find another way to satisfy the instruction. That is rational behaviour given the prompt, and no amount of guard-patching prevents the next instance. Two structural rules prevent the whole class: a blocked guard must be terminal, and every block message must name the permitted path.
 
-  - [ ] 11.1 Add to `CLAUDE.md` General Agent Guidelines: when a hook blocks a tool call, the agent **MUST** surface the block verbatim and stop that line of work. It **MUST NOT** attempt an alternative command, tool surface, or sequence that achieves the same effect. A blocked guard is a decision, not an obstacle
-  - [ ] 11.2 Mirror the rule into `AGENTS.md` General Agent Guidelines so all three platforms carry it
-  - [ ] 11.3 Audit all four `git-guard.sh` block messages: each **MUST** name the permitted alternative, or state plainly that the action is human-only. Rule 3's current message names a flag that does not exist — the direct cause of the route-around
-  - [ ] 11.4 Add an Error Handling row to `.claude/commands/planner.md`: *merge command blocked by git-guard* → report the block verbatim, mark the story blocked, write the checkpoint, ask the user. Never attempt an alternative merge path
-  - [ ] 11.5 Add the same row to the `developer` agent and command for the commit and PR paths
-  - [ ] 11.6 Verify Acceptance Criterion: a `/planner` run against a deliberately blocked merge stops and reports, leaving the integration branch untouched
-  - [ ] 11.7 Verify Acceptance Criterion: every guard block message names a permitted path or an owner
-  - [ ] 11.8 Run Tests: `pnpm run test:unit`, `pnpm run format:check`
+  - [x] 11.1 Add to `CLAUDE.md` General Agent Guidelines: when a hook blocks a tool call, the agent **MUST** surface the block verbatim and stop that line of work. It **MUST NOT** attempt an alternative command, tool surface, or sequence that achieves the same effect. A blocked guard is a decision, not an obstacle
+  - [x] 11.2 Mirror the rule into `AGENTS.md` General Agent Guidelines so all three platforms carry it
+  - [x] 11.3 Audit all four `git-guard.sh` block messages: each **MUST** name the permitted alternative, or state plainly that the action is human-only. Rule 3's current message names a flag that does not exist — the direct cause of the route-around (audit covered all 18 `block()`/`mcp_block()` call sites in the current script, not just the original four; 4 messages lacked an alternative/human-only statement and were fixed — see `test/unit/git-guard-messages.test.ts`). Round 2 (final): fixed the `--admin` message, which named no real alternative and only passed the check because its own forbidden-command text happened to contain the substring "gh pr merge" — it now states "Only the user may merge with --admin, or via GitHub's UI/API directly." Also tightened `namesAlternativeOrHumanOnly()` in the test itself, which matched on bare keywords ("instead", "gh pr merge" appearing anywhere) rather than a genuine suggestion context; it now requires a directive verb (use/open/write/create/ask) near "instead" or one of a small set of known concrete-alternative phrasings, with regression tests covering the two synthetic bad-message constructions (fake `--target` flag, vague made-up-flag "instead") that verifier used to prove the old check was too loose. No further rounds are planned for this milestone; any additional finding is logged as a follow-up, not actioned here
+  - [x] 11.4 Add an Error Handling row to `.claude/commands/planner.md`: *merge command blocked by git-guard* → report the block verbatim, mark the story blocked, write the checkpoint, ask the user. Never attempt an alternative merge path
+  - [x] 11.5 Add the same row to the `developer` agent and command for the commit and PR paths
+  - [x] 11.6 Verify Acceptance Criterion: a `/planner` run against a deliberately blocked merge stops and reports, leaving the integration branch untouched (manual validation steps recorded in the story closeout; automated text-contract half covered by `test/unit/blocked-guard-is-terminal.test.ts`)
+  - [x] 11.7 Verify Acceptance Criterion: every guard block message names a permitted path or an owner (`test/unit/git-guard-messages.test.ts`, mechanically parses every `block()`/`mcp_block()` call site)
+  - [x] 11.8 Run Tests: `pnpm run test:unit`, `pnpm run format:check` — both green (2165 tests)
 
 ## Completion
 
