@@ -7,6 +7,7 @@
 | 1.0     | 2026-09-18 | Initial base version                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | @llipe / claude           |
 | 1.1     | 2026-09-18 | Analysis and format pass against the repository: aligned drift wording with the verifier and technical-guidelines blocking policy; reconciled `SIMPLICITY.md` delivery semantics with `ROOT_FILES` and ADR-006; added meta-repo `glossary.md` precedence; qualified decision IDs for cross-feature citation; defined "implementation commit"; targeted the PR completion report at the `github-ops` PR Description Template; expanded affected surfaces; added delivery phases; added OQ-06 to OQ-10. | product-engineer          |
 | 1.2     | 2026-09-18 | Added simplicity tooling scope: new skill `activity-simplicity-tooling` that makes the `SIMPLICITY.md` thresholds executable under the single `validate` entry point (function length, file length, cyclomatic and cognitive complexity, code smells, duplication, dead code), baseline-and-ratchet adoption, and a CI wiring contract for `infra-engineer` via `deploy-ops` optimized for wall time. FR-35 to FR-44, AC-17 to AC-21, OQ-11 to OQ-13.                                                 | @llipe / product-engineer |
+| 1.3     | 2026-09-18 | Resolved OQ-10 (one PRD, four milestones) as D-07. Added the `SIMPLICITY.md` structure to Data Requirements (frontmatter, sections A to D) and FR-31a on how agents load it, mirroring the `TESTING.md` mechanism.                                                                                                                                                                                                                                                                                    | @llipe / product-engineer |
 
 ## Executive Summary
 
@@ -156,7 +157,8 @@ The draft's "four existing skills change" undercounts the surface. Because `impl
 ### Simplicity contract
 
 30. `SIMPLICITY.md` **MUST** be a root canonical contract delivered on every profile (unconditionally with respect to platform and UI scope), registered in `AGENTS.md` § Contracts and in `bundle-manifest.json` `consumer_owned_paths`, with the same ownership as `DESIGN.md` and `TESTING.md`. Its install-time overwrite semantics are decided in OQ-08.
-31. The initial content of `SIMPLICITY.md` is a deliverable of this feature. It **MUST** contain at minimum: (A) decision rules for adding code, abstractions, and dependencies, with the burden of proof on adding; (B) prohibitions; (C) the PR completion report format.
+31. The initial content of `SIMPLICITY.md` is a deliverable of this feature. It **MUST** carry the same frontmatter as `TESTING.md` (`version`, `name`, `description`, `status`, `owner`) and **MUST** contain at minimum: (A) decision rules for adding code, abstractions, and dependencies, with the burden of proof on adding; (B) prohibitions; (C) the PR completion report format; (D) measurable thresholds and the CI budget. See Data Requirements for the structure.
+    31a. Agents discover `SIMPLICITY.md` the way they discover `TESTING.md`: it is listed in `AGENTS.md` § Contracts (always-on context on Claude through the `CLAUDE.md` import, on Copilot through the agent files, on Kiro through steering), and every consuming skill or agent names it explicitly as a required input in its own body. A `status: unfilled` placeholder **MUST** be treated as "no simplicity standard established", never as permission, mirroring the `TESTING.md` rule.
 32. `activity-generate-spec`, `plan`, `implement`, and `verifier` **MUST** reference `SIMPLICITY.md` as an input and **MUST** apply its decision rules.
 33. The `github-ops` PR Description Template **MUST** gain a `## Completion Report` section carrying the report defined in `SIMPLICITY.md` section C ("what I did not add", "what I noticed and did not touch", justifications, unverified rules). `implement` **MUST** fill it when the PR is opened and update it before the PR is marked ready.
 34. The verifier **MUST** treat an empty "what I did not add" section on a non-trivial change (an implementation commit is present) as a finding requiring explanation.
@@ -233,6 +235,41 @@ erDiagram
     SPEC }o--o{ DECISION : cites
     TASK_LIST }o--o{ DECISION : cites
 ```
+
+### `SIMPLICITY.md` structure
+
+Root canonical contract, sibling of `DESIGN.md` and `TESTING.md`. Shipped filled with the defaults below; a consumer edits its copy to tighten.
+
+```markdown
+---
+version: 1.0
+name: Simplicity Standard
+description: Canonical code-simplicity contract — decision rules, prohibitions, PR completion report, and measurable thresholds.
+status: filled | unfilled
+owner: housekeeping
+---
+
+## A. Decision rules
+
+Burden of proof is on adding. Before adding a function, abstraction, dependency, configuration option, or file, the change must answer: what breaks without it, which acceptance criterion needs it, and why the existing code cannot carry it.
+
+## B. Prohibitions
+
+Speculative generality, abstractions with one caller, feature flags without a second consumer, wrapper layers over a library used once, dead code kept "for later", new dependencies for one function.
+
+## C. Completion report (copied into the PR body)
+
+- What I did not add, and why.
+- What I noticed and did not touch.
+- Justification for every new abstraction, dependency, or file.
+- Rules I could not verify.
+
+## D. Thresholds and budget
+
+The threshold table below, plus the CI static-stage budget (OQ-12).
+```
+
+Section A and B are prose rules the agents apply at spec, plan, and implement time and the verifier audits. Section C is the template `implement` fills. Section D is what `activity-simplicity-tooling` turns into checker configuration.
 
 ### Simplicity thresholds (`SIMPLICITY.md` section D, shipped defaults)
 
@@ -360,7 +397,7 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - OQ-07: In multi-repo consumers, what is the escalation path when Feature Mode grilling discovers a term that belongs to more than one component? Recommended: record the term as `proposed` in the component glossary with a pointer to a new `architecture-change` task; the verifier treats `proposed` terms as valid until the task resolves.
 - OQ-08: `SIMPLICITY.md` delivery semantics. `ROOT_FILES` overwrite on every `install`, which conflicts with "tightened per repository, never loosened". Recommended: deliver it install-if-absent on every profile through the same platform-agnostic mechanism as the glossary, and document that template improvements reach existing consumers only through a manual step (the ADR-006 trade-off). Alternative: keep `ROOT_FILES` semantics and accept that a re-install resets a tightened copy.
 - OQ-09: License and attribution for the `grill-me` interview discipline. Recommended: confirm the license permits derivative use and credit it in the skill's header.
-- OQ-10: One PRD with four milestones, or four PRDs? Recommended: one PRD, four milestones as in the delivery phases table; split only if Phase 2 (meta-repo glossary precedence) turns into its own design effort.
+- OQ-10: Resolved as D-07. One PRD, four milestones as in the delivery phases table.
 - OQ-11: Shipped threshold defaults. The table in Data Requirements proposes function 50 lines, file 300 lines, cyclomatic 10, cognitive 15, params 4, depth 3, duplication 3%, dead code 0 new. Recommended: accept as the `SIMPLICITY.md` section D baseline; they match common ESLint and Sonar defaults, so consumers inherit familiar numbers.
 - OQ-12: CI budget for the static-check stage. Recommended: a default budget of two minutes on pull requests recorded in `SIMPLICITY.md` section D, overridable per consumer; the skill reports, not blocks, on budget regression in the first release.
 - OQ-13: Which non-JS/TS profile ships second? Recommended: none in this PRD. Add profiles as separate issues once the JS/TS profile has run in two consumers.
@@ -369,11 +406,12 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 
 Decisions that shaped this PRD, recorded from the pre-PRD interview on 2026-09-18. These predate the decision-log format this PRD defines and are listed in the short form.
 
-| ID   | Decision                                                                                     |
-| ---- | -------------------------------------------------------------------------------------------- |
-| D-01 | Grilling lives in a separate skill `activity-grill`, invoked by refine and generate-spec.    |
-| D-02 | Exit gate is hard: empty open list and explicit user statement of shared understanding.      |
-| D-03 | DDD scope is strategic only: ubiquitous language and bounded contexts; no tactical patterns. |
-| D-04 | TDD is enforced through commit-order evidence checked by the verifier.                       |
-| D-05 | Simplicity rules ship as a root canonical contract `SIMPLICITY.md`.                          |
-| D-06 | Issue Mode is lighter: cap 8, glossary read-only, reuses existing decisions.                 |
+| ID   | Decision                                                                                                         |
+| ---- | ---------------------------------------------------------------------------------------------------------------- |
+| D-01 | Grilling lives in a separate skill `activity-grill`, invoked by refine and generate-spec.                        |
+| D-02 | Exit gate is hard: empty open list and explicit user statement of shared understanding.                          |
+| D-03 | DDD scope is strategic only: ubiquitous language and bounded contexts; no tactical patterns.                     |
+| D-04 | TDD is enforced through commit-order evidence checked by the verifier.                                           |
+| D-05 | Simplicity rules ship as a root canonical contract `SIMPLICITY.md`.                                              |
+| D-06 | Issue Mode is lighter: cap 8, glossary read-only, reuses existing decisions.                                     |
+| D-07 | One PRD delivered as four milestones in the delivery-phases order; no split into separate PRDs (resolves OQ-10). |
