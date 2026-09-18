@@ -9,6 +9,7 @@ Decision log for `docs/requirements/prd-shared-understanding-refinement.md` (FR-
 | 1.0     | 2026-09-18 | WHAT-phase log migrated from the PRD Decisions table (D-01 to D-26)                | product-engineer |
 | 1.1     | 2026-09-18 | D-27 added (PR-KT PRD and issue #141 artifacts deleted)                    | product-engineer |
 | 1.2     | 2026-09-18 | Phase 0 HOW-phase decisions D-28 to D-38 appended                          | product-engineer |
+| 1.3     | 2026-09-18 | D-39 added (issue #148 residue folded into `SIMPLICITY.md` v1.1)           | product-engineer |
 
 ## WHAT phase
 
@@ -63,3 +64,4 @@ Most Phase 0 questions were answered from the codebase rather than asked, per PR
 | D-36 | HOW   | testing/signal      | What is the pass signal when 11 tests already fail?          | Exactly 4 remaining failures; a fifth is caused by the change.           | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
 | D-37 | HOW   | release/restore     | Which tag is the restore path for ADR-007?                   | The last release shipping `dt`; needed human confirmation.               | `v0.13.0`, `0a6f35e`. | yes         | —          | @llipe | 2026-09-18 |
 | D-38 | HOW   | docs/prd            | Delete or keep `prd-multi-repo-context.md`?                  | Delete; ADR-007 records it and git keeps the content.                    | Delete.             | yes           | —          | @llipe | 2026-09-18 |
+| D-39 | WHAT  | simplicity/rules    | Do the four items from issue #148 not covered by the contract get added or dropped? | Dismiss with #149 and #140, or fold in.                                  | Add to `SIMPLICITY.md` as rules A11, A12, A13, B6. | no | extends D-09 | @llipe | 2026-09-18 |
