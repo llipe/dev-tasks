@@ -4,7 +4,8 @@
 
 | Version | Date       | Summary                                                                  | Author           |
 | ------- | ---------- | ------------------------------------------------------------------------ | ---------------- |
-| 1.0     | 2026-09-18 | Initial version. Covers PRD FR-53 to FR-58 (Phase 0, retire `dt`).       | product-engineer |
+| 1.0     | 2026-09-18 | Initial version. Covers PRD FR-53 to FR-58 (Phase 0, retire `dt`).                                                                                                    | product-engineer |
+| 1.1     | 2026-09-18 | All three open questions resolved. Restore tag confirmed as `v0.13.0` (`0a6f35e`) via the GitHub API. `prd-multi-repo-context.md` is deleted. One pull request, seven commits. HOW decisions confirmed and renumbered `D-28` to `D-38` into the feature's single decision-log ID space. | @llipe / product-engineer |
 
 ## 1. Executive Summary
 
@@ -220,7 +221,7 @@ No feature flag. A deletion cannot be rolled out gradually, and a flagged binary
 | Commit type           | `chore!:` with a `BREAKING CHANGE:` footer naming the removed binary and every removed command.                                   |
 | CHANGELOG             | A `Removed` section listing every command, matching the Keep a Changelog format already in use.                                   |
 | Backward compatibility | None offered, deliberately. `dt` was documented "Unstable — testing only" in the README, and no consumer is known to use it.     |
-| Restore path          | The last release tag that ships `dt`, named in ADR-007. Git history is the restore mechanism; no branch is kept alive.            |
+| Restore path          | Release tag `v0.13.0`, commit `0a6f35e`, named in ADR-007. Git history is the restore mechanism; no branch is kept alive.         |
 | Rollback              | Revert the merge commit. The phase touches no persistent state, so revert is complete and immediate.                             |
 
 ## 16. Dependencies & Risks
@@ -238,22 +239,28 @@ The last risk is real and not fully solved. A 20,000-line deletion cannot be rev
 
 ## 17. Open Questions
 
-1. **The restore tag.** ADR-007 must name the last release tag shipping `dt`. `main`'s tip is `chore(release): v0.13.0`, so `v0.13.0` is almost certainly it, but tags are human-only in this repository and a guard blocked the listing. Needs human confirmation before ADR-007 is written.
-2. **`docs/requirements/prd-multi-repo-context.md`.** This specification assumes deletion, consistent with deleting the superseded PR knowledge-transfer PRD. The alternative is keeping it as history alongside ADR-001 and ADR-002. Recommended: delete, since ADR-007 records the decision and git keeps the content.
-3. **Story granularity.** Seven commits in one pull request, or split into two (code and tests, then prompts and docs)? Recommended: one pull request, seven commits. The absence test only passes once both halves land, so splitting creates a pull request that cannot prove its own completeness.
+None. All three were resolved on 2026-09-18 and recorded as decisions.
 
-## Decisions (HOW phase — proposed)
+| Question                                          | Resolution                                                                                                    |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Which release tag is the restore path?            | `v0.13.0`, at commit `0a6f35e`, confirmed through the GitHub API. Recorded as `D-37` and named in ADR-007.     |
+| Delete or keep `prd-multi-repo-context.md`?       | Delete. ADR-007 records the decision and git history keeps the content. Recorded as `D-38`.                   |
+| One pull request or two?                          | One, with seven ordered commits. Recorded as `D-29`.                                                          |
 
-These are proposed, not confirmed. They are recorded in `workstream/decisions-shared-understanding.md` once confirmed.
+## Decisions (HOW phase)
+
+Confirmed on 2026-09-18 and recorded in `workstream/decisions-shared-understanding.md`. Numbering continues the feature's single decision-log ID space (`D-01` to `D-27` are the WHAT phase), so there is one ID space per feature rather than two conventions.
 
 | ID   | Decision                                                                                                                        |
 | ---- | --------------------------------------------------------------------------------------------------------------------------------- |
-| H-01 | Version `0.14.0`, commit type `chore!:` with a `BREAKING CHANGE:` footer naming the removed binary and commands.                 |
-| H-02 | One pull request, seven ordered commits, `typecheck` green at every boundary.                                                    |
-| H-03 | Drop `ajv`, the `pg` peer, and the `fast-uri` override; move `yaml` to `devDependencies`; keep `execa`, `reconcile`, and `hash`. |
-| H-04 | Delete `activity-contract-validation`; keep `activity-contract-test-design`, which carries no `dt` reference.                    |
-| H-05 | `docs/system-overview.md` is rewritten in its affected sections by `technical-writer`, not merely stripped.                      |
-| H-06 | `core/checks` is not created in Phase 0. This phase only deletes.                                                                |
-| H-07 | `parse-args.ts` moves to `bin/`; `adapters/` and the `#adapters/*` alias are removed.                                            |
-| H-08 | ADR-001 and ADR-002 are marked Superseded by ADR-007 and otherwise left intact, per the ADR README's never-rewrite rule.         |
-| H-09 | Success is defined as exactly 4 remaining test failures, all pre-existing; a fifth is caused by this change.                     |
+| D-28 | Version `0.14.0`, commit type `chore!:` with a `BREAKING CHANGE:` footer naming the removed binary and commands.                 |
+| D-29 | One pull request, seven ordered commits, `typecheck` green at every boundary.                                                    |
+| D-30 | Drop `ajv`, the `pg` peer, and the `fast-uri` override; move `yaml` to `devDependencies`; keep `execa`, `reconcile`, and `hash`. |
+| D-31 | Delete `activity-contract-validation`; keep `activity-contract-test-design`, which carries no `dt` reference.                    |
+| D-32 | `docs/system-overview.md` is rewritten in its affected sections by `technical-writer`, not merely stripped.                      |
+| D-33 | `core/checks` is not created in Phase 0. This phase only deletes.                                                                |
+| D-34 | `parse-args.ts` moves to `bin/`; `adapters/` and the `#adapters/*` alias are removed.                                            |
+| D-35 | ADR-001 and ADR-002 are marked Superseded by ADR-007 and otherwise left intact, per the ADR README's never-rewrite rule.         |
+| D-36 | Success is exactly 4 remaining test failures, all pre-existing; a fifth is caused by this change.                                |
+| D-37 | The restore path is release tag `v0.13.0` at commit `0a6f35e`, named in ADR-007.                                                 |
+| D-38 | `docs/requirements/prd-multi-repo-context.md` is deleted rather than kept as history.                                            |

@@ -7,7 +7,8 @@ Decision log for `docs/requirements/prd-shared-understanding-refinement.md` (FR-
 | Version | Date       | Summary                                                                            | Author           |
 | ------- | ---------- | ---------------------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-18 | WHAT-phase log migrated from the PRD Decisions table (D-01 to D-26)                | product-engineer |
-| 1.1     | 2026-09-18 | D-27 added (PR-KT PRD and issue #141 artifacts deleted) | product-engineer |
+| 1.1     | 2026-09-18 | D-27 added (PR-KT PRD and issue #141 artifacts deleted)                    | product-engineer |
+| 1.2     | 2026-09-18 | Phase 0 HOW-phase decisions D-28 to D-38 appended                          | product-engineer |
 
 ## WHAT phase
 
@@ -43,4 +44,22 @@ Decision log for `docs/requirements/prd-shared-understanding-refinement.md` (FR-
 
 ## HOW phase
 
-Per-phase HOW decisions are appended here as each specification is grilled. Phase 0 (retire `dt`) opens the HOW phase.
+Per-phase HOW decisions are appended here as each specification is grilled, continuing the same ID space as the WHAT phase.
+
+### Phase 0 — retire `dt` (`workstream/specification-shared-understanding-phase-0.md`)
+
+Most Phase 0 questions were answered from the codebase rather than asked, per PRD FR-3. The rows below are the ones that needed a human.
+
+| ID   | Phase | Branch              | Question                                                     | Recommended                                                              | Answer              | Accepted rec. | Supersedes | Author | Date       |
+| ---- | ----- | ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------- | ------------- | ---------- | ------ | ---------- |
+| D-28 | HOW   | release/version     | Which version and commit type for removing a public binary?  | `0.14.0`, `chore!:` with a `BREAKING CHANGE:` footer.                    | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-29 | HOW   | delivery/pr-shape   | One pull request or two?                                     | One, seven ordered commits; the absence test needs both halves to pass.  | One PR.             | yes           | —          | @llipe | 2026-09-18 |
+| D-30 | HOW   | deps/prune          | Which dependencies go with `dt`?                             | Drop `ajv`, `pg` peer, `fast-uri` override; move `yaml`; keep `execa`.   | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-31 | HOW   | prompts/skills      | Which contract skills are `dt`-bound?                        | Delete `activity-contract-validation` only.                              | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-32 | HOW   | docs/system-overview | Strip or rewrite a document with 30 `dt` mentions?          | Rewrite affected sections via `technical-writer`.                        | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-33 | HOW   | scope/boundary      | Does Phase 0 create `core/checks`?                           | No. Phase 0 only deletes.                                                | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-34 | HOW   | structure/adapters  | Keep `adapters/` for one 86-line module?                     | No. Move `parse-args.ts` to `bin/`, drop the alias (`SIMPLICITY.md` A4). | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-35 | HOW   | docs/adr            | Delete or supersede ADR-001 and ADR-002?                     | Mark Superseded; never rewrite an ADR.                                   | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-36 | HOW   | testing/signal      | What is the pass signal when 11 tests already fail?          | Exactly 4 remaining failures; a fifth is caused by the change.           | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-37 | HOW   | release/restore     | Which tag is the restore path for ADR-007?                   | The last release shipping `dt`; needed human confirmation.               | `v0.13.0`, `0a6f35e`. | yes         | —          | @llipe | 2026-09-18 |
+| D-38 | HOW   | docs/prd            | Delete or keep `prd-multi-repo-context.md`?                  | Delete; ADR-007 records it and git keeps the content.                    | Delete.             | yes           | —          | @llipe | 2026-09-18 |
