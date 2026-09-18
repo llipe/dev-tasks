@@ -2,16 +2,17 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Author           |
-| ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-18 | Initial base version                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | @llipe / claude  |
-| 1.1     | 2026-09-18 | Analysis and format pass against the repository: aligned drift wording with the verifier and technical-guidelines blocking policy; reconciled `SIMPLICITY.md` delivery semantics with `ROOT_FILES` and ADR-006; added meta-repo `glossary.md` precedence; qualified decision IDs for cross-feature citation; defined "implementation commit"; targeted the PR completion report at the `github-ops` PR Description Template; expanded affected surfaces; added delivery phases; added OQ-06 to OQ-10. | product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Author                    |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.0     | 2026-09-18 | Initial base version                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | @llipe / claude           |
+| 1.1     | 2026-09-18 | Analysis and format pass against the repository: aligned drift wording with the verifier and technical-guidelines blocking policy; reconciled `SIMPLICITY.md` delivery semantics with `ROOT_FILES` and ADR-006; added meta-repo `glossary.md` precedence; qualified decision IDs for cross-feature citation; defined "implementation commit"; targeted the PR completion report at the `github-ops` PR Description Template; expanded affected surfaces; added delivery phases; added OQ-06 to OQ-10. | product-engineer          |
+| 1.2     | 2026-09-18 | Added simplicity tooling scope: new skill `activity-simplicity-tooling` that makes the `SIMPLICITY.md` thresholds executable under the single `validate` entry point (function length, file length, cyclomatic and cognitive complexity, code smells, duplication, dead code), baseline-and-ratchet adoption, and a CI wiring contract for `infra-engineer` via `deploy-ops` optimized for wall time. FR-35 to FR-44, AC-17 to AC-21, OQ-11 to OQ-13.                                                 | @llipe / product-engineer |
 
 ## Executive Summary
 
 `dev-tasks` produces PRDs and specifications through a short list of clarifying questions, then hands the result to planning and implementation. In practice, the agent and the human frequently proceed with different mental models of _what_ is being built and _how_, and the gap surfaces only during verification, when it is expensive. Vocabulary drifts between documents and code, and test-first implementation is stated as a preference (`docs/technical-guidelines.md` § Test-first execution) but is not verifiable after the fact.
 
-This feature closes the gap in four connected moves. First, refinement and specification become a **relentless, one-question-at-a-time interview** (`activity-grill`) that ends only on explicit shared understanding, with every resolved decision recorded and cited downstream. Second, the project gains a **permanent ubiquitous language** (`docs/domain/ubiquitous-language.md`) organized by bounded context; PRDs, specs, and code MUST use its terms. Third, **test-driven development becomes verifiable** through commit-order evidence rather than prose. Fourth, the code simplicity rules become a **root canonical contract** (`SIMPLICITY.md`) alongside `DESIGN.md` and `TESTING.md`, referenced by spec, plan, implement, and verify.
+This feature closes the gap in four connected moves. First, refinement and specification become a **relentless, one-question-at-a-time interview** (`activity-grill`) that ends only on explicit shared understanding, with every resolved decision recorded and cited downstream. Second, the project gains a **permanent ubiquitous language** (`docs/domain/ubiquitous-language.md`) organized by bounded context; PRDs, specs, and code MUST use its terms. Third, **test-driven development becomes verifiable** through commit-order evidence rather than prose. Fourth, the code simplicity rules become a **root canonical contract** (`SIMPLICITY.md`) alongside `DESIGN.md` and `TESTING.md`, referenced by spec, plan, implement, and verify, and made **executable** by validation tooling (function length, file length, complexity, code smells) that runs under the one `validate` command locally and in CI.
 
 Issue Mode stays lightweight: it builds on existing vocabulary and existing decisions, so it grills with a small cap and consults the glossary without extending it. Feature Mode runs the full process.
 
@@ -50,18 +51,18 @@ Issue Mode:
 [researcher] → activity-refine (activity-grill: cap 8, glossary read-only, reuse prior decisions) → plan → implement → verify
 ```
 
-Three artifacts are new: the decision log per feature, the ubiquitous language document, and the simplicity contract. One skill is new: `activity-grill`. The surfaces that change are listed in Affected Repositories.
+Three artifacts are new: the decision log per feature, the ubiquitous language document, and the simplicity contract. Two skills are new: `activity-grill` and `activity-simplicity-tooling`. The surfaces that change are listed in Affected Repositories.
 
 ### Delivery phases
 
 The four moves are separable and have different dependencies. Stories **SHOULD** be grouped into milestones in this order:
 
-| Phase | Scope                                                                | Depends on                                                                               |
-| ----- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| 1     | `activity-grill`, decision log, refine/spec/plan integration         | `researcher` (ADR-004). No other dependency.                                             |
-| 2     | Ubiquitous language file, install-if-absent delivery, glossary lint  | Phase 1 (terms enter through grilling). Meta-repo `glossary.md` precedence (OQ-07).      |
-| 3     | `SIMPLICITY.md` contract, spec/plan/implement/verifier references    | `SIMPLICITY.md` content (OQ-06). Delivery semantics decision (OQ-08).                    |
-| 4     | TDD commit-order evidence, refactor invariance, PR completion report | Evidence-driven loop blocking policy (`docs/technical-guidelines.md` § Blocking policy). |
+| Phase | Scope                                                                                                                                                                                | Depends on                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| 1     | `activity-grill`, decision log, refine/spec/plan integration                                                                                                                         | `researcher` (ADR-004). No other dependency.                                                      |
+| 2     | Ubiquitous language file, install-if-absent delivery, glossary lint                                                                                                                  | Phase 1 (terms enter through grilling). Meta-repo `glossary.md` precedence (OQ-07).               |
+| 3     | `SIMPLICITY.md` contract, spec/plan/implement/verifier references, `activity-simplicity-tooling` (thresholds under `validate`, baseline-and-ratchet, CI wiring via `infra-engineer`) | `SIMPLICITY.md` content (OQ-06). Delivery semantics decision (OQ-08). Threshold defaults (OQ-11). |
+| 4     | TDD commit-order evidence, refactor invariance, PR completion report                                                                                                                 | Evidence-driven loop blocking policy (`docs/technical-guidelines.md` § Blocking policy).          |
 
 Phase 1 delivers most of the value on its own and is the recommended first milestone.
 
@@ -72,13 +73,14 @@ Phase 1 delivers most of the value on its own and is the recommended first miles
 3. Guarantee that documents and code share one vocabulary per bounded context, and that the vocabulary is durable across features.
 4. Make test-first implementation a verifiable fact in the commit history, not a stated intention.
 5. Install code simplicity as a contract enforced at spec, plan, implement, and verify, with the burden of proof on adding.
+6. Make the measurable simplicity rules machine-checked by one command, `validate`, that runs identically on a developer machine and in CI, with CI wall time treated as a design constraint.
 
 ## Affected Repositories
 
-| Repository        | Role / Impact                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `llipe/dev-tasks` | Source. New skill `activity-grill` (three platform trees). Changes to `activity-refine`, `activity-generate-spec`, `plan`, `implement` (skill, Copilot instruction, Kiro steering), and the `product-engineer`, `developer`, `verifier`, and `github-ops` agents in all platform trees. New `core/verify` modules (commit-order pairing, glossary conformance). `core/distribution` registry and `bundle-manifest.json` changes for two new consumer-owned files. New root contract `SIMPLICITY.md`. Docs: `AGENTS.md` Contracts table, `README.md` install section, `docs/workflow-chains.md`, `docs/artifact-formats.md`, `docs/adr/`. |
-| Consumer repos    | Target. Receive `SIMPLICITY.md`, the `docs/domain/ubiquitous-language.md` scaffold, and updated skills, agents, and instructions on `install` and `update`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Repository        | Role / Impact                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `llipe/dev-tasks` | Source. New skills `activity-grill` and `activity-simplicity-tooling` (three platform trees). New CI workflow template `templates/workflows/validate.yml` documented in `deploy-ops`. Changes to `activity-refine`, `activity-generate-spec`, `plan`, `implement` (skill, Copilot instruction, Kiro steering), and the `product-engineer`, `developer`, `verifier`, and `github-ops` agents in all platform trees. New `core/verify` modules (commit-order pairing, glossary conformance). `core/distribution` registry and `bundle-manifest.json` changes for two new consumer-owned files. New root contract `SIMPLICITY.md`. Docs: `AGENTS.md` Contracts table, `README.md` install section, `docs/workflow-chains.md`, `docs/artifact-formats.md`, `docs/adr/`. |
+| Consumer repos    | Target. Receive `SIMPLICITY.md`, the `docs/domain/ubiquitous-language.md` scaffold, and updated skills, agents, and instructions on `install` and `update`. Through an approved task, receive lint policy configuration, a violation baseline, and a `validate.yml` CI workflow delivered by `infra-engineer` as a draft PR.                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 The draft's "four existing skills change" undercounts the surface. Because `implement` is executed by `developer`, `verifier` runs the checks, `github-ops` owns the PR body, and `product-engineer` is the invoker, all four agents change in `.github/agents/`, `.claude/agents/` or `.claude/commands/`, and `.kiro/agents/`.
 
@@ -104,6 +106,9 @@ The draft's "four existing skills change" undercounts the surface. Because `impl
 7. As a verifier agent, I want the simplicity contract as an explicit input, so that I can reject over-built changes on stated grounds.
 8. As a developer working a single issue, I want a short interview capped at a few questions, so that small changes stay small.
 9. As a planner orchestrating several stories, I want the decision log passed to each `developer` delegation, so that no story re-derives a decision another story already settled.
+10. As a developer, I want one command, `validate`, to check function length, file length, complexity, and code smells against the thresholds in `SIMPLICITY.md`, so that the simplicity contract is a test I can run, not a review opinion.
+11. As an infra engineer, I want the same `validate` command wired into CI with caching and change scoping, so that the policy gate adds seconds, not minutes, to every pull request.
+12. As a maintainer adopting the tooling on an existing codebase, I want existing violations captured in a baseline that only ratchets down, so that adoption does not require a rewrite before the first green run.
 
 ## Functional Requirements
 
@@ -156,9 +161,21 @@ The draft's "four existing skills change" undercounts the surface. Because `impl
 33. The `github-ops` PR Description Template **MUST** gain a `## Completion Report` section carrying the report defined in `SIMPLICITY.md` section C ("what I did not add", "what I noticed and did not touch", justifications, unverified rules). `implement` **MUST** fill it when the PR is opened and update it before the PR is marked ready.
 34. The verifier **MUST** treat an empty "what I did not add" section on a non-trivial change (an implementation commit is present) as a finding requiring explanation.
 
+### Simplicity tooling and CI (`activity-simplicity-tooling`)
+
+35. A skill `activity-simplicity-tooling` **MUST** exist. It sets up, and later re-validates, the tooling that enforces the measurable rules in `SIMPLICITY.md`. Its consumers are `housekeeping` (setup and maintenance) and `infra-engineer` (CI wiring through `deploy-ops`). It **MAY** be recommended by `activity-init` and **MUST** be recommended when Phase 3 is adopted in a repository.
+36. The skill **MUST** cover at least these policy categories, each mapped to a threshold declared in `SIMPLICITY.md` section D: function length, file length, cyclomatic complexity, cognitive complexity, parameter count, nesting depth, code smells (a named smell rule set), duplication, and dead code (unused exports, unused dependencies). A category with no available checker for the detected stack **MUST** be reported as `unavailable`, never silently dropped.
+37. The single entry point **MUST** be the existing canonical `validate` script for JS/TS repositories (`pnpm validate`) and `make validate` for other stacks. The policy checks **MUST** run inside the existing `lint` step so that `validate` picks them up unchanged; the skill **MUST NOT** introduce a second top-level entry point or a parallel command that developers could run instead of `validate`.
+38. Thresholds **MUST** come from `SIMPLICITY.md`, which ships defaults (OQ-11). A consumer **MAY** tighten a threshold in its own copy and **MUST NOT** loosen one below the shipped default; the tooling configuration **MUST** be derivable from the contract, and the skill **MUST** report a mismatch between the contract and the configuration as a defect.
+39. Adoption on an existing codebase **MUST** follow baseline-and-ratchet: on first run the skill records existing violations in a committed baseline file, the gate fails only on new or changed files that violate a threshold, and the baseline **MUST** only shrink. A pull request that grows the baseline **MUST** fail `validate`.
+40. The skill **MUST NOT** install or upgrade dependencies itself. It produces the configuration, the baseline, and an implementation task; dependency installation runs through an approved task with the consumer's package manager, consistent with `housekeeping`'s dependency rule and the evidence-driven loop's FR-38.
+41. `infra-engineer`, via `deploy-ops`, **MUST** wire `validate` into CI as a recorded change delivered by draft PR, using a new `templates/workflows/validate.yml` template. The workflow **MUST** call the same `validate` command a developer runs locally; no policy logic lives in the workflow.
+42. The CI wiring **MUST** be optimized for wall time: dependency-store caching, linter and type-checker caches persisted between runs, changed-file scoping for lint, duplication, and dead-code checks on pull requests with a full run on the default branch, independent checks run in parallel, static checks ordered before the test job, and fail-fast enabled. The template **MUST** document each optimization and the condition under which it is safe.
+43. The skill **MUST** record the measured `validate` wall time locally and in CI at setup and on each re-validation, and **MUST** report a regression beyond the consumer's budget (OQ-12) as a finding. The `verifier` **MUST** read the `validate` result as an existing quality gate; a policy violation is a failed gate, not a new drift category.
+
 ### Platform parity
 
-35. `activity-grill`, the changed skills, the changed agents, and the two new consumer-owned files **MUST** ship with equivalent behavior in the Copilot (`.github/`), Claude Code (`.claude/`), and Kiro (`.kiro/`) trees. Kiro **MUST** receive a steering pointer to `SIMPLICITY.md` in the same shape as `git-guard-notice.md`.
+44. `activity-grill`, `activity-simplicity-tooling`, the changed skills, the changed agents, and the two new consumer-owned files **MUST** ship with equivalent behavior in the Copilot (`.github/`), Claude Code (`.claude/`), and Kiro (`.kiro/`) trees. Kiro **MUST** receive a steering pointer to `SIMPLICITY.md` in the same shape as `git-guard-notice.md`.
 
 ## Business Rules
 
@@ -168,6 +185,8 @@ The draft's "four existing skills change" undercounts the surface. Because `impl
 - Grilling questions answerable from the codebase are a defect in the skill, not a cost to the user.
 - Issue Mode never extends the glossary. If an issue requires a new term, it is escalated to Feature Mode.
 - Simplicity rules may be tightened per repository, never loosened.
+- One command, two places: `validate` is the same command locally and in CI. Speed comes from caches and change scoping inside the tools, never from a lighter command that skips checks.
+- The baseline only shrinks. A threshold may be tightened per repository, never loosened; a baseline may lose entries, never gain them.
 - Drift is classified, not invented: TDD-evidence and glossary findings use the existing impact and intent classes (`Critical`/`Major`/`Minor`, `Intended`/`Unintended`/`Undetermined`) and the existing blocking policy.
 
 ## Data Requirements
@@ -215,6 +234,26 @@ erDiagram
     TASK_LIST }o--o{ DECISION : cites
 ```
 
+### Simplicity thresholds (`SIMPLICITY.md` section D, shipped defaults)
+
+Defaults are the contract's baseline and are confirmed in OQ-11. A consumer tightens them in its own copy.
+
+| Policy                | Default             | Reference checker (JS/TS profile)              |
+| --------------------- | ------------------- | ---------------------------------------------- |
+| Function length       | 50 lines            | ESLint `max-lines-per-function`                |
+| File length           | 300 lines           | ESLint `max-lines`                             |
+| Cyclomatic complexity | 10                  | ESLint `complexity`                            |
+| Cognitive complexity  | 15                  | `eslint-plugin-sonarjs` `cognitive-complexity` |
+| Parameters            | 4                   | ESLint `max-params`                            |
+| Nesting depth         | 3                   | ESLint `max-depth`                             |
+| Code smells           | rule set            | `eslint-plugin-sonarjs` recommended            |
+| Duplication           | 3% of changed lines | `jscpd`                                        |
+| Dead code             | 0 new               | `knip` (unused exports and dependencies)       |
+
+### Violation baseline (`.simplicity-baseline.json` or the checker's native baseline format)
+
+A committed record of pre-existing violations per file and rule, produced once at adoption and rewritten only to remove entries. The format is decided in the specification; the invariant (shrink-only) is the requirement.
+
 ### Sensitivity constraints
 
 Decision logs and the glossary are committed to the repository and **MUST NOT** contain secrets, credentials, or personal data.
@@ -228,6 +267,9 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - Replacing `memo-cli`. The decision log is the in-repo record for one feature; `memo` remains the cross-session knowledge base written by `developer` and `technical-writer`.
 - Writing to the meta-repo from grilling. Meta-repo vocabulary changes go through `architecture-change`.
 - A UI for the interview. It runs in the agent's conversational surface.
+- Replacing `housekeeping`. The tooling skill sets policy up; `housekeeping` keeps lint and type wiring healthy as today.
+- A second validation command. `validate` is the entry point; there is no `validate:fast` that skips checks.
+- Non-JS/TS checker profiles in the first release. Other stacks get the `make validate` entry point and an `unavailable` report per category until a profile exists (OQ-13).
 
 ## Design Considerations
 
@@ -245,6 +287,9 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - **Glossary conformance** in the verifier: extract new exported identifiers from the diff, normalize (case, plural), and match against glossary terms and forbidden synonyms. Deterministic; false positives are reported, not blocked, in the first release (OQ-03). The same lint **SHOULD** back AC-07 so `activity-refine` and `verifier` share one implementation.
 - **Failing-test commits and CI.** Intermediate commits on a feature branch will be red by design. CI gates run on the PR head, and `git-guard` accepts the `test:` type, so no hook or workflow change is required. Consumers that gate every commit will need to scope the gate to the PR head.
 - **Platform parity:** the skill and templates ship for Claude, Copilot, and Kiro profiles. Kiro's steering equivalent of `SIMPLICITY.md` is a pointer, not a copy (FR-35, OQ-04).
+- **Simplicity tooling reference profile (JS/TS).** ESLint flat config (this repository already uses `eslint.config.js`) carries `complexity`, `max-lines`, `max-lines-per-function`, `max-params`, and `max-depth`; `eslint-plugin-sonarjs` adds cognitive complexity and the smell rule set; `jscpd` covers duplication; `knip` covers unused exports and dependencies. All four run under `lint`, so `validate` needs no script change. `knip` and `jscpd` are the slow ones on large repositories: scope both to changed files on pull requests (FR-42) and run them fully on the default branch. This repository has no complexity rules configured today and no CI workflow that runs `validate` (only `publish-npm.yml` and `release-bundle.yml`), so `dev-tasks` itself is the first consumer of the skill.
+- **CI wall-time techniques for `validate.yml`.** pnpm store cache keyed on the lockfile; `eslint --cache` with the cache file persisted through the Actions cache; `tsc --incremental` with `tsbuildinfo` persisted; a matrix or parallel jobs for `lint`, `typecheck`, and `format:check` ahead of `test`; `fail-fast: true`; changed-file lists derived from the PR base for the scoped checks; concurrency groups that cancel superseded runs on the same branch. `deploy-ops` documents these the way it documents the deploy workflows: as a recorded change, never applied silently.
+- **Baseline-and-ratchet.** Prefer the checker's native mechanism where one exists; otherwise a small script in `core/` compares the current violation set with the committed baseline and fails on growth. Deterministic, no agent narration.
 - **ADR.** The exit-gate semantics change when downstream activities may start, and the new delivery category changes installer behavior; both are ADR-worthy (OQ-05).
 
 ## Acceptance Criteria
@@ -265,6 +310,11 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - [ ] AC-14: The `github-ops` PR Description Template includes `## Completion Report`; the verifier flags an empty "what I did not add" section on a PR that contains an implementation commit.
 - [ ] AC-15: New exported identifiers matching a forbidden synonym are reported by the verifier.
 - [ ] AC-16: `planner` passes the decision log path to every `developer` delegation, and the delegated task list cites decision IDs.
+- [ ] AC-17: On a JS/TS repository, running `activity-simplicity-tooling` then `pnpm validate` fails on a file that exceeds any shipped threshold and passes once the file is brought under the threshold, with no new script added to `package.json`.
+- [ ] AC-18: On a repository with pre-existing violations, the first `validate` run after setup passes with a committed baseline; a pull request that adds a new violation fails; a pull request that removes one shrinks the baseline and passes; a pull request that grows the baseline fails.
+- [ ] AC-19: A consumer that loosens a threshold below the shipped default receives a named finding from the skill's re-validation.
+- [ ] AC-20: `infra-engineer` delivers `validate.yml` as a draft PR that calls `pnpm validate` (or `make validate`) and nothing else, with caching, changed-file scoping on pull requests, and a full run on the default branch, and the PR body records the measured wall time before and after.
+- [ ] AC-21: For a stack with no checker profile, the skill installs the `make validate` entry point and reports every uncovered policy category as `unavailable`.
 
 ## Success Metrics
 
@@ -273,6 +323,8 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - TDD evidence: 100% of implementation commits (FR-26) on feature branches have a preceding test commit.
 - Glossary health: zero forbidden synonyms in new code across two release cycles.
 - Interview cost: median questions per Feature Mode phase stays under the cap; Issue Mode median under 5.
+- Policy gate cost: the static-check stage of `validate.yml` finishes inside the consumer's budget (OQ-12) on pull requests, measured over the first ten runs after wiring.
+- Baseline health: the violation baseline of every adopting repository is smaller after two release cycles than at adoption.
 
 ## Assumptions
 
@@ -288,6 +340,7 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - Depends on `SIMPLICITY.md` content (FR-31, OQ-06), which does not exist in the repository yet.
 - Must maintain install-if-absent semantics defined in ADR-006 for consumer-owned files, extended to platform-agnostic entries.
 - Must respect RF-64: no meta-repo writes outside `architecture-change`.
+- Infra scope: wiring `validate.yml` is a CI workflow change. Per the `product-engineer` infra rule, this PRD recommends an `infra-engineer` pass for that story, so the workflow lands through the approval, revert, and backup gates via `deploy-ops` rather than through `developer`.
 - Scope note: this PRD bundles four features and exceeds the "1-3 iterations" guidance in `activity-refine`. The delivery phases table is the mitigation; splitting into separate PRDs remains an option (OQ-10).
 
 ## Security and Compliance
@@ -308,6 +361,9 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - OQ-08: `SIMPLICITY.md` delivery semantics. `ROOT_FILES` overwrite on every `install`, which conflicts with "tightened per repository, never loosened". Recommended: deliver it install-if-absent on every profile through the same platform-agnostic mechanism as the glossary, and document that template improvements reach existing consumers only through a manual step (the ADR-006 trade-off). Alternative: keep `ROOT_FILES` semantics and accept that a re-install resets a tightened copy.
 - OQ-09: License and attribution for the `grill-me` interview discipline. Recommended: confirm the license permits derivative use and credit it in the skill's header.
 - OQ-10: One PRD with four milestones, or four PRDs? Recommended: one PRD, four milestones as in the delivery phases table; split only if Phase 2 (meta-repo glossary precedence) turns into its own design effort.
+- OQ-11: Shipped threshold defaults. The table in Data Requirements proposes function 50 lines, file 300 lines, cyclomatic 10, cognitive 15, params 4, depth 3, duplication 3%, dead code 0 new. Recommended: accept as the `SIMPLICITY.md` section D baseline; they match common ESLint and Sonar defaults, so consumers inherit familiar numbers.
+- OQ-12: CI budget for the static-check stage. Recommended: a default budget of two minutes on pull requests recorded in `SIMPLICITY.md` section D, overridable per consumer; the skill reports, not blocks, on budget regression in the first release.
+- OQ-13: Which non-JS/TS profile ships second? Recommended: none in this PRD. Add profiles as separate issues once the JS/TS profile has run in two consumers.
 
 ## Decisions
 
