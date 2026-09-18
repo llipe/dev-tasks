@@ -2,10 +2,11 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                  | Author           |
-| ------- | ---------- | ---------------------------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-08-01 | Initial version                                                                          | product-engineer |
-| 1.1     | 2026-09-14 | Registered the issue #141 MVP as Phase 1 (template-only subset); added Delivery Phasing. | product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                       | Author           |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.0     | 2026-08-01 | Initial version                                                                                                                                                                                                                                                                                                                                                                                                               | product-engineer |
+| 1.1     | 2026-09-14 | Registered the issue #141 MVP as Phase 1 (template-only subset); added Delivery Phasing.                                                                                                                                                                                                                                                                                                                                      | product-engineer |
+| 1.2     | 2026-09-18 | Hand-over: Phase 1 (issue #141 template sections) and a re-scoped Phase 2 are delivered by `prd-shared-understanding-refinement.md` Phase 6 (FR-66 to FR-80). The `dt changemap` grounding (FR-10 to FR-16) is replaced by a `git`-derived change map in `core/checks` because `dt` is retired (that PRD, D-14). Enforcement (FR-23 to FR-27) stays deferred; the explainer adds a three-question self-check not in this PRD. | product-engineer |
 
 ## Executive Summary
 
