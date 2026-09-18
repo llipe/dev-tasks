@@ -11,6 +11,7 @@
 | 1.4     | 2026-09-18 | Resolved baseline policy as D-08: brownfield keeps a baseline and every PR must leave touched code compliant at function granularity; greenfield enforces from the first commit with no baseline. Rewrote FR-39, added FR-39a and FR-39b, updated AC-18.                                                                                                                                                                                                                                                 | @llipe / product-engineer |
 | 1.5     | 2026-09-18 | `SIMPLICITY.md` content reviewed, fixed, and committed at the repository root (resolves OQ-06 and OQ-11 as D-09; owner `housekeeping`, confirmed at init via FR-31b). Thresholds aligned to 40/400, cognitive complexity added, duplication gate dropped, coverage deferred to `TESTING.md`. New Phase 0 scope: foundation docs renamed to `docs/product.md` and `docs/tech.md`, runbooks under `docs/runbooks/`, `housekeeping` runbook hygiene (FR-44 to FR-51, AC-22 to AC-26, D-10 supersedes D-07). | @llipe / product-engineer |
 | 1.6     | 2026-09-18 | Retire `dt` and the multi-repo context layer as Phase 0 (D-14, supersedes D-10; phases renumbered 0 to 5). Monorepo awareness added to Phase 1 (D-16). Runbooks redefined around multi-step setup, configuration, and migration work with a trigger rule and examples; `technical-writer` owns `/docs` organization including runbooks (D-15, corrects FR-50/51). Resolved OQ-04 (D-11), OQ-08 (D-12), OQ-09 (D-13); OQ-07 dissolved. Checks move from `core/verify` to `core/checks`.                   | @llipe / product-engineer |
+| 1.7     | 2026-09-18 | Resolved the remaining open questions: OQ-05 (D-20, ADR-008), OQ-12 (D-17, two-minute CI budget, report-only), OQ-13 (D-18, Python is the second stack profile), OQ-14 (D-21, 90-day staleness window), OQ-15 (D-19, transition proposed on detection through a named `dev-tasks migrate` step, fallback one release cycle). One specification per phase (D-22). Added FR-65 stack profiles and Python monorepo signals. No open questions remain.                                                       | @llipe / product-engineer |
 
 ## Executive Summary
 
@@ -72,7 +73,7 @@ The four moves are separable and have different dependencies. Stories **SHOULD**
 | 4     | `SIMPLICITY.md` contract, spec/plan/implement/verifier references, `activity-simplicity-tooling` (thresholds under `validate`, baseline-and-ratchet, CI wiring via `infra-engineer`, affected-package scoping in monorepos)                                                       | `SIMPLICITY.md` committed (D-09). Delivery semantics (D-12). CI budget (OQ-12).               |
 | 5     | TDD commit-order evidence, refactor invariance, PR completion report                                                                                                                                                                                                              | Evidence-driven loop blocking policy (`docs/technical-guidelines.md` § Blocking policy).      |
 
-Phase 0 is a deletion with an ADR. Phase 1 runs before the feature phases so the new skills are written once against the new names and the repository-shape model. Phase 2 delivers most of the feature value on its own.
+Phase 0 is a deletion with an ADR. Phase 1 runs before the feature phases so the new skills are written once against the new names and the repository-shape model. Phase 2 delivers most of the feature value on its own. Each phase gets its own technical specification, story set, and milestone (D-22); the next artifact after this PRD is `workstream/specification-shared-understanding-phase-0.md`.
 
 ## Goals and Objectives
 
@@ -196,7 +197,7 @@ The draft's "four existing skills change" undercounts the surface. Because `impl
 ### Docs foundation and runbooks (Phase 1)
 
 44. The foundation documents **MUST** be renamed: `docs/product-context.md` becomes `docs/product.md` and `docs/technical-guidelines.md` becomes `docs/tech.md`. `activity-init` **MUST** create the new names, and every agent, command, skill, instruction, steering file, test, and document in `dev-tasks` **MUST** reference the new names only.
-45. Consumer repositories are external consumers of these names (`SIMPLICITY.md` A10). Agents **MUST** resolve the old names as a fallback for one release cycle, `doctor` **MUST** warn when a consumer still carries the old names and print the rename, and `update` **MUST NOT** rename consumer-owned files. After the window, the fallback is deleted.
+45. Consumer repositories are external consumers of these names (`SIMPLICITY.md` A10). The transition is proposed, not assumed: when `doctor`, `update`, or an agent at session start detects the old names, it **MUST** propose the named migration step `dev-tasks migrate docs`, which renames both files with content unchanged and lists the consumer-owned references (`CLAUDE.md`, `AGENTS.md`, custom prompts) that still point at the old names. This extends the existing `migrate` command (`core/distribution/migrate.ts`), which already performs detect-and-propose for legacy installs. Agents **MUST** resolve the old names as a fallback for one release cycle; after the window the fallback is deleted and the proposal is the only path. `update` **MUST NOT** rename consumer-owned files on its own.
 46. The rename **MUST** land as a behavior-preserving `refactor:` commit with the content unchanged (`SIMPLICITY.md` B1). Simplifying the content of either document is a separate change: the `activity-init` templates for both **SHOULD** be trimmed to the sections agents consume, and this repository's own copies **MAY** follow in a later commit.
 47. `docs/runbooks/` **MUST** exist in this repository and in every consumer where `dev-tasks` is installed. A runbook captures a multi-step procedure that is worth repeating: setup, configuration, migration, release, rollback, recovery, troubleshooting. One file per procedure named `runbook-<verb>-<object>.md`, plus `docs/runbooks/README.md` as the index. `install` scaffolds the directory, the index, and a template with install-if-absent semantics. The initial set for this repository: `runbook-install-dev-tasks`, `runbook-configure-branch-protection`, `runbook-setup-simplicity-tooling`, `runbook-migrate-foundation-docs`, `runbook-release-npm`, `runbook-rollback-deploy`, `runbook-troubleshoot-hooks`, `runbook-setup-supabase-local`, `runbook-retire-dt`.
 48. Every runbook **MUST** carry frontmatter: `name`, `trigger` (when to run it), `owner`, `last_verified` (date), and `related` (the scripts, workflows, or commands it covers). The body **MUST** follow a fixed shape: preconditions, steps, verification, rollback, escalation.
@@ -219,12 +220,16 @@ The draft's "four existing skills change" undercounts the surface. Because `impl
 
 ### Repository shape: single-package and monorepo (Phase 1)
 
-59. Terminology: a **single-package repository** has one buildable unit at the root; a **monorepo** has several packages under one workspace. "Multi-repo" is retired with `dt`. Detection signals: `pnpm-workspace.yaml`, `workspaces` in `package.json`, `turbo.json`, `nx.json`, `lerna.json`; other ecosystems' workspace files are added per stack profile (OQ-13).
+59. Terminology: a **single-package repository** has one buildable unit at the root; a **monorepo** has several packages under one workspace. "Multi-repo" is retired with `dt`. Detection signals: `pnpm-workspace.yaml`, `workspaces` in `package.json`, `turbo.json`, `nx.json`, `lerna.json`; for Python, `[tool.uv.workspace]` in `pyproject.toml`. Other ecosystems are added with their stack profile (FR-65).
 60. `activity-init` **MUST** detect the shape and record a package map in `docs/tech.md`: package name, path, purpose, owner, canonical scripts present, and the bounded context it belongs to. `doctor` **MUST** warn when the package map and the workspace disagree.
 61. In a monorepo the canonical scripts at the root **MUST** fan out to every package, and `validate` at the root stays the single entry point (FR-37). The CI template (FR-41, FR-42) **MUST** scope lint, typecheck, and tests to affected packages on pull requests and run everything on the default branch.
 62. `TESTING.md` **MUST** declare per-package runners where they differ, and `activity-test-standards` **MUST** verify every package is reachable from the root `test` command.
 63. `researcher`, `plan`, and `implement` **MUST** name the package for each finding, task, and commit (the Conventional Commits scope, e.g. `feat(api): …`). The glossary is one file at the root; its bounded contexts **MUST** map to packages or to explicit domains listed in the package map. No per-package glossaries.
 64. The simplicity baseline is one root file keyed by path; per-package ratchets need no additional mechanism.
+
+### Stack profiles
+
+65. `activity-simplicity-tooling` ships two checker profiles. JS/TS first (Data Requirements table). Python second (D-18): `ruff` for cyclomatic complexity (`C901`), parameter count (`PLR0913`), nesting (`PLR1702`), and formatting; `pylint` `too-many-lines` or an equivalent for file length; `radon` or `flake8-cognitive-complexity` for cognitive complexity; `vulture` for dead code; `import-linter` for forbidden imports; `eradicate` for commented-out code. Function length has no native rule in `ruff` and **MUST** be covered by a documented substitute or reported `unavailable`. The exact rule-to-threshold mapping is decided in the Phase 4 specification. Any other stack gets the `make validate` entry point and an `unavailable` report per category.
 
 ## Business Rules
 
@@ -401,7 +406,7 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - A second validation command. `validate` is the entry point; there is no `validate:fast` that skips checks.
 - Rewriting consumer copies of the foundation docs. The rename applies to new installs and to `dev-tasks` itself; consumers rename on their own schedule with `doctor` guidance.
 - Migrating existing prose in `docs/` into runbooks. The initial set covers scripts, workflows, and `infra-engineer` change kinds; other procedures are added as they are needed.
-- Non-JS/TS checker profiles in the first release. Other stacks get the `make validate` entry point and an `unavailable` report per category until a profile exists (OQ-13).
+- Stack profiles beyond JS/TS and Python. Other stacks get the `make validate` entry point and an `unavailable` report per category until a profile exists.
 
 ## Design Considerations
 
@@ -425,6 +430,7 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - **ADR.** The exit-gate semantics change when downstream activities may start, and the new delivery category changes installer behavior; both are ADR-worthy (OQ-05). The `dt` retirement takes ADR-007 (FR-56); the exit-gate and delivery-category decision is ADR-008.
 - **Retiring `dt` is a deletion, not a surgery.** `core/distribution` imports nothing from the `dt` modules; the `dev-tasks` binary shares only `parse-args.ts` and `exit-codes.ts`. The `pg` peer dependency, `ajv`, and `yaml` are imported only by `dt` code today and go with it unless `core/checks` needs one. Eleven of the twelve files over the 400-line threshold are `dt` files, so the Phase 4 baseline shrinks to one file.
 - **Monorepo detection signals.** `pnpm-workspace.yaml`, `workspaces` in `package.json`, `turbo.json`, `nx.json`, `lerna.json`. No prompt or skill mentions any of these today. Affected-package scoping uses `pnpm --filter "...[<base>]"` by default and the workspace tool's `affected` command when one is configured.
+- **Python reference profile.** `ruff` covers most rows and formatting in one tool; the gaps are function length (no native rule) and cognitive complexity (`radon` or a flake8 plugin). Baseline-and-ratchet follows the same root file keyed by path. Entry point stays `make validate` unless the project already exposes a task runner with a `validate` target.
 
 ## Acceptance Criteria
 
@@ -501,17 +507,19 @@ Decision logs and the glossary are committed to the repository and **MUST NOT** 
 - OQ-02: How does the verifier pair test commits with implementation commits when a story spans multiple behaviors in one commit? Recommended: require one behavior per increment and treat multi-behavior commits as a `Minor` finding.
 - OQ-03: Should glossary conformance block or only report in the first release? Recommended: report only, promote to blocking after two release cycles of data.
 - OQ-04: Resolved as D-11. Root file on every profile plus a Kiro steering pointer mirroring `git-guard-notice.md`.
-- OQ-05: Does `activity-grill` need its own ADR for the exit-gate semantics? Recommended: yes, ADR-008 (ADR-007 is the `dt` retirement, FR-56), and it should also record the platform-agnostic install-if-absent category since that changes installer behavior.
+- OQ-05: Resolved as D-20. ADR-008 records the `activity-grill` exit-gate semantics and the platform-agnostic install-if-absent category; ADR-007 is the `dt` retirement.
 - OQ-06: Resolved as D-09. Content authored by @llipe, reviewed, and committed at the repository root; owner `housekeeping`; confirmed at init (FR-31b).
 - OQ-07: Dissolved by D-14. The question was: in a consumer that had a meta-repo, which glossary wins when a term belongs to more than one component repository, and who may write it. With `dt` retired there is no meta-repo. In a monorepo one root glossary applies and bounded contexts map to packages (FR-63).
 - OQ-08: Resolved as D-12. Install-if-absent on every profile: `dev-tasks install` writes `SIMPLICITY.md` when missing and never overwrites an existing copy. Template updates reach existing consumers through a runbook step, which is acceptable because the contract changes rarely.
 - OQ-09: Resolved as D-13. Confirm the `grill-me` license permits derivative use and credit it in the skill header.
 - OQ-10: Resolved as D-07. One PRD, four milestones as in the delivery phases table.
 - OQ-11: Resolved as D-09. Function 40, file 400, cyclomatic 10, cognitive 15, params 4, depth 3, dead code 0 new, forbidden imports 0, commented-out code 0. No duplication gate. Coverage lives in `TESTING.md`.
-- OQ-12: CI budget for the static-check stage. Recommended: a default budget of two minutes on pull requests recorded in `SIMPLICITY.md` section D, overridable per consumer; the skill reports, not blocks, on budget regression in the first release.
-- OQ-13: Which non-JS/TS profile ships second? Recommended: none in this PRD. Add profiles as separate issues once the JS/TS profile has run in two consumers.
-- OQ-14: Runbook staleness window. Recommended: 90 days, reported not failed, overridable per consumer in the runbook index frontmatter.
-- OQ-15: Length of the old-name fallback window for `product-context.md` and `technical-guidelines.md`. Recommended: one release cycle, the same window ADR-002 used for deprecated exit-code aliases.
+- OQ-12: Resolved as D-17. Static-check stage budget of two minutes on pull requests, recorded in `SIMPLICITY.md` section D, overridable per consumer; report-only in the first release.
+- OQ-13: Resolved as D-18. Python is the second stack profile (FR-65).
+- OQ-14: Resolved as D-21. Runbook staleness window of 90 days, reported not failed, overridable in the runbook index frontmatter.
+- OQ-15: Resolved as D-19. No silent window: detection proposes the transition through `dev-tasks migrate docs` (FR-45); agents keep a one-release fallback, then the proposal is the only path.
+
+No open questions remain as of v1.7.
 
 ## Decisions
 
@@ -535,3 +543,9 @@ Decisions that shaped this PRD, recorded from the pre-PRD interview on 2026-09-1
 | D-14 | Supersedes D-10. Retire `dt` and the multi-repo context layer as Phase 0, recorded in ADR-007 with the last shipping release tag as the restore path. Six milestones: 0 retire `dt`, 1 docs foundation and repository shape, 2 grilling, 3 glossary, 4 simplicity, 5 TDD.  |
 | D-15 | `technical-writer` owns `/docs` organization and content, runbooks included; `housekeeping` keeps lint, types, and test wiring only. Corrects the v1.5 split.                                                                                                              |
 | D-16 | Monorepo is the repository shape in use. Agents get shape detection, a package map in `tech.md`, package-scoped research, tasks, and commits, affected-package CI scoping, and one root glossary with package-mapped bounded contexts. "Multi-repo" is retired with `dt`.  |
+| D-17 | CI static-stage budget: two minutes on pull requests, report-only in the first release, overridable per consumer (resolves OQ-12).                                                                                                                                         |
+| D-18 | Python is the second stack profile for the simplicity tooling; other stacks report `unavailable` (resolves OQ-13).                                                                                                                                                         |
+| D-19 | Foundation-doc rename transition is proposed on detection through a named `dev-tasks migrate docs` step; agents keep a one-release fallback, then the proposal is the only path (resolves OQ-15).                                                                          |
+| D-20 | ADR-008 records the `activity-grill` exit gate and the platform-agnostic install-if-absent category; ADR-007 is the `dt` retirement (resolves OQ-05).                                                                                                                      |
+| D-21 | Runbook staleness window: 90 days, reported not failed (resolves OQ-14).                                                                                                                                                                                                   |
+| D-22 | One technical specification, story set, and milestone per phase. The PRD is the program; each phase is delivered as its own feature.                                                                                                                                       |
