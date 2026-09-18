@@ -7,6 +7,7 @@ Decision log for `docs/requirements/prd-shared-understanding-refinement.md` (FR-
 | Version | Date       | Summary                                                                            | Author           |
 | ------- | ---------- | ---------------------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-18 | WHAT-phase log migrated from the PRD Decisions table (D-01 to D-26)                | product-engineer |
+| 1.1     | 2026-09-18 | D-27 added (PR-KT PRD and issue #141 artifacts deleted) | product-engineer |
 
 ## WHAT phase
 
@@ -38,6 +39,7 @@ Decision log for `docs/requirements/prd-shared-understanding-refinement.md` (FR-
 | D-24 | WHAT  | teaching/format       | HTML or Markdown explainers?                                                              | Markdown with Mermaid.                                                         | As recommended.                                                                                                  | yes           | —          | @llipe | 2026-09-18 |
 | D-25 | WHAT  | teaching/renderer     | Trace renderer CLI in the first release?                                                  | Yes, `dev-tasks trace render`.                                                 | As recommended.                                                                                                  | yes           | —          | @llipe | 2026-09-18 |
 | D-26 | WHAT  | teaching/logging      | Wrap the existing logger or adopt OpenTelemetry?                                          | Wrap the existing logger.                                                      | As recommended.                                                                                                  | yes           | —          | @llipe | 2026-09-18 |
+| D-27 | WHAT  | scope/teaching        | Keep or delete the former PR knowledge-transfer PRD and issue #141 artifacts? | Delete; inline the surviving rules; close #141 as superseded. | Delete. | yes | — | @llipe | 2026-09-18 |
 
 ## HOW phase
 
