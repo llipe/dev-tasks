@@ -5,6 +5,7 @@
 | Version | Date       | Summary                                               | Author           |
 | ------- | ---------- | ------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-19 | Initial version. Seven stories, issues pending creation. | product-engineer |
+| 1.1     | 2026-09-19 | S-002 AC-8 added (README documents the migrate process): tasks 2.13 to 2.15. Issues #202 to #208 created and recorded in the Scope table. | @llipe / product-engineer |
 
 ## Scope
 
@@ -12,13 +13,13 @@ All seven Phase 1 stories, delivered on one integration branch as one consolidat
 
 | Story | Issue | Title                                          |
 | ----- | ----- | ------------------------------------------------ |
-| S-001 | TBD   | Rename the foundation documents and update every reference |
-| S-002 | TBD   | Propose the rename to consumers via `dev-tasks migrate docs` |
-| S-003 | TBD   | Scaffold `docs/runbooks/` and seed the initial runbook set |
-| S-004 | TBD   | Create `core/checks` and enforce docs structure under `lint` |
-| S-005 | TBD   | Detect repository shape and record the package map |
-| S-006 | TBD   | Make agents package-aware                       |
-| S-007 | TBD   | Enforce runbook coverage and docs ownership     |
+| S-001 | [#202](https://github.com/llipe/dev-tasks/issues/202) | Rename the foundation documents and update every reference |
+| S-002 | [#203](https://github.com/llipe/dev-tasks/issues/203) | Propose the rename to consumers via `dev-tasks migrate docs` |
+| S-003 | [#204](https://github.com/llipe/dev-tasks/issues/204) | Scaffold `docs/runbooks/` and seed the initial runbook set |
+| S-004 | [#205](https://github.com/llipe/dev-tasks/issues/205) | Create `core/checks` and enforce docs structure under `lint` |
+| S-005 | [#206](https://github.com/llipe/dev-tasks/issues/206) | Detect repository shape and record the package map |
+| S-006 | [#207](https://github.com/llipe/dev-tasks/issues/207) | Make agents package-aware                       |
+| S-007 | [#208](https://github.com/llipe/dev-tasks/issues/208) | Enforce runbook coverage and docs ownership     |
 
 **Branch:** `integration/prd-shared-understanding-phase-1`
 **Sources:** PRD FR-44 to FR-51, FR-59 to FR-64; spec v1.1; decisions D-16, D-21, D-42 to D-45.
@@ -53,7 +54,7 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 
 - 50 files naming the old foundation docs: `.claude/` (10), `.github/` (11), `.kiro/` (12), `docs/` (10), `test/` (2), root (5: `AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`)
 - `bin/dev-tasks.ts`, `core/distribution/{doctor,profiles,install-if-absent,index}.ts`, `core/index.ts`
-- `package.json` (`lint` script), `bundle-manifest.json`, `TESTING.md`, `docs/README.md`
+- `package.json` (`lint` script), `bundle-manifest.json`, `TESTING.md`, `docs/README.md`, `README.md` (migrate-docs command reference and migration subsection)
 - `activity-init`, `activity-test-standards`, `researcher`, `plan`, `implement`, `qa-engineer`, `verifier`, `technical-writer`, `infra-engineer`, `developer`, `housekeeping` — across all three trees
 - `test/unit/{distribution-doctor,distribution-update,skill-parity-init,skill-init-walkthrough,researcher-parity,skill-parity-testing-layers}.test.ts`, `test/integration/bootstrap-commands.test.ts`
 
@@ -67,7 +68,7 @@ None. Phase 1 is additive plus one rename.
 
   - [ ] 0.1 Confirm `main` is current at `a9f7eef`; create `integration/prd-shared-understanding-phase-1`
   - [ ] 0.2 Run `pnpm run test` and save the **full failing-test names** to a file; this is the D-40 comparison set for every later gate
-  - [ ] 0.3 Create the seven GitHub issues from the stories (delegate to `github-ops`); record the numbers in the Scope table above and in the story document
+  - [x] 0.3 Create the seven GitHub issues from the stories; numbers recorded in the Scope table above (#202 to #208)
   - [ ] 0.4 Open the draft PR after the first commit, per the `implement` rules
 
 - [ ] 1.0 Implement Story S-001: Rename the foundation documents and update every reference
@@ -109,10 +110,13 @@ None. Phase 1 is additive plus one rename.
   - [ ] 2.10 Verify AC-3: the existing `migrate` integration cases pass unmodified — a change to them is a stop signal
   - [ ] 2.11 Verify AC-1, AC-2, AC-6 by `pnpm run test:unit`; AC-4 by the `doctor` test; AC-5 by the update negative test
   - [ ] 2.12 Verify AC-7 by inspection: S-001's fallback rule already satisfies "agents run unchanged"; nothing is re-implemented here
-  - [ ] 2.13 Edge cases: both names present (partial migration); target exists with different content; read-only directory; `--json` on every path
-  - [ ] 2.14 Manual check: run both forms against a scratch copy and read the output as a consumer would
-  - [ ] 2.15 Run Tests: `pnpm run validate`; the D-40 set is unchanged
-  - [ ] 2.16 Commit as `feat(cli): add dev-tasks migrate docs and doctor old-name detection`
+  - [ ] 2.13 Add `dev-tasks migrate docs` to `README.md`'s `## dev-tasks Command Reference` code block, beside the existing `dev-tasks migrate` line
+  - [ ] 2.14 Add a `README.md` subsection documenting the foundation-doc migration: what renamed, propose is the default, `--force` applies it, backups are written, consumers migrate on their own schedule
+  - [ ] 2.15 Verify AC-8: read the README section as a consumer upgrading across this release — the migration must be learnable from `README.md` alone, without the PRD or the runbook
+  - [ ] 2.16 Edge cases: both names present (partial migration); target exists with different content; read-only directory; `--json` on every path
+  - [ ] 2.17 Manual check: run both forms against a scratch copy and read the output as a consumer would
+  - [ ] 2.18 Run Tests: `pnpm run validate`; the D-40 set is unchanged
+  - [ ] 2.19 Commit as `feat(cli): add dev-tasks migrate docs and doctor old-name detection`
 
 - [ ] 3.0 Implement Story S-003: Scaffold `docs/runbooks/` and seed the initial runbook set
 
@@ -242,6 +246,7 @@ None. Phase 1 is additive plus one rename.
 | S-002 | AC-4        | 2.11           |
 | S-002 | AC-5        | 2.8            |
 | S-002 | AC-7        | 2.12           |
+| S-002 | AC-8        | 2.13, 2.14, 2.15 |
 | S-003 | AC-1 to 3   | 3.15           |
 | S-003 | AC-4        | 3.1            |
 | S-003 | AC-5        | 3.14           |
@@ -267,4 +272,4 @@ None. Phase 1 is additive plus one rename.
 
 1. **`runbook-deploy-service`** (task 3.8) is a tenth runbook beyond FR-47's named nine, required to satisfy PRD AC-25 for the deploy surface. Pending confirmation as `D-46`.
 2. **One consolidated PR** versus three by family. Pending confirmation as `D-47`.
-3. **GitHub issues** for S-001 to S-007 are not yet created (task 0.3). The Scope table's issue column stays `TBD` until they are.
+3. ~~**GitHub issues** for S-001 to S-007 are not yet created (task 0.3).~~ Done: #202 to #208.

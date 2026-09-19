@@ -5,6 +5,7 @@
 | Version | Date       | Summary                                                              | Author           |
 | ------- | ---------- | ---------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-19 | Initial version. Seven stories covering PRD FR-44 to FR-51 and FR-59 to FR-64. | product-engineer |
+| 1.1     | 2026-09-19 | S-002 gains AC-8: `README.md` must document the `migrate docs` process so a consumer upgrading across the release learns it from the README alone. | @llipe / product-engineer |
 
 ## Source Documents
 
@@ -29,6 +30,16 @@ flowchart LR
 ```
 
 Branch: `integration/prd-shared-understanding-phase-1`. Recommended orchestrator: `planner`.
+
+| Story | Issue |
+| ----- | ----- |
+| S-001 | [#202](https://github.com/llipe/dev-tasks/issues/202) |
+| S-002 | [#203](https://github.com/llipe/dev-tasks/issues/203) |
+| S-003 | [#204](https://github.com/llipe/dev-tasks/issues/204) |
+| S-004 | [#205](https://github.com/llipe/dev-tasks/issues/205) |
+| S-005 | [#206](https://github.com/llipe/dev-tasks/issues/206) |
+| S-006 | [#207](https://github.com/llipe/dev-tasks/issues/207) |
+| S-007 | [#208](https://github.com/llipe/dev-tasks/issues/208) |
 
 ---
 
@@ -131,6 +142,7 @@ So that I adopt the new names deliberately rather than discovering broken refere
 - [ ] AC-5: `dev-tasks update` never renames a consumer-owned file (FR-45), asserted by a negative test.
 - [ ] AC-6: Both new surfaces support `--json`, matching the existing command output shape.
 - [ ] AC-7: A consumer repository that still carries the old names runs every agent unchanged (PRD AC-23) — satisfied by S-001's fallback rule, verified here by inspection, not re-implemented.
+- [ ] AC-8: `README.md` documents the migration: `dev-tasks migrate docs` is listed in the `## dev-tasks Command Reference` block alongside `dev-tasks migrate`, and a short subsection explains what the foundation-doc rename is, that propose is the default and `--force` applies it, that backups are written, and that consumers migrate on their own schedule. A consumer upgrading across this release must be able to learn the migration from `README.md` alone, without reading the PRD or the runbook.
 
 #### Business Rules
 
@@ -149,7 +161,7 @@ So that I adopt the new names deliberately rather than discovering broken refere
 - **Integration Tests:** `test/integration/bootstrap-commands.test.ts` gains `migrate docs` cases against a temp fixture repo; the existing `migrate` cases must pass unmodified (AC-3).
 - **Manual/UI Testing:** Run both forms against a scratch copy and read the output as a consumer would.
 - **Edge-Case Matrix:** New name already present and old name also present (partial migration); target name exists with different content; read-only directory; `--json` on every path.
-- **Acceptance-Criteria Mapping:** AC-1 to AC-3, AC-6 by `test/unit/migrate-docs.test.ts` and the integration cases; AC-4 by a `doctor` unit test; AC-5 by a negative test in `distribution-update.test.ts`.
+- **Acceptance-Criteria Mapping:** AC-1 to AC-3, AC-6 by `test/unit/migrate-docs.test.ts` and the integration cases; AC-4 by a `doctor` unit test; AC-5 by a negative test in `distribution-update.test.ts`; AC-8 by reading `README.md` as a consumer upgrading across the release.
 - **Execution Commands:** `pnpm run test:unit`, `pnpm run test:integration`, `pnpm run validate`
 
 #### Migration Requirements
@@ -166,11 +178,13 @@ So that I adopt the new names deliberately rather than discovering broken refere
 3. Branch the `migrate` case in `bin/dev-tasks.ts` on the sub-verb; update `--help`.
 4. Add the `doctor` check reusing the detection function.
 5. Add the `update` negative test.
+6. Document the migration in `README.md`: add `dev-tasks migrate docs` to the Command Reference block and a subsection explaining the rename, the propose/`--force` split, and the backup behavior.
 
 #### Files to Create/Modify
 
 - `core/distribution/migrate-docs.ts` — new
 - `core/distribution/doctor.ts`, `core/distribution/index.ts`, `bin/dev-tasks.ts`
+- `README.md` — Command Reference block and the migration subsection
 - `test/unit/migrate-docs.test.ts` — new; `test/integration/bootstrap-commands.test.ts`, `test/unit/distribution-doctor.test.ts`, `test/unit/distribution-update.test.ts`
 
 #### Definition of Done Checklist
