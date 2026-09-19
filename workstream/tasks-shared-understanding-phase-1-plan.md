@@ -58,7 +58,8 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 
 - 50 files naming the old foundation docs: `.claude/` (10), `.github/` (11), `.kiro/` (12), `docs/` (10), `test/` (2), root (5: `AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`)
 - `bin/dev-tasks.ts`, `core/distribution/{doctor,profiles,install-if-absent,index}.ts`, `core/index.ts`
-- `test/unit/foundation-docs-naming.test.ts` — EXEMPT_FILES extended to the migration machinery and its tests (S-002)
+- `test/unit/foundation-docs-naming.test.ts` — EXEMPT_FILES extended to the migration machinery and its tests (S-002), plus `runbook-migrate-foundation-docs.md` (S-003)
+- `test/integration/install-parity.test.ts` — agnostic-tag accounting and the runbook-scaffold cases (S-003)
 - `package.json` (`lint` script), `bundle-manifest.json`, `TESTING.md`, `docs/README.md`, `README.md` (migrate-docs command reference and migration subsection)
 - `activity-init`, `activity-test-standards`, `researcher`, `plan`, `implement`, `qa-engineer`, `verifier`, `technical-writer`, `infra-engineer`, `developer`, `housekeeping` — across all three trees
 - `test/unit/{distribution-doctor,distribution-update,skill-parity-init,skill-init-walkthrough,researcher-parity,skill-parity-testing-layers}.test.ts`, `test/integration/bootstrap-commands.test.ts`
@@ -128,28 +129,28 @@ None. Phase 1 is additive plus one rename.
   - [x] 2.18 Run Tests: `pnpm run validate`; the D-40 set is unchanged
   - [x] 2.19 Commit as `feat(cli): add dev-tasks migrate docs and doctor old-name detection`
 
-- [ ] 3.0 Implement Story S-003: Scaffold `docs/runbooks/` and seed the initial runbook set
+- [x] 3.0 Implement Story S-003: Scaffold `docs/runbooks/` and seed the initial runbook set
 
   > Note: the delivery-registry gap is real work, not a detail — `INSTALL_IF_ABSENT_FILES` tags every entry with one platform, and a runbook belongs to the repository. Phase 3's glossary needs the same fix.
 
   - [x] 3.1 Write `test/unit/runbook-set.test.ts` first: frontmatter validity, the five fixed headings, index-matches-disk, and AC-5's reverse coverage (every script/workflow named by some runbook)
-  - [ ] 3.2 Extend `InstallIfAbsentFile` with a platform-agnostic tag reusing the `ROOT_PROFILE_TAG` pattern; do **not** add a third delivery category
-  - [ ] 3.3 Update `core/distribution/install-if-absent.ts` to honor the agnostic tag: installed once per run regardless of how many platforms the profile resolves to
-  - [ ] 3.4 Add `templates/runbooks/README.md` (index template) and `templates/runbooks/runbook-template.md`
-  - [ ] 3.5 Register both in `INSTALL_IF_ABSENT_FILES` with the agnostic tag
-  - [ ] 3.6 Author `runbook-install-dev-tasks` and `runbook-configure-branch-protection`
-  - [ ] 3.7 Author `runbook-release-npm` (related: **`templates/scripts/release.sh`** — the consumer template, 6443 B, *not* this repo's own `scripts/release.sh`, 13617 B; only the template is an AC-25 surface — plus `.github/workflows/publish-npm.yml` and `.github/workflows/release-bundle.yml`)
-  - [ ] 3.8 Author `runbook-deploy-service` (related: `templates/scripts/deploy.sh`, `deploy-verify.sh`, `deploy-status.sh`, `templates/workflows/deploy-dev.yml`, `deploy-prod.yml`) — the tenth runbook that closes AC-25; see Open Items
-  - [ ] 3.9 Author `runbook-rollback-deploy` (related: `templates/scripts/rollback.sh`, `templates/workflows/rollback.yml`)
-  - [ ] 3.10 Author `runbook-migrate-foundation-docs` (related: the S-002 command), `runbook-troubleshoot-hooks`, `runbook-setup-supabase-local`, `runbook-setup-simplicity-tooling`, `runbook-retire-dt`
-  - [ ] 3.11 Write `docs/runbooks/README.md` listing all ten with trigger, owner, and last-verified columns
-  - [ ] 3.12 Add the `docs/runbooks/` link to `docs/README.md`
-  - [ ] 3.13 Add the runbooks directory to `bundle-manifest.json` and `consumer_owned_paths` (AC-8)
-  - [ ] 3.14 Verify AC-5 explicitly: list all 10 files under `templates/scripts/`, `templates/workflows/`, `.github/workflows/` and confirm each appears in some runbook's `related`
-  - [ ] 3.15 Integration test: `install` into a temp repo scaffolds directory and index; a second `install` does not overwrite a modified runbook; `--profile all` installs the agnostic entry exactly once
-  - [ ] 3.16 Manual check: follow `runbook-configure-branch-protection` against a scratch repository without consulting the README
-  - [ ] 3.17 Run Tests: `pnpm run validate`; the D-40 set is unchanged
-  - [ ] 3.18 Commit as `feat(docs): scaffold docs/runbooks and seed the initial runbook set`
+  - [x] 3.2 Extend `InstallIfAbsentFile` with a platform-agnostic tag reusing the `ROOT_PROFILE_TAG` pattern; do **not** add a third delivery category
+  - [x] 3.3 Update `core/distribution/install-if-absent.ts` to honor the agnostic tag: installed once per run regardless of how many platforms the profile resolves to
+  - [x] 3.4 Add `templates/runbooks/README.md` (index template) and `templates/runbooks/runbook-template.md`
+  - [x] 3.5 Register both in `INSTALL_IF_ABSENT_FILES` with the agnostic tag
+  - [x] 3.6 Author `runbook-install-dev-tasks` and `runbook-configure-branch-protection`
+  - [x] 3.7 Author `runbook-release-npm` (related: **`templates/scripts/release.sh`** — the consumer template, 6443 B, *not* this repo's own `scripts/release.sh`, 13617 B; only the template is an AC-25 surface — plus `.github/workflows/publish-npm.yml` and `.github/workflows/release-bundle.yml`)
+  - [x] 3.8 Author `runbook-deploy-service` (related: `templates/scripts/deploy.sh`, `deploy-verify.sh`, `deploy-status.sh`, `templates/workflows/deploy-dev.yml`, `deploy-prod.yml`) — the tenth runbook that closes AC-25; see Open Items
+  - [x] 3.9 Author `runbook-rollback-deploy` (related: `templates/scripts/rollback.sh`, `templates/workflows/rollback.yml`)
+  - [x] 3.10 Author `runbook-migrate-foundation-docs` (related: the S-002 command), `runbook-troubleshoot-hooks`, `runbook-setup-supabase-local`, `runbook-setup-simplicity-tooling`, `runbook-retire-dt`
+  - [x] 3.11 Write `docs/runbooks/README.md` listing all ten with trigger, owner, and last-verified columns
+  - [x] 3.12 Add the `docs/runbooks/` link to `docs/README.md`
+  - [x] 3.13 Add the runbooks directory to `bundle-manifest.json` and `consumer_owned_paths` (AC-8)
+  - [x] 3.14 Verify AC-5 explicitly: list all 10 files under `templates/scripts/`, `templates/workflows/`, `.github/workflows/` and confirm each appears in some runbook's `related`
+  - [x] 3.15 Integration test: `install` into a temp repo scaffolds directory and index; a second `install` does not overwrite a modified runbook; `--profile all` installs the agnostic entry exactly once
+  - [x] 3.16 Manual check: follow `runbook-configure-branch-protection` against a scratch repository without consulting the README
+  - [x] 3.17 Run Tests: `pnpm run validate`; the D-40 set is unchanged
+  - [x] 3.18 Commit as `feat(docs): scaffold docs/runbooks and seed the initial runbook set`
 
 - [ ] 4.0 Implement Story S-004: Create `core/checks` and enforce docs structure under `lint`
 

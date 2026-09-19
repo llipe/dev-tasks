@@ -64,14 +64,29 @@ export const ROOT_FILES: readonly string[] = ["DESIGN.md", "TESTING.md"] as cons
  */
 export const ROOT_PROFILE_TAG = "root";
 
+/**
+ * Tag for an install-if-absent file that belongs to no platform.
+ *
+ * Reuses `ROOT_PROFILE_TAG` rather than introducing a third delivery
+ * category: the problem is identical to the one that tag already solves
+ * — a file tagged with a single platform is dropped when another profile
+ * is installed and duplicated when several are. A runbook belongs to the
+ * repository, not to Copilot or Claude or Kiro.
+ */
+export type AgnosticTag = typeof ROOT_PROFILE_TAG;
+
 /** An install-if-absent file entry: source path in the package, target path in the consumer repo. */
 export interface InstallIfAbsentFile {
   /** Relative path inside the package (source). */
   source: string;
   /** Relative path in the consumer repo (target). */
   target: string;
-  /** Platform this file belongs to. */
-  platform: Platform;
+  /**
+   * Platform this file belongs to, or `ROOT_PROFILE_TAG` when it belongs
+   * to none. An agnostic entry is delivered once per run whatever the
+   * profile resolves to.
+   */
+  platform: Platform | AgnosticTag;
 }
 
 /**
@@ -103,6 +118,16 @@ export const INSTALL_IF_ABSENT_FILES: readonly InstallIfAbsentFile[] = [
   { source: "templates/claude/settings.json", target: ".claude/settings.json", platform: "claude" },
   { source: "CLAUDE.md.template", target: "CLAUDE.md", platform: "claude" },
   { source: "AGENTS.md.template", target: "AGENTS.md", platform: "claude" },
+  {
+    source: "templates/runbooks/README.md",
+    target: "docs/runbooks/README.md",
+    platform: ROOT_PROFILE_TAG,
+  },
+  {
+    source: "templates/runbooks/runbook-template.md",
+    target: "docs/runbooks/runbook-template.md",
+    platform: ROOT_PROFILE_TAG,
+  },
 ] as const;
 
 /** Valid profile values for CLI validation. */

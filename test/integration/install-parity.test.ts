@@ -26,6 +26,7 @@ import {
   PROFILE_PATHS,
   ROOT_FILES,
   INSTALL_IF_ABSENT_FILES,
+  ROOT_PROFILE_TAG,
   resolveProfile,
   type Platform,
 } from "#core/distribution/profiles.js";
@@ -104,6 +105,87 @@ describe("install/update — Claude root context parity (#171)", () => {
     expect(result.exitCode).toBe(0);
 
     expect(readFileSync(join(tmpDir, "AGENTS.md"), "utf-8")).toBe(consumerContent);
+  });
+
+  it("scaffolds docs/runbooks/ with index and template on a fresh install (AC-2)", () => {
+    const result = run(["install", "--profile", "claude"]);
+    expect(result.exitCode).toBe(0);
+
+    expect(existsSync(join(tmpDir, "docs/runbooks/README.md"))).toBe(true);
+    expect(existsSync(join(tmpDir, "docs/runbooks/runbook-template.md"))).toBe(true);
+
+    const template = readFileSync(join(tmpDir, "docs/runbooks/runbook-template.md"), "utf-8");
+    for (const heading of [
+      "## Preconditions",
+      "## Steps",
+      "## Verification",
+      "## Rollback",
+      "## Escalation",
+    ]) {
+      expect(template).toContain(heading);
+    }
+  });
+
+  it("does not ship this repository's own ten runbooks to a consumer", () => {
+    // The consumer gets the scaffold; the runbooks in this repo document
+    // this repo. Delivering them would put dev-tasks' procedures in
+    // someone else's docs/ as if they were theirs.
+    run(["install", "--profile", "all"]);
+    const delivered = readdirSync(join(tmpDir, "docs/runbooks")).sort();
+    expect(delivered).toEqual(["README.md", "runbook-template.md"]);
+  });
+
+  it("a consumer's edited runbook index survives a second install (AC-2)", () => {
+    run(["install", "--profile", "claude"]);
+
+    const edited = "# Runbooks\n\nOur own procedures. Do not touch.\n";
+    writeFileSync(join(tmpDir, "docs/runbooks/README.md"), edited, "utf-8");
+    writeFileSync(join(tmpDir, "docs/runbooks/runbook-deploy-ours.md"), "# Ours\n", "utf-8");
+
+    const second = run(["install", "--profile", "claude"]);
+    expect(second.exitCode).toBe(0);
+
+    expect(readFileSync(join(tmpDir, "docs/runbooks/README.md"), "utf-8")).toBe(edited);
+    expect(existsSync(join(tmpDir, "docs/runbooks/runbook-deploy-ours.md"))).toBe(true);
+  });
+
+  it("a deleted runbook index is re-scaffolded; an edited one is not (AC-2)", () => {
+    run(["install", "--profile", "claude"]);
+    rmSync(join(tmpDir, "docs/runbooks/README.md"));
+
+    run(["install", "--profile", "claude"]);
+    expect(existsSync(join(tmpDir, "docs/runbooks/README.md"))).toBe(true);
+  });
+
+  it("installs the platform-agnostic entry exactly once under --profile all (AC-1)", () => {
+    // The failure this guards against is not a duplicate file — the
+    // filesystem cannot hold two — but a duplicate or dropped manifest
+    // entry, which is what tagging a platform-agnostic file with one
+    // platform produces.
+    const result = run(["install", "--profile", "all"]);
+    expect(result.exitCode).toBe(0);
+
+    const manifest = JSON.parse(
+      readFileSync(join(tmpDir, ".dev-tasks/manifest.json"), "utf-8"),
+    ) as { files: Array<{ path: string }> };
+    const runbookEntries = manifest.files.filter((f) => f.path.startsWith("docs/runbooks/"));
+    expect(runbookEntries).toEqual([]);
+  });
+
+  it("scaffolds the runbooks under every single-platform profile too (AC-1)", () => {
+    for (const profile of ["copilot", "kiro"]) {
+      const dir = mkdtempSync(join(tmpdir(), `dev-tasks-runbooks-${profile}-`));
+      try {
+        const result = run(["install", "--profile", profile], { cwd: dir });
+        expect(result.exitCode).toBe(0);
+        expect(
+          existsSync(join(dir, "docs/runbooks/README.md")),
+          `--profile ${profile} did not scaffold the runbook index`,
+        ).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    }
   });
 
   it("an existing consumer CLAUDE.md survives `update` unchanged", () => {
@@ -416,7 +498,9 @@ describe("install — enforcement-surface parity across profiles (#176)", () => 
     }
     const exact = new Set<string>([...ROOT_FILES, ".dev-tasks/manifest.json"]);
     for (const f of INSTALL_IF_ABSENT_FILES) {
-      if (platforms.includes(f.platform)) exact.add(f.target);
+      // A platform-agnostic entry is delivered under every profile, so it
+      // is accounted for whatever `platforms` holds.
+      if (f.platform === ROOT_PROFILE_TAG || platforms.includes(f.platform)) exact.add(f.target);
     }
 
     return collectAllRelPaths(dir).filter(
@@ -448,6 +532,10 @@ describe("install — enforcement-surface parity across profiles (#176)", () => 
       ".github/workflows/deploy-dev.yml",
       ".github/workflows/deploy-prod.yml",
       ".github/workflows/rollback.yml",
+      // The consumer's own runbooks. dev-tasks delivers only the index and
+      // the template into this directory (install-if-absent); everything
+      // else under it is written by the consumer and never ours to touch.
+      "docs/runbooks/",
     ]);
 
     return consumerOwned.filter(

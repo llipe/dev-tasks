@@ -22,7 +22,12 @@
 
 import { readFile, writeFile, mkdir, access } from "node:fs/promises";
 import { join, dirname } from "node:path";
-import { INSTALL_IF_ABSENT_FILES, type Platform } from "./profiles.js";
+import {
+  INSTALL_IF_ABSENT_FILES,
+  ROOT_PROFILE_TAG,
+  type AgnosticTag,
+  type Platform,
+} from "./profiles.js";
 
 /** A single install-if-absent delivery outcome, for caller reporting. */
 export interface InstallIfAbsentResult {
@@ -30,8 +35,8 @@ export interface InstallIfAbsentResult {
   path: string;
   /** Relative path inside the package (source) — for caller-side hashing. */
   source: string;
-  /** Platform this file belongs to. */
-  profile: Platform;
+  /** Platform this file belongs to, or `ROOT_PROFILE_TAG` when it belongs to none. */
+  profile: Platform | AgnosticTag;
   /** Whether the file was written by this call (false if already present). */
   delivered: boolean;
 }
@@ -46,9 +51,15 @@ async function fileExists(path: string): Promise<boolean> {
 }
 
 /**
- * Deliver every install-if-absent file whose platform is in `platforms`.
- * Writes the target only when it does not already exist; a template missing
- * from the package source (e.g. an older bundle) is skipped silently.
+ * Deliver every install-if-absent file whose platform is in `platforms`,
+ * plus every platform-agnostic entry. Writes the target only when it does
+ * not already exist; a template missing from the package source (e.g. an
+ * older bundle) is skipped silently.
+ *
+ * An agnostic entry is delivered exactly once per call regardless of how
+ * many platforms the profile resolved to — the loop runs once per entry,
+ * not once per platform, so "once per run" falls out of the structure
+ * rather than needing a seen-set to enforce it.
  */
 export async function deliverInstallIfAbsentFiles(
   sourceDir: string,
@@ -59,7 +70,7 @@ export async function deliverInstallIfAbsentFiles(
   const results: InstallIfAbsentResult[] = [];
 
   for (const file of INSTALL_IF_ABSENT_FILES) {
-    if (!platformSet.has(file.platform)) continue;
+    if (file.platform !== ROOT_PROFILE_TAG && !platformSet.has(file.platform)) continue;
 
     const targetPath = join(targetDir, file.target);
     if (await fileExists(targetPath)) {

@@ -79,6 +79,7 @@ const EXEMPT_FILES = new Set([
   "test/unit/distribution-doctor.test.ts", // asserts the doctor detection message
   "test/unit/distribution-update.test.ts", // asserts update never renames them
   "test/integration/bootstrap-commands.test.ts", // end-to-end migrate docs fixtures
+  "docs/runbooks/runbook-migrate-foundation-docs.md", // the procedure for the rename itself (S-003)
 ]);
 
 const SKIP_DIRS = new Set(["node_modules", "dist", ".git", "fixtures"]);

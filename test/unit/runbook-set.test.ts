@@ -62,25 +62,35 @@ interface Frontmatter {
 
 /**
  * Parse the five fixed keys out of a `---`-delimited frontmatter block.
- * `related` is a bracketed inline list; everything else is a scalar.
+ *
+ * `related` is read as everything between its key and the next top-level
+ * key, and the quoted paths are pulled out of that span. Prettier runs
+ * over these files and wraps a long inline list across several indented
+ * lines, so a line-anchored read of `related` finds an empty value on
+ * exactly the runbooks with the most paths — the ones that matter for
+ * AC-25 coverage. Reading the span survives both forms.
  */
 function parseFrontmatter(content: string): Frontmatter | null {
   if (!content.startsWith("---\n")) return null;
   const end = content.indexOf("\n---\n", 4);
   if (end === -1) return null;
+  const block = content.slice(4, end);
 
   const values: Record<string, string> = {};
-  for (const line of content.slice(4, end).split("\n")) {
+  for (const line of block.split("\n")) {
     const match = line.match(/^([a-z_]+):\s*(.*)$/);
     if (match) values[match[1]] = match[2].trim();
   }
 
-  const rawRelated = values["related"] ?? "";
-  const related = rawRelated
-    .replace(/^\[|\]$/g, "")
-    .split(",")
-    .map((s) => s.trim().replace(/^["']|["']$/g, ""))
-    .filter((s) => s.length > 0);
+  const relatedStart = block.search(/^related:/m);
+  let related: string[] = [];
+  if (relatedStart !== -1) {
+    const rest = block.slice(relatedStart + "related:".length);
+    const nextKey = rest.search(/^[a-z_]+:/m);
+    const span = nextKey === -1 ? rest : rest.slice(0, nextKey);
+    related = [...span.matchAll(/["']([^"']+)["']/g)].map((m) => m[1]);
+    values["related"] = span.trim();
+  }
 
   return { values, related };
 }
@@ -191,8 +201,10 @@ describe("runbook set (FR-47, FR-48, PRD AC-25)", () => {
     for (const slug of EXPECTED_RUNBOOKS) {
       expect(index, `index does not link ${slug}`).toContain(`${slug}.md`);
     }
-    // And nothing the index links is absent from disk.
-    for (const linked of index.match(/runbook-[a-z0-9-]+\.md/g) ?? []) {
+    // And nothing the index links is absent from disk. Only markdown
+    // links count — the prose above the table names the template, which
+    // lives under templates/, not here.
+    for (const linked of [...index.matchAll(/\]\((runbook-[a-z0-9-]+\.md)\)/g)].map((m) => m[1])) {
       expect(existsSync(join(RUNBOOK_DIR, linked)), `index links missing ${linked}`).toBe(true);
     }
   });
@@ -240,6 +252,14 @@ describe("runbook set (FR-47, FR-48, PRD AC-25)", () => {
         '---\nname: r\nrelated: ["a/b.sh", "c/d.yml"]\n---\n\nbody\n',
       );
       expect(parsed!.related).toEqual(["a/b.sh", "c/d.yml"]);
+    });
+
+    it("reads a related list that prettier wrapped across lines", () => {
+      const parsed = parseFrontmatter(
+        '---\nname: r\nrelated:\n  [\n    "a/b.sh",\n    "c/d.yml",\n  ]\nowner: x\n---\n\nbody\n',
+      );
+      expect(parsed!.related).toEqual(["a/b.sh", "c/d.yml"]);
+      expect(parsed!.values["owner"]).toBe("x");
     });
 
     it("reads an empty related list as no coverage, not as a wildcard", () => {
