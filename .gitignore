@@ -19,22 +19,15 @@ Thumbs.db
 .idea/
 *.swp
 
-# Ignore generated workstream docs and tasks (if not tracked)
-# Keep foundational docs and requirements tracked
+# Active workstream artifacts are per-feature scratch; archived copies are durable.
 /workstream/*.md
-/docs/*.md
-!/docs/README.md
-!/docs/product-context.md
-!/docs/technical-guidelines.md
-!/docs/system-overview.md
-!/docs/data-model.md
-!/docs/workflow-chains.md
-!/docs/agents-md-guidelines.md
-!/docs/artifact-formats.md
-!/docs/dt-user-manual.md
-!/docs/dev-tasks-user-manual.md
-!/docs/adr/
-!/docs/requirements/
+
+# /docs is deliberately NOT ignored. It previously used `/docs/*.md` plus one
+# negation per file, which silently swallowed any document nobody remembered to
+# allowlist — and rotted twice over: three negations outlived the files Phase 0
+# deleted, and the Phase 1 rename would have landed on two ignored filenames.
+# Nothing generates throwaway markdown into /docs, so an allowlist buys nothing.
+# Ignore a specific generated file here if one ever appears.
 
 # Test fixture generated outputs (created by catalog build tests)
 test/fixtures/catalog/catalog/components/
