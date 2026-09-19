@@ -156,7 +156,7 @@ None. Phase 1 is additive plus one rename.
 
   > Note: this creates the module FR-57 reserved and D-33 kept out of Phase 0. Exactly one check lands here. No registry or plugin interface for the Phase 3/5/6 checks (AC-8).
 
-  - [ ] 4.1 Write `test/unit/checks-docs-structure.test.ts` first, with fixtures under `test/fixtures/docs-structure/` for each condition
+  - [x] 4.1 Write `test/unit/checks-docs-structure.test.ts` first, with fixtures under `test/fixtures/docs-structure/` for each condition
   - [ ] 4.2 Implement `core/checks/docs-structure.ts` returning failures and staleness findings separately
   - [ ] 4.3 Condition: index lists a file that does not exist (AC-2) — resolve repo-root-aware and tolerate directory links, or `docs/README.md`'s links to `../README.md`, `requirements/`, and five root files produce false failures on the clean tree (AC-10)
   - [ ] 4.4 Condition: index omits a file that exists in its directory (AC-3) — **non-recursive**, or the seven ADRs and four PRDs that no index lists individually are flagged (AC-10)
