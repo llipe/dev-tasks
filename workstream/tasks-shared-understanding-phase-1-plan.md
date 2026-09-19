@@ -8,6 +8,7 @@
 | 1.1     | 2026-09-19 | S-002 AC-8 added (README documents the migrate process): tasks 2.13 to 2.15. Issues #202 to #208 created and recorded in the Scope table. | @llipe / product-engineer |
 | 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-46 to D-52): task 4.9 pinned to `tsx` with a fresh-clone verification at 4.9a; task 4.10 reversed (hand-parse, do not promote `yaml`); tasks 4.3/4.4 gain the false-failure constraints; task 3.7 corrected to `templates/scripts/release.sh`; tasks 1.1/1.1a scope the parity test away from immutable records; task 1.9a added for `.gitignore`. | verifier / product-engineer |
 | 1.3     | 2026-09-19 | Synced to `main` at `c14905e`: task 1.9a becomes verify-only (PR #209 shipped the `.gitignore` fix); baseline note re-confirmed against the merged base. | product-engineer |
+| 1.4     | 2026-09-19 | D-51 and D-52 accepted; open-items list closed. Task 2.14 must document the `migrate` / `migrate docs` asymmetry. | @llipe / product-engineer |
 
 ## Scope
 
@@ -24,7 +25,7 @@ All seven Phase 1 stories, delivered on one integration branch as one consolidat
 | S-007 | [#208](https://github.com/llipe/dev-tasks/issues/208) | Enforce runbook coverage and docs ownership     |
 
 **Branch:** `integration/prd-shared-understanding-phase-1`
-**Sources:** PRD FR-44 to FR-51, FR-59 to FR-64; spec v1.3; stories v1.3; decisions D-16, D-21, D-42 to D-52 (D-51 and D-52 pending).
+**Sources:** PRD v1.13, FR-44 to FR-51 and FR-59 to FR-64; spec v1.4; stories v1.4; decisions D-16, D-21, D-42 to D-52 — all resolved.
 **Predecessor:** Phase 0, merged as `a9f7eef` (PR #200). Base for this phase is `main` at `c14905e`, which also carries PR #209.
 
 ### Baseline to record before starting
@@ -68,8 +69,8 @@ None. Phase 1 is additive plus one rename.
 
 - [ ] 0.0 Set up the integration branch and baseline
 
-  - [ ] 0.1 Confirm `main` is current at `c14905e` (Phase 0 `a9f7eef` plus PR #209); create `integration/prd-shared-understanding-phase-1` from it
-  - [ ] 0.2 Run `pnpm run test` and save the **full failing-test names** to a file; this is the D-40 comparison set for every later gate
+  - [x] 0.1 Confirm `main` is current at `c14905e` (Phase 0 `a9f7eef` plus PR #209); create `integration/prd-shared-understanding-phase-1` from it
+  - [x] 0.2 Run `pnpm run test` and save the **full failing-test names** to a file; this is the D-40 comparison set for every later gate
   - [x] 0.3 Create the seven GitHub issues from the stories; numbers recorded in the Scope table above (#202 to #208)
   - [ ] 0.4 Open the draft PR after the first commit, per the `implement` rules
 
@@ -279,6 +280,8 @@ None. Phase 1 is additive plus one rename.
 
 1. ~~**`runbook-deploy-service`** (task 3.8) is a tenth runbook beyond FR-47's named nine.~~ Confirmed as `D-46`; Design Mode independently verified the coverage arithmetic.
 2. ~~**One consolidated PR** versus three by family.~~ Confirmed as `D-47`.
-4. **FR-49a's 18 infra change kinds** have no covering criterion. Recommendation: defer, recorded as `D-51`. **Pending confirmation.**
-5. **`dev-tasks migrate` is detect-and-apply, not detect-and-propose**, contrary to FR-45 and the spec's description. Recommendation: correct the description, do not change legacy behavior. Recorded as `D-52`. **Pending confirmation.**
+4. ~~**FR-49a's 18 infra change kinds** have no covering criterion.~~ Deferred as `D-51`. S-007 AC-4 carries the rule forward; no runbooks for change kinds are authored in this phase.
+5. ~~**`dev-tasks migrate` is detect-and-apply, not detect-and-propose.**~~ Corrected as `D-52`; PRD v1.13 amends FR-45. Task 2.14's README subsection must state the asymmetry (`migrate` applies, `migrate docs` proposes) rather than gloss it.
+
+**No open items remain. Phase 1 is ready to implement.**
 3. ~~**GitHub issues** for S-001 to S-007 are not yet created (task 0.3).~~ Done: #202 to #208.
