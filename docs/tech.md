@@ -2,11 +2,12 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                   | Author           |
-| ------- | ---------- | ------------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-07-20 | Initial repository-wide technical constitution                            | product-engineer |
-| 1.1     | 2026-08-18 | Added `qa-engineer` coverage gate to the golden path; named `/TESTING.md` | technical-writer |
-| 1.2     | 2026-09-19 | Recorded repository shape and the package map (S-005, PRD AC-29)          | developer        |
+| Version | Date       | Summary                                                                          | Author           |
+| ------- | ---------- | -------------------------------------------------------------------------------- | ---------------- |
+| 1.0     | 2026-07-20 | Initial repository-wide technical constitution                                   | product-engineer |
+| 1.1     | 2026-08-18 | Added `qa-engineer` coverage gate to the golden path; named `/TESTING.md`        | technical-writer |
+| 1.2     | 2026-09-19 | Recorded repository shape and the package map (S-005, PRD AC-29)                 | developer        |
+| 1.3     | 2026-09-19 | Root script fan-out contract; glossary and simplicity baseline ownership (S-006) | developer        |
 
 ## Package Map
 
@@ -27,6 +28,43 @@ longer exists. It warns and never fails; structural failures are `lint`'s
 The bounded-context value is a freeform working label
 (`shared-understanding#D-45`). Phase 3's glossary supersedes it with a
 canonical term.
+
+## Root Script Fan-Out
+
+`dev-tasks` is single-package, so its root scripts run one package's
+tooling. The contract for a repository with many (FR-61):
+
+- **The canonical root scripts fan out to every package.** `lint`,
+  `format:check`, `typecheck`, `test`, `audit` at the root run their
+  per-package equivalents across the workspace — via the workspace
+  runner (`pnpm -r run test`) or the task runner already in place
+  (`turbo run test`, `nx run-many`).
+- **Root `validate` stays the single entry point.** There is no second
+  command, no `validate:all`, and no per-package invocation a contributor
+  has to remember. If `validate` passes, every package passed.
+- **A package the root scripts do not reach is a defect**, not a
+  configuration choice. `activity-test-standards` reports it per package
+  and `TESTING.md` records the per-package runners.
+- **Scoping the gate to affected packages is a CI concern**, delivered by
+  the Phase 4 CI templates (FR-41, FR-42). The local contract stays
+  simple: root command, every package.
+
+## Glossary and Simplicity Baseline Ownership
+
+Two contracts stay at the repository root regardless of shape, because
+splitting either per package is how terms and thresholds start
+disagreeing with themselves:
+
+- **One glossary, at the root.** Its bounded contexts map to packages, or
+  to explicit domains recorded in the package map's Bounded context
+  column. There are no per-package glossaries (FR-63). A term that means
+  two things in two packages is a finding for the glossary to resolve,
+  not a reason to keep two definitions.
+- **One simplicity baseline, at the root, keyed by path.**
+  `SIMPLICITY.md` and its section D thresholds apply repository-wide. A
+  package **MAY** tighten a threshold and **MUST NOT** loosen one, but
+  there is no per-package ratchet mechanism and none will be added
+  (FR-64). Per-package thresholds turn one contract into N negotiations.
 
 ## Overview
 

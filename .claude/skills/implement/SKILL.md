@@ -29,6 +29,31 @@ This activity assumes:
 
 ---
 
+## Package Scope in Commits
+
+In a monorepo the package is the Conventional Commits **scope** (FR-63):
+
+```
+feat(api): add token-refresh endpoint
+fix(web): stop double-submitting the checkout form
+```
+
+- Take the scope from the package map in `docs/tech.md`. Use the short,
+  readable form of the package name, not the full specifier: `@acme/api`
+  becomes `api`.
+- A package name that is not a valid scope — one containing a space, a
+  slash after stripping the org prefix, or an uppercase letter — is
+  reduced to a lowercase, hyphenated form and the mapping is recorded in
+  the package map's row so every commit uses the same one. Never invent
+  a different short form per commit.
+- A commit spanning packages uses the broadest honest scope, or none. A
+  scope that names one package for a change touching four is worse than
+  no scope.
+- In a **single-package repository the scope is optional**. Omit it —
+  `feat: add the endpoint` — rather than writing an empty scope `feat():`,
+  which is not valid Conventional Commits and which the commit hook
+  rejects.
+
 ## Platform-Write Routing
 
 - You **MUST NOT** emit or execute a platform write command (`aws`, `flyctl`, `supabase`, or Cloudflare API writes) while executing a task list.

@@ -61,6 +61,8 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 - `test/unit/foundation-docs-naming.test.ts` — EXEMPT_FILES extended to the migration machinery and its tests (S-002), plus `runbook-migrate-foundation-docs.md` (S-003)
 - `test/integration/install-parity.test.ts` — agnostic-tag accounting and the runbook-scaffold cases (S-003)
 - `test/integration/checks-run.test.ts` — new; the lint entry point end to end (S-004)
+- `test/integration/test-standards-reachability.test.ts` — new; per-package reachability against the S-005 fixtures (S-006)
+- `researcher`, `plan`, `implement`, `activity-test-standards` across all three trees; `TESTING.md` (S-006)
 - `.claude/commands/product-engineer.md`, `.github/agents/product-engineer.agent.md`, `.kiro/agents/product-engineer.md`, `.github/prompts/product-engineer-init.prompt.md`, `docs/workflow-chains.md` — Mode A rename cross-references (S-005)
 - `.claude/agents/verifier.md`, `.github/agents/verifier.agent.md`, `.kiro/agents/verifier.md` — audit reads `checkDocsStructure` (S-004)
 - `package.json` (`lint` script), `bundle-manifest.json`, `TESTING.md`, `docs/README.md`, `README.md` (migrate-docs command reference and migration subsection)
@@ -199,24 +201,24 @@ None. Phase 1 is additive plus one rename.
   - [x] 5.15 Run Tests: `pnpm run validate`; the D-40 set is unchanged
   - [x] 5.16 Commit as `feat(init): detect repository shape and record the package map`
 
-- [ ] 6.0 Implement Story S-006: Make agents package-aware
+- [x] 6.0 Implement Story S-006: Make agents package-aware
 
   > Note: the CI template that scopes to affected packages is **Phase 4** (FR-41, FR-42). This story delivers agent behavior and the documented contract only.
 
-  - [ ] 6.1 Update `researcher` in all three trees: name the package for each finding
-  - [ ] 6.2 Update `plan` in all three trees: name the package for each task
-  - [ ] 6.3 Update `implement` in all three trees: package as the Conventional Commits scope (`feat(api): …`), optional in a single-package repository
-  - [ ] 6.4 Extend `activity-test-standards`'s reachability procedure to per-package; do not add a parallel monorepo path
-  - [ ] 6.5 Document the root-script fan-out contract in `docs/tech.md`; `validate` stays the single entry point, no second command
-  - [ ] 6.6 Add per-package runner declaration to `TESTING.md` (AC-3)
-  - [ ] 6.7 State in the glossary-adjacent content that there is one root glossary with package-mapped bounded contexts, and no per-package glossaries (AC-4)
-  - [ ] 6.8 State that the simplicity baseline is one root file keyed by path; no per-package ratchet (AC-5)
-  - [ ] 6.9 Extend `test/unit/researcher-parity.test.ts` and `test/unit/skill-parity-testing-layers.test.ts` for the changed content
-  - [ ] 6.10 Integration: run the `activity-test-standards` reachability check against the S-005 monorepo fixture
-  - [ ] 6.11 Verify AC-1, AC-4 to AC-6 by the parity tests and inspection; AC-2 by `docs/tech.md`; AC-3 by `TESTING.md` and the reachability test
-  - [ ] 6.12 Edge cases: single-package repository (scope optional, never empty); package name that is not a valid commit scope; package with no test script
-  - [ ] 6.13 Run Tests: `pnpm run validate`; the D-40 set is unchanged
-  - [ ] 6.14 Commit as `feat(prompts): make researcher, plan, implement, and qa-engineer package-aware`
+  - [x] 6.1 Update `researcher` in all three trees: name the package for each finding
+  - [x] 6.2 Update `plan` in all three trees: name the package for each task
+  - [x] 6.3 Update `implement` in all three trees: package as the Conventional Commits scope (`feat(api): …`), optional in a single-package repository
+  - [x] 6.4 Extend `activity-test-standards`'s reachability procedure to per-package; do not add a parallel monorepo path
+  - [x] 6.5 Document the root-script fan-out contract in `docs/tech.md`; `validate` stays the single entry point, no second command
+  - [x] 6.6 Add per-package runner declaration to `TESTING.md` (AC-3)
+  - [x] 6.7 State in the glossary-adjacent content that there is one root glossary with package-mapped bounded contexts, and no per-package glossaries (AC-4)
+  - [x] 6.8 State that the simplicity baseline is one root file keyed by path; no per-package ratchet (AC-5)
+  - [x] 6.9 Extend `test/unit/researcher-parity.test.ts` and `test/unit/skill-parity-testing-layers.test.ts` for the changed content
+  - [x] 6.10 Integration: run the `activity-test-standards` reachability check against the S-005 monorepo fixture
+  - [x] 6.11 Verify AC-1, AC-4 to AC-6 by the parity tests and inspection; AC-2 by `docs/tech.md`; AC-3 by `TESTING.md` and the reachability test
+  - [x] 6.12 Edge cases: single-package repository (scope optional, never empty); package name that is not a valid commit scope; package with no test script
+  - [x] 6.13 Run Tests: `pnpm run validate`; the D-40 set is unchanged
+  - [x] 6.14 Commit as `feat(prompts): make researcher, plan, implement, and qa-engineer package-aware`
 
 - [ ] 7.0 Implement Story S-007: Enforce runbook coverage and docs ownership
 

@@ -35,6 +35,25 @@ This is a single-package TypeScript repository; no workspace manifest or additio
 
 Tests live in `test/unit/` and `test/integration/` and use `*.test.ts`. `test/fixtures/` contains inert QA fixtures and is excluded from collection by `vitest.config.ts`.
 
+### Per-package runners (monorepo contract)
+
+This repository has one package, so the table above has one row. The
+contract for a repository that has many (FR-62):
+
+- **Every package gets a row**, with the runner and test command it
+  actually uses. A package that shares the root runner still gets a row
+  saying so — a reader must not have to infer coverage from an absence.
+- **Declare a runner where it differs.** A Vitest package beside a pytest
+  package beside a `go test` package is normal; the table is where that
+  is written down, and `activity-test-standards` reads it.
+- **A package with no test script gets a row saying so.** `no test
+  script` is a finding, distinct from `unreachable`: one needs a script
+  written, the other needs the aggregate wired to reach it.
+- **Reachability is per package.** `activity-test-standards` verifies
+  that the root `test` command reaches every package with tests, and
+  reports one row per package. An omission is a defect even when every
+  script name is canonically correct.
+
 ### Test environment
 
 The package is a CLI and filesystem toolkit, so Node is the correct environment; no DOM/browser component package was detected. Tests use temporary directories, fixture repositories, and subprocesses where required. No real database integration harness is configured.

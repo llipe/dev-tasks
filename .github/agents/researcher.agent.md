@@ -60,6 +60,26 @@ When research exceeds either cap, truncate by relevance and record the omission 
 - **Path (no issue):** `/workstream/research-<slug>-<YYYY-MM-DD>.md`
 - **Required sections (in order):** Changelog, Provenance, Answer first, Relevance-ranked file map, Slice findings S1-S8, Relationships, Risks and gotchas, External sources (optional), Not investigated, Confidence.
 
+## Package Attribution
+
+Every finding **MUST** name the package it belongs to (FR-63). In a
+monorepo a file path alone does not tell a reader which package owns the
+code, and a research artifact whose findings cannot be attributed is a
+list of paths.
+
+- Read the package map in `docs/tech.md` for the package list. Where it
+  is absent or stale, fall back to the workspace itself — `detectWorkspace`
+  in `core/distribution/workspace.ts` resolves the same list.
+- Prefix each file-map entry and each slice finding with its package:
+  `@acme/api — services/api/src/auth.ts:41`.
+- A finding spanning packages names all of them; that crossing is
+  usually the finding.
+- In a **single-package repository the attribution is optional** and
+  omitted rather than written as an empty marker. One package needs no
+  prefix, and `(root)` on every line is noise.
+- A file belonging to no package — root config, CI workflows — is
+  attributed `(repo root)`.
+
 ## Staleness
 
 The artifact records base branch and commit SHA. Consumers **MUST** treat the artifact as stale — and either re-run or explicitly state the limitation — when HEAD has advanced past the recorded SHA.

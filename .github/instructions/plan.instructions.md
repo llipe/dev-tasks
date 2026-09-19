@@ -75,6 +75,21 @@ The task list **MUST** follow this structure:
   - ...
 ```
 
+## Package Attribution
+
+Every task **MUST** name the package it changes (FR-63), so a reader can
+tell the blast radius from the task list without opening the diff.
+
+- Read the package map in `docs/tech.md` for the package list.
+- Write the package in the sub-task text, in brackets, first:
+  `- [ ] 1.1 [@acme/api] Add the token-refresh endpoint`.
+- A sub-task touching several packages lists them all. A sub-task that
+  touches *most* packages is usually the wrong size — split it.
+- In a **single-package repository the bracket is omitted**, not left
+  empty. It is optional there, never blank.
+- Non-code tasks (docs, workflow files) that belong to no package use
+  `[repo root]`.
+
 ## Conversion Guidelines
 
 When converting a **User Story** or **Refined Issue** to a **Parent Task**:
