@@ -107,7 +107,7 @@ None. Phase 1 is additive plus one rename.
 
   > Note: `update` **MUST NOT** rename a consumer-owned file on its own (FR-45). `--force` keeps its existing meaning: perform the mutating action, back up first.
 
-  - [ ] 2.1 Write `test/unit/migrate-docs.test.ts` first: detection with both old names, one, neither; propose mutates nothing; `--force` renames and backs up; content hash identical before and after
+  - [x] 2.1 Write `test/unit/migrate-docs.test.ts` first: detection with both old names, one, neither; propose mutates nothing; `--force` renames and backs up; content hash identical before and after
   - [ ] 2.2 Add `core/distribution/migrate-docs.ts` with `detectOldFoundationDocs()` and `runDocsMigration()` as separate exports, so `doctor` reuses detection without the mutation path
   - [ ] 2.3 Reuse `createBackupDir`/`backupFile` from `core/distribution/backup.ts`; do not add a second backup mechanism
   - [ ] 2.4 Branch the `case "migrate"` in `bin/dev-tasks.ts` on `positional[0] === "docs"`; leave the bare `migrate` path untouched
