@@ -5,6 +5,7 @@
 | Version | Date       | Summary                                                    | Author           |
 | ------- | ---------- | ----------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-19 | Initial version. Docs foundation rename, runbooks, monorepo/single-package detection and package map. | product-engineer |
+| 1.1     | 2026-09-19 | Open Questions A-D resolved (D-42 to D-45): fallback-window removal tracked as issue #201, not version-comparison code; `doctor`/`update` output satisfies FR-45's session-start detection for the first release; `activity-init`'s "Mode A — Mono-Repo" renamed to avoid colliding with the new "monorepo" repository-shape term; package map's Bounded Context column is freeform at `activity-init` time. | @llipe / product-engineer |
 
 ## 1. Executive Summary
 
@@ -130,7 +131,7 @@ stateDiagram-v2
     Renamed --> ReferencesUpdated: update every dev-tasks-owned reference (46 files across 3 trees)
     ReferencesUpdated --> MigrateCommand: add `migrate docs` (propose/apply)
     MigrateCommand --> FallbackWindow: agents resolve old names for one release cycle
-    FallbackWindow --> FallbackRemoved: window closes — see Open Question A
+    FallbackWindow --> FallbackRemoved: window closes — tracked follow-up, issue #201 (D-42)
     FallbackRemoved --> [*]
 ```
 
@@ -210,7 +211,7 @@ Not applicable. No new credential, network, or data-handling surface. The rename
 | Aspect                 | Decision                                                                                                       |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | Feature flag            | None. `SIMPLICITY.md` A10 — no flag for a single-consumer capability.                                          |
-| Fallback window         | One release cycle (FR-45) — mechanism is Open Question A below.                                                |
+| Fallback window         | One release cycle (FR-45); removal tracked as a follow-up issue (#201, D-42), not version-comparison code.     |
 | Backward compatibility  | Old names keep working for agents for the fallback window; `update` never renames a consumer's files unprompted. |
 | Version/commit type     | Additive capability, no breaking change to the `dev-tasks` binary's CLI contract (new subcommand, new warnings) — `feat:` commits, no `!`. Actual version bump is `./scripts/release.sh`, run by the maintainer on `main` after merge (D-41 — this phase does not repeat the Phase 0 process error). |
 | Rollback                | Revert the merge commit. The rename is the only stateful-feeling change, and it is a pure `git mv` with content unchanged, so revert is complete. |
@@ -220,20 +221,29 @@ Not applicable. No new credential, network, or data-handling surface. The rename
 | Risk                                                                                     | Likelihood | Mitigation                                                                                                    |
 | ------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
 | A reference to the old names is missed among the 46 files, and an agent reads a stale name  | Medium     | The fallback rule (8.1) means a miss degrades to "still works via fallback," not silent failure; the parity test (14) closes the gap before merge. |
-| `activity-init`'s existing "Mono-Repo" mode name collides in meaning with the new "monorepo" repository-shape term | Medium     | Open Question C below.                                                                                        |
+| `activity-init`'s existing "Mono-Repo" mode name collides in meaning with the new "monorepo" repository-shape term | Medium     | Resolved (D-44): the existing mode is renamed to "Mode A — Documented" (or equivalent) to free the term.       |
 | `INSTALL_IF_ABSENT_FILES` has no platform-agnostic tag today, and `docs/runbooks/README.md` needs one | Low        | Extend the registry with a `ROOT_PROFILE_TAG`-style dedicated tag (reusing the pattern `ROOT_FILES` already established), not a new third category — same fix the PRD's own Technical Considerations section anticipates for Phase 3's glossary file, built here first since Phase 1 needs it first. |
 | The docs-structure check produces false positives on legitimate historical `related` references (e.g., a runbook documenting a since-removed script for troubleshooting history) | Low | Runbooks describe current procedures, not history; a removed script's runbook is retired with it, consistent with `SIMPLICITY.md` A10. |
 | Monorepo detection is only exercised against one fixture shape (`pnpm-workspace.yaml`) before a real consumer monorepo validates it | Medium | Documented as a known limitation; `nx.json`/`turbo.json`/`lerna.json`/`[tool.uv.workspace]` detection is signal-file presence only (existence check), not full parsing, which keeps the untested-parser surface small. |
 
 ## 17. Open Questions
 
-| # | Question | Recommendation |
-| - | -------- | --------------- |
-| A | FR-45's "one release cycle" fallback window has no machine-checkable trigger today (no release-cycle registry exists). Enforce it as a tracked follow-up (a GitHub issue opened alongside this phase's PR, to remove the fallback paragraph and the fallback resolution rule after the next `dev-tasks` release ships), or build a version-comparison check (`doctor` compares the installed version against a recorded "fallback expires at" version)? | Tracked follow-up issue. A version-comparison check is executable code guarding a one-time documentation cleanup — disproportionate machinery for a single future edit, and exactly the "what breaks without it" test `SIMPLICITY.md` A4 asks. |
-| B | FR-45 says an agent "at session start" should detect old names and propose migration. No per-platform session-start hook exists for this today (Kiro's `git-guard-notice` is the only always-loaded steering precedent, and building equivalents for Claude Code and Copilot is a larger scope than this phase's other line items). Build real session-start detection on all three platforms, or treat `doctor`/`update` output as satisfying this requirement in the first release (the same "advisory in the first release" pattern the PRD uses elsewhere, e.g. FR-72)? | Treat `doctor`/`update` as satisfying it for the first release; note the gap explicitly rather than silently narrowing scope. |
-| C | `activity-init`'s existing "Mode A — Mono-Repo" (meaning: `/docs` already exists) predates this PRD and now collides in name with FR-59's "monorepo" (meaning: multiple workspace packages). Rename the existing mode (e.g., to "Documented" or "Existing-docs mode") to free the term, or keep both and rely on context to disambiguate? | Rename the existing mode. A reader hitting both terms in the same skill file within one section has no way to tell them apart from the name alone; the existing mode's current name was never load-bearing outside this one skill. |
-| D | Should the package map's "Bounded context" column be left blank until Phase 3's glossary exists, or filled with freeform, non-canonical text at `activity-init` time? | Freeform now, canonical later (as stated in §5) — an empty column with no guidance is more likely to be filled with something misleading than a human's best current guess, and the glossary supersedes it by ID (`shared-understanding#D-NN`) either way. |
+None. All four were resolved on 2026-09-19 and recorded as decisions.
+
+| Question                                                  | Resolution                                                                                       |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| How is the one-release-cycle fallback window enforced?     | Tracked follow-up issue, not version-comparison code. Filed as [#201](https://github.com/llipe/dev-tasks/issues/201). Recorded as `D-42`. |
+| Does FR-45's "agent at session start" detection need a new hook? | No, for the first release: `doctor`/`update` output satisfies it, advisory (FR-72 pattern). Recorded as `D-43`. |
+| Does `activity-init`'s "Mode A — Mono-Repo" collide with the new "monorepo" term? | Yes — renamed to avoid the collision (§8.2 update below). Recorded as `D-44`.                    |
+| Is the package map's "Bounded context" column populated before Phase 3's glossary exists? | Yes, freeform, superseded by the glossary later. Recorded as `D-45`.                              |
 
 ## Decisions (HOW phase)
 
-Pending resolution of the Open Questions above. Recorded in `workstream/decisions-shared-understanding.md` starting at `D-42` once answered.
+Confirmed on 2026-09-19 and recorded in `workstream/decisions-shared-understanding.md`. Numbering continues the feature's single decision-log ID space.
+
+| ID   | Decision                                                                                                                        |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------- |
+| D-42 | Fallback-window removal is a tracked follow-up issue (#201), not version-comparison code.                                       |
+| D-43 | `doctor`/`update` output satisfies FR-45's session-start detection for the first release; no new per-platform hook this phase.  |
+| D-44 | `activity-init`'s existing "Mode A — Mono-Repo" is renamed to "Mode A — Documented" (or equivalent) to free the "monorepo" term for FR-59's repository-shape concept. |
+| D-45 | Package map's "Bounded context" column is freeform at `activity-init` time; Phase 3's glossary supersedes it by decision ID.     |
