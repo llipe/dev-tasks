@@ -1,8 +1,3 @@
----
-name: activity-codebase-research
-description: "Perform bounded, delegated codebase investigation and emit a structured research artifact. Use when downstream agents need grounded, file-level evidence without pulling the search transcript into their own context."
----
-
 # Activity: Codebase Research
 
 Investigate a bounded research question against the current codebase and produce one structured artifact (`/workstream/research-*.md`). The artifact replaces an ad-hoc exploratory reading session — the search transcript is discarded and only the report survives.
@@ -80,13 +75,7 @@ The artifact **MUST** contain exactly these ten sections, in this order:
 2. If the question is vague or spans more than one answerable topic, ask **one** focused clarification. Do not proceed with an unfocused survey.
 3. Identify the target scope: files, directories, modules, or packages likely relevant.
 
-### Phase 2 — Multi-Repo Detection
-
-1. Check for `component.json` in the repository root.
-2. **If present:** Consume `dt context` / `dt catalog` output to identify cross-repo boundaries, dependencies, and contracts. Cite catalog output as a source in Provenance.
-3. **If absent or `dt` unavailable:** Fall back to direct file scanning (grep, tree-sitter, file search). Record the fallback in Provenance — never fail outright.
-
-### Phase 3 — Slice Execution
+### Phase 2 — Slice Execution
 
 For each of the eight slices (S1-S8):
 
@@ -95,7 +84,7 @@ For each of the eight slices (S1-S8):
 3. If no evidence exists for a slice, mark it `N/A` with a reason (e.g., "No UI surfaces exist in this area").
 4. Rank findings by relevance to the research question, not alphabetically.
 
-### Phase 4 — Synthesis
+### Phase 3 — Synthesis
 
 1. Write the **Answer first** section: directly answer the research question in <= 10 lines using the evidence gathered.
 2. Compile the **Relevance-ranked file map** from the top findings across all slices (max 30 files).
@@ -105,13 +94,13 @@ For each of the eight slices (S1-S8):
 6. Populate **Not investigated** with areas deliberately skipped (out of scope, budget exhausted, tooling unavailable).
 7. Assign a **Confidence** level based on coverage completeness, source quality, and known gaps.
 
-### Phase 5 — Budget Enforcement
+### Phase 4 — Budget Enforcement
 
 1. Count report lines. If > 250, remove the lowest-relevance findings until compliant and record omissions under "Not Investigated".
 2. Count cited files. If > 30, collapse the lowest-relevance entries and record omissions.
 3. Final check: all ten sections present and in order; all eight slices addressed; both caps satisfied.
 
-### Phase 6 — Provenance and Output
+### Phase 5 — Provenance and Output
 
 1. Record in Provenance:
    - Repository name
@@ -120,7 +109,6 @@ For each of the eight slices (S1-S8):
    - Invoking agent (e.g., `product-engineer`, `developer`, `planner`)
    - Research question (verbatim)
    - Date (ISO 8601)
-   - Multi-repo source: `dt context` or `direct scanning (fallback)`
 2. Write the artifact to the contract path.
 3. Optionally post a one-line summary as a GitHub issue comment.
 

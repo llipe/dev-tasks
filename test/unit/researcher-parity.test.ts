@@ -46,7 +46,6 @@ const CONTRACT_STATEMENTS: ReadonlyArray<{ label: string; pattern: RegExp }> = [
   { label: "staleness via commit SHA", pattern: /commit SHA/i },
   { label: "no verdict rendering", pattern: /no(t a)? verdict/i },
   { label: "skill: activity-codebase-research", pattern: /activity-codebase-research/ },
-  { label: "multi-repo detection", pattern: /component\.json/i },
   { label: "untrusted input handling", pattern: /untrusted data/i },
 ];
 

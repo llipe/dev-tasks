@@ -86,7 +86,6 @@ Options:
   --json         Output as JSON
   --pin <ver>    Pin to a specific version (used with install)
   --force        Force-overwrite conflicting files (backs them up first)
-  --meta-repo    Path to meta repository
   -v, --verbose  Verbose output
   -h, --help     Show this help message
 `;

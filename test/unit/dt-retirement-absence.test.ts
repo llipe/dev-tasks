@@ -44,6 +44,8 @@ const EXEMPT_FILES = new Set([
   "test/integration/binaries.test.ts", // asserts pkg.bin["dt"] is undefined and dt.js is absent
   "test/unit/cli-binaries.test.ts", // asserts bin/dt.ts is absent
   "core/exit-codes.ts", // changelog comment narrates which dt-only codes were removed
+  "test/unit/skill-parity-init.test.ts", // asserts "multi-repo"/"component.json" are absent
+  "test/unit/publish-workflow-dist-paths.test.ts", // asserts dist/bin/dt.js is not a checked path
 ]);
 
 const SKIP_DIRS = new Set(["node_modules", "dist", ".git", "fixtures"]);

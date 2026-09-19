@@ -49,52 +49,18 @@ Every document produced by this activity **MUST** include a **Changelog** table 
 
 ---
 
-## Mode Detection (RF-60)
+## Mode Detection
 
 Before starting the interview, the skill **MUST** detect the repository mode and route accordingly. The detection logic is:
 
-1. **Multi-repo mode:** `component.json` exists at the repository root → the repository is a component in a multi-repo product. Context resolution passes exclusively through `dt`.
-2. **Mono-repo mode:** no `component.json` at root, but `/docs` directory exists → current single-repo flow (interview + direct docs generation).
-3. **Undocumented / greenfield mode:** neither `component.json` nor `/docs` → extraction-first flow to bootstrap documentation from code, then interview.
-
-> **Precedence:** If both `component.json` AND `/docs` exist, multi-repo mode wins — `component.json` is the authoritative signal.
+1. **Mono-repo mode:** `/docs` directory exists → current single-repo flow (interview + direct docs generation).
+2. **Undocumented / greenfield mode:** no `/docs` → investigation-first flow to bootstrap documentation from the codebase, then interview.
 
 ---
 
-## Mode A — Multi-Repo (RF-61)
+## Mode A — Mono-Repo (Current Flow)
 
-When `component.json` is present at the repo root, the skill **MUST** delegate all context resolution to `dt` and **MUST NOT** read `/docs` or walk the repository directly.
-
-### Process
-
-1. **Invoke `dt init --task "<user's task/product description>" --json`**.
-2. **Handle exit codes:**
-
-   | Exit Code | Meaning                         | Action                                                                                                                                                                                                           |
-   | --------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `0`       | Success — bundle emitted        | Load bundle files in numeric order. Present `review_flags` (if any) to the user before proceeding to planning. Continue to the interview for product context and technical guidelines using the bundle as input. |
-   | `7`       | Gate abort — partition proposal | Present the partition proposal to the user. Explain that the scope is too broad and needs to be split. **Stop** — do not proceed to planning.                                                                    |
-   | `9`       | Stale catalog index             | Inform the user that the catalog index is stale and needs to be rebuilt (e.g., `dt catalog build`). **Stop** — do not proceed.                                                                                   |
-   | `10`      | Invalid scope after LLM retry   | Inform the user that automatic scoping failed. Suggest running with `--components` for manual scope. **Stop.**                                                                                                   |
-   | `11`      | No candidates found             | Inform the user that no components matched the task description. Suggest refining the task text or using `--components`. **Stop.**                                                                               |
-   | `6`       | Budget overflow                 | Inform the user that the scoped context exceeds the token budget. Suggest narrowing scope with `--max-components` or `--budget`. **Stop.**                                                                       |
-
-3. **On success (exit 0):**
-   - Load the assembled bundle files in numeric order (they form the context).
-   - If `review_flags` are present in the JSON output, present them as warnings to the user (e.g., "scope spans >2 domains", "low-payload boundary contract") and ask whether to proceed.
-   - Use the bundle content as the basis for the product-context and technical-guidelines interview — the bundle replaces direct `/docs` reading.
-
-### Constraints
-
-- The skill **MUST NOT** read `/docs`, walk the repository tree, or inspect source files directly in multi-repo mode.
-- All context comes from the `dt init` bundle output.
-- The skill **MAY** ask follow-up questions to fill gaps not covered by the bundle (e.g., strategic goals, success metrics).
-
----
-
-## Mode B — Mono-Repo (Current Flow)
-
-When no `component.json` is present but `/docs` exists, the skill follows the **existing single-repo flow** unchanged.
+When `/docs` exists, the skill follows the **existing single-repo flow** unchanged.
 
 ### Process
 
@@ -106,25 +72,22 @@ When no `component.json` is present but `/docs` exists, the skill follows the **
 
 ---
 
-## Mode C — Undocumented / Greenfield
+## Mode B — Undocumented / Greenfield
 
-When neither `component.json` nor `/docs` exists, the repository has no established documentation. The skill bootstraps documentation from code extraction before conducting the interview.
+When `/docs` does not exist, the repository has no established documentation. The skill investigates the codebase directly before conducting the interview.
 
 ### Process
 
-1. **Run detection:** Invoke `dt extract detect` to identify the repository's technology stack, frameworks, and extractable artifacts.
-2. **Run extraction:** Invoke `dt extract all --interactive` to extract schema, OpenAPI, AsyncAPI, and component manifest from the codebase.
-   - The `--interactive` flag allows the user to confirm or skip ambiguous extractions.
-   - If interrupted, the skill **SHOULD** inform the user how to resume (`dt extract all --interactive` picks up where it left off).
-3. **Present extraction report:** Show the user the results of extraction — what was found, confidence levels, any `unresolved` items.
-4. **Conduct the interview:** Proceed with the standard clarifying questions for product context and technical guidelines (same as Mono-Repo mode).
-5. **Generate documents:** Create `product-context.md` and `technical-guidelines.md` using the extraction results as pre-filled context combined with interview answers.
-6. **Save Output:** Save both documents in `/docs/` and present them for user review.
+1. **Investigate the codebase:** Read manifest files (`package.json`, `pyproject.toml`, `go.mod`, or equivalent), the directory structure, the README, and any existing configuration to identify the technology stack, frameworks, and conventions in use.
+2. **Present a findings summary:** Show the user what was found — stack, frameworks, notable directories, confidence per finding — before the interview.
+3. **Conduct the interview:** Proceed with the standard clarifying questions for product context and technical guidelines (same as Mono-Repo mode).
+4. **Generate documents:** Create `product-context.md` and `technical-guidelines.md` using the investigation findings as pre-filled context combined with interview answers.
+5. **Save Output:** Save both documents in `/docs/` and present them for user review.
 
 ### Constraints
 
-- The extraction results inform but do not replace the interview — the user confirms and supplements.
-- If `dt extract detect` reports that no extractable content was found (empty project), skip extraction and proceed directly to the interview (pure greenfield).
+- The investigation findings inform but do not replace the interview — the user confirms and supplements.
+- If the repository has no identifiable stack (an empty project), skip investigation and proceed directly to the interview (pure greenfield).
 
 ---
 
@@ -132,7 +95,7 @@ When neither `component.json` nor `/docs` exists, the repository has no establis
 
 ### Clarifying Questions
 
-Adapt questions based on context provided (and based on mode — in multi-repo mode, the bundle already provides some answers):
+Adapt questions based on context already gathered (e.g., from codebase investigation in greenfield mode):
 
 - **Product Definition:** "What is this product/project, and what does it do?"
 - **Problem Statement:** "What core problem does this product solve?"
@@ -245,4 +208,3 @@ When generating or updating `AGENTS.md` during project initialization, you **MUS
 5. You **MUST** save both files and present them for user review.
 6. You **SHOULD** iterate based on user feedback before finalizing.
 7. When updating an existing document, you **MUST** add a new row to the Changelog table with an incremented version, the current date, a summary of changes, and the responsible author/agent.
-8. In multi-repo mode, you **MUST NOT** read `/docs` or walk the repository directly — all context passes through `dt init`.
