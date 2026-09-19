@@ -60,6 +60,8 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 - `bin/dev-tasks.ts`, `core/distribution/{doctor,profiles,install-if-absent,index}.ts`, `core/index.ts`
 - `test/unit/foundation-docs-naming.test.ts` — EXEMPT_FILES extended to the migration machinery and its tests (S-002), plus `runbook-migrate-foundation-docs.md` (S-003)
 - `test/integration/install-parity.test.ts` — agnostic-tag accounting and the runbook-scaffold cases (S-003)
+- `test/integration/checks-run.test.ts` — new; the lint entry point end to end (S-004)
+- `.claude/agents/verifier.md`, `.github/agents/verifier.agent.md`, `.kiro/agents/verifier.md` — audit reads `checkDocsStructure` (S-004)
 - `package.json` (`lint` script), `bundle-manifest.json`, `TESTING.md`, `docs/README.md`, `README.md` (migrate-docs command reference and migration subsection)
 - `activity-init`, `activity-test-standards`, `researcher`, `plan`, `implement`, `qa-engineer`, `verifier`, `technical-writer`, `infra-engineer`, `developer`, `housekeeping` — across all three trees
 - `test/unit/{distribution-doctor,distribution-update,skill-parity-init,skill-init-walkthrough,researcher-parity,skill-parity-testing-layers}.test.ts`, `test/integration/bootstrap-commands.test.ts`
@@ -152,28 +154,28 @@ None. Phase 1 is additive plus one rename.
   - [x] 3.17 Run Tests: `pnpm run validate`; the D-40 set is unchanged
   - [x] 3.18 Commit as `feat(docs): scaffold docs/runbooks and seed the initial runbook set`
 
-- [ ] 4.0 Implement Story S-004: Create `core/checks` and enforce docs structure under `lint`
+- [x] 4.0 Implement Story S-004: Create `core/checks` and enforce docs structure under `lint`
 
   > Note: this creates the module FR-57 reserved and D-33 kept out of Phase 0. Exactly one check lands here. No registry or plugin interface for the Phase 3/5/6 checks (AC-8).
 
   - [x] 4.1 Write `test/unit/checks-docs-structure.test.ts` first, with fixtures under `test/fixtures/docs-structure/` for each condition
-  - [ ] 4.2 Implement `core/checks/docs-structure.ts` returning failures and staleness findings separately
-  - [ ] 4.3 Condition: index lists a file that does not exist (AC-2) — resolve repo-root-aware and tolerate directory links, or `docs/README.md`'s links to `../README.md`, `requirements/`, and five root files produce false failures on the clean tree (AC-10)
-  - [ ] 4.4 Condition: index omits a file that exists in its directory (AC-3) — **non-recursive**, or the seven ADRs and four PRDs that no index lists individually are flagged (AC-10)
-  - [ ] 4.5 Condition: runbook frontmatter missing/invalid, or filename not matching `^runbook-[a-z0-9]+(-[a-z0-9]+)+\.md$` (AC-4)
-  - [ ] 4.6 Condition: `related` entry names a script or workflow that does not exist (AC-5)
-  - [ ] 4.7 Reported-not-failed: `last_verified` older than 90 days (AC-6, D-21)
-  - [ ] 4.8 Absent `docs/runbooks/` reports nothing (AC-9)
-  - [ ] 4.9 Add `core/checks/run.ts` and `core/checks/index.ts`; chain **`tsx core/checks/run.ts`** into the `lint` script after `eslint` (D-48). Do **not** use a `dist/` path: `dist/` is gitignored and untracked, `validate` has no `build` step, and `publish-npm.yml` runs `validate` before `build`, so a compiled path fails every fresh clone and breaks the first release after merge
-  - [ ] 4.9a Verify D-48 the way the defect was found: clone the branch into a scratch directory and run `pnpm install && pnpm run lint` **without** running `build` first; it must pass
-  - [ ] 4.10 Hand-parse the five fixed frontmatter keys; do **not** promote `yaml` to `dependencies` (D-49). The check ships to consumers inside `dist/core/` (`package.json` `files`), where devDependencies are absent, and task 4.11 makes the `verifier` a second caller in consumer repositories
-  - [ ] 4.11 Point the `verifier` at the same exported function for its audit summary; the logic is not duplicated
-  - [ ] 4.12 Verify AC-7: `lint` still exits non-zero on an ESLint failure independently of the docs check
-  - [ ] 4.13 Verify AC-8 by inspection: no registry, no plugin interface, no abstraction for future checks
-  - [ ] 4.14 Integration: seed each failure into a temp fixture tree, assert `lint` exits non-zero, assert it exits zero once fixed
-  - [ ] 4.15 Edge cases: index entry pointing at a directory; valid frontmatter with an invalid date; `related` pointing outside the repository; empty `docs/runbooks/`
-  - [ ] 4.16 Run `pnpm run validate` against the real tree and fix anything it legitimately finds
-  - [ ] 4.17 Commit as `feat(checks): add core/checks with the docs-structure check under lint`
+  - [x] 4.2 Implement `core/checks/docs-structure.ts` returning failures and staleness findings separately
+  - [x] 4.3 Condition: index lists a file that does not exist (AC-2) — resolve repo-root-aware and tolerate directory links, or `docs/README.md`'s links to `../README.md`, `requirements/`, and five root files produce false failures on the clean tree (AC-10)
+  - [x] 4.4 Condition: index omits a file that exists in its directory (AC-3) — **non-recursive**, or the seven ADRs and four PRDs that no index lists individually are flagged (AC-10)
+  - [x] 4.5 Condition: runbook frontmatter missing/invalid, or filename not matching `^runbook-[a-z0-9]+(-[a-z0-9]+)+\.md$` (AC-4)
+  - [x] 4.6 Condition: `related` entry names a script or workflow that does not exist (AC-5)
+  - [x] 4.7 Reported-not-failed: `last_verified` older than 90 days (AC-6, D-21)
+  - [x] 4.8 Absent `docs/runbooks/` reports nothing (AC-9)
+  - [x] 4.9 Add `core/checks/run.ts` and `core/checks/index.ts`; chain **`tsx core/checks/run.ts`** into the `lint` script after `eslint` (D-48). Do **not** use a `dist/` path: `dist/` is gitignored and untracked, `validate` has no `build` step, and `publish-npm.yml` runs `validate` before `build`, so a compiled path fails every fresh clone and breaks the first release after merge
+  - [x] 4.9a Verify D-48 the way the defect was found: clone the branch into a scratch directory and run `pnpm install && pnpm run lint` **without** running `build` first; it must pass
+  - [x] 4.10 Hand-parse the five fixed frontmatter keys; do **not** promote `yaml` to `dependencies` (D-49). The check ships to consumers inside `dist/core/` (`package.json` `files`), where devDependencies are absent, and task 4.11 makes the `verifier` a second caller in consumer repositories
+  - [x] 4.11 Point the `verifier` at the same exported function for its audit summary; the logic is not duplicated
+  - [x] 4.12 Verify AC-7: `lint` still exits non-zero on an ESLint failure independently of the docs check
+  - [x] 4.13 Verify AC-8 by inspection: no registry, no plugin interface, no abstraction for future checks
+  - [x] 4.14 Integration: seed each failure into a temp fixture tree, assert `lint` exits non-zero, assert it exits zero once fixed
+  - [x] 4.15 Edge cases: index entry pointing at a directory; valid frontmatter with an invalid date; `related` pointing outside the repository; empty `docs/runbooks/`
+  - [x] 4.16 Run `pnpm run validate` against the real tree and fix anything it legitimately finds
+  - [x] 4.17 Commit as `feat(checks): add core/checks with the docs-structure check under lint`
 
 - [ ] 5.0 Implement Story S-005: Detect repository shape and record the package map
 

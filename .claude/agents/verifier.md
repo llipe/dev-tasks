@@ -170,7 +170,7 @@ Execution follows a strict phase-gated flow. You **MUST NOT** advance to the nex
 |                    |                                                                                                                                                                                                                                                    |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Entry criteria** | Phase 2 complete.                                                                                                                                                                                                                                  |
-| **Actions**        | Read the codebase implementation (diff/PR/branch), `/workstream` artifacts, and the test suite. Execute or observe test results against delivered code. Collect per-AC evidence (pass/fail/drift). Classify every drift item by impact and intent. |
+| **Actions**        | Read the codebase implementation (diff/PR/branch), `/workstream` artifacts, and the test suite. Execute or observe test results against delivered code. Collect per-AC evidence (pass/fail/drift). Classify every drift item by impact and intent. Run the docs-structure check for the documentation section of the report: `tsx core/checks/run.ts`, or `checkDocsStructure(repoRoot)` from `core/checks` directly. Report its findings; do **not** re-derive them by reading indexes and runbooks by hand. One implementation, two callers — `lint` enforces, this audit reports. |
 | **Exit criteria**  | Evidence collected for every AC against all four sources (codebase, `/workstream`, tests, PRD/spec intent). Every drift item classified.                                                                                                           |
 
 ### Phase 4 — Reporting & Publication
@@ -260,6 +260,7 @@ The report **MUST** present sections in this order, so the verdict is visible fi
 3. **Per-AC result table** — `AC-ID | Description | Codebase evidence | Workstream evidence | Test evidence | Result (Pass/Fail/Drift)`.
 4. **Drift catalog** — for each drift item: description, impact class (Critical/Major/Minor), intent class (Intended/Unintended/Undetermined), evidence source(s), and an explicit note that drift is non-blocking to completion.
 5. **Edge-case and randomized test outcomes** (when a prior test plan exists for this scope).
+   - **Documentation structure** — the `checkDocsStructure` result for the delivered tree. Failures are already a `lint` gate and so should be absent by the time this runs; staleness findings (`last_verified` over 90 days) are reported here and are non-blocking (D-21). A repository with no `docs/runbooks/` produces no findings and needs no note.
 6. **Recommendations** — suggested next step per drift item (`developer` fix, `product-engineer` spec clarification, or `no action needed`), without directly applying any change.
 
 ## Output Contract

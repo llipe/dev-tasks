@@ -46,7 +46,7 @@
     "build": "tsc",
     "prepublishOnly": "pnpm run validate && pnpm run build",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --max-warnings 0 && tsx core/checks/run.ts",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"bin/\" \"core/\" \"test/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
     "format:check": "prettier --check \"bin/\" \"core/\" \"test/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
