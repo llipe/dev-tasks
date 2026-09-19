@@ -5,6 +5,7 @@
 | Version | Date       | Summary                                                    | Author           |
 | ------- | ---------- | ----------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-19 | Initial version. Docs foundation rename, runbooks, monorepo/single-package detection and package map. | product-engineer |
+| 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-48 to D-50): `lint` invokes `tsx core/checks/run.ts`, never `dist/` — `validate` has no `build` step and `publish-npm.yml` runs `validate` before `build`, so a compiled path breaks every fresh clone and the first release; frontmatter is hand-parsed, not `yaml`-parsed, because the check ships to consumers where devDependencies are absent; 51 files carry the old names, not 46, and ADRs, PRDs, and `workstream/` among them are never rewritten; `.gitignore` would silently ignore both new filenames; the docs-structure rules gain four constraints that otherwise produce false failures on a clean tree. | verifier / product-engineer |
 | 1.1     | 2026-09-19 | Open Questions A-D resolved (D-42 to D-45): fallback-window removal tracked as issue #201, not version-comparison code; `doctor`/`update` output satisfies FR-45's session-start detection for the first release; `activity-init`'s "Mode A — Mono-Repo" renamed to avoid colliding with the new "monorepo" repository-shape term; package map's Bounded Context column is freeform at `activity-init` time. | @llipe / product-engineer |
 
 ## 1. Executive Summary
@@ -128,14 +129,36 @@ Not applicable. No new network or credential surface.
 ```mermaid
 stateDiagram-v2
     [*] --> Renamed: git mv, content unchanged (FR-46)
-    Renamed --> ReferencesUpdated: update every dev-tasks-owned reference (46 files across 3 trees)
+    Renamed --> ReferencesUpdated: update the rewritable references (51 carry them, 31 are rewritten)
     ReferencesUpdated --> MigrateCommand: add `migrate docs` (propose/apply)
     MigrateCommand --> FallbackWindow: agents resolve old names for one release cycle
     FallbackWindow --> FallbackRemoved: window closes — tracked follow-up, issue #201 (D-42)
     FallbackRemoved --> [*]
 ```
 
-The rename itself is one behavior-preserving `refactor:` commit (FR-46, `SIMPLICITY.md` B1): `git mv` for the two files, content untouched. Updating the 46 files that reference the old names by string (agents, skills, instructions, steering, tests) is mechanical and follows in the same or an immediately adjacent commit — it is still behavior-preserving, since it changes prose/config, not runtime behavior of the `dev-tasks` binary.
+The rename itself is one behavior-preserving `refactor:` commit (FR-46, `SIMPLICITY.md` B1): `git mv` for the two files, content untouched. Updating the references by string (agents, skills, instructions, steering, tests) is mechanical and follows in the same or an immediately adjacent commit — it is still behavior-preserving, since it changes prose/config, not runtime behavior of the `dev-tasks` binary.
+
+**51 files carry the old names, and not all of them may be rewritten (D-50).** Measured on this branch: `.claude/` 10, `.github/` 11, `.kiro/` 12, `docs/` 10, `test/` 2, root 6 (`AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`, `.gitignore`). `core/`, `bin/`, `templates/`, and `scripts/` carry none. Earlier drafts said 46 and then 50; 51 is the measured figure, `.gitignore` being the file both earlier counts missed.
+
+Three groups inside that 51 are **not** rewritten:
+
+| Group | Files | Why |
+| ----- | ----- | --- |
+| ADRs | `docs/adr/ADR-002`, `ADR-003`, `ADR-007`, `docs/adr/README.md` | D-35: an ADR is never rewritten. ADR-007 records which files Phase 0 changed; editing it falsifies the record. |
+| PRDs | `docs/requirements/prd-shared-understanding-refinement.md`, `prd-infra-engineer.md`, `prd-evidence-driven-development-loop.md` | A PRD is a historical statement of intent. FR-44 itself reads "`docs/product-context.md` becomes `docs/product.md`" — rewriting it erases the requirement's own subject. |
+| `workstream/` | 24 tracked files | Out of PRD AC-22's enumerated scope, and archived per-feature records. The parity test **must** exclude `workstream/` or it fails with 24 hits. |
+
+`.gitignore` is not in those groups — it is a live config file and must change, for a different reason (§8.1a).
+
+PRD AC-22's scope list names `adapters/`, which Phase 0 deleted (D-34). S-001 AC-2 drops it; that is deliberate, not drift.
+
+### 8.1a `.gitignore` silently ignores both new filenames
+
+`.gitignore:25` is `/docs/*.md`, followed by an explicit negation per tracked document — including `!/docs/product-context.md` and `!/docs/technical-guidelines.md`. There is no negation for the new names, so `git check-ignore -v docs/product.md` resolves to `.gitignore:25` today: **both renamed files would be ignored.**
+
+`git mv` on a tracked file survives this, so the rename commit itself looks clean. The trap is later: any `git add docs/product.md` after a delete, after `migrate docs --force` on a fresh tree, or after `activity-init` regenerates the file, is silently refused. The fix is two negation lines; the cost of missing it is a file that appears to save and never commits.
+
+### 8.1b Fallback resolution
 
 Fallback resolution (FR-45) is scoped to what `dev-tasks` itself ships to agents, not a new file-system watcher: any dev-tasks-authored instruction that names the foundation docs resolves `docs/product.md` first, falling back to `docs/product-context.md` (and the `docs/tech.md`/`docs/technical-guidelines.md` pair) only if the new name is absent. This is a resolution rule stated in the prompt content itself (a short paragraph in `activity-init` and any skill that reads these files), not new executable code — there is no runtime "foundation doc reader" module in `dev-tasks` today, and adding one solely to implement a fallback would be exactly the kind of abstraction `SIMPLICITY.md` A4 asks to justify against what breaks without it. Nothing breaks without it: an agent reading a file it's told to read either finds the new name or falls back per the documented rule.
 
@@ -166,7 +189,18 @@ Per FR-50, `validate` fails (via `lint`) on:
 
 It reports, without failing, a runbook whose `last_verified` exceeds the staleness window (90 days, D-21/OQ-14).
 
-This is a plain Node function (`core/checks/docs-structure.ts`, `checkDocsStructure(repoRoot): { failures: Finding[]; stale: Finding[] }`), invoked two ways: `lint` runs a small script (`node dist/core/checks/run.js` or equivalent, chained after `eslint`) so `validate` reaches it, and the `verifier` (a human-readable summary, not the enforcement path — `lint` already enforces) reads the same result for its audit. One implementation, two callers; no duplicated logic.
+Four constraints the rules above do not state, each of which produces false failures on today's clean tree if missed:
+
+- **Rule 1 must be repo-root-aware and tolerate directory links.** `docs/README.md` links `../README.md`, the `requirements/` directory, `adr/README.md`, and five root files (`AGENTS.md`, `CHANGELOG.md`, `CLAUDE.md`, `DESIGN.md`, `TESTING.md`). Resolving those relative to `docs/` yields five or more false failures.
+- **Rule 2 must be non-recursive.** `docs/` contains seven ADRs and four PRDs in subdirectories that `docs/README.md` does not list individually and should not have to. Only immediate children of the indexed directory count.
+- **Rule 3's "misnamed" needs a machine-checkable rule.** Use `^runbook-[a-z0-9]+(-[a-z0-9]+)+\.md$`. A stricter verb-object rule is not checkable: `runbook-configure-branch-protection` and `runbook-setup-supabase-local` both parse ambiguously into verb and object.
+- **Frontmatter is hand-parsed, not `yaml`-parsed (D-49).** The five keys are fixed and flat. `yaml` is a devDependency, and the check ships to consumers inside `dist/core/`, where devDependencies are not installed — parsing five known keys directly avoids promoting a dependency to satisfy one call site (`SIMPLICITY.md` A4).
+
+This is a Node function (`core/checks/docs-structure.ts`, `checkDocsStructure(repoRoot): { failures: Finding[]; stale: Finding[] }`) invoked two ways: `lint` runs it, so `validate` reaches it, and the `verifier` reads the same result for its audit summary (`lint` is the enforcement path; the verifier only reports). One implementation, two callers; no duplicated logic.
+
+**Invocation (D-48).** `lint` runs `tsx core/checks/run.ts`, not `node dist/core/checks/run.js`. The compiled path cannot work: `dist/` is gitignored with zero tracked files, `validate` is `typecheck → lint → format:check → test` with no `build` step, and `publish-npm.yml` runs `validate` at line 61 *before* `build` at line 64. A `dist/`-dependent `lint` therefore fails on every fresh clone and breaks the first release after merge — it only passes for whoever implements it, because their `dist/` is already warm. `tsx` is an existing devDependency and runs the TypeScript source directly. Making `lint` depend on `build` was rejected: it turns every lint into a compile, and it reorders a gate chain that is not this phase's to reorder.
+
+Consumers reach the same check through the published package (`dist/core/` is in `package.json` `files`), so the check itself must not need a devDependency at runtime — see the frontmatter-parsing note in §16.
 
 ### 8.4 Runbook coverage (FR-49, AC-25, AC-31)
 
@@ -202,7 +236,7 @@ Not applicable. No new credential, network, or data-handling surface. The rename
 | Static        | `typecheck` covers the new `core/checks` and `core/distribution/migrate-docs.ts` modules.                                                    |
 | Unit          | `core/checks/docs-structure.test.ts`: each of the four failure conditions plus the staleness-without-failure case, seeded fixtures under `test/fixtures/`. `migrate-docs.test.ts`: propose (no mutation) and `--force` apply (rename + backup) against a temp dir. |
 | Integration   | `activity-init` shape detection against two fixture repos: one single-package, one monorepo (`pnpm-workspace.yaml` with 2 packages) — asserts the package-map table shape in each. |
-| Parity        | Existing parity-test pattern extended: the 46 old-name references become a new parity assertion (no `.claude`/`.github`/`.kiro` file names the old filenames except the fallback-rule paragraph itself, which is explicitly allow-listed the same way `test/unit/dt-retirement-absence.test.ts` allow-lists its own pattern literals). |
+| Parity        | Existing parity-test pattern extended into a new absence assertion over the rewritable references. Its scan roots and allowlist are **not** a copy of `test/unit/dt-retirement-absence.test.ts`: that guard does not scan `docs/` at all, and this one must, while excluding `docs/adr/**`, `docs/requirements/**`, and `workstream/` per D-50, plus the fallback-rule locations. |
 | Docs-structure | Seed a broken index, a missing-frontmatter runbook, and a dangling `related` entry; assert `lint` fails on each and passes once fixed — mirrors the absence-guard self-test pattern from Phase 0. |
 | Regression    | Re-run the D-40 five-name failure baseline; this phase is not expected to change it, since it touches no code the five failing tests exercise. |
 
@@ -220,7 +254,8 @@ Not applicable. No new credential, network, or data-handling surface. The rename
 
 | Risk                                                                                     | Likelihood | Mitigation                                                                                                    |
 | ------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
-| A reference to the old names is missed among the 46 files, and an agent reads a stale name  | Medium     | The fallback rule (8.1) means a miss degrades to "still works via fallback," not silent failure; the parity test (14) closes the gap before merge. |
+| A reference to the old names is missed among the 51 files, and an agent reads a stale name  | Medium     | The fallback rule (§8.1b) means a miss degrades to "still works via fallback," not silent failure; the parity test (§14) closes the gap before merge. |
+| The parity test is written by copying Phase 0's absence guard and inherits its scan roots  | High       | Stated explicitly in §14: that guard omits `docs/`, which is where the immutable records live. Copying it silently passes while leaving `docs/` unchecked. |
 | `activity-init`'s existing "Mono-Repo" mode name collides in meaning with the new "monorepo" repository-shape term | Medium     | Resolved (D-44): the existing mode is renamed to "Mode A — Documented" (or equivalent) to free the term.       |
 | `INSTALL_IF_ABSENT_FILES` has no platform-agnostic tag today, and `docs/runbooks/README.md` needs one | Low        | Extend the registry with a `ROOT_PROFILE_TAG`-style dedicated tag (reusing the pattern `ROOT_FILES` already established), not a new third category — same fix the PRD's own Technical Considerations section anticipates for Phase 3's glossary file, built here first since Phase 1 needs it first. |
 | The docs-structure check produces false positives on legitimate historical `related` references (e.g., a runbook documenting a since-removed script for troubleshooting history) | Low | Runbooks describe current procedures, not history; a removed script's runbook is retired with it, consistent with `SIMPLICITY.md` A10. |

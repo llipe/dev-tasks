@@ -6,6 +6,7 @@
 | ------- | ---------- | ------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-19 | Initial version. Seven stories, issues pending creation. | product-engineer |
 | 1.1     | 2026-09-19 | S-002 AC-8 added (README documents the migrate process): tasks 2.13 to 2.15. Issues #202 to #208 created and recorded in the Scope table. | @llipe / product-engineer |
+| 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-46 to D-52): task 4.9 pinned to `tsx` with a fresh-clone verification at 4.9a; task 4.10 reversed (hand-parse, do not promote `yaml`); tasks 4.3/4.4 gain the false-failure constraints; task 3.7 corrected to `templates/scripts/release.sh`; tasks 1.1/1.1a scope the parity test away from immutable records; task 1.9a added for `.gitignore`. | verifier / product-engineer |
 
 ## Scope
 
@@ -75,7 +76,8 @@ None. Phase 1 is additive plus one rename.
 
   > Note: behavior-preserving `refactor:` commit. Content of both documents is untouched (FR-46, `SIMPLICITY.md` B1). Simplifying either document is a separate change and is out of scope.
 
-  - [ ] 1.1 Write `test/unit/foundation-docs-naming.test.ts` first: scan `.claude/`, `.github/`, `.kiro/`, `core/`, `bin/`, `test/`, `docs/`, and the root for `product-context.md` and `technical-guidelines.md`; it must fail against the current tree
+  - [ ] 1.1 Write `test/unit/foundation-docs-naming.test.ts` first: scan `.claude/`, `.github/`, `.kiro/`, `core/`, `bin/`, `test/`, `docs/`, and the root for `product-context.md` and `technical-guidelines.md`; it must fail against the current tree. Write the scan roots from scratch — **do not copy** `test/unit/dt-retirement-absence.test.ts`'s `SCAN_ROOTS`, which omits `docs/` entirely and would pass while checking nothing
+  - [ ] 1.1a Exclude per D-50: `docs/adr/**`, `docs/requirements/**`, and `workstream/` (24 tracked files there carry the old names), each with a reason comment
   - [ ] 1.2 Add the seeded-match self-test proving the matcher fires, and the false-positive rejection case (Phase 0 guard pattern)
   - [ ] 1.3 `git mv docs/product-context.md docs/product.md` and `git mv docs/technical-guidelines.md docs/tech.md`
   - [ ] 1.4 Update the 10 references in `.claude/`
@@ -83,7 +85,8 @@ None. Phase 1 is additive plus one rename.
   - [ ] 1.6 Update the 12 references in `.kiro/`
   - [ ] 1.7 Update the 10 references in `docs/`, including `docs/README.md`'s index rows
   - [ ] 1.8 Update the 2 references in `test/`
-  - [ ] 1.9 Update the 5 root references: `AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`
+  - [ ] 1.9 Update the 5 rewritable root references: `AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`
+  - [ ] 1.9a Add `!/docs/product.md` and `!/docs/tech.md` to `.gitignore` (AC-8). Line 25 is `/docs/*.md` with per-document negations; without these two, both renamed files are ignored. Verify with `git check-ignore -v docs/product.md` — it must exit non-zero after the fix
   - [ ] 1.10 Add the fallback-resolution paragraph (new name first, old name only if absent) to `activity-init` and every skill/agent that reads a foundation document, identically in all three trees
   - [ ] 1.11 Add those fallback locations to the test's `EXEMPT_FILES` allowlist, each with a reason comment
   - [ ] 1.12 Verify AC-1: `git log --follow docs/product.md` shows the rename and no content change
@@ -128,7 +131,7 @@ None. Phase 1 is additive plus one rename.
   - [ ] 3.4 Add `templates/runbooks/README.md` (index template) and `templates/runbooks/runbook-template.md`
   - [ ] 3.5 Register both in `INSTALL_IF_ABSENT_FILES` with the agnostic tag
   - [ ] 3.6 Author `runbook-install-dev-tasks` and `runbook-configure-branch-protection`
-  - [ ] 3.7 Author `runbook-release-npm` (related: `scripts/release.sh`, `.github/workflows/publish-npm.yml`, `.github/workflows/release-bundle.yml`)
+  - [ ] 3.7 Author `runbook-release-npm` (related: **`templates/scripts/release.sh`** — the consumer template, 6443 B, *not* this repo's own `scripts/release.sh`, 13617 B; only the template is an AC-25 surface — plus `.github/workflows/publish-npm.yml` and `.github/workflows/release-bundle.yml`)
   - [ ] 3.8 Author `runbook-deploy-service` (related: `templates/scripts/deploy.sh`, `deploy-verify.sh`, `deploy-status.sh`, `templates/workflows/deploy-dev.yml`, `deploy-prod.yml`) — the tenth runbook that closes AC-25; see Open Items
   - [ ] 3.9 Author `runbook-rollback-deploy` (related: `templates/scripts/rollback.sh`, `templates/workflows/rollback.yml`)
   - [ ] 3.10 Author `runbook-migrate-foundation-docs` (related: the S-002 command), `runbook-troubleshoot-hooks`, `runbook-setup-supabase-local`, `runbook-setup-simplicity-tooling`, `runbook-retire-dt`
@@ -147,14 +150,15 @@ None. Phase 1 is additive plus one rename.
 
   - [ ] 4.1 Write `test/unit/checks-docs-structure.test.ts` first, with fixtures under `test/fixtures/docs-structure/` for each condition
   - [ ] 4.2 Implement `core/checks/docs-structure.ts` returning failures and staleness findings separately
-  - [ ] 4.3 Condition: index lists a file that does not exist (AC-2)
-  - [ ] 4.4 Condition: index omits a file that exists in its directory (AC-3)
-  - [ ] 4.5 Condition: runbook frontmatter missing/invalid, or filename not matching `runbook-<verb>-<object>.md` (AC-4)
+  - [ ] 4.3 Condition: index lists a file that does not exist (AC-2) — resolve repo-root-aware and tolerate directory links, or `docs/README.md`'s links to `../README.md`, `requirements/`, and five root files produce false failures on the clean tree (AC-10)
+  - [ ] 4.4 Condition: index omits a file that exists in its directory (AC-3) — **non-recursive**, or the seven ADRs and four PRDs that no index lists individually are flagged (AC-10)
+  - [ ] 4.5 Condition: runbook frontmatter missing/invalid, or filename not matching `^runbook-[a-z0-9]+(-[a-z0-9]+)+\.md$` (AC-4)
   - [ ] 4.6 Condition: `related` entry names a script or workflow that does not exist (AC-5)
   - [ ] 4.7 Reported-not-failed: `last_verified` older than 90 days (AC-6, D-21)
   - [ ] 4.8 Absent `docs/runbooks/` reports nothing (AC-9)
-  - [ ] 4.9 Add `core/checks/run.ts` and `core/checks/index.ts`; chain `node dist/core/checks/run.js` into the `lint` script after `eslint`
-  - [ ] 4.10 Confirm `yaml` belongs in `devDependencies` — if the check only runs in this repository's `lint`, do **not** move it to `dependencies`
+  - [ ] 4.9 Add `core/checks/run.ts` and `core/checks/index.ts`; chain **`tsx core/checks/run.ts`** into the `lint` script after `eslint` (D-48). Do **not** use a `dist/` path: `dist/` is gitignored and untracked, `validate` has no `build` step, and `publish-npm.yml` runs `validate` before `build`, so a compiled path fails every fresh clone and breaks the first release after merge
+  - [ ] 4.9a Verify D-48 the way the defect was found: clone the branch into a scratch directory and run `pnpm install && pnpm run lint` **without** running `build` first; it must pass
+  - [ ] 4.10 Hand-parse the five fixed frontmatter keys; do **not** promote `yaml` to `dependencies` (D-49). The check ships to consumers inside `dist/core/` (`package.json` `files`), where devDependencies are absent, and task 4.11 makes the `verifier` a second caller in consumer repositories
   - [ ] 4.11 Point the `verifier` at the same exported function for its audit summary; the logic is not duplicated
   - [ ] 4.12 Verify AC-7: `lint` still exits non-zero on an ESLint failure independently of the docs check
   - [ ] 4.13 Verify AC-8 by inspection: no registry, no plugin interface, no abstraction for future checks
@@ -241,6 +245,8 @@ None. Phase 1 is additive plus one rename.
 | S-001 | AC-4, AC-5  | 1.14           |
 | S-001 | AC-6        | 1.15           |
 | S-001 | AC-7        | 1.17           |
+| S-001 | AC-8        | 1.9a           |
+| S-004 | AC-10       | 4.3, 4.4       |
 | S-002 | AC-1, 2, 6  | 2.11           |
 | S-002 | AC-3        | 2.10           |
 | S-002 | AC-4        | 2.11           |
@@ -270,6 +276,8 @@ None. Phase 1 is additive plus one rename.
 
 ## Open Items Carried From the Stories
 
-1. **`runbook-deploy-service`** (task 3.8) is a tenth runbook beyond FR-47's named nine, required to satisfy PRD AC-25 for the deploy surface. Pending confirmation as `D-46`.
-2. **One consolidated PR** versus three by family. Pending confirmation as `D-47`.
+1. ~~**`runbook-deploy-service`** (task 3.8) is a tenth runbook beyond FR-47's named nine.~~ Confirmed as `D-46`; Design Mode independently verified the coverage arithmetic.
+2. ~~**One consolidated PR** versus three by family.~~ Confirmed as `D-47`.
+4. **FR-49a's 18 infra change kinds** have no covering criterion. Recommendation: defer, recorded as `D-51`. **Pending confirmation.**
+5. **`dev-tasks migrate` is detect-and-apply, not detect-and-propose**, contrary to FR-45 and the spec's description. Recommendation: correct the description, do not change legacy behavior. Recorded as `D-52`. **Pending confirmation.**
 3. ~~**GitHub issues** for S-001 to S-007 are not yet created (task 0.3).~~ Done: #202 to #208.

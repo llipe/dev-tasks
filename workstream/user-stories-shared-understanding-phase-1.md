@@ -6,6 +6,7 @@
 | ------- | ---------- | ---------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-19 | Initial version. Seven stories covering PRD FR-44 to FR-51 and FR-59 to FR-64. | product-engineer |
 | 1.1     | 2026-09-19 | S-002 gains AC-8: `README.md` must document the `migrate docs` process so a consumer upgrading across the release learns it from the README alone. | @llipe / product-engineer |
+| 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-46 to D-52). S-001: AC-2 scoped to rewritable files with ADRs/PRDs/`workstream/` excluded (D-50), AC-3 must not copy Phase 0's scan roots, new AC-8 for `.gitignore`, count corrected to 51. S-003: AC-5 names `templates/scripts/release.sh`, not this repo's `scripts/release.sh`. S-004: AC-1 "pure" restated, AC-4 gains a checkable filename regex and hand-parsed frontmatter (D-49), AC-7 pinned to `tsx` not `dist/` (D-48), new AC-10 for the two false-failure constraints. | verifier / product-engineer |
 
 ## Source Documents
 
@@ -62,12 +63,13 @@ So that every skill written in Phases 2 to 6 names the same file the repository 
 #### Acceptance Criteria
 
 - [ ] AC-1: `docs/product-context.md` is `docs/product.md` and `docs/technical-guidelines.md` is `docs/tech.md`, moved with `git mv`, content byte-identical (FR-44, FR-46).
-- [ ] AC-2: No file under `.claude/`, `.github/`, `.kiro/`, `core/`, `bin/`, `test/`, `docs/`, or the repository root references `product-context.md` or `technical-guidelines.md`, except the fallback-rule paragraph itself (PRD AC-22).
-- [ ] AC-3: A parity test asserts AC-2, with the fallback-rule locations in an explicit, commented allowlist — the `EXEMPT_FILES` pattern `test/unit/dt-retirement-absence.test.ts` established in Phase 0.
+- [ ] AC-2: No **rewritable** file under `.claude/`, `.github/`, `.kiro/`, `core/`, `bin/`, `test/`, `docs/`, or the repository root references `product-context.md` or `technical-guidelines.md` (PRD AC-22). Four exclusions, per D-50: the fallback-rule paragraphs; `docs/adr/**` (D-35 — an ADR is never rewritten, and ADR-007 records what Phase 0 changed); `docs/requirements/**` (a PRD is a historical statement of intent, and FR-44's own text names the old files); and `workstream/**` (archived per-feature records, outside AC-22's enumerated scope). PRD AC-22 also names `adapters/`, which Phase 0 deleted (D-34) — dropping it is deliberate, not drift.
+- [ ] AC-3: A parity test asserts AC-2, with every exclusion in an explicit, commented allowlist. Its scan roots are **not** copied from `test/unit/dt-retirement-absence.test.ts`: that guard omits `docs/` entirely, which is exactly where the immutable records live, so copying it would pass while checking nothing. It must also exclude `workstream/`, where 24 tracked files carry the old names.
 - [ ] AC-4: Every skill and agent that reads a foundation document carries the fallback rule: resolve `docs/product.md` first, fall back to `docs/product-context.md` only when the new name is absent; same for the `tech.md`/`technical-guidelines.md` pair (FR-45).
 - [ ] AC-5: The fallback rule is prose in the prompt content, not a new runtime module — no `core/` code is added for it (spec §8.1).
 - [ ] AC-6: The three prompt trees stay at parity; the fallback rule and the renamed references are identical in `.claude/`, `.github/`, and `.kiro/`.
 - [ ] AC-7: `pnpm run validate` passes with the D-40 five-name failure baseline unchanged.
+- [ ] AC-8: `.gitignore` gains `!/docs/product.md` and `!/docs/tech.md`. Line 25 is `/docs/*.md` with a per-document negation list; without new negations both renamed files are ignored — verified: `git check-ignore -v docs/product.md` resolves to `.gitignore:25` today. `git mv` survives it, so the rename commit looks clean and the failure only surfaces later, when a `git add` of either file is silently refused.
 
 #### Business Rules
 
@@ -76,7 +78,7 @@ So that every skill written in Phases 2 to 6 names the same file the repository 
 
 #### Technical Notes
 
-- Reference counts by tree, measured on `a9f7eef`: `.claude/` 10, `.github/` 11, `.kiro/` 12, `docs/` 10, `test/` 2, root 5 (`AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`). `core/`, `bin/`, and `templates/` carry none.
+- Reference counts by tree, re-measured at Design Mode: `.claude/` 10, `.github/` 11, `.kiro/` 12, `docs/` 10, `test/` 2, root 6 (`AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`, `.gitignore`) = **51**. `core/`, `bin/`, `templates/`, and `scripts/` carry none. Of the 51, 20 are excluded from rewriting per AC-2 (4 ADR files, 3 PRDs, and the fallback-rule locations), plus 24 `workstream/` files outside the scanned scope.
 - `git mv` keeps rename detection in the diff, which is what makes a 50-file change reviewable.
 - `docs/README.md`'s index rows change with the filenames.
 
@@ -218,7 +220,7 @@ So that the procedure is repeatable instead of reconstructed from memory each ti
 - [ ] AC-2: `dev-tasks install` scaffolds `docs/runbooks/`, `docs/runbooks/README.md` (the index), and a runbook template, all install-if-absent — never overwritten once present.
 - [ ] AC-3: This repository carries the initial runbook set: `runbook-install-dev-tasks`, `runbook-configure-branch-protection`, `runbook-setup-simplicity-tooling`, `runbook-migrate-foundation-docs`, `runbook-release-npm`, `runbook-deploy-service`, `runbook-rollback-deploy`, `runbook-troubleshoot-hooks`, `runbook-setup-supabase-local`, `runbook-retire-dt` (FR-47 plus `runbook-deploy-service` — see Business Rules).
 - [ ] AC-4: Every runbook carries valid frontmatter (`name`, `trigger`, `owner`, `last_verified`, `related`) and the five fixed body headings: Preconditions, Steps, Verification, Rollback, Escalation (FR-48).
-- [ ] AC-5: Every file under `templates/scripts/` (5), `templates/workflows/` (3), and `.github/workflows/` (2) appears in the `related` field of at least one runbook (PRD AC-25).
+- [ ] AC-5: Every file under `templates/scripts/` (5), `templates/workflows/` (3), and `.github/workflows/` (2) appears in the `related` field of at least one runbook (PRD AC-25). Note the near-miss: `templates/scripts/release.sh` (6443 B, the consumer template) and `scripts/release.sh` (13617 B, this repository's own release script) are different files, and only the former is an AC-25 surface. `runbook-release-npm` must name the template; naming this repo's script instead leaves the tenth file uncovered while appearing complete.
 - [ ] AC-6: `docs/runbooks/README.md` lists every runbook on disk, with trigger, owner, and last-verified columns.
 - [ ] AC-7: `docs/README.md` links `docs/runbooks/`.
 - [ ] AC-8: `bundle-manifest.json` and `consumer_owned_paths` carry the runbooks directory, so `update` never overwrites a consumer's filled runbook.
@@ -290,13 +292,14 @@ This story creates `core/checks`, the module FR-57 reserved and D-33 kept out of
 
 #### Acceptance Criteria
 
-- [ ] AC-1: `core/checks/docs-structure.ts` exports a pure function that takes a repository root and returns failures and staleness findings separately.
+- [ ] AC-1: `core/checks/docs-structure.ts` exports a deterministic, side-effect-free function that takes a repository root, reads the filesystem, and returns failures and staleness findings separately. ("Pure" in an earlier draft was self-contradictory for a function whose whole job is reading files; the checkable property is that it writes nothing and returns the same result for the same tree.)
 - [ ] AC-2: `validate` fails when `docs/README.md` or `docs/runbooks/README.md` lists a file that does not exist (PRD AC-32).
 - [ ] AC-3: `validate` fails when either index omits a file that does exist in its directory (PRD AC-32).
-- [ ] AC-4: `validate` fails on a runbook with missing or invalid frontmatter, or a misnamed runbook file (PRD AC-24).
+- [ ] AC-4: `validate` fails on a runbook with missing or invalid frontmatter, or a filename not matching `^runbook-[a-z0-9]+(-[a-z0-9]+)+\.md$` (PRD AC-24). A stricter verb-then-object rule is not machine-checkable — `runbook-configure-branch-protection` and `runbook-setup-supabase-local` both parse ambiguously. Frontmatter is hand-parsed over the five fixed keys, not `yaml`-parsed (D-49).
 - [ ] AC-5: `validate` fails on a `related` entry naming a script or workflow that does not exist (PRD AC-24).
 - [ ] AC-6: A runbook whose `last_verified` exceeds 90 days is reported and does **not** fail the gate (PRD AC-24, D-21).
-- [ ] AC-7: The check runs under `lint`, so `validate` reaches it, and `lint` still exits non-zero on ESLint failures independently.
+- [ ] AC-7: The check runs under `lint` as `tsx core/checks/run.ts` (D-48), so `validate` reaches it in a fresh clone and in CI, and `lint` still exits non-zero on ESLint failures independently. It **must not** invoke a `dist/` path: `dist/` is gitignored with zero tracked files, `validate` has no `build` step, and `publish-npm.yml` runs `validate` before `build` — a compiled path passes only on a machine whose `dist/` is already warm.
+- [ ] AC-10: Rule 1 (index lists a missing file) resolves paths repo-root-aware and tolerates directory links; rule 2 (index omits an existing file) is non-recursive. Without both, the clean tree produces five or more false failures from `docs/README.md`'s links to `../README.md`, `requirements/`, and five root files, plus the seven ADRs and four PRDs that no index lists individually.
 - [ ] AC-8: `core/checks` contains no registry, plugin interface, or abstraction for the checks Phases 3, 5, and 6 will add (spec §4, `SIMPLICITY.md` A4).
 - [ ] AC-9: An absent `docs/runbooks/` is not a failure — the check reports nothing for a repository that has not adopted runbooks.
 
@@ -615,8 +618,12 @@ Not applicable.
 
 ## Open Items for Confirmation
 
-1. **A tenth runbook.** FR-47 names nine. Those nine leave `templates/scripts/{deploy,deploy-verify,deploy-status}.sh` and `templates/workflows/{deploy-dev,deploy-prod}.yml` with no `related` entry, which fails PRD AC-25. S-003 adds `runbook-deploy-service` to close it. Confirm, and it is recorded as `D-46`.
-2. **Delivery shape.** Seven stories, one consolidated PR on `integration/prd-shared-understanding-phase-1` (Phase 0's D-29 shape), versus three smaller PRs by family (rename / runbooks / repository shape). Recommendation: one PR — S-001 touches 50 files that every later story then references, so parallel branches conflict in exactly those files. Confirm, and it is recorded as `D-47`.
+Resolved at Design Mode: the tenth runbook (`D-46`, arithmetic independently confirmed) and the one-consolidated-PR shape (`D-47`).
+
+Two remain, both scope calls on PRD requirements rather than design details:
+
+1. **FR-49a's infra change kinds (`D-51`, pending).** FR-49a requires a runbook for "every `infra-engineer` change kind." There are 18. Recommendation: defer, recorded rather than silent — five are read-only discovery (discover AWS/Fly/Supabase, log triage, cost sweep) and are not procedures worth a runbook, and the rest have no script or workflow for FR-49a's "same draft PR" rule to attach to. S-007 AC-4 states the rule going forward, so the next `infra-engineer` change that touches a kind brings its runbook. Authoring 18 now would be the largest single item in the phase, for content nobody has exercised.
+2. **The `migrate` contract description (`D-52`, pending).** FR-45 and the spec both describe `dev-tasks migrate` as "detect-and-propose." It is not: `runMigration()` takes no options and writes the manifest unconditionally. Recommendation: correct the description only. Adding a dry-run to the legacy path changes a shipped command's default behavior — a breaking CLI change to Phase 0 code, outside this phase's scope. The resulting asymmetry (`migrate` applies, `migrate docs` proposes) is then documented rather than papered over.
 
 ## Execution Plan
 
