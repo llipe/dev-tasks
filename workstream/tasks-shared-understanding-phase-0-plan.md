@@ -4,7 +4,8 @@
 
 | Version | Date       | Summary                                               | Author           |
 | ------- | ---------- | ------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-18 | Initial version. Five stories, issues #195 to #199.   | product-engineer |
+| 1.0     | 2026-09-18 | Initial version. Five stories, issues #195 to #199.                                                    | product-engineer |
+| 1.1     | 2026-09-19 | Verifier corrections: five-failure baseline as a set (D-40), both publish assertions, four alias files, format globs, exit-code repoint, six expected test edits, bitbucket template. | verifier / product-engineer |
 
 ## Scope
 
@@ -23,7 +24,7 @@ All five Phase 0 stories, delivered on one integration branch as one consolidate
 
 ### Baseline to record before starting
 
-Run `pnpm run test` on `main` and save the failing-test list. The phase is correct when exactly these 4 remain (D-36):
+Run `pnpm run test` on `main` and save the failing-test list. Eleven fail today; **six** live in files this phase deletes (four `ctxFetch`, two `dt init --components`). The phase is correct when exactly these **five** remain, compared as a set of full test names rather than as a count (D-40, superseding D-36 which said four and miscounted):
 
 | Failing test                                             | Cause          |
 | ---------------------------------------------------------- | -------------- |
@@ -32,7 +33,7 @@ Run `pnpm run test` on `main` and save the failing-test list. The phase is corre
 | `deploy.sh > exits 2 when yq is missing from PATH`         | `yq` present   |
 | `bootstrap > doctor` (2 integration cases)                 | environment    |
 
-A fifth failure at any point is caused by this work.
+A sixth failure, or the disappearance of one of these five, is caused by this work. Compare sets, not counts: a count survives a regression that removes one failure and introduces another.
 
 ## Relevant Files
 
@@ -58,7 +59,10 @@ A fifth failure at any point is caused by this work.
 - `bin/dev-tasks.ts` — import path
 - `core/index.ts` — barrel pruned; `core/exit-codes.ts` — `dt`-only codes removed
 - `package.json`, `pnpm-lock.yaml` — bin, imports, files, dependencies, version
-- `.github/workflows/publish-npm.yml` — `dist/bin/dt.js` assertion
+- `.github/workflows/publish-npm.yml` — `dist/bin/dt.js` and `dist/adapters` assertions
+- `tsconfig.json`, `vitest.config.ts`, `eslint.config.js` — the `#adapters` alias, includes, and restricted-path zone
+- `templates/bitbucket-pipelines.yml` — `dt catalog` steps
+- `test/unit/exit-codes.test.ts` and four parity tests — expected edits, enumerated in the story
 - `test/integration/binaries.test.ts` — `dt` cases removed, absence asserted
 - 27 prompt files across `.claude/`, `.github/`, `.kiro/`
 - `AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`
@@ -71,7 +75,7 @@ A fifth failure at any point is caused by this work.
 - [ ] 0.0 Set up the integration branch and baseline
 
   - [ ] 0.1 Confirm `main` is current; create `integration/prd-shared-understanding-phase-0`
-  - [ ] 0.2 Run `pnpm run test` and record the failing-test list as the 4-failure baseline in the PR draft
+  - [ ] 0.2 Run `pnpm run test` and save the **full failing-test names** to a file; this set, minus the six in deleted files, is the baseline every later gate compares against
   - [ ] 0.3 Run `pnpm run build` and confirm both `dist/bin/dev-tasks.js` and `dist/bin/dt.js` exist, so their later absence is meaningful
   - [ ] 0.4 Open the draft PR after the first commit, per the `implement` rules
 
@@ -85,16 +89,21 @@ A fifth failure at any point is caused by this work.
   - [ ] 1.4 Delete `core/catalog/`, `core/context/`, `core/extract/`, `core/scope/`, `core/verify/`, `core/providers/`
   - [ ] 1.5 Delete `schemas/` and `templates/meta-repo/`
   - [ ] 1.6 Prune `core/index.ts` to `ExitCode`, `ExitCodeValue`, `reconcile`, `ReconcileAction`, `distribution`
-  - [ ] 1.7 Remove `dt`-only codes from `core/exit-codes.ts`, leaving every `dev-tasks` code at its current numeric value
-  - [ ] 1.8 Remove `#adapters/*` from `package.json` `imports`; remove `schemas/` and `dist/adapters/` from `files`
+  - [ ] 1.7 Enumerate the codes `bin/dev-tasks.ts` actually returns, then prune `core/exit-codes.ts` to those at unchanged numeric values. Note `bin/dev-tasks.ts:237` returns `ExitCode.DependencyError`, a deprecated alias of the `dt`-only `NoCandidates: 11` — repoint it at a retained code
+  - [ ] 1.7a Update `test/unit/exit-codes.test.ts`, which asserts the full fifteen-code table and fails on any prune
+  - [ ] 1.8 Remove the `#adapters` alias and the deleted directories from **all four** files that name them:
+  - [ ] 1.8a `package.json` — `bin`, `imports`, `files`, and the `"adapters/"` and `"schemas/"` entries in the `format` and `format:check` globs (`prettier --check` exits 2 on a missing pattern)
+  - [ ] 1.8b `tsconfig.json` — `paths` and `include`
+  - [ ] 1.8c `vitest.config.ts` — the alias and the coverage `include`
+  - [ ] 1.8d `eslint.config.js` — the `core/` → `adapters/` restricted-path zone
   - [ ] 1.9 Run `pnpm run typecheck`; resolve only dangling references, never by re-adding deleted code
   - [ ] 1.10 Verify AC-1: the nine deleted paths no longer exist
   - [ ] 1.11 Verify AC-2: `adapters/` is gone and `bin/parse-args.ts` exists
   - [ ] 1.12 Verify AC-3 and AC-4 by inspecting `package.json` and `core/index.ts`
   - [ ] 1.13 Verify AC-5: diff `core/exit-codes.ts` and confirm no retained code changed value
-  - [ ] 1.14 Verify AC-6: `pnpm run typecheck` and `pnpm run build` pass
+  - [ ] 1.14 Verify AC-6: `pnpm run typecheck`, `pnpm run build`, `pnpm run lint`, and `pnpm run format:check` all pass
   - [ ] 1.15 Verify AC-7: run `node dist/bin/dev-tasks.js --version`, `--help`, `status`, `doctor` and compare against the baseline output
-  - [ ] 1.16 Run Tests: `pnpm run test:unit`; every retained test must pass unmodified. A retained test needing an edit is a stop signal — report, do not fix
+  - [ ] 1.16 Run Tests: `pnpm run test:unit`. Six retained tests are expected to change across this phase (`binaries`, `exit-codes`, and four parity tests — see the story). A **seventh** is a stop signal: report, do not fix
   - [ ] 1.17 Run `pnpm run lint` and `pnpm run format:check`
   - [ ] 1.18 Commit as `refactor(core)!: remove the dt source tree and rewire the package`
 
@@ -106,8 +115,8 @@ A fifth failure at any point is caused by this work.
   - [ ] 2.2 Delete `test/fixtures/catalog`, `context`, `extract`, `schemas`, `verify`
   - [ ] 2.3 Verify AC-2: `test/fixtures/git-guard`, `infra`, `qa-standards` are untouched
   - [ ] 2.4 Amend `test/integration/binaries.test.ts`: remove the four `dt` cases, add an assertion that `dist/bin/dt.js` does not exist
-  - [ ] 2.5 Run Tests: `pnpm run test`; confirm exactly 4 failures and that each is on the baseline list
-  - [ ] 2.6 Verify AC-5: if a fifth failure appears, stop and diagnose before continuing
+  - [ ] 2.5 Run Tests: `pnpm run test`; confirm the failing set equals the five baseline names exactly
+  - [ ] 2.6 Verify AC-5: any name added to or missing from that set stops the work until diagnosed
   - [ ] 2.7 Restore the test fixture the suite mutates (`test/fixtures/catalog/catalog/index.yaml` is deleted here, so confirm no retained fixture is left dirty by the run)
   - [ ] 2.8 Commit as `test: remove dt tests and fixtures`
   - [ ] 2.9 Write `test/unit/dt-retirement-absence.test.ts`: scan `bin/`, `core/`, `test/`, `.claude/`, `.github/`, `.kiro/`, `AGENTS.md`, `CLAUDE.md` for `dt` command forms, `component.json`, and meta-repo references
@@ -126,7 +135,8 @@ A fifth failure at any point is caused by this work.
   - [ ] 3.4 Move `yaml` from `dependencies` to `devDependencies`
   - [ ] 3.5 Verify AC-4: `execa` remains in `dependencies`, since `core/distribution/fetch-package.ts` uses it
   - [ ] 3.6 Run `pnpm install` and commit the regenerated `pnpm-lock.yaml`
-  - [ ] 3.7 Edit `.github/workflows/publish-npm.yml`: remove the `dist/bin/dt.js` assertion, keep the `dist/bin/dev-tasks.js` one
+  - [ ] 3.7 Edit `.github/workflows/publish-npm.yml` `Verify dist output`: **two** assertions break, line 69 `dist/bin/dt.js` and line 71 `dist/adapters`. Remove both; keep `dist/bin/dev-tasks.js` and `dist/core`
+  - [ ] 3.7a Add a test that parses the step and asserts every path it names exists after `pnpm run build`, so this class cannot recur at publish time
   - [ ] 3.8 Verify AC-6: `pnpm install` reports no missing-peer warnings
   - [ ] 3.9 Run `pnpm audit --prod` and paste the result into the PR body
   - [ ] 3.10 Verify AC-7: `pnpm run build` produces `dist/bin/dev-tasks.js` and no `dist/bin/dt.js`
@@ -148,6 +158,7 @@ A fifth failure at any point is caused by this work.
   - [ ] 4.8 Remove the Cross-Repo Partitioning section (RF-63) from the same three files (AC-5, AC-6)
   - [ ] 4.9 Check `AGENTS.md` against the size budget in `docs/agents-md-guidelines.md`
   - [ ] 4.10 Manual check: read `activity-init` end to end in one tree; confirm no orphaned step numbers and no dangling references
+  - [ ] 4.10a Remove the `dt catalog build` and `dt catalog validate` steps from `templates/bitbucket-pipelines.yml`, which ships to consumers and is in no other inventory
   - [ ] 4.11 Verify AC-1 and AC-8: run the absence test; it must now pass
   - [ ] 4.12 Run Tests: `pnpm run test:unit`; the agent and skill parity suites must pass (AC-7)
   - [ ] 4.13 Run `pnpm run validate`
@@ -173,7 +184,7 @@ A fifth failure at any point is caused by this work.
 
 - [ ] 6.0 Completion gates
 
-  - [ ] 6.1 Run `pnpm run validate` and confirm the 4-failure baseline, no fifth failure
+  - [ ] 6.1 Run `pnpm run validate`; the failing set equals the five baseline names exactly, with `lint` and `format:check` green
   - [ ] 6.2 Run `pnpm audit --prod` and record the result
   - [ ] 6.3 Map every acceptance criterion across S-001 to S-005 to its evidence; record the mapping in the PR body
   - [ ] 6.4 Run `qa-engineer` at the completion gate and record `coverage_gate: PASS | FAIL | SKIPPED(<reason>)`

@@ -4,7 +4,8 @@
 
 | Version | Date       | Summary                                                              | Author           |
 | ------- | ---------- | ---------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-18 | Initial version. Five stories covering PRD FR-53 to FR-58.           | product-engineer |
+| 1.0     | 2026-09-18 | Initial version. Five stories covering PRD FR-53 to FR-58.                                                                                                                                                          | product-engineer |
+| 1.1     | 2026-09-19 | Verifier Design Mode corrections: pass signal is the five named failures as a set, not a count of four (D-40); `publish-npm.yml` asserts two deleted paths; the `#adapters` alias spans four files; `format` globs break the gate; the exit-code prune touches the retained binary; six retained tests must change, enumerated. | verifier / product-engineer |
 
 ## Source Documents
 
@@ -51,10 +52,10 @@ So that the code I maintain is the code I actually use.
 
 - [ ] AC-1: `bin/dt.ts`, `core/catalog`, `core/context`, `core/extract`, `core/scope`, `core/verify`, `core/providers`, `schemas/`, and `templates/meta-repo/` no longer exist.
 - [ ] AC-2: `adapters/` no longer exists; `parse-args.ts` lives at `bin/parse-args.ts` and `bin/dev-tasks.ts` imports it by relative path.
-- [ ] AC-3: `package.json` has no `dt` bin entry, no `#adapters/*` import alias, and no `schemas/` or `dist/adapters/` entry in `files`.
+- [ ] AC-3: The `#adapters` alias and the deleted directories are gone from all four files that name them: `package.json` (`bin`, `imports`, `files`, and the `format`/`format:check` globs), `tsconfig.json` (`paths`, `include`), `vitest.config.ts` (alias, coverage `include`), and `eslint.config.js` (the `core/` → `adapters/` restricted-path zone).
 - [ ] AC-4: `core/index.ts` exports only `ExitCode`, `ExitCodeValue`, `reconcile`, `ReconcileAction`, and `distribution`.
-- [ ] AC-5: `core/exit-codes.ts` retains every code the `dev-tasks` binary can return, with unchanged numeric values; `dt`-only codes are removed.
-- [ ] AC-6: `pnpm run typecheck` and `pnpm run build` both pass.
+- [ ] AC-5: `core/exit-codes.ts` retains, at unchanged numeric values, exactly the codes the `dev-tasks` binary returns, enumerated in the commit message. `bin/dev-tasks.ts:237` currently returns `ExitCode.DependencyError`, a deprecated alias of the `dt`-only `NoCandidates: 11`; it is repointed at a retained code. `test/unit/exit-codes.test.ts`, which asserts the full fifteen-code table, is updated in the same commit.
+- [ ] AC-6: `pnpm run typecheck`, `pnpm run build`, `pnpm run lint`, and `pnpm run format:check` all pass. `format:check` is named explicitly because its globs reference two deleted directories and `prettier --check` exits 2 on a missing pattern.
 - [ ] AC-7: `dev-tasks --help`, `--version`, `status`, and `doctor` behave exactly as before.
 
 #### Business Rules
@@ -132,18 +133,28 @@ So that the retirement cannot quietly regress.
 - [ ] AC-2: `test/fixtures/{git-guard,infra,qa-standards}` are untouched.
 - [ ] AC-3: `test/integration/binaries.test.ts` no longer contains `dt` cases and asserts `dist/bin/dt.js` does not exist.
 - [ ] AC-4: A new absence test fails when any file under `bin/`, `core/`, `test/`, `.claude/`, `.github/`, `.kiro/`, `AGENTS.md`, or `CLAUDE.md` references `dt ` as a command, `component.json`, or the meta-repo.
-- [ ] AC-5: `pnpm run test` reports exactly 4 failures, all pre-existing (two `doctor` integration cases, one `doctor` unit case, one `update` backup case, one `deploy.sh` case).
+- [ ] AC-5: `pnpm run test` fails on exactly the five pre-existing cases captured at task 0.2 and no others, compared as a set of full test names rather than as a count.
 - [ ] AC-6: The absence test is currently failing for the prompt trees, which S-004 resolves; it is committed after the code deletion and expected red until S-004 lands.
 
 #### Business Rules
 
-- No retained test is modified except `binaries.test.ts`. Any other retained test needing an edit means the seam analysis was wrong; stop and report.
+- Six retained tests are expected to change, and no others. Any seventh is a stop signal, not a fix.
+
+| Test | Change |
+| --- | --- |
+| `binaries.test.ts` | remove `dt` cases, assert `dist/bin/dt.js` absent |
+| `architecture-change-parity.test.ts` | delete with the `AGENTS.md` block it asserts |
+| `cross-repo-partitioning-parity.test.ts` | delete with the block it asserts |
+| `skill-parity-init.test.ts` | drop eight `dt` and multi-repo assertions |
+| `researcher-parity.test.ts` | drop the `component.json` assertion |
+| `skill-parity-testing-layers.test.ts` | drop `dt verify impact` and `dt verify drift` |
+| `exit-codes.test.ts` | update the fifteen-code table (S-001) |
 - A test is never skipped or quarantined to reach green (`SIMPLICITY.md` and the repository testing rules).
 
 #### Technical Notes
 
 - `test/integration/extract-component.test.ts` and `test/unit/extract-component.test.ts` import `hashContent` from `core/distribution`, but only as a helper. They are `dt` tests and are deleted.
-- The expected-failure count of 4 is the acceptance signal (D-36). A fifth failure is caused by this change.
+- The acceptance signal is set equality with the five failures captured at task 0.2 (D-40, superseding D-36 which said four and miscounted). A count is not enough: it survives a regression that removes one failure and adds another, which is the shape this phase is prone to.
 - The absence test belongs beside the existing parity tests and should read files rather than shell out, so it works on every platform.
 
 #### Testing Requirements
@@ -200,7 +211,7 @@ So that the published package stops carrying weight it does not use and the next
 - [ ] AC-2: The `fast-uri` entry in `pnpm.overrides` is removed, since it exists only for `ajv`.
 - [ ] AC-3: `yaml` moves from `dependencies` to `devDependencies`; after removal only `test/unit/infra-workflow-templates.test.ts` imports it.
 - [ ] AC-4: `execa` stays in `dependencies`.
-- [ ] AC-5: `.github/workflows/publish-npm.yml` no longer asserts `dist/bin/dt.js`, and still asserts `dist/bin/dev-tasks.js`.
+- [ ] AC-5: `.github/workflows/publish-npm.yml` asserts no deleted path. **Two** of its assertions break, not one: line 69 checks `dist/bin/dt.js` and line 71 checks `dist/adapters`. It still asserts `dist/bin/dev-tasks.js` and `dist/core`. A test parses the `Verify dist output` step and asserts every path it names exists after a build, so the class is closed rather than these two instances.
 - [ ] AC-6: `pnpm install` resolves with no missing-peer warnings; `pnpm audit --prod` result recorded in the pull request.
 - [ ] AC-7: `pnpm run build` produces `dist/bin/dev-tasks.js` and no `dist/bin/dt.js`.
 
@@ -269,7 +280,7 @@ So that I stop spending context on a mode that can never trigger.
 - [ ] AC-4: `activity-codebase-research`, `researcher`, `product-engineer`, and `qa-engineer` carry no `dt` invocation in any tree.
 - [ ] AC-5: `AGENTS.md` has no Task Types / `architecture-change` section (RF-62, RF-64) and no Cross-Repo Partitioning section (RF-63); `CLAUDE.md` loses the matching rules.
 - [ ] AC-6: `AGENTS.md.template` receives the same removals, so new installs do not ship the rules.
-- [ ] AC-7: The three trees remain at parity; the existing parity tests pass.
+- [ ] AC-7: The three trees remain at parity. Five parity tests assert content this story removes and are therefore changed, not merely kept passing: `architecture-change-parity` and `cross-repo-partitioning-parity` are deleted with the blocks they assert; `skill-parity-init`, `researcher-parity`, and `skill-parity-testing-layers` lose their `dt` assertions. Every other parity test passes unmodified, and a new check asserts set equality of skill directory names across the three trees.
 - [ ] AC-8: The S-002 absence test now passes.
 
 #### Business Rules

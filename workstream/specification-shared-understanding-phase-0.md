@@ -5,6 +5,7 @@
 | Version | Date       | Summary                                                                  | Author           |
 | ------- | ---------- | ------------------------------------------------------------------------ | ---------------- |
 | 1.0     | 2026-09-18 | Initial version. Covers PRD FR-53 to FR-58 (Phase 0, retire `dt`).                                                                                                    | product-engineer |
+| 1.2     | 2026-09-19 | Verifier Design Mode corrections. The pass signal is **5** remaining failures, not 4 — a recount error (D-40 supersedes D-36). Four further gaps closed: `publish-npm.yml` also asserts `dist/adapters`; the `#adapters` alias lives in four files, not one; `format`/`format:check` glob deleted directories and exit 2; `bin/dev-tasks.ts` returns a `dt`-only exit code through a deprecated alias. `templates/bitbucket-pipelines.yml` and five parity tests added to the inventory. | verifier / product-engineer |
 | 1.1     | 2026-09-18 | All three open questions resolved. Restore tag confirmed as `v0.13.0` (`0a6f35e`) via the GitHub API. `prd-multi-repo-context.md` is deleted. One pull request, seven commits. HOW decisions confirmed and renumbered `D-28` to `D-38` into the feature's single decision-log ID space. | @llipe / product-engineer |
 
 ## 1. Executive Summary
@@ -162,9 +163,26 @@ Each numbered step is one commit, and `pnpm run typecheck` must pass at every st
 Four files must be edited, and getting any of them wrong breaks a gate rather than a test:
 
 1. **`core/index.ts`** — the barrel re-exports `catalog`, `extract`, `context`, `scope`, `providers`, and `verify`. Prune to `ExitCode`, `ExitCodeValue`, `reconcile`, `ReconcileAction`, and `distribution`.
-2. **`package.json`** — remove the `dt` bin entry, the `#adapters/*` import alias, and `schemas/` and `dist/adapters/` from `files`; move `yaml`; drop `ajv`, the `pg` peer, and the `fast-uri` override.
-3. **`.github/workflows/publish-npm.yml` line 69** — asserts `dist/bin/dt.js` exists and fails the publish if it does not. This is the one deletion that silently breaks release rather than CI, because the assertion only runs on publish.
+2. **The `#adapters` alias lives in four files, not one.** `package.json` (`imports`, `files`, and the `format`/`format:check` globs), `tsconfig.json` (`paths` and `include`), `vitest.config.ts` (the alias and the coverage `include`), and `eslint.config.js` (the `core/` → `adapters/` restricted-path zone). All four change together. The `format` and `format:check` scripts also glob `"adapters/"` and `"schemas/"`; `prettier --check` on a missing directory prints `No files matching the pattern` and exits 2, so leaving the globs breaks the format gate even though every remaining file is correctly formatted.
+3. **`.github/workflows/publish-npm.yml` asserts two deleted paths, not one.** Line 69 checks `dist/bin/dt.js` and line 71 checks `dist/adapters`. Both fail after this phase. The step runs only at publish time, so neither produces a CI signal; fixing one and missing the other still breaks the next release. The durable fix is a test that parses the workflow's `Verify dist output` step and asserts every path it names exists after a build, which closes the class rather than these two instances.
 4. **`test/integration/binaries.test.ts`** — paired `dev-tasks`/`dt` cases. Remove the four `dt` cases and add one asserting `dist/bin/dt.js` is absent, so a future accidental reintroduction fails a test.
+5. **`core/exit-codes.ts` cannot be pruned naively.** `bin/dev-tasks.ts:237` returns `ExitCode.DependencyError`, which is a deprecated alias of the `dt`-only `NoCandidates: 11`. The retained binary therefore depends on a `dt` code. `test/unit/exit-codes.test.ts` additionally asserts the table holds exactly fifteen distinct values 0 to 14 plus every name, so any prune fails it. Enumerate the codes the retained binary returns, repoint line 237 at a retained code, and update the test in the same commit.
+6. **`templates/bitbucket-pipelines.yml`** — ships `dt catalog build` and `dt catalog validate` to consumers. It is in no deletion inventory and outside the absence guard's default scope. Left alone, v0.14.0 publishes a CI template invoking the binary it removed.
+
+### Retained tests that must change
+
+The claim "no retained test is modified" does not survive contact with the repository. Five parity tests assert the presence of content this phase removes:
+
+| Test | Why it must change |
+| --- | --- |
+| `architecture-change-parity.test.ts` | asserts the `AGENTS.md` blocks S-004 deletes — delete with them |
+| `cross-repo-partitioning-parity.test.ts` | same | 
+| `skill-parity-init.test.ts` | eight `dt` and multi-repo assertions survive the edit |
+| `researcher-parity.test.ts` | asserts a `component.json` pattern |
+| `skill-parity-testing-layers.test.ts` | asserts `dt verify impact` and `dt verify drift` |
+| `test/unit/exit-codes.test.ts` | asserts the full fifteen-code table |
+
+These six edits are expected and enumerated. Any *other* retained test needing a change remains a stop signal.
 
 ## 9. Integration Details
 
@@ -207,9 +225,13 @@ The risk in a deletion is not that removed code breaks. It is that something ret
 
 ### Pre-existing failures, and why they matter here
 
-Eleven tests currently fail on `main` for environment reasons: permission tests that pass trivially as root, a missing `yq`, and `dt` sparse-clone integration. Seven of the eleven are in files this phase deletes. The four that remain (`update` unwritable backup, `doctor` cache dir, `deploy.sh` `yq`, and the two `doctor` integration cases) are retained and will still fail.
+Eleven tests currently fail on `main` for environment reasons. **Six** of them live in files this phase deletes: four `ctxFetch` integration cases and two `dt init --components` cases. **Five** are retained and will still fail: `doctor > checkCacheDir`, `runUpdate > --force with unwritable backup dir`, `deploy.sh > exits 2 when yq is missing from PATH`, and two `bootstrap > doctor` integration cases.
 
-This must be stated in the PR rather than presented as a clean run, and the post-change expectation is recorded up front: **4 failures remain, all pre-existing and environment-dependent; any fifth failure is caused by this change.** That number is the acceptance signal.
+An earlier draft of this specification said four. That was a recount error, and it was propagated into the stories, the task list, and issue #196, each of which enumerated five cases while asserting four. Corrected here and in D-40.
+
+This must be stated in the PR rather than presented as a clean run, and the expectation is recorded before any deletion: **the five named failures remain, and no others.**
+
+The assertion is set equality over full test names, not a count. A count survives a regression that removes one failure and introduces another, which is exactly the shape a deletion phase is prone to. Capture the failing set on `main` at task 0.2 and compare sets at every gate.
 
 ## 15. Deployment & Rollout
 
@@ -261,6 +283,7 @@ Confirmed on 2026-09-18 and recorded in `workstream/decisions-shared-understandi
 | D-33 | `core/checks` is not created in Phase 0. This phase only deletes.                                                                |
 | D-34 | `parse-args.ts` moves to `bin/`; `adapters/` and the `#adapters/*` alias are removed.                                            |
 | D-35 | ADR-001 and ADR-002 are marked Superseded by ADR-007 and otherwise left intact, per the ADR README's never-rewrite rule.         |
-| D-36 | Success is exactly 4 remaining test failures, all pre-existing; a fifth is caused by this change.                                |
+| D-36 | Superseded by D-40. Success was recorded as exactly 4 remaining test failures.                                                  |
+| D-40 | Success is set equality with the five named pre-existing failures, not a count. Supersedes D-36, which said four and miscounted. |
 | D-37 | The restore path is release tag `v0.13.0` at commit `0a6f35e`, named in ADR-007.                                                 |
 | D-38 | `docs/requirements/prd-multi-repo-context.md` is deleted rather than kept as history.                                            |
