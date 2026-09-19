@@ -7,6 +7,7 @@
 | 1.0     | 2026-09-19 | Initial version. Seven stories, issues pending creation. | product-engineer |
 | 1.1     | 2026-09-19 | S-002 AC-8 added (README documents the migrate process): tasks 2.13 to 2.15. Issues #202 to #208 created and recorded in the Scope table. | @llipe / product-engineer |
 | 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-46 to D-52): task 4.9 pinned to `tsx` with a fresh-clone verification at 4.9a; task 4.10 reversed (hand-parse, do not promote `yaml`); tasks 4.3/4.4 gain the false-failure constraints; task 3.7 corrected to `templates/scripts/release.sh`; tasks 1.1/1.1a scope the parity test away from immutable records; task 1.9a added for `.gitignore`. | verifier / product-engineer |
+| 1.3     | 2026-09-19 | Synced to `main` at `c14905e`: task 1.9a becomes verify-only (PR #209 shipped the `.gitignore` fix); baseline note re-confirmed against the merged base. | product-engineer |
 
 ## Scope
 
@@ -23,8 +24,8 @@ All seven Phase 1 stories, delivered on one integration branch as one consolidat
 | S-007 | [#208](https://github.com/llipe/dev-tasks/issues/208) | Enforce runbook coverage and docs ownership     |
 
 **Branch:** `integration/prd-shared-understanding-phase-1`
-**Sources:** PRD FR-44 to FR-51, FR-59 to FR-64; spec v1.1; decisions D-16, D-21, D-42 to D-45.
-**Predecessor:** Phase 0, merged as `a9f7eef` (PR #200).
+**Sources:** PRD FR-44 to FR-51, FR-59 to FR-64; spec v1.3; stories v1.3; decisions D-16, D-21, D-42 to D-52 (D-51 and D-52 pending).
+**Predecessor:** Phase 0, merged as `a9f7eef` (PR #200). Base for this phase is `main` at `c14905e`, which also carries PR #209.
 
 ### Baseline to record before starting
 
@@ -67,7 +68,7 @@ None. Phase 1 is additive plus one rename.
 
 - [ ] 0.0 Set up the integration branch and baseline
 
-  - [ ] 0.1 Confirm `main` is current at `a9f7eef`; create `integration/prd-shared-understanding-phase-1`
+  - [ ] 0.1 Confirm `main` is current at `c14905e` (Phase 0 `a9f7eef` plus PR #209); create `integration/prd-shared-understanding-phase-1` from it
   - [ ] 0.2 Run `pnpm run test` and save the **full failing-test names** to a file; this is the D-40 comparison set for every later gate
   - [x] 0.3 Create the seven GitHub issues from the stories; numbers recorded in the Scope table above (#202 to #208)
   - [ ] 0.4 Open the draft PR after the first commit, per the `implement` rules
@@ -86,7 +87,7 @@ None. Phase 1 is additive plus one rename.
   - [ ] 1.7 Update the 10 references in `docs/`, including `docs/README.md`'s index rows
   - [ ] 1.8 Update the 2 references in `test/`
   - [ ] 1.9 Update the 5 rewritable root references: `AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`
-  - [ ] 1.9a Add `!/docs/product.md` and `!/docs/tech.md` to `.gitignore` (AC-8). Line 25 is `/docs/*.md` with per-document negations; without these two, both renamed files are ignored. Verify with `git check-ignore -v docs/product.md` — it must exit non-zero after the fix
+  - [x] 1.9a `.gitignore` — done ahead of this story by PR #209 (`c14905e`), which removed the `/docs/*.md` allowlist entirely. **Verify only:** `git check-ignore -v docs/product.md` must exit non-zero (AC-8)
   - [ ] 1.10 Add the fallback-resolution paragraph (new name first, old name only if absent) to `activity-init` and every skill/agent that reads a foundation document, identically in all three trees
   - [ ] 1.11 Add those fallback locations to the test's `EXEMPT_FILES` allowlist, each with a reason comment
   - [ ] 1.12 Verify AC-1: `git log --follow docs/product.md` shows the rename and no content change

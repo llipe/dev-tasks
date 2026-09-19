@@ -5,12 +5,13 @@
 | Version | Date       | Summary                                                    | Author           |
 | ------- | ---------- | ----------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-19 | Initial version. Docs foundation rename, runbooks, monorepo/single-package detection and package map. | product-engineer |
-| 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-48 to D-50): `lint` invokes `tsx core/checks/run.ts`, never `dist/` — `validate` has no `build` step and `publish-npm.yml` runs `validate` before `build`, so a compiled path breaks every fresh clone and the first release; frontmatter is hand-parsed, not `yaml`-parsed, because the check ships to consumers where devDependencies are absent; 51 files carry the old names, not 46, and ADRs, PRDs, and `workstream/` among them are never rewritten; `.gitignore` would silently ignore both new filenames; the docs-structure rules gain four constraints that otherwise produce false failures on a clean tree. | verifier / product-engineer |
 | 1.1     | 2026-09-19 | Open Questions A-D resolved (D-42 to D-45): fallback-window removal tracked as issue #201, not version-comparison code; `doctor`/`update` output satisfies FR-45's session-start detection for the first release; `activity-init`'s "Mode A — Mono-Repo" renamed to avoid colliding with the new "monorepo" repository-shape term; package map's Bounded Context column is freeform at `activity-init` time. | @llipe / product-engineer |
+| 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-48 to D-50): `lint` invokes `tsx core/checks/run.ts`, never `dist/` — `validate` has no `build` step and `publish-npm.yml` runs `validate` before `build`, so a compiled path breaks every fresh clone and the first release; frontmatter is hand-parsed, not `yaml`-parsed, because the check ships to consumers where devDependencies are absent; 51 files carry the old names, not 46, and ADRs, PRDs, and `workstream/` among them are never rewritten; `.gitignore` would silently ignore both new filenames; the docs-structure rules gain four constraints that otherwise produce false failures on a clean tree. | verifier / product-engineer |
+| 1.3     | 2026-09-19 | Synced to `main` at `c14905e`. PR #209 removed `.gitignore`'s `/docs/*.md` allowlist, so the file no longer names either old document: the count returns to 50 (root 5), §8.1a becomes a resolved-ahead record rather than pending work, and S-001 AC-8 is delivered ahead of its story. | product-engineer |
 
 ## 1. Executive Summary
 
-Phase 1 renames the two foundation documents to `docs/product.md` and `docs/tech.md` behind a one-release fallback, establishes `docs/runbooks/` as an install-if-absent capability with nine seeded runbooks, teaches `activity-init` to detect single-package vs. monorepo shape and record a package map in `docs/tech.md`, and creates the `core/checks` module (first use: a docs-structure check wired into `lint`). It runs after Phase 0 (merged, PR #200) so the rename never touches a file Phase 0 was scheduled to delete, and it is a prerequisite for every later phase because Phases 2 to 5 name `docs/product.md`, `docs/tech.md`, and the package map directly.
+Phase 1 renames the two foundation documents to `docs/product.md` and `docs/tech.md` behind a one-release fallback, establishes `docs/runbooks/` as an install-if-absent capability with ten seeded runbooks (FR-47's nine plus `runbook-deploy-service`, D-46), teaches `activity-init` to detect single-package vs. monorepo shape and record a package map in `docs/tech.md`, and creates the `core/checks` module (first use: a docs-structure check wired into `lint`). It runs after Phase 0 (merged, PR #200) so the rename never touches a file Phase 0 was scheduled to delete, and it is a prerequisite for every later phase because Phases 2 to 5 name `docs/product.md`, `docs/tech.md`, and the package map directly.
 
 ## 2. Reference Documents
 
@@ -48,7 +49,7 @@ flowchart TB
     end
     subgraph "2. Runbooks"
         B1["INSTALL_IF_ABSENT_FILES<br/>+ platform-agnostic ROOT tag"]
-        B2["docs/runbooks/README.md index<br/>+ 9 seeded runbooks"]
+        B2["docs/runbooks/README.md index<br/>+ 10 seeded runbooks"]
         B1 --> B2
     end
     subgraph "3. Repository shape"
@@ -129,7 +130,7 @@ Not applicable. No new network or credential surface.
 ```mermaid
 stateDiagram-v2
     [*] --> Renamed: git mv, content unchanged (FR-46)
-    Renamed --> ReferencesUpdated: update the rewritable references (51 carry them, 31 are rewritten)
+    Renamed --> ReferencesUpdated: update the rewritable references (50 carry them, 31 are rewritten)
     ReferencesUpdated --> MigrateCommand: add `migrate docs` (propose/apply)
     MigrateCommand --> FallbackWindow: agents resolve old names for one release cycle
     FallbackWindow --> FallbackRemoved: window closes — tracked follow-up, issue #201 (D-42)
@@ -138,9 +139,11 @@ stateDiagram-v2
 
 The rename itself is one behavior-preserving `refactor:` commit (FR-46, `SIMPLICITY.md` B1): `git mv` for the two files, content untouched. Updating the references by string (agents, skills, instructions, steering, tests) is mechanical and follows in the same or an immediately adjacent commit — it is still behavior-preserving, since it changes prose/config, not runtime behavior of the `dev-tasks` binary.
 
-**51 files carry the old names, and not all of them may be rewritten (D-50).** Measured on this branch: `.claude/` 10, `.github/` 11, `.kiro/` 12, `docs/` 10, `test/` 2, root 6 (`AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`, `.gitignore`). `core/`, `bin/`, `templates/`, and `scripts/` carry none. Earlier drafts said 46 and then 50; 51 is the measured figure, `.gitignore` being the file both earlier counts missed.
+**50 files carry the old names, and not all of them may be rewritten (D-50).** Measured against `main` at `c14905e`: `.claude/` 10, `.github/` 11, `.kiro/` 12, `docs/` 10, `test/` 2, root 5 (`AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`). `core/`, `bin/`, `templates/`, and `scripts/` carry none.
 
-Three groups inside that 51 are **not** rewritten:
+The count has moved three times and the history is worth keeping straight: drafts said 46, then 50, then 51 once `.gitignore` was found to name both old documents in its negation list. PR #209 has since removed that negation list entirely, so `.gitignore` no longer names either document and the figure is 50 again — the same number as the second draft, for a different reason.
+
+Three groups inside that 50 are **not** rewritten:
 
 | Group | Files | Why |
 | ----- | ----- | --- |
@@ -148,15 +151,15 @@ Three groups inside that 51 are **not** rewritten:
 | PRDs | `docs/requirements/prd-shared-understanding-refinement.md`, `prd-infra-engineer.md`, `prd-evidence-driven-development-loop.md` | A PRD is a historical statement of intent. FR-44 itself reads "`docs/product-context.md` becomes `docs/product.md`" — rewriting it erases the requirement's own subject. |
 | `workstream/` | 24 tracked files | Out of PRD AC-22's enumerated scope, and archived per-feature records. The parity test **must** exclude `workstream/` or it fails with 24 hits. |
 
-`.gitignore` is not in those groups — it is a live config file and must change, for a different reason (§8.1a).
-
 PRD AC-22's scope list names `adapters/`, which Phase 0 deleted (D-34). S-001 AC-2 drops it; that is deliberate, not drift.
 
-### 8.1a `.gitignore` silently ignores both new filenames
+### 8.1a `.gitignore` — resolved ahead of this phase by PR #209
 
-`.gitignore:25` is `/docs/*.md`, followed by an explicit negation per tracked document — including `!/docs/product-context.md` and `!/docs/technical-guidelines.md`. There is no negation for the new names, so `git check-ignore -v docs/product.md` resolves to `.gitignore:25` today: **both renamed files would be ignored.**
+Design Mode found that `.gitignore:25` was `/docs/*.md` followed by one negation per tracked document, with no negation for either new name — so `git check-ignore -v docs/product.md` resolved to that line and **both renamed files would have been ignored.** `git mv` survives an ignore rule, so the rename commit would have looked clean and the failure would have surfaced later, on the first `git add` after a delete or a regenerate.
 
-`git mv` on a tracked file survives this, so the rename commit itself looks clean. The trap is later: any `git add docs/product.md` after a delete, after `migrate docs --force` on a fresh tree, or after `activity-init` regenerates the file, is silently refused. The fix is two negation lines; the cost of missing it is a file that appears to save and never commits.
+PR #209 (merged, `c14905e`) removed the pattern and all twelve negations rather than adding two more, on the grounds that the allowlist had already rotted in both directions and nothing generates markdown into `docs/`. `docs/**` is now tracked by default.
+
+**Consequence for this phase:** the work S-001 AC-8 described is already done. The criterion is retained in the story as delivered-ahead rather than deleted, so the trace from Design Mode's finding to its resolution stays readable, and S-001's implementer should verify rather than re-implement: `git check-ignore -v docs/product.md` must exit non-zero.
 
 ### 8.1b Fallback resolution
 
@@ -254,7 +257,7 @@ Not applicable. No new credential, network, or data-handling surface. The rename
 
 | Risk                                                                                     | Likelihood | Mitigation                                                                                                    |
 | ------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
-| A reference to the old names is missed among the 51 files, and an agent reads a stale name  | Medium     | The fallback rule (§8.1b) means a miss degrades to "still works via fallback," not silent failure; the parity test (§14) closes the gap before merge. |
+| A reference to the old names is missed among the 50 files, and an agent reads a stale name  | Medium     | The fallback rule (§8.1b) means a miss degrades to "still works via fallback," not silent failure; the parity test (§14) closes the gap before merge. |
 | The parity test is written by copying Phase 0's absence guard and inherits its scan roots  | High       | Stated explicitly in §14: that guard omits `docs/`, which is where the immutable records live. Copying it silently passes while leaving `docs/` unchecked. |
 | `activity-init`'s existing "Mono-Repo" mode name collides in meaning with the new "monorepo" repository-shape term | Medium     | Resolved (D-44): the existing mode is renamed to "Mode A — Documented" (or equivalent) to free the term.       |
 | `INSTALL_IF_ABSENT_FILES` has no platform-agnostic tag today, and `docs/runbooks/README.md` needs one | Low        | Extend the registry with a `ROOT_PROFILE_TAG`-style dedicated tag (reusing the pattern `ROOT_FILES` already established), not a new third category — same fix the PRD's own Technical Considerations section anticipates for Phase 3's glossary file, built here first since Phase 1 needs it first. |

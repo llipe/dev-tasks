@@ -7,12 +7,14 @@
 | 1.0     | 2026-09-19 | Initial version. Seven stories covering PRD FR-44 to FR-51 and FR-59 to FR-64. | product-engineer |
 | 1.1     | 2026-09-19 | S-002 gains AC-8: `README.md` must document the `migrate docs` process so a consumer upgrading across the release learns it from the README alone. | @llipe / product-engineer |
 | 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-46 to D-52). S-001: AC-2 scoped to rewritable files with ADRs/PRDs/`workstream/` excluded (D-50), AC-3 must not copy Phase 0's scan roots, new AC-8 for `.gitignore`, count corrected to 51. S-003: AC-5 names `templates/scripts/release.sh`, not this repo's `scripts/release.sh`. S-004: AC-1 "pure" restated, AC-4 gains a checkable filename regex and hand-parsed frontmatter (D-49), AC-7 pinned to `tsx` not `dist/` (D-48), new AC-10 for the two false-failure constraints. | verifier / product-engineer |
+| 1.3     | 2026-09-19 | Synced to `main` at `c14905e`: S-001 AC-8 marked delivered ahead by PR #209 (verify, do not re-implement), reference count corrected 51 → 50 with root back to 5. | product-engineer |
 
 ## Source Documents
 
 - PRD: `docs/requirements/prd-shared-understanding-refinement.md` (FR-44 to FR-51, FR-59 to FR-64; AC-22 to AC-26, AC-29 to AC-32, AC-31)
-- Specification: `workstream/specification-shared-understanding-phase-1.md` (v1.1)
-- Decisions: `workstream/decisions-shared-understanding.md` (D-16, D-21, D-42 to D-45)
+- Specification: `workstream/specification-shared-understanding-phase-1.md` (v1.3)
+- Decisions: `workstream/decisions-shared-understanding.md` (D-16, D-21, D-42 to D-52; D-51 and D-52 still pending)
+- Design Mode: `workstream/test-plan-shared-understanding-phase-1.md`, `workstream/traceability-matrix-shared-understanding-phase-1.md`
 - Predecessor: Phase 0, merged as `a9f7eef` (PR #200)
 
 ## Delivery Shape
@@ -69,7 +71,7 @@ So that every skill written in Phases 2 to 6 names the same file the repository 
 - [ ] AC-5: The fallback rule is prose in the prompt content, not a new runtime module — no `core/` code is added for it (spec §8.1).
 - [ ] AC-6: The three prompt trees stay at parity; the fallback rule and the renamed references are identical in `.claude/`, `.github/`, and `.kiro/`.
 - [ ] AC-7: `pnpm run validate` passes with the D-40 five-name failure baseline unchanged.
-- [ ] AC-8: `.gitignore` gains `!/docs/product.md` and `!/docs/tech.md`. Line 25 is `/docs/*.md` with a per-document negation list; without new negations both renamed files are ignored — verified: `git check-ignore -v docs/product.md` resolves to `.gitignore:25` today. `git mv` survives it, so the rename commit looks clean and the failure only surfaces later, when a `git add` of either file is silently refused.
+- [x] AC-8 — **delivered ahead of this story by PR #209** (`c14905e`). Design Mode found `.gitignore:25` (`/docs/*.md` plus a per-document negation list) would silently ignore both renamed files; #209 removed the pattern and all twelve negations rather than adding two more, since the allowlist had already rotted in both directions. Nothing to implement here: **verify** with `git check-ignore -v docs/product.md`, which must exit non-zero. Retained rather than deleted so the trace from finding to resolution stays readable.
 
 #### Business Rules
 
@@ -78,7 +80,7 @@ So that every skill written in Phases 2 to 6 names the same file the repository 
 
 #### Technical Notes
 
-- Reference counts by tree, re-measured at Design Mode: `.claude/` 10, `.github/` 11, `.kiro/` 12, `docs/` 10, `test/` 2, root 6 (`AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`, `.gitignore`) = **51**. `core/`, `bin/`, `templates/`, and `scripts/` carry none. Of the 51, 20 are excluded from rewriting per AC-2 (4 ADR files, 3 PRDs, and the fallback-rule locations), plus 24 `workstream/` files outside the scanned scope.
+- Reference counts by tree, measured against `main` at `c14905e`: `.claude/` 10, `.github/` 11, `.kiro/` 12, `docs/` 10, `test/` 2, root 5 (`AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`) = **50**. `core/`, `bin/`, `templates/`, and `scripts/` carry none. Of the 50, 7 are excluded from rewriting per AC-2 (4 ADR files, 3 PRDs), plus the fallback-rule locations and the 24 `workstream/` files outside the scanned scope. `.gitignore` was the 51st until PR #209 removed its negation list.
 - `git mv` keeps rename detection in the diff, which is what makes a 50-file change reviewable.
 - `docs/README.md`'s index rows change with the filenames.
 
