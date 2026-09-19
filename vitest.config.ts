@@ -16,14 +16,11 @@ export default defineConfig({
     fileParallelism: false,
     coverage: {
       provider: "v8",
-      include: ["core/**/*.ts", "adapters/**/*.ts", "bin/**/*.ts"],
+      include: ["core/**/*.ts", "bin/**/*.ts"],
       exclude: ["**/*.d.ts", "test/**"],
     },
   },
   resolve: {
-    alias: [
-      { find: /^#core\/(.*)/, replacement: resolve(import.meta.dirname, "core/$1") },
-      { find: /^#adapters\/(.*)/, replacement: resolve(import.meta.dirname, "adapters/$1") },
-    ],
+    alias: [{ find: /^#core\/(.*)/, replacement: resolve(import.meta.dirname, "core/$1") }],
   },
 });

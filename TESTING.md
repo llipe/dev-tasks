@@ -14,7 +14,6 @@ owner: qa-engineer
 | 2        | Constrained model/tool    | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs. | configured                             |
 | 2.5      | Integration               | Real database, migrations, RLS, and schema contracts without a mocked data layer.                                                 | not configured                         |
 | E2E      | End-to-end                | Playwright full-stack browser scenarios.                                                                                          | not configured                         |
-| Contract | Contract validation       | `dt verify` API-spec diff, impact, and drift checks.                                                                              | not configured; no repository API spec |
 | 3        | Product evaluation        | Semantic or groundedness evaluation for LLM features.                                                                             | not applicable                         |
 | 4        | Human evaluation          | Human review and safeguard gates.                                                                                                 | manual only                            |
 
@@ -24,7 +23,6 @@ owner: qa-engineer
 - **Layer 2 must not:** replace the system under test at its own public entry point, reimplement production filtering or persistence in a fake, or claim provider behavior that was only tested against a double.
 - **Layer 2.5 must not:** mock the data layer or use application-level filtering as evidence of database/RLS policy.
 - **E2E must not:** assert on internal state or implementation details; it must assert observable user-facing behavior.
-- **Contract validation must not:** test internal business logic; it checks the boundary/interface only.
 - **Escalation:** when a Layer 1 test needs a real dependency, move it to Layer 2 instead of growing a behavior-reimplementing double; when a Layer 2 test needs a real database, move it to Layer 2.5.
 
 ## Packages
@@ -61,7 +59,6 @@ The package is a CLI and filesystem toolkit, so Node is the correct environment;
 | `test:unit`        | Unit tests                                                                                            | present                                |
 | `test:integration` | Integration-directory tests; these are CLI/filesystem integration tests, not Layer 2.5 database tests | present                                |
 | `test:e2e`         | Playwright tests                                                                                      | not configured; no Playwright setup    |
-| `test:contract`    | `dt verify` family                                                                                    | not configured; no repository API spec |
 | `test:coverage`    | Coverage measurement                                                                                  | missing; no usable provider configured |
 | `audit`            | Production dependency audit                                                                           | present                                |
 | `validate`         | `typecheck` → `lint` → `format:check` → aggregate `test`                                              | present                                |

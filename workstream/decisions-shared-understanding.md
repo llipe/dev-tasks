@@ -7,7 +7,11 @@ Decision log for `docs/requirements/prd-shared-understanding-refinement.md` (FR-
 | Version | Date       | Summary                                                                            | Author           |
 | ------- | ---------- | ---------------------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-18 | WHAT-phase log migrated from the PRD Decisions table (D-01 to D-26)                | product-engineer |
-| 1.1     | 2026-09-18 | D-27 added (PR-KT PRD and issue #141 artifacts deleted) | product-engineer |
+| 1.1     | 2026-09-18 | D-27 added (PR-KT PRD and issue #141 artifacts deleted)                    | product-engineer |
+| 1.2     | 2026-09-18 | Phase 0 HOW-phase decisions D-28 to D-38 appended                          | product-engineer |
+| 1.3     | 2026-09-18 | D-39 added (issue #148 residue folded into `SIMPLICITY.md` v1.1)           | product-engineer |
+| 1.4     | 2026-09-19 | D-40 added, superseding D-36 (five failures as a set, not four as a count) | verifier / product-engineer |
+| 1.5     | 2026-09-19 | D-41 added, superseding D-28 (version bump and release commit removed from S-005; `scripts/release.sh` is the actual, manual, post-merge release mechanism) | @llipe / product-engineer |
 
 ## WHAT phase
 
@@ -43,4 +47,25 @@ Decision log for `docs/requirements/prd-shared-understanding-refinement.md` (FR-
 
 ## HOW phase
 
-Per-phase HOW decisions are appended here as each specification is grilled. Phase 0 (retire `dt`) opens the HOW phase.
+Per-phase HOW decisions are appended here as each specification is grilled, continuing the same ID space as the WHAT phase.
+
+### Phase 0 — retire `dt` (`workstream/specification-shared-understanding-phase-0.md`)
+
+Most Phase 0 questions were answered from the codebase rather than asked, per PRD FR-3. The rows below are the ones that needed a human.
+
+| ID   | Phase | Branch              | Question                                                     | Recommended                                                              | Answer              | Accepted rec. | Supersedes | Author | Date       |
+| ---- | ----- | ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------- | ------------- | ---------- | ------ | ---------- |
+| D-28 | HOW   | release/version     | Which version and commit type for removing a public binary?  | `0.14.0`, `chore!:` with a `BREAKING CHANGE:` footer.                    | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-29 | HOW   | delivery/pr-shape   | One pull request or two?                                     | One, seven ordered commits; the absence test needs both halves to pass.  | One PR.             | yes           | —          | @llipe | 2026-09-18 |
+| D-30 | HOW   | deps/prune          | Which dependencies go with `dt`?                             | Drop `ajv`, `pg` peer, `fast-uri` override; move `yaml`; keep `execa`.   | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-31 | HOW   | prompts/skills      | Which contract skills are `dt`-bound?                        | Delete `activity-contract-validation` only.                              | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-32 | HOW   | docs/system-overview | Strip or rewrite a document with 30 `dt` mentions?          | Rewrite affected sections via `technical-writer`.                        | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-33 | HOW   | scope/boundary      | Does Phase 0 create `core/checks`?                           | No. Phase 0 only deletes.                                                | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-34 | HOW   | structure/adapters  | Keep `adapters/` for one 86-line module?                     | No. Move `parse-args.ts` to `bin/`, drop the alias (`SIMPLICITY.md` A4). | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-35 | HOW   | docs/adr            | Delete or supersede ADR-001 and ADR-002?                     | Mark Superseded; never rewrite an ADR.                                   | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-36 | HOW   | testing/signal      | What is the pass signal when 11 tests already fail?          | Exactly 4 remaining failures; a fifth is caused by the change.           | As recommended.     | yes           | —          | @llipe | 2026-09-18 |
+| D-37 | HOW   | release/restore     | Which tag is the restore path for ADR-007?                   | The last release shipping `dt`; needed human confirmation.               | `v0.13.0`, `0a6f35e`. | yes         | —          | @llipe | 2026-09-18 |
+| D-38 | HOW   | docs/prd            | Delete or keep `prd-multi-repo-context.md`?                  | Delete; ADR-007 records it and git keeps the content.                    | Delete.             | yes           | —          | @llipe | 2026-09-18 |
+| D-39 | WHAT  | simplicity/rules    | Do the four items from issue #148 not covered by the contract get added or dropped? | Dismiss with #149 and #140, or fold in.                                  | Add to `SIMPLICITY.md` as rules A11, A12, A13, B6. | no | extends D-09 | @llipe | 2026-09-18 |
+| D-40 | HOW   | testing/signal      | The pass signal said 4 remaining failures but enumerated 5. Which is right, and is a count enough? | Five, and assert set equality over full test names, not a count. | As recommended. | yes | D-36 | @llipe | 2026-09-19 |
+| D-41 | HOW   | release/version     | D-28 put a hand-set version and a release commit inside the feature PR. Does that match how this repo actually releases? | No: `scripts/release.sh` computes the next semver from the last git tag and is a manual, `main`-only, post-merge step; `publish-npm.yml` overwrites `package.json`'s version from the pushed tag at publish time regardless. Remove the version bump and release commit from S-005; document under `CHANGELOG.md`'s `## [Unreleased]` instead. | As recommended. | yes | D-28 | @llipe | 2026-09-19 |

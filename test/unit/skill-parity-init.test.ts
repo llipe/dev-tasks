@@ -36,44 +36,25 @@ describe("activity-init skill parity", () => {
   });
 
   it("contains Mode Detection section", () => {
-    expect(kiroContent).toContain("## Mode Detection (RF-60)");
+    expect(kiroContent).toContain("## Mode Detection");
   });
 
-  it("contains multi-repo mode (Mode A)", () => {
-    expect(kiroContent).toContain("## Mode A — Multi-Repo (RF-61)");
-    expect(kiroContent).toContain("dt init --task");
-    expect(kiroContent).toContain("MUST NOT** read `/docs`");
+  it("contains mono-repo mode (Mode A)", () => {
+    expect(kiroContent).toContain("## Mode A — Mono-Repo (Current Flow)");
   });
 
-  it("contains mono-repo mode (Mode B)", () => {
-    expect(kiroContent).toContain("## Mode B — Mono-Repo (Current Flow)");
+  it("contains undocumented/greenfield mode (Mode B), investigating the codebase directly", () => {
+    expect(kiroContent).toContain("## Mode B — Undocumented / Greenfield");
+    expect(kiroContent).toContain("Investigate the codebase");
+    expect(kiroContent).toContain("Present a findings summary");
   });
 
-  it("contains undocumented/greenfield mode (Mode C)", () => {
-    expect(kiroContent).toContain("## Mode C — Undocumented / Greenfield");
-    expect(kiroContent).toContain("dt extract detect");
-    expect(kiroContent).toContain("dt extract all --interactive");
-  });
-
-  it("documents exit code handling for multi-repo mode", () => {
-    expect(kiroContent).toContain("Exit Code");
-    expect(kiroContent).toContain("`0`");
-    expect(kiroContent).toContain("`7`");
-    expect(kiroContent).toContain("`9`");
-    expect(kiroContent).toContain("`10`");
-    expect(kiroContent).toContain("`11`");
-    expect(kiroContent).toContain("`6`");
-  });
-
-  it("documents component.json as the multi-repo signal with precedence over /docs", () => {
-    expect(kiroContent).toContain("component.json");
-    expect(kiroContent).toContain(
-      "If both `component.json` AND `/docs` exist, multi-repo mode wins",
-    );
-  });
-
-  it("documents review_flags presentation on success", () => {
-    expect(kiroContent).toContain("review_flags");
-    expect(kiroContent).toContain("present them as warnings");
+  it("has no multi-repo mode, dt invocation, or component.json reference (dt retirement, ADR-007)", () => {
+    for (const content of [kiroContent, githubContent, claudeContent]) {
+      expect(content).not.toMatch(/multi-repo/);
+      expect(content).not.toMatch(/\bdt\s+(init|extract|catalog|scope|verify|ctx)\b/);
+      expect(content).not.toContain("component.json");
+      expect(content).not.toContain("review_flags");
+    }
   });
 });

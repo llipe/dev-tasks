@@ -41,11 +41,10 @@ You **MUST NOT** create or modify application code, PRDs, specs, task lists, tes
 One procedure. Invoke `activity-codebase-research` and follow its phases:
 
 1. **Intake** — receive the research question; clarify if vague.
-2. **Multi-repo detection** — check for `component.json`; consume `dt context`/catalog if present, fall back to direct scanning otherwise. Record the method in Provenance.
-3. **Slice execution** — investigate all eight slices (S1 Components/modules, S2 APIs/contracts, S3 UI surfaces, S4 Tests, S5 Data model, S6 Config/env/CI, S7 Relationships, S8 Prior history). Each slice is populated or marked `N/A` with a reason.
-4. **Synthesis** — write answer-first summary (<= 10 lines), compile relevance-ranked file map (<= 30 files), derive relationships, risks, and gaps.
-5. **Budget enforcement** — ensure report <= 250 lines and <= 30 cited files. Truncate by relevance; record omissions under "Not Investigated".
-6. **Provenance and output** — record repository, base branch, commit SHA, invoking agent, research question, date, and multi-repo source. Write artifact to contract path.
+2. **Slice execution** — investigate all eight slices (S1 Components/modules, S2 APIs/contracts, S3 UI surfaces, S4 Tests, S5 Data model, S6 Config/env/CI, S7 Relationships, S8 Prior history). Each slice is populated or marked `N/A` with a reason.
+3. **Synthesis** — write answer-first summary (<= 10 lines), compile relevance-ranked file map (<= 30 files), derive relationships, risks, and gaps.
+4. **Budget enforcement** — ensure report <= 250 lines and <= 30 cited files. Truncate by relevance; record omissions under "Not Investigated".
+5. **Provenance and output** — record repository, base branch, commit SHA, invoking agent, research question, and date. Write artifact to contract path.
 
 ## Budget Caps
 

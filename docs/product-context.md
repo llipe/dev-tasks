@@ -55,9 +55,7 @@ The workflow must scale down to small projects and direct production environment
 
 `dev-tasks` is an actively evolving toolkit distributed as a versioned repository bundle. It currently provides product, development, planning, research, verification, quality assurance, documentation, housekeeping, GitHub operations, and UX roles; reusable activity skills; scoped instructions; installer/update scripts; and support for multiple AI coding platforms.
 
-The workflow includes PRD-driven planning, test-first guidance, canonical quality gates, a pre-implementation verifier design mode, a quality-assurance coverage gate recorded before completion, a per-repository testing-standard contract (`/TESTING.md`), and a post-implementation fidelity audit. The CLI toolkit (`dt`) implements the full multi-repo context pipeline: extraction (with a ladder pattern for confidence-ranked source selection), catalog aggregation and validation, context assembly with token budgeting, LLM-assisted scoping with gate rules, and contract verification (breaking-change detection, consumer impact analysis, and docs/code drift heuristics). The extraction pipeline is fully deterministic — no LLM is used for structural extraction.
-
-Its next maturity step is exposing the `dt` toolkit as MCP tools for agent consumption and wiring a live LLM provider for the scoping pipeline.
+The workflow includes PRD-driven planning, test-first guidance, canonical quality gates, a pre-implementation verifier design mode, a quality-assurance coverage gate recorded before completion, a per-repository testing-standard contract (`/TESTING.md`), and a post-implementation fidelity audit. The `dev-tasks` CLI handles bootstrap and distribution only: installing, updating, pinning, and reconciling the agent toolkit files across platform profiles. It carries no runtime extraction, catalog, or context-resolution capability — the multi-repo context layer this repository once shipped (`dt`) was retired (ADR-007) as unused, and its restoration is not on the current roadmap.
 
 ## Vision and Roadmap
 
@@ -70,8 +68,6 @@ Its next maturity step is exposing the `dt` toolkit as MCP tools for agent consu
 - Add incremental mutation testing to evaluate test-suite effectiveness.
 - Standardize validation evidence attached to CI runs and pull requests.
 - Make blocking, retry, fallback, and drift-resolution behavior explicit.
-- Wire a live LLM provider for `dt scope`.
-- Expose `dt` commands as MCP tools for direct agent consumption.
 
 ### Medium term
 

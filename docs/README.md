@@ -9,7 +9,6 @@ Entry point for `dev-tasks` documentation. Each document below is the single sou
 | Install and run the toolkit                            | [`../README.md`](../README.md)                         |
 | Understand what the system is and how it fits together | [`system-overview.md`](system-overview.md)             |
 | Look up a `dev-tasks` command                          | [`dev-tasks-user-manual.md`](dev-tasks-user-manual.md) |
-| Look up a `dt` command                                 | [`dt-user-manual.md`](dt-user-manual.md)               |
 | Know which agent to invoke, in what order              | [`workflow-chains.md`](workflow-chains.md)             |
 
 ## Reference
@@ -17,8 +16,6 @@ Entry point for `dev-tasks` documentation. Each document below is the single sou
 | Document                                             | Subject                                                                      |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
 | [`system-overview.md`](system-overview.md)           | Purpose, architecture, components, integrations, runtime flows, NFR posture  |
-| [`data-model.md`](data-model.md)                     | Artifacts and entities, invariants, ownership boundaries, exit-code contract |
-| [`artifact-formats.md`](artifact-formats.md)         | Serialization format and authorship per artifact, with exceptions            |
 | [`product-context.md`](product-context.md)           | Product constitution: problem, users, goals, metrics, constraints            |
 | [`technical-guidelines.md`](technical-guidelines.md) | Enforceable engineering rules and quality gates                              |
 | [`agents-md-guidelines.md`](agents-md-guidelines.md) | Sizing and content rules for `AGENTS.md`                                     |

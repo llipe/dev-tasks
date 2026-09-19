@@ -66,16 +66,7 @@ Invoke `activity-e2e-test-implementation` for the requested scope.
 - Verify Playwright prerequisites (auth, base URL, state reset, browser install).
 - Report uncovered scenarios from the test plan.
 
-### 4. Contract validation — conditional
-
-Invoke `activity-contract-validation` for the requested scope.
-
-- **Condition:** Run only when the Contract Validation layer is configured in `/TESTING.md` (not `<!-- unfilled -->`) or when OpenAPI/AsyncAPI specs are detected in the repository. If neither condition is met, emit `SKIPPED(no contract validation layer configured and no API specs found)` and proceed to the next step.
-- Detect `dt` availability. If unavailable, emit `SKIPPED(dt not installed)` with manual instructions.
-- Run `dt verify contract-diff`, `impact`, and `drift`.
-- Report breaking changes as critical findings. Report drift as non-blocking.
-
-### 5. Coverage and gap report
+### 4. Coverage and gap report
 
 Invoke `activity-coverage-gap-analysis`.
 

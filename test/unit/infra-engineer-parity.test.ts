@@ -258,10 +258,10 @@ describe("infra-engineer — S-009 AC-5: deploy-ops registry parity", () => {
     }
   });
 
-  it("system-overview skill count reconciles to twenty-five", () => {
+  it("system-overview skill count reconciles to twenty-six", () => {
     expect(
-      /twenty-five skills/.test(read("docs/system-overview.md")),
-      "system-overview.md skill count was not reconciled to twenty-five (deploy-ops added)",
+      /twenty-six skills/.test(read("docs/system-overview.md")),
+      "system-overview.md skill count was not reconciled to twenty-six (deploy-ops added, activity-contract-validation retired per ADR-007)",
     ).toBe(true);
   });
 });

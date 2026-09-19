@@ -6,7 +6,7 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { parseArgs } from "#adapters/cli/parse-args.js";
+import { parseArgs } from "./parse-args.js";
 import { ExitCode } from "#core/exit-codes.js";
 import { installFiles } from "#core/distribution/install.js";
 import { isValidProfile, VALID_PROFILES, type Profile } from "#core/distribution/profiles.js";
@@ -86,7 +86,6 @@ Options:
   --json         Output as JSON
   --pin <ver>    Pin to a specific version (used with install)
   --force        Force-overwrite conflicting files (backs them up first)
-  --meta-repo    Path to meta repository
   -v, --verbose  Verbose output
   -h, --help     Show this help message
 `;

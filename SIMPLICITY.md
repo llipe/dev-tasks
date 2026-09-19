@@ -1,5 +1,5 @@
 ---
-version: 1.0
+version: 1.1
 name: Simplicity Standard
 description: Canonical code-simplicity contract — decision rules, process rules, PR completion report, and tool-enforced thresholds.
 status: filled
@@ -77,6 +77,23 @@ Check: the dependency manifest diff (e.g. `package.json`, `requirements.txt`, `g
 When something becomes unused, remove it in the same change. No commented-out code, no `_old` suffixes, no feature flags left at a fixed value. This applies to internal code: if you are the only consumer, an unused symbol is dead code and is deleted. Public surface with external consumers (a published package, an exposed API, a contract other repositories depend on) follows the repository's versioning policy instead: deprecate, keep the alias for the published window, then delete. Contract stability for others outranks tidiness; tidiness for yourself outranks ceremony.
 Check: the diff contains no commented-out code and no internal symbol with zero references. Any `@deprecated` in the diff points at a public surface and names the removal release.
 
+**A11. Prefer synchronous until latency demands otherwise.**
+Asynchrony buys throughput and costs a state machine, a retry policy, and a failure mode the next reader has to hold in their head. Reach for it when a measured latency or availability requirement needs it, not because the work sounds slow.
+Check: for each async boundary added — queue, worker, background job, event — name the requirement it serves and the number it must hit. No number, make it synchronous.
+
+```
+❌ await queue.publish("welcome-email", { userId })   // no SLA; the handler is a 30ms insert
+✅ await sendWelcomeEmail(userId)
+```
+
+**A12. Build for the load you have, plus one order of magnitude.**
+Caches, queues, shards, read replicas, and connection pools answer measured pressure, not imagined growth. A slow query at small scale is acceptable and easy to fix later; an unnecessary cache is an invalidation bug waiting to happen.
+Check: for each scaling mechanism in the diff, state the current load figure and the figure that justified it. No figure, remove it.
+
+**A13. Security is never speculative; security theater is.**
+The burden of proof on adding does not apply to a control that mitigates a real threat to this system. Authentication, authorization checks, validation at the boundary, secret handling, and safe defaults ship even when nothing is broken today, and A1 to A3 never justify dropping one. The burden does apply to a control that mitigates no named threat, or a layer added because it sounds safer.
+Check: for each control, name the threat it stops. For each place a reader would expect one and finds none, say why. A control with no named threat is complexity; a missing control with no rationale is a defect.
+
 ---
 
 ## B. Process rules
@@ -100,6 +117,10 @@ Check: the plan exists in the task record and the diff matches it, or the deviat
 **B5. Reuse existing patterns.**
 Before writing a new way to do something (logging, errors, config, HTTP calls, tests), find how the repo already does it and copy that. Consistency beats local optimality.
 Check: for each new pattern, name the existing pattern you looked for and why it did not apply.
+
+**B6. Make it runnable before you make it complete.**
+A change nobody can run is a change nobody can check. Reach a state where the behavior can be exercised — a command, a route, a seeded local environment, a failing test — before widening the work. On a new component this comes before features; on an existing one it means the first increment is demonstrable rather than scaffolding.
+Check: name the command a reader runs to see the behavior. If the answer is "once the rest lands", the increment is too large.
 
 ---
 

@@ -10,9 +10,8 @@ Run the `product-engineer` agent to establish foundation documents for this proj
 
 The agent will invoke the `activity-init` skill which first **detects the repository mode**:
 
-- **Multi-repo** (`component.json` present): delegates context resolution to `dt init --task --json`
-- **Mono-repo** (`/docs` present, no `component.json`): standard interview flow
-- **Undocumented/greenfield** (neither): runs `dt extract detect` → `dt extract all --interactive` → interview
+- **Mono-repo** (`/docs` present): standard interview flow
+- **Undocumented/greenfield** (`/docs` absent): investigates the codebase directly, then interview
 
 Then creates:
 

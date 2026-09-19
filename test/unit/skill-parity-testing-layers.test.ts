@@ -1,19 +1,24 @@
 /**
- * Structural and behavioral parity checks for the three new testing skills
- * added in issue #130:
+ * Structural and behavioral parity checks for the testing skills added in
+ * issue #130:
  *   - activity-integration-test-implementation (Layer 2.5)
  *   - activity-e2e-test-implementation (Playwright E2E)
- *   - activity-contract-validation (dt verify wiring)
+ *
+ * activity-contract-validation (which wired the contract-diff, impact, and
+ * drift commands of the retired binary) was removed with it (ADR-007),
+ * and this file's checks were updated accordingly: its TESTING.md-facing
+ * assertions (AC-6, test:contract) and the workflow-chains.md Step 4
+ * assertion are removed, matching TESTING.md's and workflow-chains.md's
+ * own S-005 edits.
  *
  * Also validates TESTING.md taxonomy updates and qa-engineer procedure extension.
  *
  * Test plan mapping (workstream/test-plan-130.md):
  *   SC-1/SC-2/SC-3  integration skill presence + parity + content
  *   SC-5/SC-6/SC-7  e2e skill presence + parity + content
- *   SC-8/SC-9/SC-10 contract skill presence + parity + content
  *   SC-4/SC-26      no install commands + line count budget
  *   SC-11/SC-12     TESTING.md Layer 2.5
- *   SC-13/SC-14     TESTING.md E2E + Contract
+ *   SC-13/SC-14     TESTING.md E2E
  *   SC-15/SC-16     qa-engineer steps + conditional logic
  *   SC-22           AGENTS.md skill registration
  */
@@ -42,7 +47,6 @@ const PLATFORMS = [".kiro/skills", ".github/skills", ".claude/skills"] as const;
 const NEW_SKILLS = [
   "activity-integration-test-implementation",
   "activity-e2e-test-implementation",
-  "activity-contract-validation",
 ] as const;
 
 const MAX_SKILL_LINES = 200;
@@ -176,25 +180,13 @@ describe("issue-130 — SC-6: e2e skill Playwright prerequisites", () => {
   });
 });
 
-// --- SC-9/SC-10: Contract validation skill ---
+// --- SC-9/SC-10: Contract validation skill was retired with dt (ADR-007) ---
 
-describe("issue-130 — SC-9: contract validation references dt verify", () => {
-  const content = () => read(".kiro/skills/activity-contract-validation/SKILL.md");
-
-  it("references contract-diff", () => {
-    expect(content()).toMatch(/contract-diff/);
-  });
-
-  it("references impact", () => {
-    expect(content()).toMatch(/dt verify impact/);
-  });
-
-  it("references drift", () => {
-    expect(content()).toMatch(/dt verify drift/);
-  });
-
-  it("handles dt not installed (SC-10)", () => {
-    expect(content()).toMatch(/SKIPPED.*dt not installed/i);
+describe("issue-130 — dt retirement: activity-contract-validation is gone", () => {
+  it("no longer ships in any tree", () => {
+    for (const platform of PLATFORMS) {
+      expect(exists(`${platform}/activity-contract-validation/SKILL.md`)).toBe(false);
+    }
   });
 });
 
@@ -224,18 +216,6 @@ describe("issue-130 — TESTING.md taxonomy updates", () => {
   it("AC-5: E2E boundary states MUST NOT assert on internal state", () => {
     expect(content()).toMatch(/MUST NOT.*assert on internal state/i);
   });
-
-  it("AC-6: has Contract Validation row", () => {
-    expect(content()).toMatch(/Contract.*validation/i);
-  });
-
-  it("AC-6: contract boundary checks interface only", () => {
-    expect(content()).toMatch(/checks the boundary\/interface only/i);
-  });
-
-  it("has test:contract in commands", () => {
-    expect(content()).toMatch(/test:contract/);
-  });
 });
 
 // --- SC-15/SC-16: qa-engineer procedure ---
@@ -263,8 +243,8 @@ describe("issue-130 — SC-15/SC-16: qa-engineer procedure extension", () => {
         expect(content()).toMatch(/activity-e2e-test-implementation/);
       });
 
-      it("references activity-contract-validation", () => {
-        expect(content()).toMatch(/activity-contract-validation/);
+      it("does not reference the retired activity-contract-validation (ADR-007)", () => {
+        expect(content()).not.toMatch(/activity-contract-validation/);
       });
 
       it("conditional steps skip when layer not configured", () => {
@@ -325,10 +305,6 @@ describe("issue-130 — SC-21: docs/workflow-chains.md updated", () => {
 
   it("shows step 3 (E2E) in QA chain", () => {
     expect(content()).toMatch(/Step 3.*activity-e2e-test-implementation/);
-  });
-
-  it("shows step 4 (contract) in QA chain", () => {
-    expect(content()).toMatch(/Step 4.*activity-contract-validation/);
   });
 
   it("has integration decision path section", () => {

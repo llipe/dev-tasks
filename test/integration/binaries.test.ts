@@ -43,20 +43,8 @@ describe("binary integration — built binaries resolve and execute", () => {
     expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it("dt --version prints version from built binary", () => {
-    const result = runBin("dt", ["--version"]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
-  });
-
   it("dev-tasks exits 2 on unknown command from built binary", () => {
     const result = runBin("dev-tasks", ["nonexistent"]);
-    expect(result.exitCode).toBe(2);
-    expect(result.stderr).toMatch(/unknown command/i);
-  });
-
-  it("dt exits 2 on unknown command from built binary", () => {
-    const result = runBin("dt", ["nonexistent"]);
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toMatch(/unknown command/i);
   });
@@ -67,25 +55,18 @@ describe("binary integration — built binaries resolve and execute", () => {
     expect(result.stderr).toMatch(/usage/i);
   });
 
-  it("dt prints usage on no args from built binary", () => {
-    const result = runBin("dt");
-    expect(result.exitCode).toBe(2);
-    expect(result.stderr).toMatch(/usage/i);
-  });
-
-  it("package.json bin field points to existing dist files", () => {
+  it("package.json bin field points only to dev-tasks, and dt is gone (dt retirement, ADR-007)", () => {
     const pkg = JSON.parse(execSync("cat package.json", { cwd: ROOT, encoding: "utf-8" })) as {
       bin: Record<string, string>;
     };
 
-    // Normalize away any leading "./" — npm strips it on publish, so both
-    // "./dist/bin/dt.js" and "dist/bin/dt.js" are valid declarations.
+    // Normalize away any leading "./" — npm strips it on publish.
     const normalize = (p: string) => p.replace(/^\.\//, "");
 
     expect(normalize(pkg.bin["dev-tasks"])).toBe("dist/bin/dev-tasks.js");
-    expect(normalize(pkg.bin["dt"])).toBe("dist/bin/dt.js");
-
     expect(existsSync(resolve(ROOT, pkg.bin["dev-tasks"]))).toBe(true);
-    expect(existsSync(resolve(ROOT, pkg.bin["dt"]))).toBe(true);
+
+    expect(pkg.bin["dt"]).toBeUndefined();
+    expect(existsSync(resolve(DIST_BIN, "dt.js"))).toBe(false);
   });
 });
