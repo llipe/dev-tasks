@@ -9,6 +9,7 @@
 | 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-46 to D-52): task 4.9 pinned to `tsx` with a fresh-clone verification at 4.9a; task 4.10 reversed (hand-parse, do not promote `yaml`); tasks 4.3/4.4 gain the false-failure constraints; task 3.7 corrected to `templates/scripts/release.sh`; tasks 1.1/1.1a scope the parity test away from immutable records; task 1.9a added for `.gitignore`. | verifier / product-engineer |
 | 1.3     | 2026-09-19 | Synced to `main` at `c14905e`: task 1.9a becomes verify-only (PR #209 shipped the `.gitignore` fix); baseline note re-confirmed against the merged base. | product-engineer |
 | 1.4     | 2026-09-19 | D-51 and D-52 accepted; open-items list closed. Task 2.14 must document the `migrate` / `migrate docs` asymmetry. | @llipe / product-engineer |
+| 1.5     | 2026-09-19 | S-001 complete (`7449ab0`), draft PR #211 opened. Three sub-tasks added for references discovered beyond the enumerated 50: directory-form paths in `technical-writer`, stale `activity-init` frontmatter descriptions, and prose references in `CLAUDE.md`. | developer |
 
 ## Scope
 
@@ -67,37 +68,40 @@ None. Phase 1 is additive plus one rename.
 
 ## Tasks
 
-- [ ] 0.0 Set up the integration branch and baseline
+- [x] 0.0 Set up the integration branch and baseline
 
   - [x] 0.1 Confirm `main` is current at `c14905e` (Phase 0 `a9f7eef` plus PR #209); create `integration/prd-shared-understanding-phase-1` from it
   - [x] 0.2 Run `pnpm run test` and save the **full failing-test names** to a file; this is the D-40 comparison set for every later gate
   - [x] 0.3 Create the seven GitHub issues from the stories; numbers recorded in the Scope table above (#202 to #208)
-  - [ ] 0.4 Open the draft PR after the first commit, per the `implement` rules
+  - [x] 0.4 Open the draft PR after the first commit, per the `implement` rules
 
-- [ ] 1.0 Implement Story S-001: Rename the foundation documents and update every reference
+- [x] 1.0 Implement Story S-001: Rename the foundation documents and update every reference
 
   > Note: behavior-preserving `refactor:` commit. Content of both documents is untouched (FR-46, `SIMPLICITY.md` B1). Simplifying either document is a separate change and is out of scope.
 
-  - [ ] 1.1 Write `test/unit/foundation-docs-naming.test.ts` first: scan `.claude/`, `.github/`, `.kiro/`, `core/`, `bin/`, `test/`, `docs/`, and the root for `product-context.md` and `technical-guidelines.md`; it must fail against the current tree. Write the scan roots from scratch — **do not copy** `test/unit/dt-retirement-absence.test.ts`'s `SCAN_ROOTS`, which omits `docs/` entirely and would pass while checking nothing
-  - [ ] 1.1a Exclude per D-50: `docs/adr/**`, `docs/requirements/**`, and `workstream/` (24 tracked files there carry the old names), each with a reason comment
-  - [ ] 1.2 Add the seeded-match self-test proving the matcher fires, and the false-positive rejection case (Phase 0 guard pattern)
-  - [ ] 1.3 `git mv docs/product-context.md docs/product.md` and `git mv docs/technical-guidelines.md docs/tech.md`
-  - [ ] 1.4 Update the 10 references in `.claude/`
-  - [ ] 1.5 Update the 11 references in `.github/`
-  - [ ] 1.6 Update the 12 references in `.kiro/`
-  - [ ] 1.7 Update the 10 references in `docs/`, including `docs/README.md`'s index rows
-  - [ ] 1.8 Update the 2 references in `test/`
-  - [ ] 1.9 Update the 5 rewritable root references: `AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`
+  - [x] 1.1 Write `test/unit/foundation-docs-naming.test.ts` first: scan `.claude/`, `.github/`, `.kiro/`, `core/`, `bin/`, `test/`, `docs/`, and the root for `product-context.md` and `technical-guidelines.md`; it must fail against the current tree. Write the scan roots from scratch — **do not copy** `test/unit/dt-retirement-absence.test.ts`'s `SCAN_ROOTS`, which omits `docs/` entirely and would pass while checking nothing
+  - [x] 1.1a Exclude per D-50: `docs/adr/**`, `docs/requirements/**`, and `workstream/` (24 tracked files there carry the old names), each with a reason comment
+  - [x] 1.2 Add the seeded-match self-test proving the matcher fires, and the false-positive rejection case (Phase 0 guard pattern)
+  - [x] 1.3 `git mv docs/product-context.md docs/product.md` and `git mv docs/technical-guidelines.md docs/tech.md`
+  - [x] 1.4 Update the 10 references in `.claude/`
+  - [x] 1.5 Update the 11 references in `.github/`
+  - [x] 1.6 Update the 12 references in `.kiro/`
+  - [x] 1.7 Update the 10 references in `docs/`, including `docs/README.md`'s index rows
+  - [x] 1.8 Update the 2 references in `test/`
+  - [x] 1.9 Update the 5 rewritable root references: `AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`
   - [x] 1.9a `.gitignore` — done ahead of this story by PR #209 (`c14905e`), which removed the `/docs/*.md` allowlist entirely. **Verify only:** `git check-ignore -v docs/product.md` must exit non-zero (AC-8)
-  - [ ] 1.10 Add the fallback-resolution paragraph (new name first, old name only if absent) to `activity-init` and every skill/agent that reads a foundation document, identically in all three trees
-  - [ ] 1.11 Add those fallback locations to the test's `EXEMPT_FILES` allowlist, each with a reason comment
-  - [ ] 1.12 Verify AC-1: `git log --follow docs/product.md` shows the rename and no content change
-  - [ ] 1.13 Verify AC-2 and AC-3: `pnpm run test:unit` — the new test passes
-  - [ ] 1.14 Verify AC-4 and AC-5: the fallback is prose only; confirm no new `core/` module was added for it
-  - [ ] 1.15 Verify AC-6: diff the three trees' changed files against each other; behavioral content identical
-  - [ ] 1.16 Manual check: read `activity-init` end to end; the fallback paragraph reads coherently
-  - [ ] 1.17 Run Tests: `pnpm run validate`; verify AC-7 — failing set equals the five D-40 names exactly
-  - [ ] 1.18 Commit as `refactor(docs)!: rename foundation documents to product.md and tech.md`
+  - [x] 1.10 Add the fallback-resolution paragraph (new name first, old name only if absent) to `activity-init` and every skill/agent that reads a foundation document, identically in all three trees
+  - [x] 1.11 Add those fallback locations to the test's `EXEMPT_FILES` allowlist, each with a reason comment
+  - [x] 1.11a **Discovered during the sweep, beyond the enumerated 50:** `technical-writer` named both documents in directory form (`/docs/product-context/`) in all three trees — a path that never existed. Fixed, and the guard now matches that form
+  - [x] 1.11b **Discovered:** `activity-init`'s frontmatter `description` in `.claude` and `.kiro` still named the old documents. Fixed
+  - [x] 1.11c **Discovered:** `CLAUDE.md` and `CLAUDE.md.template` named them in prose in the File Organization table. Fixed by hand; the guard deliberately does not match the bare word form, because `technical-guidelines` is also a memo-cli tag value in `technical-writer`'s entry-type tables where renaming would break existing entries
+  - [x] 1.12 Verify AC-1: `git log --follow docs/product.md` shows the rename and no content change
+  - [x] 1.13 Verify AC-2 and AC-3: `pnpm run test:unit` — the new test passes
+  - [x] 1.14 Verify AC-4 and AC-5: the fallback is prose only; confirm no new `core/` module was added for it
+  - [x] 1.15 Verify AC-6: diff the three trees' changed files against each other; behavioral content identical
+  - [x] 1.16 Manual check: read `activity-init` end to end; the fallback paragraph reads coherently
+  - [x] 1.17 Run Tests: `pnpm run validate`; verify AC-7 — failing set equals the five D-40 names exactly
+  - [x] 1.18 Commit as `refactor(docs)!: rename foundation documents to product.md and tech.md`
 
 - [ ] 2.0 Implement Story S-002: Propose the rename to consumers via `dev-tasks migrate docs`
 
