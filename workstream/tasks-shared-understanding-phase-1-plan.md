@@ -132,7 +132,7 @@ None. Phase 1 is additive plus one rename.
 
   > Note: the delivery-registry gap is real work, not a detail — `INSTALL_IF_ABSENT_FILES` tags every entry with one platform, and a runbook belongs to the repository. Phase 3's glossary needs the same fix.
 
-  - [ ] 3.1 Write `test/unit/runbook-set.test.ts` first: frontmatter validity, the five fixed headings, index-matches-disk, and AC-5's reverse coverage (every script/workflow named by some runbook)
+  - [x] 3.1 Write `test/unit/runbook-set.test.ts` first: frontmatter validity, the five fixed headings, index-matches-disk, and AC-5's reverse coverage (every script/workflow named by some runbook)
   - [ ] 3.2 Extend `InstallIfAbsentFile` with a platform-agnostic tag reusing the `ROOT_PROFILE_TAG` pattern; do **not** add a third delivery category
   - [ ] 3.3 Update `core/distribution/install-if-absent.ts` to honor the agnostic tag: installed once per run regardless of how many platforms the profile resolves to
   - [ ] 3.4 Add `templates/runbooks/README.md` (index template) and `templates/runbooks/runbook-template.md`
