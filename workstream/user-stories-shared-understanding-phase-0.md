@@ -51,13 +51,13 @@ So that the code I maintain is the code I actually use.
 
 #### Acceptance Criteria
 
-- [ ] AC-1: `bin/dt.ts`, `core/catalog`, `core/context`, `core/extract`, `core/scope`, `core/verify`, `core/providers`, `schemas/`, and `templates/meta-repo/` no longer exist.
-- [ ] AC-2: `adapters/` no longer exists; `parse-args.ts` lives at `bin/parse-args.ts` and `bin/dev-tasks.ts` imports it by relative path.
-- [ ] AC-3: The `#adapters` alias and the deleted directories are gone from all four files that name them: `package.json` (`bin`, `imports`, `files`, and the `format`/`format:check` globs), `tsconfig.json` (`paths`, `include`), `vitest.config.ts` (alias, coverage `include`), and `eslint.config.js` (the `core/` → `adapters/` restricted-path zone).
-- [ ] AC-4: `core/index.ts` exports only `ExitCode`, `ExitCodeValue`, `reconcile`, `ReconcileAction`, and `distribution`.
-- [ ] AC-5: `core/exit-codes.ts` retains, at unchanged numeric values, exactly the codes the `dev-tasks` binary returns, enumerated in the commit message. `bin/dev-tasks.ts:237` currently returns `ExitCode.DependencyError`, a deprecated alias of the `dt`-only `NoCandidates: 11`; it is repointed at a retained code. `test/unit/exit-codes.test.ts`, which asserts the full fifteen-code table, is updated in the same commit.
-- [ ] AC-6: `pnpm run typecheck`, `pnpm run build`, `pnpm run lint`, and `pnpm run format:check` all pass. `format:check` is named explicitly because its globs reference two deleted directories and `prettier --check` exits 2 on a missing pattern.
-- [ ] AC-7: `dev-tasks --help`, `--version`, `status`, and `doctor` behave exactly as before.
+- [x] AC-1: `bin/dt.ts`, `core/catalog`, `core/context`, `core/extract`, `core/scope`, `core/verify`, `core/providers`, `schemas/`, and `templates/meta-repo/` no longer exist.
+- [x] AC-2: `adapters/` no longer exists; `parse-args.ts` lives at `bin/parse-args.ts` and `bin/dev-tasks.ts` imports it by relative path.
+- [x] AC-3: The `#adapters` alias and the deleted directories are gone from all four files that name them: `package.json` (`bin`, `imports`, `files`, and the `format`/`format:check` globs), `tsconfig.json` (`paths`, `include`), `vitest.config.ts` (alias, coverage `include`), and `eslint.config.js` (the `core/` → `adapters/` restricted-path zone).
+- [x] AC-4: `core/index.ts` exports only `ExitCode`, `ExitCodeValue`, `reconcile`, `ReconcileAction`, and `distribution`.
+- [x] AC-5: `core/exit-codes.ts` retains, at unchanged numeric values, exactly the codes the `dev-tasks` binary returns, enumerated in the commit message. `bin/dev-tasks.ts:237` currently returns `ExitCode.DependencyError`, a deprecated alias of the `dt`-only `NoCandidates: 11`; it is repointed at a retained code. `test/unit/exit-codes.test.ts`, which asserts the full fifteen-code table, is updated in the same commit.
+- [x] AC-6: `pnpm run typecheck`, `pnpm run build`, `pnpm run lint`, and `pnpm run format:check` all pass. `format:check` is named explicitly because its globs reference two deleted directories and `prettier --check` exits 2 on a missing pattern.
+- [x] AC-7: `dev-tasks --help`, `--version`, `status`, and `doctor` behave exactly as before.
 
 #### Business Rules
 
@@ -104,11 +104,11 @@ Not applicable. No data model, no persistent state.
 
 #### Definition of Done Checklist
 
-- [ ] Code implemented per technical guidelines
-- [ ] Retained tests pass unchanged
-- [ ] `typecheck`, `lint`, `format:check` pass
-- [ ] Acceptance criteria verified and mapped to evidence
-- [ ] Committed to the integration branch
+- [x] Code implemented per technical guidelines
+- [x] Retained tests pass unchanged
+- [x] `typecheck`, `lint`, `format:check` pass
+- [x] Acceptance criteria verified and mapped to evidence
+- [x] Committed to the integration branch
 
 ---
 
@@ -130,12 +130,12 @@ So that the retirement cannot quietly regress.
 
 #### Acceptance Criteria
 
-- [ ] AC-1: The 74 `dt` test files are deleted, along with `test/fixtures/{catalog,context,extract,schemas,verify}`.
-- [ ] AC-2: `test/fixtures/{git-guard,infra,qa-standards}` are untouched.
-- [ ] AC-3: `test/integration/binaries.test.ts` no longer contains `dt` cases and asserts `dist/bin/dt.js` does not exist.
-- [ ] AC-4: A new absence test fails when any file under `bin/`, `core/`, `test/`, `.claude/`, `.github/`, `.kiro/`, `AGENTS.md`, or `CLAUDE.md` references `dt ` as a command, `component.json`, or the meta-repo.
-- [ ] AC-5: `pnpm run test` fails on exactly the five pre-existing cases captured at task 0.2 and no others, compared as a set of full test names rather than as a count.
-- [ ] AC-6: The absence test is currently failing for the prompt trees, which S-004 resolves; it is committed after the code deletion and expected red until S-004 lands.
+- [x] AC-1: The 74 `dt` test files are deleted, along with `test/fixtures/{catalog,context,extract,schemas,verify}`.
+- [x] AC-2: `test/fixtures/{git-guard,infra,qa-standards}` are untouched.
+- [x] AC-3: `test/integration/binaries.test.ts` no longer contains `dt` cases and asserts `dist/bin/dt.js` does not exist.
+- [x] AC-4: A new absence test fails when any file under `bin/`, `core/`, `test/`, `.claude/`, `.github/`, `.kiro/`, `AGENTS.md`, or `CLAUDE.md` references `dt ` as a command, `component.json`, or the meta-repo.
+- [x] AC-5: `pnpm run test` fails on exactly the five pre-existing cases captured at task 0.2 and no others, compared as a set of full test names rather than as a count.
+- [x] AC-6: The absence test is currently failing for the prompt trees, which S-004 resolves; it is committed after the code deletion and expected red until S-004 lands.
 
 #### Business Rules
 
@@ -183,10 +183,10 @@ So that the retirement cannot quietly regress.
 
 #### Definition of Done Checklist
 
-- [ ] Absence test written before the prompt-tree cleanup it guards
-- [ ] Test suite at the 4-failure baseline
-- [ ] Quality gates pass
-- [ ] Committed to the integration branch
+- [x] Absence test written before the prompt-tree cleanup it guards
+- [x] Test suite at the 4-failure baseline
+- [x] Quality gates pass
+- [x] Committed to the integration branch
 
 ---
 
@@ -208,14 +208,14 @@ So that the published package stops carrying weight it does not use and the next
 
 #### Acceptance Criteria
 
-- [ ] AC-1: `ajv` is removed from `dependencies`; the `pg` optional peer and its `peerDependenciesMeta` entry are removed.
-- [ ] AC-2: The `fast-uri` entry in `pnpm.overrides` is removed, since it exists only for `ajv`.
-- [ ] AC-3: `yaml` moves from `dependencies` to `devDependencies`; after removal only `test/unit/infra-workflow-templates.test.ts` imports it.
-- [ ] AC-4: `execa` stays in `dependencies`.
-- [ ] AC-5: `.github/workflows/publish-npm.yml` asserts no deleted path. **Two** of its assertions break, not one: line 69 checks `dist/bin/dt.js` and line 71 checks `dist/adapters`. It still asserts `dist/bin/dev-tasks.js` and `dist/core`. A test parses the `Verify dist output` step and asserts every path it names exists after a build, so the class is closed rather than these two instances.
-- [ ] AC-6: `pnpm install` resolves with no missing-peer warnings; `pnpm audit --prod` result recorded in the pull request.
-- [ ] AC-7: `pnpm run build` produces `dist/bin/dev-tasks.js` and no `dist/bin/dt.js`.
-- [ ] AC-8 (added at drift reconciliation, v1.2): `express`, `@types/express`, and `eslint-plugin-import-x` are also removed from `devDependencies` — the first two backed only the deleted Express-introspection extractor, the third's only rule (`core/` must not import `adapters/`) became meaningless once `adapters/` was deleted. Disclosed in commit `6edee92`.
+- [x] AC-1: `ajv` is removed from `dependencies`; the `pg` optional peer and its `peerDependenciesMeta` entry are removed.
+- [x] AC-2: The `fast-uri` entry in `pnpm.overrides` is removed, since it exists only for `ajv`.
+- [x] AC-3: `yaml` moves from `dependencies` to `devDependencies`; after removal only `test/unit/infra-workflow-templates.test.ts` imports it.
+- [x] AC-4: `execa` stays in `dependencies`.
+- [x] AC-5: `.github/workflows/publish-npm.yml` asserts no deleted path. **Two** of its assertions break, not one: line 69 checks `dist/bin/dt.js` and line 71 checks `dist/adapters`. It still asserts `dist/bin/dev-tasks.js` and `dist/core`. A test parses the `Verify dist output` step and asserts every path it names exists after a build, so the class is closed rather than these two instances.
+- [x] AC-6: `pnpm install` resolves with no missing-peer warnings; `pnpm audit --prod` result recorded in the pull request.
+- [x] AC-7: `pnpm run build` produces `dist/bin/dev-tasks.js` and no `dist/bin/dt.js`.
+- [x] AC-8 (added at drift reconciliation, v1.2): `express`, `@types/express`, and `eslint-plugin-import-x` are also removed from `devDependencies` — the first two backed only the deleted Express-introspection extractor, the third's only rule (`core/` must not import `adapters/`) became meaningless once `adapters/` was deleted. Disclosed in commit `6edee92`.
 
 #### Business Rules
 
@@ -251,10 +251,10 @@ So that the published package stops carrying weight it does not use and the next
 
 #### Definition of Done Checklist
 
-- [ ] Lockfile regenerated and committed
-- [ ] `audit` output captured for the pull request
-- [ ] Release assertions replayed locally against a fresh build
-- [ ] Committed to the integration branch
+- [x] Lockfile regenerated and committed
+- [x] `audit` output captured for the pull request
+- [x] Release assertions replayed locally against a fresh build
+- [x] Committed to the integration branch
 
 ---
 
@@ -276,14 +276,14 @@ So that I stop spending context on a mode that can never trigger.
 
 #### Acceptance Criteria
 
-- [ ] AC-1: No file under `.claude/`, `.github/`, or `.kiro/` references a `dt` command, `component.json`, or the meta-repo.
-- [ ] AC-2: `activity-contract-validation` is deleted from all three trees; `activity-contract-test-design` is retained unchanged.
-- [ ] AC-3: `activity-init` has no multi-repo mode and no `component.json` detection; its Init Mode flow is single-repo throughout.
-- [ ] AC-4: `activity-codebase-research`, `researcher`, `product-engineer`, and `qa-engineer` carry no `dt` invocation in any tree.
-- [ ] AC-5: `AGENTS.md` has no Task Types / `architecture-change` section (RF-62, RF-64) and no Cross-Repo Partitioning section (RF-63); `CLAUDE.md` loses the matching rules.
-- [ ] AC-6: `AGENTS.md.template` receives the same removals, so new installs do not ship the rules.
-- [ ] AC-7: The three trees remain at parity. Nine test files assert content this story removes and are therefore changed, not merely kept passing: `architecture-change-parity.test.ts`, `architecture-change-dryrun.test.ts`, `cross-repo-partitioning-parity.test.ts`, and `cross-repo-partitioning-dryrun.test.ts` are deleted with the blocks they assert; `skill-init-edge-cases.test.ts` is deleted as multi-repo-only; `skill-init-walkthrough.test.ts` is rewritten for the single-repo-only flow; `skill-parity-init`, `researcher-parity`, and `skill-parity-testing-layers` lose their `dt` assertions. Every other parity test passes unmodified, and a new check asserts set equality of skill directory names across the three trees.
-- [ ] AC-8: The S-002 absence test now passes.
+- [x] AC-1: No file under `.claude/`, `.github/`, or `.kiro/` references a `dt` command, `component.json`, or the meta-repo.
+- [x] AC-2: `activity-contract-validation` is deleted from all three trees; `activity-contract-test-design` is retained unchanged.
+- [x] AC-3: `activity-init` has no multi-repo mode and no `component.json` detection; its Init Mode flow is single-repo throughout.
+- [x] AC-4: `activity-codebase-research`, `researcher`, `product-engineer`, and `qa-engineer` carry no `dt` invocation in any tree.
+- [x] AC-5: `AGENTS.md` has no Task Types / `architecture-change` section (RF-62, RF-64) and no Cross-Repo Partitioning section (RF-63); `CLAUDE.md` loses the matching rules.
+- [x] AC-6: `AGENTS.md.template` receives the same removals, so new installs do not ship the rules.
+- [x] AC-7: The three trees remain at parity. Nine test files assert content this story removes and are therefore changed, not merely kept passing: `architecture-change-parity.test.ts`, `architecture-change-dryrun.test.ts`, `cross-repo-partitioning-parity.test.ts`, and `cross-repo-partitioning-dryrun.test.ts` are deleted with the blocks they assert; `skill-init-edge-cases.test.ts` is deleted as multi-repo-only; `skill-init-walkthrough.test.ts` is rewritten for the single-repo-only flow; `skill-parity-init`, `researcher-parity`, and `skill-parity-testing-layers` lose their `dt` assertions. Every other parity test passes unmodified, and a new check asserts set equality of skill directory names across the three trees.
+- [x] AC-8: The S-002 absence test now passes.
 
 #### Business Rules
 
@@ -321,10 +321,10 @@ So that I stop spending context on a mode that can never trigger.
 
 #### Definition of Done Checklist
 
-- [ ] Absence test green
-- [ ] Parity suites pass
-- [ ] `activity-init` reads coherently end to end
-- [ ] Committed to the integration branch
+- [x] Absence test green
+- [x] Parity suites pass
+- [x] `activity-init` reads coherently end to end
+- [x] Committed to the integration branch
 
 ---
 
@@ -346,15 +346,15 @@ Three documents exist only for `dt`, three more carry substantial `dt` content, 
 
 #### Acceptance Criteria
 
-- [ ] AC-1: `docs/dt-user-manual.md`, `docs/data-model.md`, `docs/artifact-formats.md`, and `docs/requirements/prd-multi-repo-context.md` are deleted (D-38).
-- [ ] AC-2: `docs/README.md` lists no deleted document.
-- [ ] AC-3: `README.md`, `docs/system-overview.md`, and `docs/workflow-chains.md` carry no `dt` section; `docs/system-overview.md` is rewritten in its affected sections rather than merely stripped (D-32).
-- [ ] AC-4: `docs/product-context.md` Current State and Roadmap describe the product in use, with no `dt` MCP or LLM-scoping roadmap item.
-- [ ] AC-5: `TESTING.md` no longer declares a Contract-validation layer.
-- [ ] AC-6: ADR-007 exists with Context, Decision, Alternatives considered (keep, freeze, split to its own repository, remove), Consequences, and the restore path named as tag `v0.13.0` at commit `0a6f35e`.
-- [ ] AC-7: ADR-001 and ADR-002 are marked `Superseded` by ADR-007 with no other edit; the ADR index reflects the new status and lists ADR-007.
-- [ ] AC-8: `CHANGELOG.md` gains a `Removed` section naming every removed command, and `package.json` version is `0.14.0`.
-- [ ] AC-9: The version commit uses `chore!:` with a `BREAKING CHANGE:` footer naming the removed binary (D-28).
+- [x] AC-1: `docs/dt-user-manual.md`, `docs/data-model.md`, `docs/artifact-formats.md`, and `docs/requirements/prd-multi-repo-context.md` are deleted (D-38).
+- [x] AC-2: `docs/README.md` lists no deleted document.
+- [x] AC-3: `README.md`, `docs/system-overview.md`, and `docs/workflow-chains.md` carry no `dt` section; `docs/system-overview.md` is rewritten in its affected sections rather than merely stripped (D-32).
+- [x] AC-4: `docs/product-context.md` Current State and Roadmap describe the product in use, with no `dt` MCP or LLM-scoping roadmap item.
+- [x] AC-5: `TESTING.md` no longer declares a Contract-validation layer.
+- [x] AC-6: ADR-007 exists with Context, Decision, Alternatives considered (keep, freeze, split to its own repository, remove), Consequences, and the restore path named as tag `v0.13.0` at commit `0a6f35e`.
+- [x] AC-7: ADR-001 and ADR-002 are marked `Superseded` by ADR-007 with no other edit; the ADR index reflects the new status and lists ADR-007.
+- [x] AC-8: `CHANGELOG.md` gains a `Removed` section naming every removed command, and `package.json` version is `0.14.0`.
+- [x] AC-9: The version commit uses `chore!:` with a `BREAKING CHANGE:` footer naming the removed binary (D-28).
 
 #### Business Rules
 
@@ -395,10 +395,10 @@ Three documents exist only for `dt`, three more carry substantial `dt` content, 
 
 #### Definition of Done Checklist
 
-- [ ] ADR-007 complete with all four alternatives and the restore tag
-- [ ] No broken internal links
-- [ ] `validate` passes
-- [ ] Committed to the integration branch; pull request opened for review
+- [x] ADR-007 complete with all four alternatives and the restore tag
+- [x] No broken internal links
+- [x] `validate` passes
+- [x] Committed to the integration branch; pull request opened for review
 
 ---
 
@@ -430,10 +430,10 @@ None.
 
 ### Non-Goals Validation
 
-- [ ] `core/checks` is not created in this phase — confirmed absent from every story (D-33).
-- [ ] No foundation-doc rename — that is Phase 1; no story touches `product-context.md`'s filename.
-- [ ] No replacement for multi-repo context — confirmed; no story adds a cross-repository capability.
-- [ ] No consumer migration tooling for `dt` — confirmed; the restore tag is the documented path.
+- [x] `core/checks` is not created in this phase — confirmed absent from every story (D-33).
+- [x] No foundation-doc rename — that is Phase 1; no story touches `product-context.md`'s filename.
+- [x] No replacement for multi-repo context — confirmed; no story adds a cross-repository capability.
+- [x] No consumer migration tooling for `dt` — confirmed; the restore tag is the documented path.
 
 ## Execution Plan
 
