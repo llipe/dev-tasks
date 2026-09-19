@@ -7,6 +7,7 @@
 | 1.0     | 2026-09-18 | Initial version. Five stories covering PRD FR-53 to FR-58.                                                                                                                                                          | product-engineer |
 | 1.1     | 2026-09-19 | Verifier Design Mode corrections: pass signal is the five named failures as a set, not a count of four (D-40); `publish-npm.yml` asserts two deleted paths; the `#adapters` alias spans four files; `format` globs break the gate; the exit-code prune touches the retained binary; six retained tests must change, enumerated. | verifier / product-engineer |
 | 1.2     | 2026-09-19 | Verifier Audit Mode drift reconciliation (fidelity-report-shared-understanding-phase-0.md): S-004 AC-7 corrected from five to the actual nine touched test files (`architecture-change-dryrun.test.ts`, `cross-repo-partitioning-dryrun.test.ts`, `skill-init-edge-cases.test.ts`, and `skill-init-walkthrough.test.ts` were undercounted); S-003 note added recording the `express`, `@types/express`, and `eslint-plugin-import-x` devDependency removals, disclosed in commit `6edee92` but never enumerated in this document. | product-engineer (drift-reconciliation) |
+| 1.3     | 2026-09-19 | D-41 supersedes D-28: the version bump and release commit are removed from S-005's scope. `scripts/release.sh` is a manual, `main`-only, post-merge maintainer step that computes the next semver from the last tag and overwrites `package.json` from the tag at publish time regardless (`publish-npm.yml`); a feature PR hand-setting a version pre-empts and can conflict with that computation. S-005 AC-8/AC-9 corrected accordingly; `package.json` reverted to `0.13.0`, `CHANGELOG.md` entry moved under `## [Unreleased]`. | @llipe / product-engineer |
 
 ## Source Documents
 
@@ -353,8 +354,8 @@ Three documents exist only for `dt`, three more carry substantial `dt` content, 
 - [x] AC-5: `TESTING.md` no longer declares a Contract-validation layer.
 - [x] AC-6: ADR-007 exists with Context, Decision, Alternatives considered (keep, freeze, split to its own repository, remove), Consequences, and the restore path named as tag `v0.13.0` at commit `0a6f35e`.
 - [x] AC-7: ADR-001 and ADR-002 are marked `Superseded` by ADR-007 with no other edit; the ADR index reflects the new status and lists ADR-007.
-- [x] AC-8: `CHANGELOG.md` gains a `Removed` section naming every removed command, and `package.json` version is `0.14.0`.
-- [x] AC-9: The version commit uses `chore!:` with a `BREAKING CHANGE:` footer naming the removed binary (D-28).
+- [x] AC-8 (corrected at v1.3, superseding D-28 per D-41): `CHANGELOG.md` gains an `## [Unreleased]` → `Removed` section naming every removed command. `package.json`'s version is **not** bumped by this story: `scripts/release.sh` computes the next semver from the last tag and is a manual, `main`-only, post-merge step; hand-setting a version inside this PR would fabricate a number the script doesn't own and that `publish-npm.yml` overwrites from the tag at publish time regardless (`Verify package version matches tag` step).
+- [x] AC-9 (superseded at v1.3 per D-41): No release commit is authored by this story. The actual version bump, `chore(release): vX.Y.Z` commit, tag, and push are performed by the maintainer running `./scripts/release.sh <major|minor|patch>` on `main` after this PR merges — that run also regenerates its own `CHANGELOG.md` entry from the merged commit/PR history, which is why this story's entry stays under `[Unreleased]` rather than a version header.
 
 #### Business Rules
 

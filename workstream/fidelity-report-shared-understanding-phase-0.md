@@ -104,6 +104,16 @@ No randomized/fuzz tests were in scope (a deletion has no property space to fuzz
 - GAP-4 (carried forward, not new drift): track for the Phase 4 CI-wiring specification (FR-41/FR-42).
 - Everything else: no action needed.
 
+## 7. Post-Audit Correction (2026-09-19, not re-verified by the original auditor)
+
+S-005 AC-8 and AC-9 (both audited **Pass** in §3 above) are corrected by D-41, which supersedes D-28. At audit time, `package.json` read `0.14.0` and commit `a76e2c3` was `chore!: release v0.14.0` — both accurately observed and accurately reported as meeting the story's AC wording as it existed then.
+
+That wording was itself wrong: this repository's actual release mechanism is `scripts/release.sh`, run manually on `main` after merge, which computes the next semver from the last git tag (not from anything a feature PR sets) and whose commit, tag, and CHANGELOG entry are what actually constitute a release. `publish-npm.yml`'s "Verify package version matches tag" step overwrites `package.json`'s version from the pushed tag at publish time regardless of what a feature branch committed. Setting `0.14.0` and authoring a release-shaped commit inside PR #200 pre-empted that process and risked colliding with it (the script's own `suggest_increment` flags `major` on `BREAKING CHANGE` text, so the real next version may not even be `0.14.0`).
+
+Corrective commit (this branch, after the original audit): `package.json` reverted to `0.13.0`; `CHANGELOG.md`'s entry moved under `## [Unreleased]`; S-005 AC-8/AC-9 reworded in `workstream/user-stories-shared-understanding-phase-0.md` v1.3; task list corrected in `workstream/tasks-shared-understanding-phase-0-plan.md` v1.2; decision recorded as D-41 (supersedes D-28) in `workstream/decisions-shared-understanding.md`.
+
+This does not change the audit's overall verdict — no code-deletion or absence-guard finding is affected — but the S-001 AC-7 evidence row's `--version` → `0.14.0` observation is now stale (it will read `0.13.0` until a maintainer runs `scripts/release.sh`), and S-005 AC-8/AC-9 should be read as **Pass against the corrected wording**, not the original. A fresh Audit Mode pass was not re-run for this correction; the calling session applied it directly and disclosed it here rather than re-invoking the verifier for a single-decision reconciliation.
+
 ## Output Contract
 
 - Mode: Audit · Scope: PR #200 completion gate

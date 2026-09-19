@@ -6,6 +6,7 @@
 | ------- | ---------- | ------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-18 | Initial version. Five stories, issues #195 to #199.                                                    | product-engineer |
 | 1.1     | 2026-09-19 | Verifier corrections: five-failure baseline as a set (D-40), both publish assertions, four alias files, format globs, exit-code repoint, six expected test edits, bitbucket template. | verifier / product-engineer |
+| 1.2     | 2026-09-19 | D-41 supersedes D-28: tasks 5.12/5.13 no longer set `package.json`'s version or author a release commit — that is `scripts/release.sh`, run manually on `main` after merge. | @llipe / product-engineer |
 
 ## Scope
 
@@ -178,9 +179,9 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
   - [x] 5.8 Add a `Superseded by ADR-007` status line to ADR-001 and ADR-002 with no other edit; update the ADR index to show both statuses and list ADR-007 (AC-7)
   - [x] 5.9 Manual check: follow every link in `docs/README.md`, `README.md`, and the ADR index; none may be broken
   - [x] 5.10 Commit as `docs: retire dt documentation and record ADR-007`
-  - [x] 5.11 Add a `Removed` section to `CHANGELOG.md` naming every removed command: `dt init`, `dt extract` (`detect`, `all`, `component`, `openapi`, `asyncapi`, `schema`), `dt catalog` (`build`, `validate`, `query`, `scaffold`), `dt scope`, `dt scope gate`, `dt verify` (`contract-diff`, `impact`, `drift`), `dt ctx` (`fetch`, `assemble`)
-  - [x] 5.12 Set `package.json` version to `0.14.0` (AC-8)
-  - [x] 5.13 Commit as `chore!: release v0.14.0` with a `BREAKING CHANGE:` footer naming the removed binary (AC-9)
+  - [x] 5.11 Add a `Removed` section under `CHANGELOG.md`'s `## [Unreleased]` heading naming every removed command: `dt init`, `dt extract` (`detect`, `all`, `component`, `openapi`, `asyncapi`, `schema`), `dt catalog` (`build`, `validate`, `query`, `scaffold`), `dt scope`, `dt scope gate`, `dt verify` (`contract-diff`, `impact`, `drift`), `dt ctx` (`fetch`, `assemble`)
+  - [x] 5.12 (corrected, D-41 supersedes D-28) Do **not** set `package.json`'s version in this story. `scripts/release.sh` is the manual, `main`-only, post-merge release mechanism: it computes the next semver from the last git tag, not from whatever this PR sets, and `publish-npm.yml` overwrites `package.json`'s version from the pushed tag at publish time regardless. `package.json` stays at `0.13.0` on this branch (AC-8, corrected)
+  - [x] 5.13 (corrected, D-41 supersedes D-28) No release commit in this story. After merge, the maintainer runs `./scripts/release.sh <major|minor|patch>` on `main`, which commits `chore(release): vX.Y.Z`, tags, pushes, and triggers `release-bundle.yml`/`publish-npm.yml` — that run also regenerates its own `CHANGELOG.md` entry from the merged history (AC-9, corrected)
 
 - [x] 6.0 Completion gates
 
