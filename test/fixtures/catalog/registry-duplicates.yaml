@@ -1,5 +1,0 @@
-entries:
-  - id: payment-service
-    repo: ./repos/payment-service
-  - id: duplicate-payment
-    repo: ./repos/duplicate-payment
