@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.14.0] - 2026-09-19
+
+### Removed
+
+- **`dt` binary and the entire multi-repo context layer** (ADR-007). Restore path: tag `v0.13.0`, commit `0a6f35e`.
+  - `dt init`
+  - `dt extract detect`, `dt extract all`, `dt extract component`, `dt extract openapi`, `dt extract asyncapi`, `dt extract schema`
+  - `dt catalog build`, `dt catalog validate`, `dt catalog query`, `dt catalog scaffold`
+  - `dt scope`, `dt scope gate`
+  - `dt verify contract-diff`, `dt verify impact`, `dt verify drift`
+  - `dt ctx fetch`, `dt ctx assemble`
+- `docs/dt-user-manual.md`, `docs/data-model.md`, `docs/artifact-formats.md`, `docs/requirements/prd-multi-repo-context.md`.
+- The `architecture-change` task type and Cross-Repo Partitioning (RF-63) rules from `AGENTS.md` and `AGENTS.md.template`.
+- The `activity-contract-validation` skill (all three platform trees).
+
+### Changed
+
+- `core/exit-codes.ts` collapsed to a 5-code contract (`Success`, `GeneralError`, `InvalidUsage`, `DependencyError`, `ReconciliationConflict`); all deprecated aliases removed.
+- `bin/parse-args.ts` moved from `adapters/cli/parse-args.ts`; dead flags `metaRepo`, `strategy`, `interactive`, `dbUrl` dropped.
+- ADR-001 and ADR-002 marked Superseded by ADR-007.
+
 ## [0.13.0] - 2026-09-17
 
 ### Added
