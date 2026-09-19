@@ -1,0 +1,7 @@
+{
+  "name": "npm-root",
+  "private": true,
+  "workspaces": [
+    "libs/*"
+  ]
+}

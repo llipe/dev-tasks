@@ -39,8 +39,44 @@ describe("activity-init skill parity", () => {
     expect(kiroContent).toContain("## Mode Detection");
   });
 
-  it("contains mono-repo mode (Mode A)", () => {
-    expect(kiroContent).toContain("## Mode A — Mono-Repo (Current Flow)");
+  it("contains documented-repository mode (Mode A), renamed per D-44", () => {
+    expect(kiroContent).toContain("## Mode A — Documented Repository (Current Flow)");
+  });
+
+  it("no longer uses the old mode heading anywhere (AC-5)", () => {
+    // The term is reserved for repository shape now. The rename note
+    // that explains the change is the one permitted mention, so the
+    // heading is what is asserted gone — not the word.
+    for (const content of [kiroContent, githubContent, claudeContent]) {
+      expect(content).not.toContain("## Mode A — Mono-Repo");
+    }
+  });
+
+  it("documents repository-shape detection and the package map (AC-1, AC-2)", () => {
+    for (const content of [kiroContent, githubContent, claudeContent]) {
+      expect(content).toContain("## Repository Shape Detection");
+      expect(content).toContain("pnpm-workspace.yaml");
+      expect(content).toContain("[tool.uv.workspace]");
+      expect(content).toContain("### Package Map");
+      expect(content).toContain("Bounded context");
+    }
+  });
+
+  it("states that a single-package repository records exactly one row (AC-3)", () => {
+    expect(kiroContent).toContain("single-package repository records exactly one row");
+  });
+
+  it("fills bounded context freeform at interview time (AC-4, D-45)", () => {
+    expect(kiroContent).toContain("shared-understanding#D-45");
+    expect(kiroContent).toContain("freeform");
+  });
+
+  it("confirms the SIMPLICITY.md owner and thresholds with the user (AC-7)", () => {
+    for (const content of [kiroContent, githubContent, claudeContent]) {
+      expect(content).toContain("## SIMPLICITY.md Confirmation");
+      expect(content).toContain("housekeeping");
+      expect(content).toContain("MUST NOT** loosen");
+    }
   });
 
   it("contains undocumented/greenfield mode (Mode B), investigating the codebase directly", () => {

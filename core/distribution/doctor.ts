@@ -10,11 +10,19 @@ import { execSync } from "node:child_process";
 import { readManifest } from "./manifest.js";
 import { readPin } from "./pin.js";
 import { detectOldFoundationDocs } from "./migrate-docs.js";
+import { findPackageMapDrift } from "./workspace.js";
 
 export interface DoctorCheck {
   name: string;
   pass: boolean;
   message: string;
+  /**
+   * A passing check with something worth saying. `doctor`'s exit code is
+   * driven by `pass` alone, so a warning reports without failing — which
+   * is what AC-6 requires of the package-map drift check: structural
+   * failures belong to `lint` (S-004), and the two must not overlap.
+   */
+  warn?: boolean;
 }
 
 export interface DoctorOptions {
@@ -260,6 +268,31 @@ export async function checkFoundationDocNames(repoRoot: string): Promise<DoctorC
 }
 
 /**
+ * Warn when the `docs/tech.md` package map and the workspace disagree
+ * (PRD AC-29). Never fails: a stale map is a documentation problem, and
+ * failing `doctor` on it would block a consumer from using the tool over
+ * a table they have not filled in yet.
+ */
+export function checkPackageMap(repoRoot: string): DoctorCheck {
+  const drift = findPackageMapDrift(repoRoot);
+
+  if (drift.length === 0) {
+    return {
+      name: "package-map",
+      pass: true,
+      message: "The docs/tech.md package map matches the workspace.",
+    };
+  }
+
+  return {
+    name: "package-map",
+    pass: true,
+    warn: true,
+    message: `Package-map drift (${drift.length}): ${drift.map((d) => d.message).join(" ")}`,
+  };
+}
+
+/**
  * Get the default cache directory.
  * Uses $XDG_CACHE_HOME/dev-tasks or ~/.cache/dev-tasks.
  */
@@ -287,6 +320,7 @@ export async function runDoctor(options: DoctorOptions): Promise<DoctorCheck[]> 
     checkVersionSkew(installed, pinned),
     await checkClaudeHooksWiring(repoRoot),
     await checkFoundationDocNames(repoRoot),
+    checkPackageMap(repoRoot),
   ];
 
   return checks;

@@ -61,6 +61,7 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 - `test/unit/foundation-docs-naming.test.ts` — EXEMPT_FILES extended to the migration machinery and its tests (S-002), plus `runbook-migrate-foundation-docs.md` (S-003)
 - `test/integration/install-parity.test.ts` — agnostic-tag accounting and the runbook-scaffold cases (S-003)
 - `test/integration/checks-run.test.ts` — new; the lint entry point end to end (S-004)
+- `.claude/commands/product-engineer.md`, `.github/agents/product-engineer.agent.md`, `.kiro/agents/product-engineer.md`, `.github/prompts/product-engineer-init.prompt.md`, `docs/workflow-chains.md` — Mode A rename cross-references (S-005)
 - `.claude/agents/verifier.md`, `.github/agents/verifier.agent.md`, `.kiro/agents/verifier.md` — audit reads `checkDocsStructure` (S-004)
 - `package.json` (`lint` script), `bundle-manifest.json`, `TESTING.md`, `docs/README.md`, `README.md` (migrate-docs command reference and migration subsection)
 - `activity-init`, `activity-test-standards`, `researcher`, `plan`, `implement`, `qa-engineer`, `verifier`, `technical-writer`, `infra-engineer`, `developer`, `housekeeping` — across all three trees
@@ -177,26 +178,26 @@ None. Phase 1 is additive plus one rename.
   - [x] 4.16 Run `pnpm run validate` against the real tree and fix anything it legitimately finds
   - [x] 4.17 Commit as `feat(checks): add core/checks with the docs-structure check under lint`
 
-- [ ] 5.0 Implement Story S-005: Detect repository shape and record the package map
+- [x] 5.0 Implement Story S-005: Detect repository shape and record the package map
 
   > Note: `dev-tasks` is single-package. The monorepo path is built and tested against a fixture, not exercised on this repository.
 
-  - [ ] 5.1 Write `test/unit/workspace.test.ts` first: enumeration per signal type, single-package fallback, drift detection both directions
-  - [ ] 5.2 Create `test/fixtures/workspace-single/` and `test/fixtures/workspace-mono/` (a `pnpm-workspace.yaml` monorepo with two packages)
-  - [ ] 5.3 Implement `core/distribution/workspace.ts`: detect shape from `pnpm-workspace.yaml`, `workspaces` in `package.json`, `turbo.json`, `nx.json`, `lerna.json`, `[tool.uv.workspace]`
-  - [ ] 5.4 Parse the package list from `pnpm-workspace.yaml` and `package.json` `workspaces` only; the other four are presence-only signals
-  - [ ] 5.5 Add the `doctor` package-map drift check: warn, never fail (AC-6)
-  - [ ] 5.6 Add shape detection and the package-map output structure (package, path, purpose, owner, canonical scripts, bounded context) to `activity-init` in all three trees
-  - [ ] 5.7 Add the freeform bounded-context interview question per D-45; state that Phase 3's glossary supersedes it
-  - [ ] 5.8 Add the `SIMPLICITY.md` owner-and-thresholds confirmation step to `activity-init` (AC-7)
-  - [ ] 5.9 Rename `activity-init`'s "Mode A — Mono-Repo" per D-44 in all three trees; update every cross-reference, including the Mode Detection section and Final Instructions
-  - [ ] 5.10 Record this repository's own package map in `docs/tech.md`: one row, single-package shape (AC-3)
-  - [ ] 5.11 Update `test/unit/skill-parity-init.test.ts` and `test/unit/skill-init-walkthrough.test.ts` for the renamed mode and the new section
-  - [ ] 5.12 Verify AC-1 to AC-4 by `pnpm run test:unit` and the two fixtures; AC-5 by grepping for the old mode name; AC-6 by the `doctor` test; AC-7 by the fresh-repository integration case; AC-8 by the parity suites
-  - [ ] 5.13 Edge cases: workspace glob matching zero packages; package with no `name`; nested workspaces; map row for a deleted package; empty `pnpm-workspace.yaml`
-  - [ ] 5.14 Manual check: run `activity-init` against the monorepo fixture and read the produced `docs/tech.md` section
-  - [ ] 5.15 Run Tests: `pnpm run validate`; the D-40 set is unchanged
-  - [ ] 5.16 Commit as `feat(init): detect repository shape and record the package map`
+  - [x] 5.1 Write `test/unit/workspace.test.ts` first: enumeration per signal type, single-package fallback, drift detection both directions
+  - [x] 5.2 Create `test/fixtures/workspace-single/` and `test/fixtures/workspace-mono/` (a `pnpm-workspace.yaml` monorepo with two packages)
+  - [x] 5.3 Implement `core/distribution/workspace.ts`: detect shape from `pnpm-workspace.yaml`, `workspaces` in `package.json`, `turbo.json`, `nx.json`, `lerna.json`, `[tool.uv.workspace]`
+  - [x] 5.4 Parse the package list from `pnpm-workspace.yaml` and `package.json` `workspaces` only; the other four are presence-only signals
+  - [x] 5.5 Add the `doctor` package-map drift check: warn, never fail (AC-6)
+  - [x] 5.6 Add shape detection and the package-map output structure (package, path, purpose, owner, canonical scripts, bounded context) to `activity-init` in all three trees
+  - [x] 5.7 Add the freeform bounded-context interview question per D-45; state that Phase 3's glossary supersedes it
+  - [x] 5.8 Add the `SIMPLICITY.md` owner-and-thresholds confirmation step to `activity-init` (AC-7)
+  - [x] 5.9 Rename `activity-init`'s "Mode A — Mono-Repo" per D-44 in all three trees; update every cross-reference, including the Mode Detection section and Final Instructions
+  - [x] 5.10 Record this repository's own package map in `docs/tech.md`: one row, single-package shape (AC-3)
+  - [x] 5.11 Update `test/unit/skill-parity-init.test.ts` and `test/unit/skill-init-walkthrough.test.ts` for the renamed mode and the new section
+  - [x] 5.12 Verify AC-1 to AC-4 by `pnpm run test:unit` and the two fixtures; AC-5 by grepping for the old mode name; AC-6 by the `doctor` test; AC-7 by the fresh-repository integration case; AC-8 by the parity suites
+  - [x] 5.13 Edge cases: workspace glob matching zero packages; package with no `name`; nested workspaces; map row for a deleted package; empty `pnpm-workspace.yaml`
+  - [x] 5.14 Manual check: run `activity-init` against the monorepo fixture and read the produced `docs/tech.md` section
+  - [x] 5.15 Run Tests: `pnpm run validate`; the D-40 set is unchanged
+  - [x] 5.16 Commit as `feat(init): detect repository shape and record the package map`
 
 - [ ] 6.0 Implement Story S-006: Make agents package-aware
 

@@ -5,6 +5,7 @@ import {
   checkCacheDir,
   checkVersionSkew,
   checkFoundationDocNames,
+  checkPackageMap,
   runDoctor,
 } from "#core/distribution/doctor.js";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
@@ -174,6 +175,33 @@ describe("core/distribution/doctor", () => {
     });
   });
 
+  describe("checkPackageMap", () => {
+    const FIXTURES = join(import.meta.dirname, "../fixtures");
+
+    it("passes when the map matches the workspace", () => {
+      const result = checkPackageMap(join(FIXTURES, "workspace-mono"));
+      expect(result.name).toBe("package-map");
+      expect(result.pass).toBe(true);
+      expect(result.warn).toBeUndefined();
+    });
+
+    it("warns without failing when the map and the workspace disagree (AC-6)", () => {
+      // The whole point: a stale table is a documentation problem, and
+      // failing doctor on it would block a consumer over a column they
+      // have not filled in. Structural failures belong to lint (S-004).
+      const result = checkPackageMap(join(FIXTURES, "workspace-unnamed"));
+      expect(result.pass).toBe(true);
+      expect(result.warn).toBe(true);
+      expect(result.message).toContain("packages/gone");
+    });
+
+    it("passes quietly when there is no package map at all", () => {
+      const result = checkPackageMap(join(FIXTURES, "workspace-nx"));
+      expect(result.pass).toBe(true);
+      expect(result.warn).toBeUndefined();
+    });
+  });
+
   describe("runDoctor", () => {
     let tmpDir: string;
 
@@ -225,6 +253,7 @@ describe("core/distribution/doctor", () => {
       expect(names).toContain("cache-dir");
       expect(names).toContain("version-skew");
       expect(names).toContain("foundation-doc-names");
+      expect(names).toContain("package-map");
     });
   });
 });

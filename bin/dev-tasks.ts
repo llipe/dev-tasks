@@ -233,7 +233,9 @@ async function main(): Promise<void> {
         );
       } else {
         for (const check of checks) {
-          const icon = check.pass ? "✓" : "✗";
+          // A warning passes: `doctor`'s exit code follows `pass` alone,
+          // so a drift report never blocks a consumer (S-005 AC-6).
+          const icon = check.pass ? (check.warn === true ? "⚠" : "✓") : "✗";
           process.stdout.write(`  ${icon} ${check.name}: ${check.message}\n`);
         }
         const allPass = checks.every((c) => c.pass);

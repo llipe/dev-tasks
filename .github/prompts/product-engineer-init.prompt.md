@@ -10,7 +10,7 @@ Run the `product-engineer` agent to establish foundation documents for this proj
 
 The agent will invoke the `activity-init` skill which first **detects the repository mode**:
 
-- **Mono-repo** (`/docs` present): standard interview flow
+- **Documented repository** (`/docs` present): standard interview flow
 - **Undocumented/greenfield** (`/docs` absent): investigates the codebase directly, then interview
 
 Then creates:

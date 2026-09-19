@@ -56,12 +56,13 @@ Every document produced by this activity **MUST** include a **Changelog** table 
 
 Before starting the interview, the skill **MUST** detect the repository mode and route accordingly. The detection logic is:
 
-1. **Mono-repo mode:** `/docs` directory exists → current single-repo flow (interview + direct docs generation).
+1. **Documented-repository mode:** `/docs` directory exists → interview + direct docs generation.
+   This mode is about whether documentation exists, not about how many packages the repository has. Repository *shape* (single-package or monorepo) is detected separately — see Repository Shape Detection below. The mode was called "Mono-Repo" until `shared-understanding#D-44` renamed it to free the term.
 2. **Undocumented / greenfield mode:** no `/docs` → investigation-first flow to bootstrap documentation from the codebase, then interview.
 
 ---
 
-## Mode A — Mono-Repo (Current Flow)
+## Mode A — Documented Repository (Current Flow)
 
 When `/docs` exists, the skill follows the **existing single-repo flow** unchanged.
 
@@ -69,8 +70,8 @@ When `/docs` exists, the skill follows the **existing single-repo flow** unchang
 
 1. **Receive Initial Brief:** The user describes the product, project, or technology stack.
 2. **Ask Clarifying Questions:** Gather information for both product context and technical guidelines in a single interview. Group questions by domain.
-3. **Generate Product Context Document:** Create `product-context.md` using the structure below.
-4. **Generate Technical Guidelines Document:** Create `technical-guidelines.md` using the structure below.
+3. **Generate Product Document:** Create `docs/product.md` using the structure below.
+4. **Generate Technical Document:** Create `docs/tech.md` using the structure below.
 5. **Save Output:** Save both documents in `/docs/` and present them for user review.
 
 ---
@@ -83,8 +84,8 @@ When `/docs` does not exist, the repository has no established documentation. Th
 
 1. **Investigate the codebase:** Read manifest files (`package.json`, `pyproject.toml`, `go.mod`, or equivalent), the directory structure, the README, and any existing configuration to identify the technology stack, frameworks, and conventions in use.
 2. **Present a findings summary:** Show the user what was found — stack, frameworks, notable directories, confidence per finding — before the interview.
-3. **Conduct the interview:** Proceed with the standard clarifying questions for product context and technical guidelines (same as Mono-Repo mode).
-4. **Generate documents:** Create `product-context.md` and `technical-guidelines.md` using the investigation findings as pre-filled context combined with interview answers.
+3. **Conduct the interview:** Proceed with the standard clarifying questions for product and technical context (same as documented-repository mode).
+4. **Generate documents:** Create `docs/product.md` and `docs/tech.md` using the investigation findings as pre-filled context combined with interview answers.
 5. **Save Output:** Save both documents in `/docs/` and present them for user review.
 
 ### Constraints
@@ -93,6 +94,62 @@ When `/docs` does not exist, the repository has no established documentation. Th
 - If the repository has no identifiable stack (an empty project), skip investigation and proceed directly to the interview (pure greenfield).
 
 ---
+
+---
+
+## Repository Shape Detection
+
+Before the interview, detect the repository's **shape**. This is independent of the mode above: a documented repository can be either shape, and so can a greenfield one.
+
+Detect from these signals (FR-59):
+
+| Signal | Read for |
+| ------ | -------- |
+| `pnpm-workspace.yaml` | Shape **and** the package list |
+| `workspaces` in `package.json` | Shape **and** the package list |
+| `turbo.json` | Shape only |
+| `nx.json` | Shape only |
+| `lerna.json` | Shape only |
+| `[tool.uv.workspace]` in `pyproject.toml` | Shape only |
+
+Any signal present → **monorepo**. No signal → **single-package**.
+
+Only the first two are parsed for a package list. When a repository signals monorepo through one of the other four, ask the user which packages exist rather than guessing.
+
+`core/distribution/workspace.ts` exports `detectWorkspace(repoRoot)`, which returns the shape, the signals found, and the packages. Use it rather than re-deriving the answer.
+
+### Package Map
+
+Record the result in `docs/tech.md` as a **Package Map** section, one row per package:
+
+```markdown
+## Package Map
+
+| Package | Path | Purpose | Owner | Canonical scripts | Bounded context |
+| ------- | ---- | ------- | ----- | ----------------- | --------------- |
+| @acme/core | packages/core | Shared domain logic | platform | lint, typecheck, test | Ordering |
+```
+
+Rules:
+
+- A **single-package repository records exactly one row**, for the root, with path `.`. The table has the same shape in both cases, so a reader never has to work out which kind of repository they are looking at.
+- **Purpose** and **Owner** come from the interview. Do not invent an owner; ask.
+- **Canonical scripts** lists the scripts the package actually defines, in the order `lint`, `format:check`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `audit`, `validate`. Absent scripts are omitted, not marked missing.
+- **Bounded context** is filled **freeform at interview time** (`shared-understanding#D-45`). Ask: *"In one phrase, what part of the business or domain does this package own?"* A freeform guess beats an empty column. Phase 3's glossary supersedes these answers with canonical terms; until then this column is a working label, not a contract.
+- A package whose `package.json` has no `name` is listed by its path. Do not invent a name — nothing would match it.
+
+`dev-tasks doctor` warns when the map and the workspace disagree in either direction: a package on disk with no row, or a row for a package that no longer exists. It warns and never fails; structural failures belong to `lint`.
+
+---
+
+## SIMPLICITY.md Confirmation
+
+`SIMPLICITY.md` ships at the repository root and states the code-simplicity contract, including section D's tool-enforced thresholds. During initialization you **MUST** confirm two things with the user rather than assuming them:
+
+1. **Owner** — who is accountable for the contract. The shipped default is `housekeeping`.
+2. **Thresholds** — section D's defaults (function length ≤ 40 lines, cyclomatic complexity ≤ 10, cognitive complexity ≤ 15, nesting depth ≤ 3, parameters ≤ 4, file length ≤ 400 lines). A repository **MAY** tighten a default; it **MUST NOT** loosen one.
+
+Ask: *"SIMPLICITY.md's owner is `housekeeping` and its thresholds are the shipped defaults. Keep both, or tighten anything?"* Record the answer in the file's frontmatter and in the section D table. Wiring the thresholds into a linter is a separate procedure — see `docs/runbooks/runbook-setup-simplicity-tooling.md`.
 
 ## Part 1 — Product Context
 
@@ -154,7 +211,8 @@ Adapt questions based on context already gathered (e.g., from codebase investiga
 
 0. **Changelog** — Version history table (see Document Changelog Convention above)
 1. **Overview** — Technical vision and guiding principles
-2. **Technology Stack** — Backend/frontend languages, frameworks, databases, key dependencies
+2. **Package Map** — Repository shape and one row per package (see Repository Shape Detection above)
+3. **Technology Stack** — Backend/frontend languages, frameworks, databases, key dependencies
 3. **Architecture Patterns** — System architecture, key decisions and rationale, component organization
 4. **API Design Standards** — Style, naming, request/response formats, error handling
 5. **Authentication & Authorization** — Mechanism, model, permission levels, session management
@@ -192,7 +250,7 @@ When the project includes JavaScript/TypeScript:
 
 - **Format:** Markdown (`.md`)
 - **Location:** `/docs/`
-- **Filenames:** `product-context.md`, `technical-guidelines.md`
+- **Filenames:** `product.md`, `tech.md`
 
 ## AGENTS.md Sizing
 

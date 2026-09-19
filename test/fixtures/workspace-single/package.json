@@ -1,0 +1,9 @@
+{
+  "name": "single-app",
+  "version": "1.0.0",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  }
+}

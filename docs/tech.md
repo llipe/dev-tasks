@@ -6,6 +6,27 @@
 | ------- | ---------- | ------------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-07-20 | Initial repository-wide technical constitution                            | product-engineer |
 | 1.1     | 2026-08-18 | Added `qa-engineer` coverage gate to the golden path; named `/TESTING.md` | technical-writer |
+| 1.2     | 2026-09-19 | Recorded repository shape and the package map (S-005, PRD AC-29)          | developer        |
+
+## Package Map
+
+**Repository shape:** single-package. No workspace signal is present — no
+`pnpm-workspace.yaml`, no `workspaces` key, no `turbo.json`, `nx.json`,
+`lerna.json`, or `[tool.uv.workspace]`. One row, for the root, so the table
+reads the same here as it would in a monorepo.
+
+| Package                | Path | Purpose                                                             | Owner    | Canonical scripts                                                                 | Bounded context                  |
+| ---------------------- | ---- | ------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------- | -------------------------------- |
+| `@llipe.com/dev-tasks` | `.`  | The workflow harness: CLI, core library, and the three prompt trees | platform | `lint`, `typecheck`, `test`, `test:unit`, `test:integration`, `audit`, `validate` | AI-assisted development workflow |
+
+`dev-tasks doctor` warns when this table and the workspace disagree in either
+direction — a package on disk with no row, or a row for a package that no
+longer exists. It warns and never fails; structural failures are `lint`'s
+(see `core/checks/`).
+
+The bounded-context value is a freeform working label
+(`shared-understanding#D-45`). Phase 3's glossary supersedes it with a
+canonical term.
 
 ## Overview
 

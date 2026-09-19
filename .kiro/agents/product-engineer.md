@@ -197,12 +197,12 @@ This agent invokes the following **skills** for each activity. You **MUST** load
 
 Follow the `activity-init` skill:
 
-1. **Detect repository mode:** check for `/docs` (mono-repo) or neither (undocumented/greenfield).
+1. **Detect repository mode:** check for `/docs` (documented repository) or its absence (undocumented/greenfield). Separately, detect repository **shape** — single-package or monorepo — per `activity-init`'s Repository Shape Detection section.
 2. **Route by mode:**
-   - **Mono-repo:** Proceed with the standard interview (current flow unchanged).
+   - **Documented repository:** Proceed with the standard interview (current flow unchanged).
    - **Undocumented/greenfield:** Investigate the codebase directly (manifest files, directory structure, README) → present a findings summary → then conduct the interview.
 3. Ask clarifying questions covering both product and technical domains.
-4. Generate `product.md` and `tech.md` in `/docs/`.
+4. Generate `product.md` and `tech.md` in `/docs/`, including the package map.
 5. If `/DESIGN.md` is missing and the project has UI scope, create a baseline `/DESIGN.md` aligned with current product direction.
 6. Present generated documents for user review.
 7. Iterate based on feedback.

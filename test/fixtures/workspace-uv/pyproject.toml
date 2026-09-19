@@ -1,0 +1,5 @@
+[project]
+name = "pyroot"
+
+[tool.uv.workspace]
+members = ["libs/*"]

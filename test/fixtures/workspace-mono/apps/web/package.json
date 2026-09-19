@@ -1,0 +1,6 @@
+{
+  "name": "@mono/web",
+  "scripts": {
+    "test": "vitest run"
+  }
+}

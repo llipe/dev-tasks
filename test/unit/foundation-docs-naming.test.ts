@@ -69,9 +69,6 @@ const EXCLUDED_DIRS = ["docs/adr", "docs/requirements", "workstream"];
  */
 const EXEMPT_FILES = new Set([
   "test/unit/foundation-docs-naming.test.ts", // this file: its own pattern literals
-  ".claude/skills/activity-init/SKILL.md", // states the fallback rule
-  ".github/skills/activity-init/SKILL.md", // states the fallback rule
-  ".kiro/skills/activity-init/SKILL.md", // states the fallback rule
   "core/distribution/migrate-docs.ts", // the rename pairs themselves (S-002)
   "bin/dev-tasks.ts", // `migrate docs` help text names both renames
   "README.md", // documents the migration for consumers (S-002 AC-8)
@@ -115,6 +112,27 @@ const OLD_NAME_PATTERNS: Array<{ name: string; pattern: RegExp }> = [
   { name: "product-context/ (directory form)", pattern: /\bproduct-context\// },
   { name: "technical-guidelines/ (directory form)", pattern: /\btechnical-guidelines\// },
 ];
+
+/**
+ * Files where a *line* may name an old document, but only the line that
+ * states the fallback rule (FR-45) — the rest of the file is guarded.
+ *
+ * A whole-file exemption hid a real defect: `activity-init` was exempt
+ * for its fallback paragraph, and four lines elsewhere in it went on
+ * telling the agent to *create* `product-context.md` long after S-001
+ * renamed it. The guard was silent because the file was. Narrowing the
+ * exemption to lines that actually state the rule re-arms it.
+ */
+const FALLBACK_RULE_FILES = new Set([
+  ".claude/skills/activity-init/SKILL.md",
+  ".github/skills/activity-init/SKILL.md",
+  ".kiro/skills/activity-init/SKILL.md",
+]);
+
+/** A line that states the rename, rather than a line that uses an old name. */
+function statesFallbackRule(line: string): boolean {
+  return /renamed from|fall back/i.test(line);
+}
 
 interface Finding {
   file: string;
@@ -171,7 +189,9 @@ function collectFiles(): string[] {
 function scanContent(relPath: string, content: string): Finding[] {
   const findings: Finding[] = [];
   const lines = content.split("\n");
+  const fallbackFile = FALLBACK_RULE_FILES.has(relPath);
   for (let i = 0; i < lines.length; i++) {
+    if (fallbackFile && statesFallbackRule(lines[i])) continue;
     for (const { name, pattern } of OLD_NAME_PATTERNS) {
       if (pattern.test(lines[i])) {
         findings.push({ file: relPath, pattern: name, line: i + 1, text: lines[i].trim() });
@@ -227,6 +247,29 @@ describe("foundation-docs naming guard (PRD FR-44, AC-22)", () => {
     );
     expect(scanContent("docs/adr/ADR-002-exit-code-contract.md", adr).length).toBeGreaterThan(0);
     expect(scanContent("prd", prd).length).toBeGreaterThan(0);
+  });
+
+  it("guards the rest of a fallback-rule file, not just its rule line", () => {
+    // The defect this catches: an instruction to create an old-named
+    // document, sitting in the same file as the rule explaining that the
+    // document was renamed.
+    const stale = "3. **Generate Product Context Document:** Create `product-context.md`.";
+    expect(scanContent(".claude/skills/activity-init/SKILL.md", stale)).toHaveLength(1);
+
+    const rule = "These documents were renamed from `docs/product-context.md`; fall back to it.";
+    expect(scanContent(".claude/skills/activity-init/SKILL.md", rule)).toHaveLength(0);
+    // The same line in any other file is still a finding.
+    expect(scanContent("some/other/file.md", rule).length).toBeGreaterThan(0);
+  });
+
+  it("every fallback-rule file exists and still states the rule", () => {
+    for (const relPath of FALLBACK_RULE_FILES) {
+      const content = readFileSync(join(ROOT, relPath), "utf-8");
+      expect(
+        content.split("\n").some((l) => statesFallbackRule(l) && /product-context/.test(l)),
+        `${relPath} no longer states the FR-45 fallback rule — drop it from FALLBACK_RULE_FILES`,
+      ).toBe(true);
+    }
   });
 
   it("every exempt file exists and names an old document", () => {
