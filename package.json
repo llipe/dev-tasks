@@ -1,21 +1,17 @@
 {
   "name": "@llipe.com/dev-tasks",
   "version": "0.13.0",
-  "description": "Multi-repo context tooling for dev-tasks",
+  "description": "AI agent toolkit for structured, PRD-driven development workflows",
   "type": "module",
   "imports": {
-    "#core/*": "./dist/core/*",
-    "#adapters/*": "./dist/adapters/*"
+    "#core/*": "./dist/core/*"
   },
   "bin": {
-    "dev-tasks": "dist/bin/dev-tasks.js",
-    "dt": "dist/bin/dt.js"
+    "dev-tasks": "dist/bin/dev-tasks.js"
   },
   "files": [
     "dist/bin/",
     "dist/core/",
-    "dist/adapters/",
-    "schemas/",
     ".github/agents/",
     ".github/skills/",
     ".github/instructions/",
@@ -52,8 +48,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"bin/\" \"core/\" \"adapters/\" \"schemas/\" \"test/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
-    "format:check": "prettier --check \"bin/\" \"core/\" \"adapters/\" \"schemas/\" \"test/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
+    "format": "prettier --write \"bin/\" \"core/\" \"test/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
+    "format:check": "prettier --check \"bin/\" \"core/\" \"test/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
     "test": "vitest run",
     "test:unit": "vitest run test/unit",
     "test:integration": "vitest run test/integration",
@@ -63,12 +59,9 @@
   "keywords": [
     "dev-tasks",
     "ai-agents",
-    "multi-repo",
-    "context",
-    "extraction",
-    "openapi",
-    "asyncapi",
-    "schema"
+    "workflow",
+    "prd",
+    "claude-code"
   ],
   "author": "llipe",
   "repository": {
