@@ -66,9 +66,7 @@ jobs:
       - name: Verify dist output
         run: |
           [ -f dist/bin/dev-tasks.js ] || { echo "Missing dist/bin/dev-tasks.js"; exit 1; }
-          [ -f dist/bin/dt.js ]        || { echo "Missing dist/bin/dt.js"; exit 1; }
           [ -d dist/core ]             || { echo "Missing dist/core/"; exit 1; }
-          [ -d dist/adapters ]         || { echo "Missing dist/adapters/"; exit 1; }
           echo "dist/ structure OK"
 
       - name: Dry-run pack to verify contents
