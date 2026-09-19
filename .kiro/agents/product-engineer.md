@@ -4,8 +4,8 @@ tools: [read, write, shell, web]
 resources:
   - file://AGENTS.md
   - file://DESIGN.md
-  - file://docs/product-context.md
-  - file://docs/technical-guidelines.md
+  - file://docs/product.md
+  - file://docs/tech.md
   - file://.kiro/steering/plan.md
   - file://.kiro/steering/implement.md
   - skill://.kiro/skills/**/SKILL.md
@@ -43,7 +43,7 @@ Initialize project foundation documents.
 
 - **Project/product description:** describe the product, project, or technology stack.
 
-Invokes the `activity-init` skill to create `docs/product-context.md` (product context and strategic goals) and `docs/technical-guidelines.md` (technical standards and patterns) — the "constitution" for all future development. Run once per project or on major strategic/technical pivots.
+Invokes the `activity-init` skill to create `docs/product.md` (product context and strategic goals) and `docs/tech.md` (technical standards and patterns) — the "constitution" for all future development. Run once per project or on major strategic/technical pivots.
 
 ### Feature
 
@@ -202,7 +202,7 @@ Follow the `activity-init` skill:
    - **Mono-repo:** Proceed with the standard interview (current flow unchanged).
    - **Undocumented/greenfield:** Investigate the codebase directly (manifest files, directory structure, README) → present a findings summary → then conduct the interview.
 3. Ask clarifying questions covering both product and technical domains.
-4. Generate `product-context.md` and `technical-guidelines.md` in `/docs/`.
+4. Generate `product.md` and `tech.md` in `/docs/`.
 5. If `/DESIGN.md` is missing and the project has UI scope, create a baseline `/DESIGN.md` aligned with current product direction.
 6. Present generated documents for user review.
 7. Iterate based on feedback.
@@ -216,7 +216,7 @@ Follow the `activity-refine` skill (PRD mode):
 
 1. Gather feature scope from user.
 2. Ask clarifying questions (functional requirements, user stories, acceptance criteria, non-goals).
-3. Reference `product-context.md` and `technical-guidelines.md`.
+3. Reference `product.md` and `tech.md`.
 4. Produce PRD: `/docs/requirements/prd-[feature-name].md`
 5. Present for user review and iterate.
 

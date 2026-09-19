@@ -1,6 +1,6 @@
 ---
 name: activity-init
-description: "Establish product-context.md and technical-guidelines.md foundation docs. Use in product-engineer Init Mode."
+description: "Establish product.md and tech.md foundation docs. Use in product-engineer Init Mode."
 ---
 
 # Activity: Initialize Project Foundation
@@ -16,6 +16,14 @@ Establish the foundational documents for a project: Product Context and Technica
 Guide an AI assistant in establishing the foundational documents for a project: **Product Context** and **Technical Guidelines**. These documents serve as the "constitution" for all future development — every PRD, specification, user story, and implementation decision **SHOULD** be informed by them.
 
 Run this activity **once per project** (or when a major strategic or technical pivot occurs).
+
+## Foundation Document Names
+
+The canonical names are **`docs/product.md`** and **`docs/tech.md`**. Create and reference those names only.
+
+**Fallback, one release cycle (FR-45, `shared-understanding#D-42`).** These documents were renamed from `docs/product-context.md` and `docs/technical-guidelines.md`. A consumer repository installed before the rename still carries the old names, and `dev-tasks update` never renames a consumer-owned file on its own. So when reading a foundation document: resolve `docs/product.md` first and fall back to `docs/product-context.md` only if the new name is absent; likewise `docs/tech.md`, then `docs/technical-guidelines.md`. When writing, always write the new name.
+
+On encountering the old names, propose `dev-tasks migrate docs`, which performs the rename with content unchanged. Do not rename a consumer's files without being asked. The fallback is removed one release cycle after the rename ships (tracked in issue #201); after that the proposal is the only path.
 
 ## Repository Setup — Branch Protection (Required)
 
@@ -108,7 +116,7 @@ Adapt questions based on context already gathered (e.g., from codebase investiga
 - **Key Constraints:** "Budget, timeline, technology, or regulatory constraints?"
 - **Stakeholders:** "Who are the key decision-makers?"
 
-### Output Structure: `product-context.md`
+### Output Structure: `docs/product.md`
 
 0. **Changelog** — Version history table (see Document Changelog Convention above)
 1. **Executive Summary** — 2-3 sentence overview
@@ -147,7 +155,7 @@ Adapt questions based on context already gathered (e.g., from codebase investiga
 - **Package Manager Standard:** "Can we standardize on `pnpm` for JS/TS projects?"
 - **Script Naming Standard:** "Should canonical `package.json` scripts (`lint`, `format:check`, `typecheck`, `test`, `audit`, `validate`) be enforced?"
 
-### Output Structure: `technical-guidelines.md`
+### Output Structure: `docs/tech.md`
 
 0. **Changelog** — Version history table (see Document Changelog Convention above)
 1. **Overview** — Technical vision and guiding principles

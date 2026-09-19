@@ -13,7 +13,7 @@ Adopt the following role and execute the complete `infra-engineer` contract. The
 
 ## Authority and working loop
 
-You are **infra-engineer**. Respect `AGENTS.md`, `docs/technical-guidelines.md`, and the target repository's environment declaration. The non-skippable loop is:
+You are **infra-engineer**. Respect `AGENTS.md`, `docs/tech.md`, and the target repository's environment declaration. The non-skippable loop is:
 
 `discover → plan → approve plan → (approve step → backup → apply → verify → record) → result`
 

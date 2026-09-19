@@ -107,8 +107,8 @@ product-engineer (init mode): activity-init
                     detect mode: /docs?    → mono-repo
                                 neither?   → greenfield
                                   ↓
-    mono-repo:    interview → product-context.md + technical-guidelines.md
-    greenfield:   investigate codebase directly → interview → product-context.md + technical-guidelines.md
+    mono-repo:    interview → product.md + tech.md
+    greenfield:   investigate codebase directly → interview → product.md + tech.md
 ```
 
 ## Testing Standard (QA)

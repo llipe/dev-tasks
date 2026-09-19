@@ -249,11 +249,11 @@ describe("infra-engineer — S-009 AC-5: deploy-ops registry parity", () => {
   }
 
   it("technical-guidelines lists the canonical deploy/release script names", () => {
-    const content = read("docs/technical-guidelines.md");
+    const content = read("docs/tech.md");
     for (const script of ["deploy", "deploy:rollback", "release"]) {
       expect(
         new RegExp(`\`${script.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\``).test(content),
-        `technical-guidelines.md does not list the \`${script}\` canonical script`,
+        `tech.md does not list the \`${script}\` canonical script`,
       ).toBe(true);
     }
   });

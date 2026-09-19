@@ -15,7 +15,7 @@ All work in this repository **MUST**:
 - Always create feature branches — never commit directly to the default branch (`main`).
 - Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`).
 - Open PRs for review — **never self-merge into `main`**. PRs targeting `main` require **user** approval and the **user** merges them. No agent may merge into `main`.
-- Follow testing, linting, and documentation standards from `docs/technical-guidelines.md`.
+- Follow testing, linting, and documentation standards from `docs/tech.md`.
 - Prefer `pnpm` over `npm` for JavaScript/TypeScript workflows (fallback to `npm` only when `pnpm` is unavailable or explicitly disallowed).
 - Use canonical `package.json` script names for JS/TS projects: `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `audit`, `validate`.
 - Before developer/planner completion, enforce and record quality gates: `test`, `lint`, `format:check`, `typecheck`, `audit`.
@@ -91,7 +91,7 @@ Copilot's `applyTo`-scoped instructions have no direct Claude Code equivalent (t
 
 | Directory             | Contents                                                              |
 | --------------------- | --------------------------------------------------------------------- |
-| `/docs/`              | Foundation docs — product-context, technical-guidelines, ADRs         |
+| `/docs/`              | Foundation docs — product.md, tech.md, ADRs         |
 | `/docs/requirements/` | PRDs                                                                  |
 | `/workstream/`        | Active feature work — specs, stories, task lists, planner state files |
 | `.claude/agents/`     | Subagent definitions                                                  |

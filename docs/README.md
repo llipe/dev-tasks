@@ -16,8 +16,8 @@ Entry point for `dev-tasks` documentation. Each document below is the single sou
 | Document                                             | Subject                                                                      |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
 | [`system-overview.md`](system-overview.md)           | Purpose, architecture, components, integrations, runtime flows, NFR posture  |
-| [`product-context.md`](product-context.md)           | Product constitution: problem, users, goals, metrics, constraints            |
-| [`technical-guidelines.md`](technical-guidelines.md) | Enforceable engineering rules and quality gates                              |
+| [`product.md`](product.md)                           | Product constitution: problem, users, goals, metrics, constraints            |
+| [`tech.md`](tech.md)                                 | Enforceable engineering rules and quality gates                              |
 | [`agents-md-guidelines.md`](agents-md-guidelines.md) | Sizing and content rules for `AGENTS.md`                                     |
 | [`adr/`](adr/README.md)                              | Architecture decision records                                                |
 | [`requirements/`](requirements/)                     | Product requirements documents                                               |

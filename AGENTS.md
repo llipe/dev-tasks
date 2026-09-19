@@ -104,7 +104,7 @@ All agents **MUST**:
 - Create feature branches — never commit to default branch
 - Use Conventional Commits (`feat`, `fix`, `chore`, `docs`, etc.)
 - Create PRs for review — never self-merge into `main`; PRs targeting `main` require user approval
-- Follow standards from `technical-guidelines.md`
+- Follow standards from `tech.md`
 - Reference GitHub Issues in branch names and commits
 - Prefer `pnpm` over `npm`; use canonical scripts: `lint`, `format:check`, `typecheck`, `test`, `audit`, `validate`
 - Enforce quality gates before completion

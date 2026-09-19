@@ -162,7 +162,7 @@ Follow the `activity-init` skill:
    - **Mono-repo:** Proceed with the standard interview (current flow unchanged).
    - **Undocumented/greenfield:** Investigate the codebase directly (manifest files, directory structure, README) → present a findings summary → then conduct the interview.
 3. Ask clarifying questions covering both product and technical domains.
-4. Generate `product-context.md` and `technical-guidelines.md` in `/docs/`.
+4. Generate `product.md` and `tech.md` in `/docs/`.
 5. If `/DESIGN.md` is missing and the project has UI scope, create a baseline `/DESIGN.md` aligned with current product direction.
 6. Present generated documents for user review.
 7. Iterate based on feedback.
@@ -176,7 +176,7 @@ Follow the `activity-refine` skill (PRD mode):
 
 1. Gather feature scope from user.
 2. Ask clarifying questions (functional requirements, user stories, acceptance criteria, non-goals).
-3. Reference `product-context.md` and `technical-guidelines.md`.
+3. Reference `product.md` and `tech.md`.
 4. Produce PRD: `/docs/requirements/prd-[feature-name].md`
 5. Present for user review and iterate.
 

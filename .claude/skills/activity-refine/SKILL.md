@@ -19,8 +19,8 @@ Clarify the scope, acceptance criteria, and constraints of a feature or issue be
 
 This step assumes foundation documents exist:
 
-- `product-context.md` — Understanding the overall product
-- `technical-guidelines.md` — Understanding technical constraints and patterns
+- `product.md` — Understanding the overall product
+- `tech.md` — Understanding technical constraints and patterns
 
 If the user provides a **GitHub Issue number**, you **MUST** produce a lightweight refinement.
 If the user provides a **feature description**, you **MUST** produce a full PRD.

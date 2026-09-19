@@ -76,8 +76,8 @@ Or configure it via **Settings → Branches → Branch protection rules** in the
 
 Invoke the `product-engineer` agent in Init Mode (via `@product-engineer` or the `product-engineer-init` prompt). This creates:
 
-- `docs/product-context.md` — what your product is and who it's for
-- `docs/technical-guidelines.md` — stack, conventions, and constraints
+- `docs/product.md` — what your product is and who it's for
+- `docs/tech.md` — stack, conventions, and constraints
 
 Run this once per project.
 
@@ -201,7 +201,7 @@ Agents are autonomous personas that orchestrate skills and activities.
 
 Preparation agent — owns the full pre-coding chain:
 
-- **Init Mode**: `activity-init` → product-context.md + technical-guidelines.md
+- **Init Mode**: `activity-init` → product.md + tech.md
 - **Feature Mode**: `activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan`
 - **Issue Mode**: `activity-refine` → `plan`
 

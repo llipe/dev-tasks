@@ -12,6 +12,14 @@ Guide an AI assistant in establishing the foundational documents for a project: 
 
 Run this activity **once per project** (or when a major strategic or technical pivot occurs).
 
+## Foundation Document Names
+
+The canonical names are **`docs/product.md`** and **`docs/tech.md`**. Create and reference those names only.
+
+**Fallback, one release cycle (FR-45, `shared-understanding#D-42`).** These documents were renamed from `docs/product-context.md` and `docs/technical-guidelines.md`. A consumer repository installed before the rename still carries the old names, and `dev-tasks update` never renames a consumer-owned file on its own. So when reading a foundation document: resolve `docs/product.md` first and fall back to `docs/product-context.md` only if the new name is absent; likewise `docs/tech.md`, then `docs/technical-guidelines.md`. When writing, always write the new name.
+
+On encountering the old names, propose `dev-tasks migrate docs`, which performs the rename with content unchanged. Do not rename a consumer's files without being asked. The fallback is removed one release cycle after the rename ships (tracked in issue #201); after that the proposal is the only path.
+
 ## Repository Setup — Branch Protection (Required)
 
 Before or alongside establishing the foundation documents, verify the repository's default branch has GitHub branch protection configured. This is not optional hardening — it is the actual gate for "no agent merges into the default branch." Every hook shipped with dev-tasks (`git-guard.sh`, `branch-guard.sh`, and their Kiro equivalents) is a best-effort, advisory, local check that can be evaded by a sufficiently creative command or tool-input shape, and Copilot has no hook system at all; only a server-side branch protection rule is unbypassable by any tool surface.
@@ -103,7 +111,7 @@ Adapt questions based on context already gathered (e.g., from codebase investiga
 - **Key Constraints:** "Budget, timeline, technology, or regulatory constraints?"
 - **Stakeholders:** "Who are the key decision-makers?"
 
-### Output Structure: `product-context.md`
+### Output Structure: `docs/product.md`
 
 0. **Changelog** — Version history table (see Document Changelog Convention above)
 1. **Executive Summary** — 2-3 sentence overview
@@ -142,7 +150,7 @@ Adapt questions based on context already gathered (e.g., from codebase investiga
 - **Package Manager Standard:** "Can we standardize on `pnpm` for JS/TS projects?"
 - **Script Naming Standard:** "Should canonical `package.json` scripts (`lint`, `format:check`, `typecheck`, `test`, `audit`, `validate`) be enforced?"
 
-### Output Structure: `technical-guidelines.md`
+### Output Structure: `docs/tech.md`
 
 0. **Changelog** — Version history table (see Document Changelog Convention above)
 1. **Overview** — Technical vision and guiding principles

@@ -14,7 +14,7 @@ Context for this pass _(provide one or more)_:
 The agent will:
 
 - Update `/docs` artifacts to reflect current implemented behavior
-- Create a new ADR in `/docs/adr/` if `technical-guidelines.md` changed
+- Create a new ADR in `/docs/adr/` if `tech.md` changed
 - Update `/docs/user-guide/` for any user-visible changes
 - Keep `mkdocs.yml` navigation in sync with pages on disk
 

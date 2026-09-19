@@ -19,8 +19,8 @@ Transform refined requirements (PRD) into an actionable technical design by synt
 
 This activity assumes the following documents already exist:
 
-- `product-context.md` — Product understanding
-- `technical-guidelines.md` — Technical standards and patterns
+- `product.md` — Product understanding
+- `tech.md` — Technical standards and patterns
 - `prd-[feature-name].md` — Feature requirements (produced by the **refine** activity)
 
 ## Document Changelog Convention

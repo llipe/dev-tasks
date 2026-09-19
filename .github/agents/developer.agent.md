@@ -74,7 +74,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 8. **Update Relevant Files:** You **MUST** keep the task file's Relevant Files section accurate.
 9. **English-only outputs:** You **MUST** produce English-only output for docs, comments, and generated content.
 10. **Documentation gate before completion:** Before marking a story/issue complete or converting the PR to Ready for Review, you **MUST** invoke `technical-writer` to update current-state docs and keep `/docs` aligned with implemented behavior.
-11. **ADR enforcement:** If `/docs/technical-guidelines.md` changes during the documentation pass, you **MUST** ensure a new ADR is created in `/docs/adr/`.
+11. **ADR enforcement:** If `/docs/tech.md` changes during the documentation pass, you **MUST** ensure a new ADR is created in `/docs/adr/`.
 12. **GitHub hygiene:** All issues, PRs, labels, milestones, and comments **MUST** conform to `github-ops` conventions.
 13. **Git operations:** For complex git operations (rebase, merge conflicts, branch updates), you **SHOULD** invoke the `git-ops` skill for standardized procedures.
 14. **DESIGN.md compliance:** If a sub-task changes UI behavior, visual styling, or component variants, you **MUST** verify compliance with `/DESIGN.md` and update `/DESIGN.md` when the visual contract changes.

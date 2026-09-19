@@ -322,7 +322,7 @@ describe("issue-130 — SC-21: docs/workflow-chains.md updated", () => {
 
 describe("issue-130 — SC-23: technical-guidelines references Layer 2.5", () => {
   it("mentions Layer 2.5 or Integration tests", () => {
-    const content = read("docs/technical-guidelines.md");
+    const content = read("docs/tech.md");
     expect(content).toMatch(/Layer 2\.5|Integration tests/i);
   });
 });

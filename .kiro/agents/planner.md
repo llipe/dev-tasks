@@ -4,7 +4,7 @@ tools: [read, write, shell, subagent]
 resources:
   - file://AGENTS.md
   - file://DESIGN.md
-  - file://docs/technical-guidelines.md
+  - file://docs/tech.md
   - file://.kiro/steering/plan.md
   - skill://.kiro/skills/**/SKILL.md
 ---

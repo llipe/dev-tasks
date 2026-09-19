@@ -110,8 +110,8 @@ Platform differences that are intentional, not drift:
 ## Related Documents
 
 - `docs/dev-tasks-user-manual.md` — `dev-tasks` command reference
-- `docs/technical-guidelines.md` — enforceable engineering rules
-- `docs/product-context.md` — product constitution
+- `docs/tech.md` — enforceable engineering rules
+- `docs/product.md` — product constitution
 - `docs/adr/` — architecture decision records, including ADR-007 (dt retirement)
 
 ## Testing Standard Artifact

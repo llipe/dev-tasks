@@ -3,7 +3,7 @@ description: "Verification agent that owns both compliance test-plan design and 
 tools: [read, write, shell]
 resources:
   - file://AGENTS.md
-  - file://docs/technical-guidelines.md
+  - file://docs/tech.md
   - skill://.kiro/skills/**/SKILL.md
 ---
 

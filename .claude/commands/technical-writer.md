@@ -7,4 +7,4 @@ Delegate to the **`technical-writer` subagent** (via the Task tool) to update do
 
 **Context:** $ARGUMENTS
 
-The subagent updates `/docs` artifacts, creates a new ADR in `/docs/adr/` if `technical-guidelines.md` changed, updates `/docs/user-guide/` for user-visible changes, and keeps docs-site navigation in sync with pages on disk. It never modifies application code.
+The subagent updates `/docs` artifacts, creates a new ADR in `/docs/adr/` if `tech.md` changed, updates `/docs/user-guide/` for user-visible changes, and keeps docs-site navigation in sync with pages on disk. It never modifies application code.

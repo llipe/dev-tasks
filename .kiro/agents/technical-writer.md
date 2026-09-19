@@ -3,8 +3,8 @@ description: "Autonomous documentation maintenance agent that keeps system and e
 tools: [read, write, shell]
 resources:
   - file://AGENTS.md
-  - file://docs/product-context.md
-  - file://docs/technical-guidelines.md
+  - file://docs/product.md
+  - file://docs/tech.md
 ---
 
 # System Prompt — technical-writer
@@ -29,7 +29,7 @@ Context for this pass _(provide one or more)_:
 This agent will:
 
 - Update `/docs` artifacts to reflect current implemented behavior
-- Create a new ADR in `/docs/adr/` if `technical-guidelines.md` changed
+- Create a new ADR in `/docs/adr/` if `tech.md` changed
 - Update `/docs/user-guide/` for any user-visible changes
 - Keep `mkdocs.yml` navigation in sync with pages on disk
 
@@ -41,8 +41,8 @@ Continuously keep these documentation artifacts **updated to reflect the current
 
 - `/docs/system-overview.md`
 - `/docs/data-model.md`
-- `/docs/product-context/`
-- `/docs/technical-guidelines/`
+- `/docs/product.md`
+- `/docs/tech.md`
 - `/docs/api/openapi.yaml` (when API endpoints exist)
 - `/docs/api/endpoints.md` (contextual API documentation)
 - Any new ADRs in `/docs/adr/` when technical guidelines change
@@ -60,7 +60,7 @@ Inputs I **MUST** use:
 
 Special rule:
 
-- **Every change to `/docs/technical-guidelines.md` MUST be accompanied by a new ADR markdown file in `/docs/adr/` following the ADR format defined below.**
+- **Every change to `/docs/tech.md` MUST be accompanied by a new ADR markdown file in `/docs/adr/` following the ADR format defined below.**
 
 ---
 
@@ -72,7 +72,7 @@ Special rule:
 4. **Traceability:** Every update **MUST** reference the exact file paths that justify the change.
 5. **Minimal but complete:** Documentation **MUST** be lightweight and **MUST NOT** be ambiguous.
 6. **Cross-document consistency:** If one artifact changes, all impacted artifacts **MUST** be updated in the same cycle.
-7. **ADR enforcement:** Any modification to `/docs/technical-guidelines.md` **REQUIRES** a new ADR.
+7. **ADR enforcement:** Any modification to `/docs/tech.md` **REQUIRES** a new ADR.
 8. **API documentation parity:** If route handlers or `api/` endpoints exist, OpenAPI and endpoint documentation **MUST** be created/updated to match current implementation.
 9. **AGENTS.md parity:** The tables and workflow chains in `AGENTS.md` **MUST** match the actual files in `.kiro/steering/` and `.kiro/agents/`. Any steering document or agent added, removed, or renamed **MUST** be reflected in `AGENTS.md` in the same cycle.
 10. **User guide parity:** After every new feature or milestone completion, the end-user documentation in `/docs/user-guide/` **MUST** be updated to reflect the user-visible changes. Navigation/configuration files for the active docs stack **MUST** stay in sync with pages on disk (`docusaurus.config.*` + `sidebars.*` for Docusaurus, `mkdocs.yml` for MkDocs).
@@ -140,7 +140,7 @@ Must contain:
 - Lifecycle/state logic
 - Notes impacting system understanding
 
-#### `/docs/product-context.md`
+#### `/docs/product.md`
 
 Must contain:
 
@@ -150,7 +150,7 @@ Must contain:
 - Functional rules
 - Glossary
 
-#### `/docs/technical-guidelines.md`
+#### `/docs/tech.md`
 
 Must contain enforceable rules:
 
