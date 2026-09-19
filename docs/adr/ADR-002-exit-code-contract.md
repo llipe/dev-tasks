@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by ADR-007
 
 Recorded retroactively. The decision was taken and implemented on 2026-07-31; this ADR captures it in the required format because `docs/adr/` did not exist at the time.
 

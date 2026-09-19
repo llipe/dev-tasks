@@ -2,7 +2,7 @@
 
 This document explains the `dev-tasks` CLI: the bootstrap and distribution binary shipped in the `@llipe.com/dev-tasks` npm package.
 
-While `dt` handles runtime extraction and catalog operations, `dev-tasks` manages the lifecycle of agent toolkit files in consumer repositories — installing, updating, pinning, and reconciling them across platform profiles.
+`dev-tasks` manages the lifecycle of agent toolkit files in consumer repositories — installing, updating, pinning, and reconciling them across platform profiles.
 
 ---
 

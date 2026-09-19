@@ -41,7 +41,7 @@ infra-engineer: discover → plan → per-step approval → apply → verify →
 ## Codebase Research (Standalone)
 
 ```text
-researcher: intake → multi-repo detect → slice execution (S1-S8) → synthesis → budget enforcement → provenance
+researcher: intake → slice execution (S1-S8) → synthesis → budget enforcement → provenance
                                                                                                         ↓
                                                                         /workstream/research-*.md (250 lines, 30 files max)
 ```
@@ -104,36 +104,11 @@ developer/planner: implement (feature + tests from test plan)
 ```text
 product-engineer (init mode): activity-init
                                   ↓
-                    detect mode: component.json? → multi-repo
-                                /docs?           → mono-repo
-                                neither?         → greenfield
+                    detect mode: /docs?    → mono-repo
+                                neither?   → greenfield
                                   ↓
-    multi-repo:   dt init --task --json → bundle → interview → product-context.md + technical-guidelines.md
     mono-repo:    interview → product-context.md + technical-guidelines.md
-    greenfield:   dt extract detect → dt extract all --interactive → interview → product-context.md + technical-guidelines.md
-```
-
-## Contract Verification (Cross-Repo)
-
-```text
-dt verify contract-diff --base <old> --head <new>
-    ↓ (exit 8 if breaking)
-dt verify impact --contract <id>
-    ↓ (lists affected consumers)
-dt verify drift [--id <comp>]
-    ↓ (staleness report)
-developer/planner: address breaking changes or update consumers
-```
-
-## Extraction Ladder (Per Stage)
-
-```text
-dt extract all
-    ↓
-    For each stage (schema, openapi, asyncapi):
-        declared rung → (success? stop) → observed rung → (success? stop) → inferred rung
-        ↓
-    component.json derivation + extraction_report.json
+    greenfield:   investigate codebase directly → interview → product-context.md + technical-guidelines.md
 ```
 
 ## Testing Standard (QA)
@@ -155,12 +130,8 @@ qa-engineer:
                                              - SC-{n} → .spec.ts traceability
                                              - Auth, state reset, CI config
       ↓
-  Step 4: activity-contract-validation     → Contract layer (conditional)
-                                             - dt verify contract-diff / impact / drift
-                                             - OpenAPI/AsyncAPI drift detection
-      ↓
-  Step 5: activity-coverage-gap-analysis   → coverage_gate + risk-ranked gap inventory
-                                             (scope includes integration + E2E + contract layers)
+  Step 4: activity-coverage-gap-analysis   → coverage_gate + risk-ranked gap inventory
+                                             (scope includes integration + E2E layers)
 ```
 
 Invoked by `developer` at the completion gate before the `verifier` audit, or directly by a user for a standalone pass (bootstrap `/TESTING.md`, backfill legacy tests, audit coverage).

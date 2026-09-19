@@ -14,14 +14,11 @@ Use npm to install the [dev-tasks package](https://www.npmjs.com/package/@llipe.
 pnpm add -g @llipe.com/dev-tasks
 ```
 
-This gives you two binaries:
+This gives you one binary:
 
-| Binary      | Stability    | Purpose                                                 |
-| ----------- | ------------ | ------------------------------------------------------- |
-| `dev-tasks` | **Stable**   | Bootstrap: install agent files, update, status, migrate |
-| `dt`        | **Unstable** | Runtime: extract repo metadata, build context           |
-
-> **⚠️ `dt` is unstable** — recommended for testing purposes only. The extraction pipeline, manifest format, and CLI surface may change without notice between releases. The rest of dev-tasks (agents, skills, instructions, `dev-tasks` CLI) is available for use.
+| Binary      | Stability  | Purpose                                                 |
+| ----------- | ---------- | -------------------------------------------------------- |
+| `dev-tasks` | **Stable** | Bootstrap: install agent files, update, status, migrate |
 
 ### 2. Install agent workflow files into your repo
 
@@ -104,85 +101,30 @@ dev-tasks status            # compare installed vs latest version
 
 ---
 
-## Using `dt` for Multi-Repo Context _(Unstable — testing only)_
+## `dev-tasks` CLI Reference
 
-> **⚠️ Unstable:** The `dt` command is under active development and recommended for testing purposes only. APIs, flags, output formats, and exit codes may change between releases.
-
-`dt` extracts repository metadata (schema, OpenAPI, AsyncAPI), derives a `component.json` manifest with provenance and confidence tracking, and builds cross-repo context for agent sessions.
-
-### Extract metadata from a repo
-
-```bash
-cd my-service
-
-# Run the full extraction pipeline
-dt extract all --interactive
-
-# Or run individual extractors
-dt extract detect       # stack, framework, ORM, messaging
-dt extract schema       # database schema from ORM definitions
-dt extract openapi      # OpenAPI spec (copy existing or AST inference)
-dt extract asyncapi     # AsyncAPI spec from Kafka topic patterns
-dt extract component    # derive component.json manifest
-```
-
-### Review outputs
-
-```bash
-cat component.json           # manifest with _provenance metadata
-cat extraction_report.json   # coverage, confidence, unresolved items
-```
-
-### Validate a manifest (offline, no network access)
-
-```bash
-dt validate-component component.json          # exit 0 valid, exit 4 invalid
-dt validate-component component.json --json   # structured error list
-```
-
-### Typical workflow
-
-```bash
-dt extract all --interactive
-dt validate-component component.json
-git add component.json contracts/ docs/schema.md extraction_report.json
-git commit -m "feat: add component manifest via dt extract"
-```
-
-### Artifact formats
-
-For which artifacts are JSON vs YAML, and which are generated vs hand-written, see [`docs/artifact-formats.md`](docs/artifact-formats.md). Generated artifacts (`catalog/index.yaml`, `catalog/components/`) are never hand-edited.
-
-### CLI documentation
-
-- **`dev-tasks` (bootstrap/distribution):** [`docs/dev-tasks-user-manual.md`](docs/dev-tasks-user-manual.md) — install, update, pin/unpin, profiles, manifest merging, reconciliation
-- **`dt` (extraction/catalog/context):** [`docs/dt-user-manual.md`](docs/dt-user-manual.md) — extract, catalog, context, scope
-- **Architecture and artifacts:** [`docs/system-overview.md`](docs/system-overview.md) and [`docs/data-model.md`](docs/data-model.md)
+- **CLI documentation:** [`docs/dev-tasks-user-manual.md`](docs/dev-tasks-user-manual.md) — install, update, pin/unpin, profiles, manifest merging, reconciliation
+- **Architecture and artifacts:** [`docs/system-overview.md`](docs/system-overview.md)
 - **Everything else:** [`docs/README.md`](docs/README.md)
 
 ### Global options
 
-| Flag                 | Description                  |
-| -------------------- | ---------------------------- |
-| `--json`             | Machine-readable JSON output |
-| `--meta-repo <path>` | Path or URL to the meta-repo |
-| `-v`                 | Verbose diagnostics (stderr) |
+| Flag     | Description                  |
+| -------- | ----------------------------- |
+| `--json` | Machine-readable JSON output |
+| `-v`     | Verbose diagnostics (stderr) |
 
 ### Exit codes
 
-Both binaries share one exit-code table. Common cases:
+| Code | Meaning                                   |
+| ---- | ------------------------------------------ |
+| 0    | Success                                    |
+| 1    | Unexpected error                           |
+| 2    | Incorrect usage                            |
+| 11   | Dependency check failed (`doctor`)         |
+| 14   | Reconciliation conflict (edited fields)    |
 
-| Code | Meaning                                           |
-| ---- | ------------------------------------------------- |
-| 0    | OK                                                |
-| 1    | Unexpected error                                  |
-| 2    | Incorrect usage                                   |
-| 7    | Gate aborted (scope gate G1–G4)                   |
-| 8    | Breaking contract change detected                 |
-| 13   | Incomplete extraction: required fields unresolved |
-| 14   | Reconciliation conflict (edited fields)           |
-
-Full table with all 15 codes: [`docs/data-model.md`](docs/data-model.md#exit-code-contract).
+Full contract, including retirement history for codes no longer in use: [`core/exit-codes.ts`](core/exit-codes.ts).
 
 ---
 
@@ -397,13 +339,10 @@ The `verifier` audit after implementation is mandatory and non-skippable before 
 | `/docs/adr/`          | Architecture decision records                                           |
 | `/docs/requirements/` | PRDs produced by the refine skill                                       |
 | `/workstream/`        | Active feature work — specs, stories, task lists, fidelity reports      |
-| `bin/`                | CLI entrypoints (`dev-tasks.ts`, `dt.ts`)                               |
-| `core/`               | Business logic — catalog, context, distribution, extract, scope, verify |
-| `adapters/cli/`       | CLI adapter — wraps core, formats stdout/JSON                           |
-| `adapters/mcp/`       | MCP adapter placeholder (not implemented)                               |
-| `schemas/`            | JSON Schemas for validation                                             |
+| `bin/`                | CLI entrypoint (`dev-tasks.ts`) and its argument parser                |
+| `core/`               | Business logic — `distribution` (install/update/status/pin/doctor)     |
 | `scripts/`            | Bundle build, release, and formatting scripts                           |
-| `templates/`          | Meta-repo scaffold and CI templates                                     |
+| `templates/`          | Claude settings, infra scaffold, deploy scripts, and CI workflows       |
 | `test/`               | Unit and integration tests + fixtures                                   |
 | `.github/`            | Copilot agents, skills, instructions, prompts; CI workflows             |
 | `.claude/`            | Claude Code agents, skills, commands, hooks                             |
