@@ -6,10 +6,10 @@
  *
  * activity-contract-validation (which wired the contract-diff, impact, and
  * drift commands of the retired binary) was removed with it (ADR-007),
- * and this file's checks were updated accordingly; its
- * TESTING.md-facing assertions (AC-6, test:contract) are removed in the
- * same PR's S-005 commit, which edits TESTING.md's Contract Validation
- * row directly.
+ * and this file's checks were updated accordingly: its TESTING.md-facing
+ * assertions (AC-6, test:contract) and the workflow-chains.md Step 4
+ * assertion are removed, matching TESTING.md's and workflow-chains.md's
+ * own S-005 edits.
  *
  * Also validates TESTING.md taxonomy updates and qa-engineer procedure extension.
  *
@@ -216,18 +216,6 @@ describe("issue-130 — TESTING.md taxonomy updates", () => {
   it("AC-5: E2E boundary states MUST NOT assert on internal state", () => {
     expect(content()).toMatch(/MUST NOT.*assert on internal state/i);
   });
-
-  it("AC-6: has Contract Validation row", () => {
-    expect(content()).toMatch(/Contract.*validation/i);
-  });
-
-  it("AC-6: contract boundary checks interface only", () => {
-    expect(content()).toMatch(/checks the boundary\/interface only/i);
-  });
-
-  it("has test:contract in commands", () => {
-    expect(content()).toMatch(/test:contract/);
-  });
 });
 
 // --- SC-15/SC-16: qa-engineer procedure ---
@@ -317,10 +305,6 @@ describe("issue-130 — SC-21: docs/workflow-chains.md updated", () => {
 
   it("shows step 3 (E2E) in QA chain", () => {
     expect(content()).toMatch(/Step 3.*activity-e2e-test-implementation/);
-  });
-
-  it("shows step 4 (contract) in QA chain", () => {
-    expect(content()).toMatch(/Step 4.*activity-contract-validation/);
   });
 
   it("has integration decision path section", () => {
