@@ -133,16 +133,40 @@ export async function runDocsMigration(
   return { applied: true, renames, consumerReferences, backupPath };
 }
 
-/** Human-readable proposal text, shared by `migrate docs` and `doctor`. */
-export function formatProposal(result: DocsMigrationResult): string {
+/**
+ * Human-readable text for both paths, shared by `migrate docs` and
+ * `doctor`. One function rather than two: the propose and apply outputs
+ * differ by a handful of words, and keeping them together is what stops
+ * them drifting apart.
+ */
+export function formatDocsMigration(result: DocsMigrationResult): string {
   if (result.renames.length === 0) return "Foundation documents already use the current names.";
 
-  const lines = result.renames.map((r) =>
-    r.targetExists
-      ? `  ${r.from} -> ${r.to} (SKIPPED: ${r.to} already exists)`
-      : `  ${r.from} -> ${r.to}`,
-  );
-  const out = [`Foundation documents to rename (${result.renames.length}):`, ...lines];
+  const out: string[] = [];
+
+  if (result.applied) {
+    const renamed = result.renames.filter((r) => !r.skipped && !r.error);
+    out.push(`Renamed ${renamed.length} of ${result.renames.length} foundation document(s):`);
+    for (const r of result.renames) {
+      if (r.skipped === "target-exists") {
+        out.push(`  ${r.from} -> ${r.to} (SKIPPED: ${r.to} already exists)`);
+      } else if (r.error) {
+        out.push(`  ${r.from} -> ${r.to} (FAILED: ${r.error})`);
+      } else {
+        out.push(`  ${r.from} -> ${r.to}`);
+      }
+    }
+    if (result.backupPath) out.push(`Originals backed up to: ${result.backupPath}`);
+  } else {
+    out.push(`Foundation documents to rename (${result.renames.length}):`);
+    for (const r of result.renames) {
+      out.push(
+        r.targetExists
+          ? `  ${r.from} -> ${r.to} (conflict: ${r.to} already exists)`
+          : `  ${r.from} -> ${r.to}`,
+      );
+    }
+  }
 
   if (result.consumerReferences.length > 0) {
     out.push(
@@ -151,6 +175,10 @@ export function formatProposal(result: DocsMigrationResult): string {
       ...result.consumerReferences.map((f) => `  ${f}`),
     );
   }
-  out.push("", "Run `dev-tasks migrate docs --force` to apply. Originals are backed up first.");
+
+  if (!result.applied) {
+    out.push("", "Run `dev-tasks migrate docs --force` to apply. Originals are backed up first.");
+  }
+
   return out.join("\n");
 }

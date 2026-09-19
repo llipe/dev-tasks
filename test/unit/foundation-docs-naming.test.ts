@@ -56,15 +56,29 @@ const EXCLUDED_DIRS = ["docs/adr", "docs/requirements", "workstream"];
 
 /**
  * Files that legitimately name an old document: the fallback-resolution
- * rule (FR-45) has to name what it falls back to, and this guard has to
- * contain its own pattern literals. Listed by name with a reason, which
- * is more auditable than making the pattern context-aware.
+ * rule (FR-45) has to name what it falls back to, the migration machinery
+ * has to name what it migrates, and this guard has to contain its own
+ * pattern literals. Listed by name with a reason, which is more auditable
+ * than making the pattern context-aware.
+ *
+ * The exemption is whole-file, so a stale reference added inside one of
+ * these later will not be caught here. That is the cost of a file-level
+ * allowlist, and the reason the list stays short and reasoned rather than
+ * growing by reflex: everything below either performs the rename or
+ * asserts that it happened.
  */
 const EXEMPT_FILES = new Set([
   "test/unit/foundation-docs-naming.test.ts", // this file: its own pattern literals
   ".claude/skills/activity-init/SKILL.md", // states the fallback rule
   ".github/skills/activity-init/SKILL.md", // states the fallback rule
   ".kiro/skills/activity-init/SKILL.md", // states the fallback rule
+  "core/distribution/migrate-docs.ts", // the rename pairs themselves (S-002)
+  "bin/dev-tasks.ts", // `migrate docs` help text names both renames
+  "README.md", // documents the migration for consumers (S-002 AC-8)
+  "test/unit/migrate-docs.test.ts", // seeds old-named fixtures
+  "test/unit/distribution-doctor.test.ts", // asserts the doctor detection message
+  "test/unit/distribution-update.test.ts", // asserts update never renames them
+  "test/integration/bootstrap-commands.test.ts", // end-to-end migrate docs fixtures
 ]);
 
 const SKIP_DIRS = new Set(["node_modules", "dist", ".git", "fixtures"]);

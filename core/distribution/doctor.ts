@@ -1,6 +1,7 @@
 /**
  * Doctor checks — validate environment prerequisites.
- * Checks: Node >= 24, git >= 2.37, cache dir writable, version skew.
+ * Checks: Node >= 24, git >= 2.37, cache dir writable, version skew,
+ * Claude hook wiring, foundation-document names.
  */
 
 import { mkdir, writeFile, rm, readdir, readFile } from "node:fs/promises";
@@ -8,6 +9,7 @@ import { join } from "node:path";
 import { execSync } from "node:child_process";
 import { readManifest } from "./manifest.js";
 import { readPin } from "./pin.js";
+import { detectOldFoundationDocs } from "./migrate-docs.js";
 
 export interface DoctorCheck {
   name: string;
@@ -231,6 +233,33 @@ export async function checkClaudeHooksWiring(repoRoot: string): Promise<DoctorCh
 }
 
 /**
+ * Check that the foundation documents use their current names (FR-45,
+ * PRD AC-23). Detection only — `doctor` never renames a consumer-owned
+ * file; it names the command that will.
+ */
+export async function checkFoundationDocNames(repoRoot: string): Promise<DoctorCheck> {
+  const pending = await detectOldFoundationDocs(repoRoot);
+
+  if (pending.length === 0) {
+    return {
+      name: "foundation-doc-names",
+      pass: true,
+      message: "Foundation documents use the current names (docs/product.md, docs/tech.md).",
+    };
+  }
+
+  const list = pending.map((p) => `${p.from} -> ${p.to}`).join(", ");
+  return {
+    name: "foundation-doc-names",
+    pass: false,
+    message:
+      `Foundation document(s) still use the pre-rename names: ${list}. ` +
+      "Run `dev-tasks migrate docs` to see the proposal, or " +
+      "`dev-tasks migrate docs --force` to apply it.",
+  };
+}
+
+/**
  * Get the default cache directory.
  * Uses $XDG_CACHE_HOME/dev-tasks or ~/.cache/dev-tasks.
  */
@@ -257,6 +286,7 @@ export async function runDoctor(options: DoctorOptions): Promise<DoctorCheck[]> 
     await checkCacheDir(cacheDir),
     checkVersionSkew(installed, pinned),
     await checkClaudeHooksWiring(repoRoot),
+    await checkFoundationDocNames(repoRoot),
   ];
 
   return checks;

@@ -58,6 +58,7 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 
 - 50 files naming the old foundation docs: `.claude/` (10), `.github/` (11), `.kiro/` (12), `docs/` (10), `test/` (2), root (5: `AGENTS.md`, `AGENTS.md.template`, `CLAUDE.md`, `CLAUDE.md.template`, `README.md`)
 - `bin/dev-tasks.ts`, `core/distribution/{doctor,profiles,install-if-absent,index}.ts`, `core/index.ts`
+- `test/unit/foundation-docs-naming.test.ts` — EXEMPT_FILES extended to the migration machinery and its tests (S-002)
 - `package.json` (`lint` script), `bundle-manifest.json`, `TESTING.md`, `docs/README.md`, `README.md` (migrate-docs command reference and migration subsection)
 - `activity-init`, `activity-test-standards`, `researcher`, `plan`, `implement`, `qa-engineer`, `verifier`, `technical-writer`, `infra-engineer`, `developer`, `housekeeping` — across all three trees
 - `test/unit/{distribution-doctor,distribution-update,skill-parity-init,skill-init-walkthrough,researcher-parity,skill-parity-testing-layers}.test.ts`, `test/integration/bootstrap-commands.test.ts`
@@ -103,29 +104,29 @@ None. Phase 1 is additive plus one rename.
   - [x] 1.17 Run Tests: `pnpm run validate`; verify AC-7 — failing set equals the five D-40 names exactly
   - [x] 1.18 Commit as `refactor(docs)!: rename foundation documents to product.md and tech.md`
 
-- [ ] 2.0 Implement Story S-002: Propose the rename to consumers via `dev-tasks migrate docs`
+- [x] 2.0 Implement Story S-002: Propose the rename to consumers via `dev-tasks migrate docs`
 
   > Note: `update` **MUST NOT** rename a consumer-owned file on its own (FR-45). `--force` keeps its existing meaning: perform the mutating action, back up first.
 
   - [x] 2.1 Write `test/unit/migrate-docs.test.ts` first: detection with both old names, one, neither; propose mutates nothing; `--force` renames and backs up; content hash identical before and after
   - [x] 2.2 Add `core/distribution/migrate-docs.ts` with `detectOldFoundationDocs()` and `runDocsMigration()` as separate exports, so `doctor` reuses detection without the mutation path
   - [x] 2.3 Reuse `createBackupDir`/`backupFile` from `core/distribution/backup.ts`; do not add a second backup mechanism
-  - [ ] 2.4 Branch the `case "migrate"` in `bin/dev-tasks.ts` on `positional[0] === "docs"`; leave the bare `migrate` path untouched
-  - [ ] 2.5 Add `--json` output for both the propose and apply paths
-  - [ ] 2.6 Update `dev-tasks --help` to list the `migrate docs` sub-verb
-  - [ ] 2.7 Add the `doctor` old-names check, reusing the detection export, proposing `dev-tasks migrate docs`
-  - [ ] 2.8 Add a negative test to `test/unit/distribution-update.test.ts`: `update` never renames a foundation doc
-  - [ ] 2.9 Add `migrate docs` cases to `test/integration/bootstrap-commands.test.ts` against a temp fixture repo
-  - [ ] 2.10 Verify AC-3: the existing `migrate` integration cases pass unmodified — a change to them is a stop signal
-  - [ ] 2.11 Verify AC-1, AC-2, AC-6 by `pnpm run test:unit`; AC-4 by the `doctor` test; AC-5 by the update negative test
-  - [ ] 2.12 Verify AC-7 by inspection: S-001's fallback rule already satisfies "agents run unchanged"; nothing is re-implemented here
-  - [ ] 2.13 Add `dev-tasks migrate docs` to `README.md`'s `## dev-tasks Command Reference` code block, beside the existing `dev-tasks migrate` line
-  - [ ] 2.14 Add a `README.md` subsection documenting the foundation-doc migration: what renamed, propose is the default, `--force` applies it, backups are written, consumers migrate on their own schedule
-  - [ ] 2.15 Verify AC-8: read the README section as a consumer upgrading across this release — the migration must be learnable from `README.md` alone, without the PRD or the runbook
-  - [ ] 2.16 Edge cases: both names present (partial migration); target exists with different content; read-only directory; `--json` on every path
-  - [ ] 2.17 Manual check: run both forms against a scratch copy and read the output as a consumer would
-  - [ ] 2.18 Run Tests: `pnpm run validate`; the D-40 set is unchanged
-  - [ ] 2.19 Commit as `feat(cli): add dev-tasks migrate docs and doctor old-name detection`
+  - [x] 2.4 Branch the `case "migrate"` in `bin/dev-tasks.ts` on `positional[0] === "docs"`; leave the bare `migrate` path untouched
+  - [x] 2.5 Add `--json` output for both the propose and apply paths
+  - [x] 2.6 Update `dev-tasks --help` to list the `migrate docs` sub-verb
+  - [x] 2.7 Add the `doctor` old-names check, reusing the detection export, proposing `dev-tasks migrate docs`
+  - [x] 2.8 Add a negative test to `test/unit/distribution-update.test.ts`: `update` never renames a foundation doc
+  - [x] 2.9 Add `migrate docs` cases to `test/integration/bootstrap-commands.test.ts` against a temp fixture repo
+  - [x] 2.10 Verify AC-3: the existing `migrate` integration cases pass unmodified — a change to them is a stop signal
+  - [x] 2.11 Verify AC-1, AC-2, AC-6 by `pnpm run test:unit`; AC-4 by the `doctor` test; AC-5 by the update negative test
+  - [x] 2.12 Verify AC-7 by inspection: S-001's fallback rule already satisfies "agents run unchanged"; nothing is re-implemented here
+  - [x] 2.13 Add `dev-tasks migrate docs` to `README.md`'s `## dev-tasks Command Reference` code block, beside the existing `dev-tasks migrate` line
+  - [x] 2.14 Add a `README.md` subsection documenting the foundation-doc migration: what renamed, propose is the default, `--force` applies it, backups are written, consumers migrate on their own schedule
+  - [x] 2.15 Verify AC-8: read the README section as a consumer upgrading across this release — the migration must be learnable from `README.md` alone, without the PRD or the runbook
+  - [x] 2.16 Edge cases: both names present (partial migration); target exists with different content; read-only directory; `--json` on every path
+  - [x] 2.17 Manual check: run both forms against a scratch copy and read the output as a consumer would
+  - [x] 2.18 Run Tests: `pnpm run validate`; the D-40 set is unchanged
+  - [x] 2.19 Commit as `feat(cli): add dev-tasks migrate docs and doctor old-name detection`
 
 - [ ] 3.0 Implement Story S-003: Scaffold `docs/runbooks/` and seed the initial runbook set
 

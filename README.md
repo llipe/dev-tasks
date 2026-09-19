@@ -17,7 +17,7 @@ pnpm add -g @llipe.com/dev-tasks
 This gives you one binary:
 
 | Binary      | Stability  | Purpose                                                 |
-| ----------- | ---------- | -------------------------------------------------------- |
+| ----------- | ---------- | ------------------------------------------------------- |
 | `dev-tasks` | **Stable** | Bootstrap: install agent files, update, status, migrate |
 
 ### 2. Install agent workflow files into your repo
@@ -110,19 +110,19 @@ dev-tasks status            # compare installed vs latest version
 ### Global options
 
 | Flag     | Description                  |
-| -------- | ----------------------------- |
+| -------- | ---------------------------- |
 | `--json` | Machine-readable JSON output |
 | `-v`     | Verbose diagnostics (stderr) |
 
 ### Exit codes
 
-| Code | Meaning                                   |
-| ---- | ------------------------------------------ |
-| 0    | Success                                    |
-| 1    | Unexpected error                           |
-| 2    | Incorrect usage                            |
-| 11   | Dependency check failed (`doctor`)         |
-| 14   | Reconciliation conflict (edited fields)    |
+| Code | Meaning                                 |
+| ---- | --------------------------------------- |
+| 0    | Success                                 |
+| 1    | Unexpected error                        |
+| 2    | Incorrect usage                         |
+| 11   | Dependency check failed (`doctor`)      |
+| 14   | Reconciliation conflict (edited fields) |
 
 Full contract, including retirement history for codes no longer in use: [`core/exit-codes.ts`](core/exit-codes.ts).
 
@@ -136,8 +136,9 @@ dev-tasks update [--force]            # Reconcile with hash-based conflict detec
 dev-tasks status                      # Compare installed/pinned/latest versions
 dev-tasks pin <version>               # Pin to a specific version
 dev-tasks unpin                       # Remove the version pin
-dev-tasks doctor                      # Check Node ≥20, git ≥2.37, cache writable
+dev-tasks doctor                      # Check Node ≥24, git ≥2.37, cache writable
 dev-tasks migrate                     # Migrate from legacy shell-script install
+dev-tasks migrate docs [--force]      # Rename the foundation docs to their current names
 ```
 
 ### Version Pinning
@@ -160,6 +161,45 @@ dev-tasks unpin        # Remove the pin (update will use the local package versi
 | `--json`           | both       | Machine-readable output                                             |
 
 `update` never overwrites a locally modified managed file without `--force`; it reports the conflict and exits `14`.
+
+### Foundation Document Migration
+
+The two foundation documents were renamed:
+
+| Before                         | After             |
+| ------------------------------ | ----------------- |
+| `docs/product-context.md`      | `docs/product.md` |
+| `docs/technical-guidelines.md` | `docs/tech.md`    |
+
+Nothing breaks if you do not migrate. Agents resolve the new name first and
+fall back to the old one, so a repository installed before the rename keeps
+working — they will just propose this command when they encounter an old name.
+`dev-tasks doctor` reports the old names as a failing check for the same
+reason: to tell you the migration is available, not that anything is broken.
+
+`dev-tasks migrate docs` is **report-only**. It prints the pending renames and
+the files of your own that still reference the old names, and changes nothing:
+
+```bash
+dev-tasks migrate docs           # Show what would change
+dev-tasks migrate docs --force   # Perform the renames
+```
+
+`--force` renames the files with their content unchanged, after copying the
+originals into `.dev-tasks/backup/<timestamp>/`. A rename whose target already
+exists is skipped rather than overwritten — if you half-migrated by hand, your
+file stays — and the command exits `14` so the skip is visible to a script.
+Both forms accept `--json`.
+
+Files you own are yours to update. The command reports which of them still
+name the old documents; it does not edit them, and neither does
+`dev-tasks update`.
+
+**Note the asymmetry with the bare `migrate` command.** `dev-tasks migrate`
+(no sub-verb) migrates a legacy shell-script install and applies its change
+immediately. `dev-tasks migrate docs` proposes by default. The difference is
+deliberate: `migrate` shipped with that behavior, and quietly turning it into
+a dry run would break anyone already scripting it.
 
 ---
 
@@ -333,20 +373,20 @@ The `verifier` audit after implementation is mandatory and non-skippable before 
 
 ## File Organization
 
-| Directory             | Contents                                                                |
-| --------------------- | ----------------------------------------------------------------------- |
-| `/docs/`              | Documentation — see [`docs/README.md`](docs/README.md) for the index    |
-| `/docs/adr/`          | Architecture decision records                                           |
-| `/docs/requirements/` | PRDs produced by the refine skill                                       |
-| `/workstream/`        | Active feature work — specs, stories, task lists, fidelity reports      |
-| `bin/`                | CLI entrypoint (`dev-tasks.ts`) and its argument parser                |
-| `core/`               | Business logic — `distribution` (install/update/status/pin/doctor)     |
-| `scripts/`            | Bundle build, release, and formatting scripts                           |
-| `templates/`          | Claude settings, infra scaffold, deploy scripts, and CI workflows       |
-| `test/`               | Unit and integration tests + fixtures                                   |
-| `.github/`            | Copilot agents, skills, instructions, prompts; CI workflows             |
-| `.claude/`            | Claude Code agents, skills, commands, hooks                             |
-| `.kiro/`              | Kiro agents, skills, steering, hooks                                    |
+| Directory             | Contents                                                             |
+| --------------------- | -------------------------------------------------------------------- |
+| `/docs/`              | Documentation — see [`docs/README.md`](docs/README.md) for the index |
+| `/docs/adr/`          | Architecture decision records                                        |
+| `/docs/requirements/` | PRDs produced by the refine skill                                    |
+| `/workstream/`        | Active feature work — specs, stories, task lists, fidelity reports   |
+| `bin/`                | CLI entrypoint (`dev-tasks.ts`) and its argument parser              |
+| `core/`               | Business logic — `distribution` (install/update/status/pin/doctor)   |
+| `scripts/`            | Bundle build, release, and formatting scripts                        |
+| `templates/`          | Claude settings, infra scaffold, deploy scripts, and CI workflows    |
+| `test/`               | Unit and integration tests + fixtures                                |
+| `.github/`            | Copilot agents, skills, instructions, prompts; CI workflows          |
+| `.claude/`            | Claude Code agents, skills, commands, hooks                          |
+| `.kiro/`              | Kiro agents, skills, steering, hooks                                 |
 
 ---
 

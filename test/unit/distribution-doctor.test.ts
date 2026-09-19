@@ -4,9 +4,10 @@ import {
   checkGitVersion,
   checkCacheDir,
   checkVersionSkew,
+  checkFoundationDocNames,
   runDoctor,
 } from "#core/distribution/doctor.js";
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -118,6 +119,61 @@ describe("core/distribution/doctor", () => {
     });
   });
 
+  describe("checkFoundationDocNames", () => {
+    let tmpDir: string;
+
+    beforeEach(() => {
+      tmpDir = mkdtempSync(join(tmpdir(), "dev-tasks-doctor-docnames-"));
+      mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    });
+
+    afterEach(() => {
+      rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    it("passes when neither old document is present", async () => {
+      writeFileSync(join(tmpDir, "docs", "product.md"), "# Product\n", "utf-8");
+      const result = await checkFoundationDocNames(tmpDir);
+      expect(result.pass).toBe(true);
+      expect(result.name).toBe("foundation-doc-names");
+    });
+
+    it("passes when there is no docs directory at all", async () => {
+      rmSync(join(tmpDir, "docs"), { recursive: true, force: true });
+      const result = await checkFoundationDocNames(tmpDir);
+      expect(result.pass).toBe(true);
+    });
+
+    it("fails and names both documents, both new names, and the command (PRD AC-23)", async () => {
+      writeFileSync(join(tmpDir, "docs", "product-context.md"), "# Product\n", "utf-8");
+      writeFileSync(join(tmpDir, "docs", "technical-guidelines.md"), "# Tech\n", "utf-8");
+
+      const result = await checkFoundationDocNames(tmpDir);
+      expect(result.pass).toBe(false);
+      expect(result.message).toContain("docs/product-context.md");
+      expect(result.message).toContain("docs/product.md");
+      expect(result.message).toContain("docs/technical-guidelines.md");
+      expect(result.message).toContain("docs/tech.md");
+      expect(result.message).toContain("dev-tasks migrate docs");
+    });
+
+    it("fails when only one old document is present", async () => {
+      writeFileSync(join(tmpDir, "docs", "technical-guidelines.md"), "# Tech\n", "utf-8");
+      const result = await checkFoundationDocNames(tmpDir);
+      expect(result.pass).toBe(false);
+      expect(result.message).toContain("docs/technical-guidelines.md");
+      expect(result.message).not.toContain("docs/product-context.md");
+    });
+
+    it("renames nothing — the check is read-only", async () => {
+      writeFileSync(join(tmpDir, "docs", "product-context.md"), "# Product\n", "utf-8");
+      await checkFoundationDocNames(tmpDir);
+      expect(existsSync(join(tmpDir, "docs", "product-context.md"))).toBe(true);
+      expect(existsSync(join(tmpDir, "docs", "product.md"))).toBe(false);
+      expect(existsSync(join(tmpDir, ".dev-tasks"))).toBe(false);
+    });
+  });
+
   describe("runDoctor", () => {
     let tmpDir: string;
 
@@ -168,6 +224,7 @@ describe("core/distribution/doctor", () => {
       expect(names).toContain("git-version");
       expect(names).toContain("cache-dir");
       expect(names).toContain("version-skew");
+      expect(names).toContain("foundation-doc-names");
     });
   });
 });
