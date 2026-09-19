@@ -27,6 +27,17 @@ function sha256(text: string): string {
   return createHash("sha256").update(text).digest("hex");
 }
 
+async function writesAreBlocked(dir: string): Promise<boolean> {
+  const probe = join(dir, ".write-probe");
+  try {
+    await writeFile(probe, "x", "utf-8");
+    await rm(probe, { force: true });
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 let repo: string;
 
 async function seed(files: Record<string, string>): Promise<void> {
@@ -53,7 +64,10 @@ afterEach(async () => {
 
 describe("detectOldFoundationDocs", () => {
   it("finds both old documents when both are present", async () => {
-    await seed({ "docs/product-context.md": PRODUCT_BODY, "docs/technical-guidelines.md": TECH_BODY });
+    await seed({
+      "docs/product-context.md": PRODUCT_BODY,
+      "docs/technical-guidelines.md": TECH_BODY,
+    });
     const found = await detectOldFoundationDocs(repo);
     expect(found.map((f) => f.from).sort()).toEqual([
       "docs/product-context.md",
@@ -94,7 +108,10 @@ describe("detectOldFoundationDocs", () => {
 
 describe("runDocsMigration — propose (default)", () => {
   it("mutates nothing and reports what it would do", async () => {
-    await seed({ "docs/product-context.md": PRODUCT_BODY, "docs/technical-guidelines.md": TECH_BODY });
+    await seed({
+      "docs/product-context.md": PRODUCT_BODY,
+      "docs/technical-guidelines.md": TECH_BODY,
+    });
     const result = await runDocsMigration(repo, { apply: false });
 
     expect(result.applied).toBe(false);
@@ -124,14 +141,19 @@ describe("runDocsMigration — propose (default)", () => {
 
 describe("runDocsMigration — apply (--force)", () => {
   it("renames both documents with content byte-identical", async () => {
-    await seed({ "docs/product-context.md": PRODUCT_BODY, "docs/technical-guidelines.md": TECH_BODY });
+    await seed({
+      "docs/product-context.md": PRODUCT_BODY,
+      "docs/technical-guidelines.md": TECH_BODY,
+    });
     const result = await runDocsMigration(repo, { apply: true });
 
     expect(result.applied).toBe(true);
     expect(existsSync(join(repo, "docs/product-context.md"))).toBe(false);
     expect(existsSync(join(repo, "docs/technical-guidelines.md"))).toBe(false);
 
-    expect(sha256(await readFile(join(repo, "docs/product.md"), "utf-8"))).toBe(sha256(PRODUCT_BODY));
+    expect(sha256(await readFile(join(repo, "docs/product.md"), "utf-8"))).toBe(
+      sha256(PRODUCT_BODY),
+    );
     expect(sha256(await readFile(join(repo, "docs/tech.md"), "utf-8"))).toBe(sha256(TECH_BODY));
   });
 
@@ -169,9 +191,18 @@ describe("runDocsMigration — apply (--force)", () => {
     expect(existsSync(join(repo, ".dev-tasks"))).toBe(false);
   });
 
-  it("reports an error rather than throwing when the rename cannot be written", async () => {
+  it("reports an error rather than throwing when the rename cannot be written", async (ctx) => {
     await seed({ "docs/product-context.md": PRODUCT_BODY });
     await chmod(join(repo, "docs"), 0o500); // read + execute, no write
+
+    // Root ignores the permission bits, so the failure this case needs
+    // cannot be produced there. Probe instead of checking the uid: the
+    // probe is the truth, and it keeps the case real wherever it can run
+    // rather than turning it into a permanent skip.
+    if (!(await writesAreBlocked(join(repo, "docs")))) {
+      ctx.skip();
+      return;
+    }
 
     const result = await runDocsMigration(repo, { apply: true });
     const product = result.renames.find((r) => r.from === "docs/product-context.md");
