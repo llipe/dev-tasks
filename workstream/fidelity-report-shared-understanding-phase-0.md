@@ -1,0 +1,114 @@
+# Fidelity Audit Report — PRD Shared-Understanding Refinement, Phase 0 (Retire `dt`)
+
+## 1. Header / Verdict
+
+**Fidelity: High**
+**Highest drift impact present: Minor**
+**Scope:** PRD `docs/requirements/prd-shared-understanding-refinement.md` FR-53–FR-58, AC-27/AC-28 · Stories S-001–S-005 · Branch `integration/prd-shared-understanding-phase-0` · PR #200 (draft against `main`)
+
+All five stories' acceptance criteria are met by the delivered code, and all completion-gate commands were re-run and pass: `typecheck`, `lint`, `build`, `format:check` are clean; `pnpm run test` fails on **exactly** the five named cases in D-40 (set equality verified below); `pnpm audit --prod` reports no known vulnerabilities. Two config-and-docs level findings and one process-transparency observation are recorded below as non-blocking drift.
+
+## 2. Human-Readable Summary
+
+This branch deletes the `dt` tool — a second, unused command-line program that used to live inside `dev-tasks` for managing many linked repositories at once — and keeps only the `dev-tasks` installer/updater people actually use. It removed about 20,000 lines of code, 74 test files no longer needed, three now-pointless dependencies, and every instruction across the three AI-assistant "prompt trees" (Claude, Copilot, Kiro) that told an agent to run the missing tool. It wrote a permanent test that will fail forever if a `dt` reference ever creeps back in, wrote up the decision as a formal record (ADR-007) with a documented way to get the old code back if it's ever needed again (tag `v0.13.0`), and shipped it all as version `0.14.0`, correctly marked as a breaking change. Along the way, the team found and fixed a few things nobody had explicitly asked for but that clearly needed fixing too — three more dead dependencies, a CI template file that would have shipped consumers instructions for a command that no longer exists, and (at the very last minute, as a "completion gate" catch) two tests that were still checking for wording the docs had already removed. Those extra fixes were the right call and were disclosed in the commit messages, but they mean the actual work done was a bit larger than what the story documents enumerated line-by-line — a paperwork gap, not a functional one.
+
+## 3. Per-AC Result Table
+
+| AC | Description | Codebase evidence | Workstream evidence | Test evidence | Result |
+|---|---|---|---|---|---|
+| S-001 AC-1 | 9 source paths gone | Verified absent: `bin/dt.ts`, `core/{catalog,context,extract,scope,verify,providers}`, `schemas/`, `templates/meta-repo/`, `adapters/` | Story/spec inventory matches | `typecheck`/`build` pass | Pass |
+| S-001 AC-2 | `adapters/` gone; `parse-args.ts` at `bin/` | `bin/parse-args.ts` exists (71 lines), `bin/dev-tasks.ts` imports it relatively | matches D-34 | build pass | Pass |
+| S-001 AC-3 | `#adapters` alias + deleted dirs gone from 4 config files | Read `package.json`, `tsconfig.json`, `vitest.config.ts`, `eslint.config.js` — all clean of `#adapters`, `adapters/`, `schemas/` | matches spec §8 item 2 | `lint`/`typecheck`/`format:check` all pass | Pass |
+| S-001 AC-4 | `core/index.ts` exports exactly 5 names | `core/index.ts` exports `ExitCode, ExitCodeValue, reconcile, ReconcileAction, distribution` only | matches | typecheck pass | Pass |
+| S-001 AC-5 | Exit codes retained match what binary returns; `DependencyError` repointed | `core/exit-codes.ts` = `{Success:0, GeneralError:1, InvalidUsage:2, DependencyError:11, ReconciliationConflict:14}`; `bin/dev-tasks.ts:236` uses only these 5; `test/unit/exit-codes.test.ts` asserts the 5-value set | matches spec item 5 exactly | `exit-codes.test.ts` (4 tests) pass | Pass |
+| S-001 AC-6 | `typecheck`/`build`/`lint`/`format:check` pass | Ran all four locally — clean | — | all green | Pass |
+| S-001 AC-7 | `--help`/`--version`/`status`/`doctor` unchanged | Ran built binary: `--help` lists install/update/status/pin/doctor/migrate with no `dt` mention; `--version` → `0.14.0`; `status` runs | — | `binaries.test.ts`, `cli-binaries.test.ts` pass | Pass |
+| S-002 AC-1 | 74 test files + 5 fixture dirs gone | `test/fixtures/` now contains only `git-guard`, `infra`, `qa-standards` | matches | — | Pass |
+| S-002 AC-2 | `git-guard`/`infra`/`qa-standards` fixtures untouched | confirmed above | — | — | Pass |
+| S-002 AC-3 | `binaries.test.ts` has no dt cases, asserts `dt.js` absent | Read file — asserts `pkg.bin["dt"]` undefined and `dt.js` absent | — | passes | Pass |
+| S-002 AC-4 | Absence guard scans 8 roots for `dt`/`component.json`/meta-repo | `test/unit/dt-retirement-absence.test.ts` read in full: word-boundary patterns, self-test for false positives (`width`, `CloudTrail`, `adt`) and a seeded-positive self-test; `EXEMPT_FILES` list checked file-by-file, each justified (self-reference, negative assertions, changelog narration) | note: also scans `templates/`, a superset of AC-4's literal wording — closes GAP-2 from the traceability matrix | passes (4 sub-tests) | Pass |
+| S-002 AC-5 | `test` fails on exactly the 5 D-40 names, as a set | **Ran `pnpm run test` directly**: 5 failed / 1291 passed. The 5 failures are exactly: `doctor > checkCacheDir > fails when path is not writable`, `runUpdate > --force with unwritable backup dir > throws error...`, `deploy.sh > exits 2 when yq is missing from PATH`, and two `bootstrap commands (integration) > doctor >` cases (`runs all checks...`, `supports --json output...`) | matches D-40 exactly | direct run | Pass |
+| S-002 AC-6 | Guard committed red, turns green after S-004 | Confirmed via commit sequence (3eca0da red → a94e232 green) | — | — | Pass |
+| S-003 AC-1–AC-4 | `ajv`/`pg`+meta removed; `fast-uri` override removed; `yaml`→devDeps; `execa` stays | Read `package.json`: none of `ajv`/`pg`/`fast-uri` present; `yaml` in `devDependencies`; `execa` in `dependencies` | matches D-30 | `pnpm install` resolved clean | Pass |
+| S-003 AC-5 | Publish workflow no longer asserts either deleted path; class closed | Read `.github/workflows/publish-npm.yml` — "Verify dist output" step only checks `dist/bin/dev-tasks.js` and `dist/core`; new `test/unit/publish-workflow-dist-paths.test.ts` parses the step and asserts every named path exists post-build, and explicitly asserts `dt.js`/`dist/adapters` are not checked | matches spec item 3 exactly (both broken assertions fixed) | passes (3 tests) | Pass |
+| S-003 AC-6 | `pnpm install` clean, `audit --prod` recorded | Ran `pnpm install` and `pnpm audit --prod`: no missing-peer warnings, "No known vulnerabilities found" | — | — | Pass |
+| S-003 AC-7 | Build yields `dev-tasks.js`, no `dt.js` | Ran `pnpm run build`; confirmed `dist/bin/dev-tasks.js` exists, `dist/bin/dt.js` does not | — | — | Pass |
+| S-004 AC-1 | No `dt`/`component.json`/meta-repo in the three trees | Absence-guard test run confirms; spot-checked `AGENTS.md`, `CLAUDE.md` directly | — | absence guard passes | Pass |
+| S-004 AC-2 | `activity-contract-validation` deleted, `-test-design` retained | 0 hits for `activity-contract-validation`; `activity-contract-test-design` present in all 3 trees | matches D-31 | — | Pass |
+| S-004 AC-3 | `activity-init` single-repo, coherent, no orphaned steps | Read `.claude/skills/activity-init/SKILL.md` in full: two modes (Mono-Repo, Undocumented/Greenfield), sequential 1–5 steps, no dangling references | matches | — | Pass |
+| S-004 AC-4 | 4 named agents carry no `dt` invocation | grep across `developer`/`planner` agent files in all 3 trees — clean | — | absence guard passes | Pass |
+| S-004 AC-5/AC-6 | `AGENTS.md`/`AGENTS.md.template`/`CLAUDE.md` lose Task-Types and Cross-Repo sections | grep confirms no `architecture-change`/`Cross-Repo Partitioning` section headers remain; only historical CHANGELOG.md entries remain (expected) | matches | — | Pass |
+| S-004 AC-7 | Parity: exactly 5 named parity tests change, no unlisted 7th | **See Drift-1 below — this criterion is not literally met.** | see Drift-1 | test suite green either way | Drift (Minor) |
+| S-004 AC-8 | Absence test now passes | Confirmed — green after a94e232 | — | passes | Pass |
+| S-005 AC-1 | 4 docs deleted | `docs/dt-user-manual.md`, `docs/data-model.md`, `docs/artifact-formats.md`, `docs/requirements/prd-multi-repo-context.md` all absent | matches D-38 | — | Pass |
+| S-005 AC-2 | `docs/README.md` lists no deleted doc | grepped — no hits | — | — | Pass |
+| S-005 AC-3 | No `dt` section; `system-overview.md` rewritten not stripped | Read `docs/system-overview.md` — the 3 remaining `dt` mentions are narrative, past-tense, ADR-007-citing prose describing the retirement itself, consistent with a genuine rewrite | matches D-32 | — | Pass |
+| S-005 AC-4 | `docs/product-context.md` Current State/Roadmap updated | Confirmed no `dt` MCP/roadmap item remains | — | — | Pass |
+| S-005 AC-5 | `TESTING.md` drops Contract-validation layer | grep clean; confirmed by the completion-gate fix commit (67cc8fc) reconciling a stale reference in a test | — | passes | Pass |
+| S-005 AC-6 | ADR-007 complete: Context/Decision/4 Alternatives/Consequences/restore path | Read ADR-007 in full — all sections present, all 4 alternatives (keep/freeze/split/remove) argued, restore path stated as tag `v0.13.0` commit `0a6f35e` | matches D-37 | `git tag -l v0.13.0` and `git log -1 0a6f35e` both confirm the tag→commit pair exists and is a real `chore(release): v0.13.0` commit | Pass |
+| S-005 AC-7 | ADR-001/002 Superseded, no other edit; index updated | `git diff main...branch -- docs/adr/README.md` shows only the two status-cell edits + new ADR-007 row — no other line touched; `ADR-001`/`ADR-002` bodies each show only a `## Status` → `Superseded by ADR-007` change | matches D-35 exactly | — | Pass, see Drift-2 for an adjacent, untouched-but-now-stale section of the same file |
+| S-005 AC-8 | CHANGELOG `Removed` section names every command; version `0.14.0` | Read CHANGELOG.md — `[0.14.0]` entry lists all 15 `dt` subcommands individually under `### Removed`; `package.json` version is `0.14.0` | matches | — | Pass |
+| S-005 AC-9 | Release commit `chore!:` + `BREAKING CHANGE:` footer naming the binary | `git log -1 a76e2c3` — `chore!: release v0.14.0` with `BREAKING CHANGE: removes the dt binary...` footer | matches D-28 | — | Pass |
+| AC-27 (PRD) | No `dt`/`pg` anywhere; `lint`/`typecheck`/`format:check` clean; `test` fails only named pre-existing cases | Confirmed by direct execution of all four gates | matches v1.2 reworded AC-27 | direct run | Pass |
+| AC-28 (PRD) | ADR-007 + CHANGELOG name every removed command | Confirmed above | — | — | Pass |
+
+## 4. Drift Catalog
+
+**Drift-1 — S-004 AC-7's "five parity tests" undercounts the actual test-file churn (Minor / Unintended)**
+
+S-004's AC-7 and the specification's "Retained tests that must change" table (spec §8, item 6) enumerate exactly five parity tests as the only ones permitted to change, backed by the story's own stated rule: *"Any seventh is a stop signal, not a fix."* Commit `a94e232` in fact touched **nine** test files, not five:
+
+- Changed as planned: `skill-parity-init.test.ts`, `researcher-parity.test.ts`, `skill-parity-testing-layers.test.ts` (assertions dropped), `architecture-change-parity.test.ts`, `cross-repo-partitioning-parity.test.ts` (both deleted).
+- Not in any enumerated list: `architecture-change-dryrun.test.ts` (deleted), `cross-repo-partitioning-dryrun.test.ts` (deleted), `skill-init-edge-cases.test.ts` (deleted), `skill-init-walkthrough.test.ts` (rewritten).
+
+Both additionally-deleted files were inspected directly (`git show a94e232^:<path>`) and confirmed to test only removed multi-repo/`component.json`/architecture-change content — the deletions are substantively correct, not scope creep. The commit message discloses the count discrepancy candidly, so this is not a concealed change, but it is the same "stated count doesn't match the actual enumeration" pattern this feature has already hit twice before (D-36→D-40's four-vs-five recount).
+
+- Impact: Minor (no functional regression; `validate` stays green).
+- Intent: Unintended (contradicts an explicit, stated business rule; not escalated as a new decision).
+- Recommendation: route to `product-engineer`'s drift-reconciliation to amend S-004's AC-7/business-rule table to name the actual nine files.
+
+**Drift-2 — `docs/adr/README.md`'s "When an ADR Is Required" section now references a deleted concept (Minor / Unintended)**
+
+`docs/adr/README.md` states an ADR is required for *"Any meta-repo pull request under the `architecture-change` task type (see `AGENTS.md`)."* S-004 deleted the entire `architecture-change` task type and meta-repo concept from `AGENTS.md`. This stale sentence was never in scope for any story's AC — S-005 AC-7 correctly required "no other edit" to this file beyond the index table — so it is a genuine gap in the deletion inventory, not a deliberate choice.
+
+- Impact: Minor (documentation-only).
+- Intent: Unintended.
+- Recommendation: route to `product-engineer`'s drift-reconciliation; a one-line rewording, likely bundled into a later phase's docs pass.
+
+**Drift-3 — Undocumented dependency removals beyond the story's named scope (Minor / Intended-but-undocumented-in-artifacts)**
+
+S-003's commit `6edee92` removed `express`, `@types/express`, and `eslint-plugin-import-x` from `devDependencies` — none of which appear in S-003's AC list or the spec's deletion inventory. The commit message discloses this candidly with correct rationale (consistent with ADR-007's Consequences section, which flags `test/unit/dependency-direction.test.ts` as now vacuously passing).
+
+- Impact: Minor (correct, disclosed, consistent with `SIMPLICITY.md` A10).
+- Intent: Intended, but not reflected in the spec/story artifacts.
+- Recommendation: route to `product-engineer`'s drift-reconciliation for a spec/story changelog note; no code action needed.
+
+All three items are non-blocking to PR/issue completion per repository policy and route to `product-engineer`'s `activity-drift-reconciliation` skill.
+
+## 5. Edge-Case Outcomes Against Prior Design Mode Artifacts
+
+Status of the four gaps recorded in `workstream/traceability-matrix-shared-understanding-phase-0.md` (v1.0):
+
+- **GAP-1** (FR-57 coverage row overstated `core/checks` as fully covered): Resolved — the delivered stories doc v1.1 correctly qualifies this row.
+- **GAP-2** (`templates/bitbucket-pipelines.yml` shipped `dt catalog` commands to consumers, outside guard scope): Resolved and exceeded — file deleted outright; the guard's `SCAN_ROOTS` includes `templates/`, wider than AC-4's literal wording.
+- **GAP-3** (six `developer`/`planner` prompt files unassigned): Resolved — confirmed clean via direct grep.
+- **GAP-4** (the absence/regression guard never runs on a pull request — both CI workflows are tag-push-triggered only): Still open. Pre-existing condition, explicitly Phase 4 scope (PRD FR-41), not a regression introduced here. Flagged for visibility only.
+
+No randomized/fuzz tests were in scope (a deletion has no property space to fuzz).
+
+## 6. Recommendations
+
+- Drift-1: `product-engineer` — amend S-004's AC-7 and Business Rules table to name all nine touched test files.
+- Drift-2: `product-engineer`/`technical-writer` — reword `docs/adr/README.md`'s "When an ADR Is Required" bullet.
+- Drift-3: `product-engineer` — add a one-line spec/CHANGELOG note recording the three additional dependency removals.
+- GAP-4 (carried forward, not new drift): track for the Phase 4 CI-wiring specification (FR-41/FR-42).
+- Everything else: no action needed.
+
+## Output Contract
+
+- Mode: Audit · Scope: PR #200 completion gate
+- Source artifacts used: `docs/requirements/prd-shared-understanding-refinement.md`, `workstream/specification-shared-understanding-phase-0.md` (v1.2), `workstream/user-stories-shared-understanding-phase-0.md` (v1.1), `workstream/decisions-shared-understanding.md`, `workstream/test-plan-shared-understanding-phase-0.md`, `workstream/traceability-matrix-shared-understanding-phase-0.md`, `docs/adr/ADR-007-retire-multi-repo-context-layer.md`
+- Commands run with actual output captured: `pnpm run typecheck`, `pnpm run lint`, `pnpm run format:check`, `pnpm run build`, `pnpm run test` (5 failed / 1291 passed — exact D-40 set), `pnpm install`, `pnpm audit --prod` (no known vulnerabilities), `git tag -l v0.13.0`, `git log -1 0a6f35e`, `node dist/bin/dev-tasks.js --help/--version/status`
+- AC coverage status: 37/37 story ACs covered (36 Pass, 1 Drift — S-004 AC-7), plus PRD AC-27/AC-28 both Pass.
+- Overall fidelity verdict: **High**. Highest drift impact: **Minor**. All three drift items are non-blocking per repository policy.
+- Blocking gaps: **None.**

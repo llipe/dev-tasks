@@ -6,6 +6,7 @@
 | ------- | ---------- | ---------------------------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-18 | Initial version. Five stories covering PRD FR-53 to FR-58.                                                                                                                                                          | product-engineer |
 | 1.1     | 2026-09-19 | Verifier Design Mode corrections: pass signal is the five named failures as a set, not a count of four (D-40); `publish-npm.yml` asserts two deleted paths; the `#adapters` alias spans four files; `format` globs break the gate; the exit-code prune touches the retained binary; six retained tests must change, enumerated. | verifier / product-engineer |
+| 1.2     | 2026-09-19 | Verifier Audit Mode drift reconciliation (fidelity-report-shared-understanding-phase-0.md): S-004 AC-7 corrected from five to the actual nine touched test files (`architecture-change-dryrun.test.ts`, `cross-repo-partitioning-dryrun.test.ts`, `skill-init-edge-cases.test.ts`, and `skill-init-walkthrough.test.ts` were undercounted); S-003 note added recording the `express`, `@types/express`, and `eslint-plugin-import-x` devDependency removals, disclosed in commit `6edee92` but never enumerated in this document. | product-engineer (drift-reconciliation) |
 
 ## Source Documents
 
@@ -214,6 +215,7 @@ So that the published package stops carrying weight it does not use and the next
 - [ ] AC-5: `.github/workflows/publish-npm.yml` asserts no deleted path. **Two** of its assertions break, not one: line 69 checks `dist/bin/dt.js` and line 71 checks `dist/adapters`. It still asserts `dist/bin/dev-tasks.js` and `dist/core`. A test parses the `Verify dist output` step and asserts every path it names exists after a build, so the class is closed rather than these two instances.
 - [ ] AC-6: `pnpm install` resolves with no missing-peer warnings; `pnpm audit --prod` result recorded in the pull request.
 - [ ] AC-7: `pnpm run build` produces `dist/bin/dev-tasks.js` and no `dist/bin/dt.js`.
+- [ ] AC-8 (added at drift reconciliation, v1.2): `express`, `@types/express`, and `eslint-plugin-import-x` are also removed from `devDependencies` — the first two backed only the deleted Express-introspection extractor, the third's only rule (`core/` must not import `adapters/`) became meaningless once `adapters/` was deleted. Disclosed in commit `6edee92`.
 
 #### Business Rules
 
@@ -280,7 +282,7 @@ So that I stop spending context on a mode that can never trigger.
 - [ ] AC-4: `activity-codebase-research`, `researcher`, `product-engineer`, and `qa-engineer` carry no `dt` invocation in any tree.
 - [ ] AC-5: `AGENTS.md` has no Task Types / `architecture-change` section (RF-62, RF-64) and no Cross-Repo Partitioning section (RF-63); `CLAUDE.md` loses the matching rules.
 - [ ] AC-6: `AGENTS.md.template` receives the same removals, so new installs do not ship the rules.
-- [ ] AC-7: The three trees remain at parity. Five parity tests assert content this story removes and are therefore changed, not merely kept passing: `architecture-change-parity` and `cross-repo-partitioning-parity` are deleted with the blocks they assert; `skill-parity-init`, `researcher-parity`, and `skill-parity-testing-layers` lose their `dt` assertions. Every other parity test passes unmodified, and a new check asserts set equality of skill directory names across the three trees.
+- [ ] AC-7: The three trees remain at parity. Nine test files assert content this story removes and are therefore changed, not merely kept passing: `architecture-change-parity.test.ts`, `architecture-change-dryrun.test.ts`, `cross-repo-partitioning-parity.test.ts`, and `cross-repo-partitioning-dryrun.test.ts` are deleted with the blocks they assert; `skill-init-edge-cases.test.ts` is deleted as multi-repo-only; `skill-init-walkthrough.test.ts` is rewritten for the single-repo-only flow; `skill-parity-init`, `researcher-parity`, and `skill-parity-testing-layers` lose their `dt` assertions. Every other parity test passes unmodified, and a new check asserts set equality of skill directory names across the three trees.
 - [ ] AC-8: The S-002 absence test now passes.
 
 #### Business Rules

@@ -5,7 +5,6 @@ Durable records of architectural decisions for `dev-tasks`. One file per decisio
 ## When an ADR Is Required
 
 - Any change to `docs/technical-guidelines.md`.
-- Any meta-repo pull request under the `architecture-change` task type (see `AGENTS.md`).
 - Any decision that constrains future implementation choices across modules, artifacts, or platform trees.
 
 ## Index
