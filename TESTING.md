@@ -8,14 +8,14 @@ owner: qa-engineer
 
 ## Test Layers
 
-| Layer    | Name                      | Scope                                                                                                                             | Status                                 |
-| -------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| 1        | Deterministic foundations | Unit tests and schema/contract assertions with no network, database, or wall-clock dependency.                                    | configured                             |
-| 2        | Constrained model/tool    | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs. | configured                             |
-| 2.5      | Integration               | Real database, migrations, RLS, and schema contracts without a mocked data layer.                                                 | not configured                         |
-| E2E      | End-to-end                | Playwright full-stack browser scenarios.                                                                                          | not configured                         |
-| 3        | Product evaluation        | Semantic or groundedness evaluation for LLM features.                                                                             | not applicable                         |
-| 4        | Human evaluation          | Human review and safeguard gates.                                                                                                 | manual only                            |
+| Layer | Name                      | Scope                                                                                                                             | Status         |
+| ----- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| 1     | Deterministic foundations | Unit tests and schema/contract assertions with no network, database, or wall-clock dependency.                                    | configured     |
+| 2     | Constrained model/tool    | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs. | configured     |
+| 2.5   | Integration               | Real database, migrations, RLS, and schema contracts without a mocked data layer.                                                 | not configured |
+| E2E   | End-to-end                | Playwright full-stack browser scenarios.                                                                                          | not configured |
+| 3     | Product evaluation        | Semantic or groundedness evaluation for LLM features.                                                                             | not applicable |
+| 4     | Human evaluation          | Human review and safeguard gates.                                                                                                 | manual only    |
 
 ### Layer boundaries
 

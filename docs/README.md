@@ -13,27 +13,27 @@ Entry point for `dev-tasks` documentation. Each document below is the single sou
 
 ## Reference
 
-| Document                                             | Subject                                                                      |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------- |
-| [`system-overview.md`](system-overview.md)           | Purpose, architecture, components, integrations, runtime flows, NFR posture  |
-| [`product-context.md`](product-context.md)           | Product constitution: problem, users, goals, metrics, constraints            |
-| [`technical-guidelines.md`](technical-guidelines.md) | Enforceable engineering rules and quality gates                              |
-| [`agents-md-guidelines.md`](agents-md-guidelines.md) | Sizing and content rules for `AGENTS.md`                                     |
-| [`adr/`](adr/README.md)                              | Architecture decision records                                                |
-| [`requirements/`](requirements/)                     | Product requirements documents                                               |
+| Document                                             | Subject                                                                     |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| [`system-overview.md`](system-overview.md)           | Purpose, architecture, components, integrations, runtime flows, NFR posture |
+| [`product-context.md`](product-context.md)           | Product constitution: problem, users, goals, metrics, constraints           |
+| [`technical-guidelines.md`](technical-guidelines.md) | Enforceable engineering rules and quality gates                             |
+| [`agents-md-guidelines.md`](agents-md-guidelines.md) | Sizing and content rules for `AGENTS.md`                                    |
+| [`adr/`](adr/README.md)                              | Architecture decision records                                               |
+| [`requirements/`](requirements/)                     | Product requirements documents                                              |
 
 ## Registries and Contracts
 
 These live outside `docs/` because agent runtimes load them directly:
 
-| File                | Subject                                                                     |
-| ------------------- | --------------------------------------------------------------------------- |
-| `../AGENTS.md`      | Authoritative registry of agents, skills, and instructions; agent rules     |
-| `../CLAUDE.md`      | Claude Code entry point                                                     |
-| `../DESIGN.md`      | Canonical design-system contract for UI work                                |
-| `../TESTING.md`     | Canonical testing contract — layers, runners, thresholds, fixtures          |
-| `../SIMPLICITY.md`  | Canonical code-simplicity contract — decision rules, prohibitions, thresholds |
-| `../CHANGELOG.md`   | Release history                                                             |
+| File               | Subject                                                                       |
+| ------------------ | ----------------------------------------------------------------------------- |
+| `../AGENTS.md`     | Authoritative registry of agents, skills, and instructions; agent rules       |
+| `../CLAUDE.md`     | Claude Code entry point                                                       |
+| `../DESIGN.md`     | Canonical design-system contract for UI work                                  |
+| `../TESTING.md`    | Canonical testing contract — layers, runners, thresholds, fixtures            |
+| `../SIMPLICITY.md` | Canonical code-simplicity contract — decision rules, prohibitions, thresholds |
+| `../CHANGELOG.md`  | Release history                                                               |
 
 ## Working Documents
 

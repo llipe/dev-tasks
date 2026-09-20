@@ -17,7 +17,7 @@ pnpm add -g @llipe.com/dev-tasks
 This gives you one binary:
 
 | Binary      | Stability  | Purpose                                                 |
-| ----------- | ---------- | -------------------------------------------------------- |
+| ----------- | ---------- | ------------------------------------------------------- |
 | `dev-tasks` | **Stable** | Bootstrap: install agent files, update, status, migrate |
 
 ### 2. Install agent workflow files into your repo
@@ -110,19 +110,19 @@ dev-tasks status            # compare installed vs latest version
 ### Global options
 
 | Flag     | Description                  |
-| -------- | ----------------------------- |
+| -------- | ---------------------------- |
 | `--json` | Machine-readable JSON output |
 | `-v`     | Verbose diagnostics (stderr) |
 
 ### Exit codes
 
-| Code | Meaning                                   |
-| ---- | ------------------------------------------ |
-| 0    | Success                                    |
-| 1    | Unexpected error                           |
-| 2    | Incorrect usage                            |
-| 11   | Dependency check failed (`doctor`)         |
-| 14   | Reconciliation conflict (edited fields)    |
+| Code | Meaning                                 |
+| ---- | --------------------------------------- |
+| 0    | Success                                 |
+| 1    | Unexpected error                        |
+| 2    | Incorrect usage                         |
+| 11   | Dependency check failed (`doctor`)      |
+| 14   | Reconciliation conflict (edited fields) |
 
 Full contract, including retirement history for codes no longer in use: [`core/exit-codes.ts`](core/exit-codes.ts).
 
@@ -333,20 +333,20 @@ The `verifier` audit after implementation is mandatory and non-skippable before 
 
 ## File Organization
 
-| Directory             | Contents                                                                |
-| --------------------- | ----------------------------------------------------------------------- |
-| `/docs/`              | Documentation — see [`docs/README.md`](docs/README.md) for the index    |
-| `/docs/adr/`          | Architecture decision records                                           |
-| `/docs/requirements/` | PRDs produced by the refine skill                                       |
-| `/workstream/`        | Active feature work — specs, stories, task lists, fidelity reports      |
-| `bin/`                | CLI entrypoint (`dev-tasks.ts`) and its argument parser                |
-| `core/`               | Business logic — `distribution` (install/update/status/pin/doctor)     |
-| `scripts/`            | Bundle build, release, and formatting scripts                           |
-| `templates/`          | Claude settings, infra scaffold, deploy scripts, and CI workflows       |
-| `test/`               | Unit and integration tests + fixtures                                   |
-| `.github/`            | Copilot agents, skills, instructions, prompts; CI workflows             |
-| `.claude/`            | Claude Code agents, skills, commands, hooks                             |
-| `.kiro/`              | Kiro agents, skills, steering, hooks                                    |
+| Directory             | Contents                                                             |
+| --------------------- | -------------------------------------------------------------------- |
+| `/docs/`              | Documentation — see [`docs/README.md`](docs/README.md) for the index |
+| `/docs/adr/`          | Architecture decision records                                        |
+| `/docs/requirements/` | PRDs produced by the refine skill                                    |
+| `/workstream/`        | Active feature work — specs, stories, task lists, fidelity reports   |
+| `bin/`                | CLI entrypoint (`dev-tasks.ts`) and its argument parser              |
+| `core/`               | Business logic — `distribution` (install/update/status/pin/doctor)   |
+| `scripts/`            | Bundle build, release, and formatting scripts                        |
+| `templates/`          | Claude settings, infra scaffold, deploy scripts, and CI workflows    |
+| `test/`               | Unit and integration tests + fixtures                                |
+| `.github/`            | Copilot agents, skills, instructions, prompts; CI workflows          |
+| `.claude/`            | Claude Code agents, skills, commands, hooks                          |
+| `.kiro/`              | Kiro agents, skills, steering, hooks                                 |
 
 ---
 
