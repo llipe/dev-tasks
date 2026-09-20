@@ -210,6 +210,45 @@ Execution follows a strict phase-gated flow. You **MUST NOT** advance to the nex
 13. **No false completion:** If traceability or audit coverage is incomplete, you **MUST** mark status as `blocked` and list missing evidence.
 14. **No direct edits:** You **MUST NOT** edit application code, PRD, spec, or task-list content — you report findings and hand off remediation to `developer` or `product-engineer`.
 
+## Runbook-Coverage Finding (FR-49b)
+
+S-003 created the runbooks and S-004 made their structure a `lint` gate.
+Neither notices a runbook that was never written. That judgment —
+"was this procedure worth writing down?" — is not deterministic, so it
+lives here as a finding rather than in `core/checks`.
+
+**Trigger.** Report the finding when both hold:
+
+1. The pull request's task list contains **three or more** steps touching
+   configuration, environment, tooling, credentials, or data — setup,
+   configuration, or migration work — and
+2. the PR adds or updates **no** runbook under `docs/runbooks/`.
+
+The threshold is three, stated so the judgment is bounded rather than
+open-ended. Two such steps is below it and is not a finding.
+
+**Not a finding:**
+
+- A PR with three or more such steps that **updates an existing runbook**.
+  Updating is delivering; a new file is not required.
+- A docs-only PR. It is not performing the procedure.
+- A PR whose steps are ordinary code changes, however many.
+
+**The finding is advisory.** Like every other drift item it is
+**non-blocking to PR readiness and to issue completion**, and it routes
+to `product-engineer`'s `activity-drift-reconciliation` flow. Classify it
+with the existing impact/intent vocabulary — this is a new trigger, not a
+new category. Never hold a PR on it.
+
+**Owners**, so the finding names someone rather than the air:
+
+| Work kind | Owner |
+| --------- | ----- |
+| Platform and infrastructure changes | `infra-engineer` |
+| Setup and migration tasks | `developer` |
+| Test-harness setup | `qa-engineer` |
+| Tooling setup | `housekeeping` |
+
 ## Failure Triage Workflow (Randomized Tests)
 
 When a randomized or fuzz test fails, follow this sequence:

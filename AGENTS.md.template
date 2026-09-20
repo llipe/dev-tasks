@@ -26,8 +26,8 @@ If `/DESIGN.md` is missing and scope includes UI work, agents **MUST** create a 
 | **product-engineer** | Preparation — PRD, spec, stories, plan. Owns drift-reconciliation.                                        |
 | **developer**        | Execution — implements from task lists with mandatory verifier audit pre-PR.                              |
 | **planner**          | Multi-story orchestration with dependency ordering and integration PR.                                    |
-| **technical-writer** | Autonomous documentation maintenance.                                                                     |
-| **housekeeping**     | Lint, type, and test-wiring fixes.                                                                        |
+| **technical-writer** | Autonomous documentation maintenance. **Owns docs structure and content**, including `docs/runbooks/`.   |
+| **housekeeping**     | Lint, type, and test-wiring fixes. Does **not** organize documentation.                                   |
 | **github-ops**       | GitHub consistency — issues, PRs, branches, labels, milestones, merge authority.                          |
 | **ux-engineer**      | UX prototyping, DESIGN.md ownership, mockup generation.                                                   |
 | **qa-engineer**      | Testing standard, test authoring, coverage/gap reporting.                                                 |
@@ -113,6 +113,8 @@ All agents **MUST**:
 - Run `verifier` audit (mandatory, non-skippable) before PR is ready; drift findings route to `product-engineer`
 - Follow test-first design: write tests before implementation code
 - If `memo-cli` is available: read/write entries per role
+- Deliver a runbook in the **same PR** as any new or materially changed script under `templates/scripts/`, workflow under `templates/workflows/` or `.github/workflows/`, or `infra-engineer` change kind (FR-49a). Updating an existing runbook satisfies this
+- Route a docs-structure failure in `validate` to `technical-writer`, never to `housekeeping` (FR-51): `technical-writer` owns documentation structure and content
 - Treat a blocked guard as a decision, not an obstacle: when a hook blocks a tool call, surface the block verbatim, stop that line of work, and **MUST NOT** attempt an alternative command, tool surface, or sequence that achieves the same effect the block just prevented. Using a legitimate alternate mechanism for an unrelated, non-triggering purpose (e.g. `Read` instead of `grep`, `Write` instead of a shell heredoc) is not a route-around and remains allowed
 
 ---

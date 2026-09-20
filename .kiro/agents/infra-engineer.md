@@ -70,6 +70,27 @@ Resources carry environment, owner, and ChangeId tags; ephemeral resources carry
 
 Log queries require a bounded UTC `--since` or explicit start/end window and stated scan scope before any billed query. All output passes unconditionally through `templates/infra/redaction-patterns.txt`; raw output is never written and inference is labelled. Cloudflare DNS captures the complete prior record as revert before update and verifies after; ACM and Fly certificate steps are separate approved steps.
 
+## Runbook Delivery in the Same PR (FR-49a)
+
+A script or workflow that ships without a runbook is a procedure that
+lives in one person's head until they leave. These **MUST** arrive with a
+runbook in the **same draft PR**, not a follow-up issue:
+
+- every script added or materially changed under `templates/scripts/`
+- every workflow under `templates/workflows/` and `.github/workflows/`
+- every `infra-engineer` change kind — secrets, deploy, DNS,
+  certificates, IAM policy, migrations
+
+Updating an existing runbook satisfies this; a new file is required only
+when no runbook covers the procedure. Add the new file to
+`docs/runbooks/README.md` and to `EXPECTED_RUNBOOKS` in
+`test/unit/runbook-set.test.ts`, or the suite fails on the undeclared
+file — which is the reminder working, not a problem with it.
+
+A PR that skips this is flagged by the `verifier`'s runbook-coverage
+finding. That finding is advisory and does not block the PR; this rule
+is what it is measuring against.
+
 ## Handoff and outcomes
 
 Outcomes are `applied`, `verified`, `failed`, `blocked`, `routed`, `reverted`, or `skipped(<reason>)`; blocked includes remediation. Retry read probes once and allow at most three attempts or fifteen minutes per step before escalating. Commit records on an issue/story branch with a Conventional Commit, then use `github-ops` to open a draft PR containing the ChangeId, plan, result, rollback, and validation evidence. The agent never merges a draft PR.

@@ -62,6 +62,8 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 - `test/integration/install-parity.test.ts` — agnostic-tag accounting and the runbook-scaffold cases (S-003)
 - `test/integration/checks-run.test.ts` — new; the lint entry point end to end (S-004)
 - `test/integration/test-standards-reachability.test.ts` — new; per-package reachability against the S-005 fixtures (S-006)
+- `test/unit/runbook-coverage-parity.test.ts` — new; the S-007 finding, same-PR rule, and ownership boundary (S-007)
+- `verifier`, `technical-writer`, `infra-engineer`, `developer`, `qa-engineer`, `housekeeping` across all three trees; `AGENTS.md`, `CLAUDE.md` and both templates (S-007)
 - `researcher`, `plan`, `implement`, `activity-test-standards` across all three trees; `TESTING.md` (S-006)
 - `.claude/commands/product-engineer.md`, `.github/agents/product-engineer.agent.md`, `.kiro/agents/product-engineer.md`, `.github/prompts/product-engineer-init.prompt.md`, `docs/workflow-chains.md` — Mode A rename cross-references (S-005)
 - `.claude/agents/verifier.md`, `.github/agents/verifier.agent.md`, `.kiro/agents/verifier.md` — audit reads `checkDocsStructure` (S-004)
@@ -220,21 +222,21 @@ None. Phase 1 is additive plus one rename.
   - [x] 6.13 Run Tests: `pnpm run validate`; the D-40 set is unchanged
   - [x] 6.14 Commit as `feat(prompts): make researcher, plan, implement, and qa-engineer package-aware`
 
-- [ ] 7.0 Implement Story S-007: Enforce runbook coverage and docs ownership
+- [x] 7.0 Implement Story S-007: Enforce runbook coverage and docs ownership
 
   > Note: deterministic conditions stay in `core/checks` (task 4.0). This task adds only the judgment-based finding and the ownership statements.
 
-  - [ ] 7.1 Add the runbook-coverage finding trigger to `verifier` in all three trees: a PR whose task list has ≥3 setup/configuration/migration/credential/data steps and adds or updates no runbook
-  - [ ] 7.2 State the finding is advisory and does not block PR readiness (AC-2)
-  - [ ] 7.3 Add the FR-49a same-PR delivery rule to `infra-engineer`, `developer`, `qa-engineer`, and `housekeeping` in all three trees (AC-3, AC-4)
-  - [ ] 7.4 Extend `technical-writer` with runbook hygiene: indexes in sync, frontmatter valid, naming respected, no dangling `related`, staleness reported (AC-5)
-  - [ ] 7.5 State the ownership boundary in `technical-writer`, `housekeeping`, `AGENTS.md`, and `CLAUDE.md`: `technical-writer` owns docs structure and content; a `validate` docs failure routes to it, not to `housekeeping` (AC-6)
-  - [ ] 7.6 Extend the parity suites for every changed agent
-  - [ ] 7.7 Verify AC-1 to AC-4 by inspection and the parity tests; AC-5 and AC-6 by the changed content; AC-7 by the parity suites
-  - [ ] 7.8 Edge cases: a PR with three configuration steps that updates an existing runbook (no finding); a PR with two steps (below threshold); a docs-only PR
-  - [ ] 7.9 Manual check: the runbook-coverage trigger must not fire on this phase's own PR, because task 3.0 delivered runbooks
-  - [ ] 7.10 Run Tests: `pnpm run validate`; the D-40 set is unchanged
-  - [ ] 7.11 Commit as `feat(prompts): enforce runbook coverage and docs ownership`
+  - [x] 7.1 Add the runbook-coverage finding trigger to `verifier` in all three trees: a PR whose task list has ≥3 setup/configuration/migration/credential/data steps and adds or updates no runbook
+  - [x] 7.2 State the finding is advisory and does not block PR readiness (AC-2)
+  - [x] 7.3 Add the FR-49a same-PR delivery rule to `infra-engineer`, `developer`, `qa-engineer`, and `housekeeping` in all three trees (AC-3, AC-4)
+  - [x] 7.4 Extend `technical-writer` with runbook hygiene: indexes in sync, frontmatter valid, naming respected, no dangling `related`, staleness reported (AC-5)
+  - [x] 7.5 State the ownership boundary in `technical-writer`, `housekeeping`, `AGENTS.md`, and `CLAUDE.md`: `technical-writer` owns docs structure and content; a `validate` docs failure routes to it, not to `housekeeping` (AC-6)
+  - [x] 7.6 Extend the parity suites for every changed agent
+  - [x] 7.7 Verify AC-1 to AC-4 by inspection and the parity tests; AC-5 and AC-6 by the changed content; AC-7 by the parity suites
+  - [x] 7.8 Edge cases: a PR with three configuration steps that updates an existing runbook (no finding); a PR with two steps (below threshold); a docs-only PR
+  - [x] 7.9 Manual check: the runbook-coverage trigger must not fire on this phase's own PR, because task 3.0 delivered runbooks
+  - [x] 7.10 Run Tests: `pnpm run validate`; the D-40 set is unchanged
+  - [x] 7.11 Commit as `feat(prompts): enforce runbook coverage and docs ownership`
 
 - [ ] 8.0 Completion gates
 

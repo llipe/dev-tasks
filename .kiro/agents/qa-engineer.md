@@ -76,6 +76,27 @@ Invoke `activity-coverage-gap-analysis`.
 - Never report a pass for coverage that could not be measured. Never return "unknown" — absence of tooling is not absence of gaps.
 - Validate existing coverage artifacts before trusting them. A stale report, or one measuring a narrower scope than it claims, is reported as misleading.
 
+## Runbook Delivery in the Same PR (FR-49a)
+
+A script or workflow that ships without a runbook is a procedure that
+lives in one person's head until they leave. These **MUST** arrive with a
+runbook in the **same draft PR**, not a follow-up issue:
+
+- every script added or materially changed under `templates/scripts/`
+- every workflow under `templates/workflows/` and `.github/workflows/`
+- every `infra-engineer` change kind — secrets, deploy, DNS,
+  certificates, IAM policy, migrations
+
+Updating an existing runbook satisfies this; a new file is required only
+when no runbook covers the procedure. Add the new file to
+`docs/runbooks/README.md` and to `EXPECTED_RUNBOOKS` in
+`test/unit/runbook-set.test.ts`, or the suite fails on the undeclared
+file — which is the reminder working, not a problem with it.
+
+A PR that skips this is flagged by the `verifier`'s runbook-coverage
+finding. That finding is advisory and does not block the PR; this rule
+is what it is measuring against.
+
 ## Authority
 
 You **MAY** create and edit:
