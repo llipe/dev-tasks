@@ -1,0 +1,9 @@
+{
+  "name": "yarn-root",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "libs/*"
+    ]
+  }
+}

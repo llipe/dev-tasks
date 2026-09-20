@@ -19,6 +19,8 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { checkDocsStructure } from "../../core/checks/docs-structure.js";
+
 const ROOT = join(import.meta.dirname, "../..");
 const RUNBOOK_DIR = join(ROOT, "docs/runbooks");
 const TEMPLATE_DIR = join(ROOT, "templates/runbooks");
@@ -183,6 +185,21 @@ describe("runbook set (FR-47, FR-48, PRD AC-25)", () => {
     expect(
       uncovered,
       `Not named by any runbook's 'related' field:\n  ${uncovered.join("\n  ")}`,
+    ).toEqual([]);
+  });
+
+  it("agrees with the shipped check, not just with its own parser copy", () => {
+    // This file hand-parses frontmatter so it can assert per-runbook
+    // detail. That copy can drift from core/checks/docs-structure.ts,
+    // which is what `lint` actually runs — and then ten runbooks stay
+    // green here while the gate fails, or the reverse. Calling the
+    // shipped check pins the two together.
+    const result = checkDocsStructure(ROOT);
+    expect(
+      result.failures,
+      `the shipped docs-structure check disagrees with this file:\n${result.failures
+        .map((f) => `  [${f.rule}] ${f.message}`)
+        .join("\n")}`,
     ).toEqual([]);
   });
 

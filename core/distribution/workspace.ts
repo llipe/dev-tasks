@@ -107,11 +107,31 @@ function readPnpmPatterns(repoRoot: string): string[] {
   return patterns;
 }
 
+/**
+ * Read `workspaces` from `package.json`, in both declared forms.
+ *
+ * npm and pnpm use the array form. Yarn classic uses an object with a
+ * `packages` key, and it is still common. Reading only the array form
+ * does not fail loudly — it reports single-package for a monorepo, so
+ * `doctor`'s package-map check goes green while every real package is
+ * invisible, which is the exact failure the per-package contract exists
+ * to prevent.
+ */
 function readNpmPatterns(repoRoot: string): string[] {
   const pkg = readJson(join(repoRoot, "package.json"));
   const workspaces = pkg?.["workspaces"];
-  if (Array.isArray(workspaces))
+
+  if (Array.isArray(workspaces)) {
     return workspaces.filter((w): w is string => typeof w === "string");
+  }
+
+  if (workspaces !== null && typeof workspaces === "object") {
+    const packages = (workspaces as Record<string, unknown>)["packages"];
+    if (Array.isArray(packages)) {
+      return packages.filter((w): w is string => typeof w === "string");
+    }
+  }
+
   return [];
 }
 
@@ -140,7 +160,12 @@ function expandPattern(repoRoot: string, pattern: string): string[] {
       if (!entry.isDirectory() || entry.name === "node_modules") continue;
       const rel = `${relDir}/${entry.name}`;
       out.push(rel);
-      if (deep && depth < 8) walk(rel, depth + 1);
+      // Stop at a package boundary. Descending into one turns its own
+      // subdirectories into phantom packages — a vendored or fixture
+      // package.json becomes a package-map row nobody can explain.
+      if (deep && depth < 8 && !existsSync(join(repoRoot, rel, "package.json"))) {
+        walk(rel, depth + 1);
+      }
     }
   };
   walk(base, 0);
@@ -185,14 +210,9 @@ export function detectWorkspace(repoRoot: string): Workspace {
   const signals = SIGNAL_FILES.filter((f) => existsSync(join(repoRoot, f)));
   if (hasUvWorkspace(repoRoot)) signals.push("pyproject.toml");
 
-  const patterns = [...readPnpmPatterns(repoRoot), ...readNpmPatterns(repoRoot)];
-  if (
-    patterns.length > 0 &&
-    !signals.includes("package.json") &&
-    readNpmPatterns(repoRoot).length > 0
-  ) {
-    signals.push("package.json");
-  }
+  const npmPatterns = readNpmPatterns(repoRoot);
+  const patterns = [...readPnpmPatterns(repoRoot), ...npmPatterns];
+  if (npmPatterns.length > 0) signals.push("package.json");
 
   if (signals.length === 0) {
     const root = readPackage(repoRoot, ".");

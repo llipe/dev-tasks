@@ -72,6 +72,17 @@ describe("detectWorkspace", () => {
     expect(ws.packages.map((p) => p.name)).toEqual(["@npm/util"]);
   });
 
+  it("enumerates packages from the Yarn object form of workspaces (AC-1)", () => {
+    // npm and pnpm use the array form; Yarn classic uses an object with
+    // a `packages` key. Reading only the array form does not fail loudly
+    // — it reports single-package for a monorepo, so doctor's check goes
+    // green while every real package is invisible.
+    const ws = detectWorkspace(fixture("workspace-yarn-object"));
+    expect(ws.shape).toBe<WorkspaceShape>("monorepo");
+    expect(ws.signals).toEqual(["package.json"]);
+    expect(ws.packages.map((p) => p.name)).toEqual(["@yarn/util"]);
+  });
+
   it("records every signal it found, not just the one it parsed", () => {
     const ws = detectWorkspace(fixture("workspace-mono"));
     expect(ws.signals.sort()).toEqual(["pnpm-workspace.yaml", "turbo.json"]);
@@ -108,6 +119,30 @@ describe("detectWorkspace", () => {
       const ws = detectWorkspace(fixture("workspace-unnamed"));
       expect(ws.packages).toHaveLength(1);
       expect(ws.packages[0]).toMatchObject({ name: null, path: "packages/anon" });
+    });
+
+    it("stops a deep glob at a package boundary", () => {
+      // packages/** would otherwise descend into a matched package and
+      // turn its vendored package.json into a phantom map row.
+      const ws = detectWorkspace(fixture("workspace-deep"));
+      const paths = ws.packages.map((p) => p.path).sort();
+      expect(paths).toContain("packages/real");
+      expect(paths).not.toContain("packages/real/vendor");
+      // A nested package under a directory that is NOT itself a package
+      // is still found — the stop is at packages, not at depth 1.
+      expect(paths).toContain("packages/group/nested");
+    });
+
+    it("stops reading pnpm patterns at the next top-level key", () => {
+      const ws = detectWorkspace(fixture("workspace-trailing-key"));
+      expect(ws.packages.map((p) => p.name)).toEqual(["@trailing/one"]);
+    });
+
+    it("a pyproject.toml without [tool.uv.workspace] stays single-package", () => {
+      // The false positive that would flip every Python repository.
+      const ws = detectWorkspace(fixture("workspace-plain-python"));
+      expect(ws.shape).toBe<WorkspaceShape>("single-package");
+      expect(ws.signals).toEqual([]);
     });
 
     it("a repository that does not exist reports single-package, not a crash", () => {

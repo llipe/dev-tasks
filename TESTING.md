@@ -8,14 +8,14 @@ owner: qa-engineer
 
 ## Test Layers
 
-| Layer    | Name                      | Scope                                                                                                                             | Status                                 |
-| -------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| 1        | Deterministic foundations | Unit tests and schema/contract assertions with no network, database, or wall-clock dependency.                                    | configured                             |
-| 2        | Constrained model/tool    | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs. | configured                             |
-| 2.5      | Integration               | Real database, migrations, RLS, and schema contracts without a mocked data layer.                                                 | not configured                         |
-| E2E      | End-to-end                | Playwright full-stack browser scenarios.                                                                                          | not configured                         |
-| 3        | Product evaluation        | Semantic or groundedness evaluation for LLM features.                                                                             | not applicable                         |
-| 4        | Human evaluation          | Human review and safeguard gates.                                                                                                 | manual only                            |
+| Layer | Name                      | Scope                                                                                                                             | Status         |
+| ----- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| 1     | Deterministic foundations | Unit tests and schema/contract assertions with no network, database, or wall-clock dependency.                                    | configured     |
+| 2     | Constrained model/tool    | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs. | configured     |
+| 2.5   | Integration               | Real database, migrations, RLS, and schema contracts without a mocked data layer.                                                 | not configured |
+| E2E   | End-to-end                | Playwright full-stack browser scenarios.                                                                                          | not configured |
+| 3     | Product evaluation        | Semantic or groundedness evaluation for LLM features.                                                                             | not applicable |
+| 4     | Human evaluation          | Human review and safeguard gates.                                                                                                 | manual only    |
 
 ### Layer boundaries
 
@@ -33,7 +33,7 @@ This is a single-package TypeScript repository; no workspace manifest or additio
 | ---------------------- | -------------- | ------------ | --------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `@llipe.com/dev-tasks` | TypeScript/ESM | Vitest 3.2.6 | `pnpm run test` | Node (`environment: "node"`) | V8 provider declared in `vitest.config.ts`, but no usable coverage command/provider package is installed |
 
-Tests live in `test/unit/` and `test/integration/` and use `*.test.ts`. `test/fixtures/` contains inert QA fixtures and is excluded from collection by `vitest.config.ts`.
+Tests live in `test/unit/` and `test/integration/` and use `*.test.ts`. `test/fixtures/` is excluded from `.test.ts` collection by `vitest.config.ts`. That exclusion is about collection only — it does not mean the tree is inert. `test/fixtures/docs-structure/*` and `test/fixtures/workspace-*` are live input fixtures read by passing tests, and editing one changes what those tests assert.
 
 ### Per-package runners (monorepo contract)
 
@@ -47,8 +47,9 @@ contract for a repository that has many (FR-62):
   package beside a `go test` package is normal; the table is where that
   is written down, and `activity-test-standards` reads it.
 - **A package with no test script gets a row saying so.** `no test
-  script` is a finding, distinct from `unreachable`: one needs a script
+script` is a finding, distinct from `unreachable`: one needs a script
   written, the other needs the aggregate wired to reach it.
+- **The Packages table above is the per-package record.** In a repository with many packages it gains a row each, and the finding vocabulary below (`no test script`, `unreachable`) is what its notes carry. The single row here reflects this repository's shape, not a different schema.
 - **Reachability is per package.** `activity-test-standards` verifies
   that the root `test` command reaches every package with tests, and
   reports one row per package. An omission is a defect even when every
@@ -60,16 +61,16 @@ The package is a CLI and filesystem toolkit, so Node is the correct environment;
 
 ### Runtime parity
 
-- Local validation observed Node `v26.7.0`.
 - CI workflow `publish-npm.yml` uses Node `24`.
 - The package declares production engine `>=24`.
-- The local major version differs from the pinned CI major and is a harness defect until local and CI validation use the same supported major (or CI is changed to a tested range).
+- **Local validation has been observed on Node `v22.22.2`, which is _below_ the declared engine floor.** This is not a parity mismatch between two supported majors; it is validation on an unsupported runtime. It is a harness defect, and it is the direct cause of two of the five known failures: `dev-tasks doctor` self-reports `node-version` as failing, and both `bootstrap > doctor` integration cases assert a zero exit.
+- Until local and CI validation run on the same supported major, a green local `test` is not evidence that CI will be green, and a red one is not necessarily evidence of a defect in the code.
 
 ## Commands
 
 | Script             | Purpose                                                                                               | Status                                 |
 | ------------------ | ----------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `lint`             | ESLint static analysis                                                                                | present                                |
+| `lint`             | ESLint static analysis **and** `tsx core/checks/run.ts` (docs-structure gate)                         | present                                |
 | `lint:fix`         | ESLint auto-fix                                                                                       | present                                |
 | `format`           | Prettier write                                                                                        | present                                |
 | `format:check`     | Prettier verification                                                                                 | present                                |
@@ -111,6 +112,14 @@ Gold or generated fixture files must record their source and regeneration path w
 This package has no authentication or authorization implementation path in the analyzed scope. If one is added, tests are mandatory for invalid signature, expired credential, wrong issuer/audience, tampered claims, missing credential, insufficient permission, and cross-tenant access where applicable. Tests against a fake policy layer must state that production policy remains unverified.
 
 ## Harness defects to track
+
+### Environment-fragility classes
+
+Three classes of test in this repository assert facts about the machine rather than about the product. Each is a harness defect, not a product failure, and each is part of the five-name failure baseline:
+
+- **Root-permission assumptions.** A test that `chmod`s a path unwritable and expects a failure passes only as a non-root user. Root ignores the bits. `test/unit/migrate-docs.test.ts` shows the correct pattern: probe whether writes are actually blocked, and `ctx.skip()` when they are not. `checkCacheDir` and `runUpdate --force` should adopt it.
+- **Node-major assumptions.** Tests that assert `doctor` exits zero fail on any runtime below the declared engine floor. See Runtime parity above.
+- **PATH assumptions.** A test that sets `PATH=/usr/bin:/bin` to simulate a missing binary depends on that binary being absent from those directories. `yq` is present at `/usr/bin/yq` in some containers. A purpose-built empty directory is the reliable form.
 
 1. `vitest.config.ts`: `restoreMocks` is not enabled. Expected state: enable explicit mock restoration if mocks/stubs are introduced, and retain per-test cleanup for any global stubs.
 2. `package.json` and `vitest.config.ts`: V8 coverage is declared but no usable `test:coverage` command/provider is configured. Expected state: add the approved provider and canonical command in a separate approved change, then record thresholds and baseline; until then coverage is skipped.
