@@ -251,8 +251,16 @@ describe("runbook set (FR-47, FR-48, PRD AC-25)", () => {
   });
 
   it("links docs/runbooks from the docs index (AC-7)", () => {
+    // Not `toMatch(/runbooks/i)`: that passes on one passing mention
+    // with both real links deleted. A link is what a reader follows.
     const docsIndex = readFileSync(join(ROOT, "docs/README.md"), "utf-8");
-    expect(docsIndex).toMatch(/runbooks/i);
+    const links = [...docsIndex.matchAll(/\]\((runbooks\/[^)]*)\)/g)].map((m) => m[1]);
+    expect(links.length, "docs/README.md has no markdown link into runbooks/").toBeGreaterThan(0);
+    for (const target of links) {
+      expect(existsSync(join(ROOT, "docs", target)), `docs/README.md links missing ${target}`).toBe(
+        true,
+      );
+    }
   });
 
   describe("the parser itself", () => {

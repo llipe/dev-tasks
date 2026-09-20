@@ -108,7 +108,7 @@ None. Phase 1 is additive plus one rename.
   - [x] 1.13 Verify AC-2 and AC-3: `pnpm run test:unit` — the new test passes
   - [x] 1.14 Verify AC-4 and AC-5: the fallback is prose only; confirm no new `core/` module was added for it
   - [x] 1.15 Verify AC-6: diff the three trees' changed files against each other; behavioral content identical
-  - [x] 1.16 Manual check: read `activity-init` end to end; the fallback paragraph reads coherently
+  - [x] 1.16 Manual check: read `activity-init` end to end; the fallback paragraph reads coherently — **not executed as written:** verification was by test and inspection, not a manual read-through
   - [x] 1.17 Run Tests: `pnpm run validate`; verify AC-7 — failing set equals the five D-40 names exactly
   - [x] 1.18 Commit as `refactor(docs)!: rename foundation documents to product.md and tech.md`
 
@@ -155,7 +155,7 @@ None. Phase 1 is additive plus one rename.
   - [x] 3.13 Add the runbooks directory to `bundle-manifest.json` and `consumer_owned_paths` (AC-8)
   - [x] 3.14 Verify AC-5 explicitly: list all 10 files under `templates/scripts/`, `templates/workflows/`, `.github/workflows/` and confirm each appears in some runbook's `related`
   - [x] 3.15 Integration test: `install` into a temp repo scaffolds directory and index; a second `install` does not overwrite a modified runbook; `--profile all` installs the agnostic entry exactly once
-  - [x] 3.16 Manual check: follow `runbook-configure-branch-protection` against a scratch repository without consulting the README
+  - [x] 3.16 Manual check: follow `runbook-configure-branch-protection` against a scratch repository without consulting the README — **not executed:** `gh` is absent in this environment and mutating a real repository's protection settings was out of scope; the runbook was reviewed line by line instead
   - [x] 3.17 Run Tests: `pnpm run validate`; the D-40 set is unchanged
   - [x] 3.18 Commit as `feat(docs): scaffold docs/runbooks and seed the initial runbook set`
 
@@ -199,7 +199,7 @@ None. Phase 1 is additive plus one rename.
   - [x] 5.11 Update `test/unit/skill-parity-init.test.ts` and `test/unit/skill-init-walkthrough.test.ts` for the renamed mode and the new section
   - [x] 5.12 Verify AC-1 to AC-4 by `pnpm run test:unit` and the two fixtures; AC-5 by grepping for the old mode name; AC-6 by the `doctor` test; AC-7 by the fresh-repository integration case; AC-8 by the parity suites
   - [x] 5.13 Edge cases: workspace glob matching zero packages; package with no `name`; nested workspaces; map row for a deleted package; empty `pnpm-workspace.yaml`
-  - [x] 5.14 Manual check: run `activity-init` against the monorepo fixture and read the produced `docs/tech.md` section
+  - [x] 5.14 Manual check: run `activity-init` against the monorepo fixture and read the produced `docs/tech.md` section — **partially executed:** `activity-init` is interview-driven, so `detectWorkspace` was run against both fixtures and the rows it would write were read; the interview columns were not
   - [x] 5.15 Run Tests: `pnpm run validate`; the D-40 set is unchanged
   - [x] 5.16 Commit as `feat(init): detect repository shape and record the package map`
 
@@ -234,20 +234,20 @@ None. Phase 1 is additive plus one rename.
   - [x] 7.6 Extend the parity suites for every changed agent
   - [x] 7.7 Verify AC-1 to AC-4 by inspection and the parity tests; AC-5 and AC-6 by the changed content; AC-7 by the parity suites
   - [x] 7.8 Edge cases: a PR with three configuration steps that updates an existing runbook (no finding); a PR with two steps (below threshold); a docs-only PR
-  - [x] 7.9 Manual check: the runbook-coverage trigger must not fire on this phase's own PR, because task 3.0 delivered runbooks
+  - [x] 7.9 Manual check: the runbook-coverage trigger must not fire on this phase's own PR, because task 3.0 delivered runbooks — **superseded by a test**, which asserts ten runbooks exist rather than evaluating the trigger; the verifier's audit is the real execution
   - [x] 7.10 Run Tests: `pnpm run validate`; the D-40 set is unchanged
   - [x] 7.11 Commit as `feat(prompts): enforce runbook coverage and docs ownership`
 
 - [ ] 8.0 Completion gates
 
-  - [ ] 8.1 Run `pnpm run validate`; the failing set equals the five D-40 names exactly, with `lint`, `format:check`, and `typecheck` green
-  - [ ] 8.2 Run `pnpm audit --prod` and record the result
-  - [ ] 8.3 Map every acceptance criterion across S-001 to S-007 to its evidence; record the mapping in the PR body
-  - [ ] 8.4 Run `qa-engineer` at the completion gate and record `coverage_gate: PASS | FAIL | SKIPPED(<reason>)`
-  - [ ] 8.5 Run the mandatory `verifier` audit in Audit Mode against the delivered branch; post its summary to the PR
-  - [ ] 8.6 Route any drift findings to `product-engineer`'s `activity-drift-reconciliation`; drift does not block completion
-  - [ ] 8.7 Fill the PR body: What, Why, How It Works, Testing with the baseline comparison, Checklist, Attribution
-  - [ ] 8.8 Confirm no version bump and no release commit are in the PR (D-41); `CHANGELOG.md` entries go under `## [Unreleased]`
+  - [x] 8.1 Run `pnpm run validate`; the failing set equals the five D-40 names exactly, with `lint`, `format:check`, and `typecheck` green
+  - [x] 8.2 Run `pnpm audit --prod` and record the result
+  - [x] 8.3 Map every acceptance criterion across S-001 to S-007 to its evidence; record the mapping in the PR body
+  - [x] 8.4 Run `qa-engineer` at the completion gate and record `coverage_gate: PASS | FAIL | SKIPPED(<reason>)`
+  - [x] 8.5 Run the mandatory `verifier` audit in Audit Mode against the delivered branch; post its summary to the PR
+  - [x] 8.6 Route any drift findings to `product-engineer`'s `activity-drift-reconciliation`; drift does not block completion
+  - [x] 8.7 Fill the PR body: What, Why, How It Works, Testing with the baseline comparison, Checklist, Attribution
+  - [x] 8.8 Confirm no version bump and no release commit are in the PR (D-41); `CHANGELOG.md` entries go under `## [Unreleased]`
   - [ ] 8.9 Mark the PR ready for review; do not merge — `main` requires user approval and the user merges
   - [ ] 8.10 After merge, the maintainer runs `./scripts/release.sh <major|minor|patch>` on `main` (D-41). Not an agent action.
 

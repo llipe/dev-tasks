@@ -26,7 +26,7 @@ If `/DESIGN.md` is missing and scope includes UI work, agents **MUST** create a 
 | **product-engineer** | Preparation — PRD, spec, stories, plan. Owns drift-reconciliation.                                        |
 | **developer**        | Execution — implements from task lists with mandatory verifier audit pre-PR.                              |
 | **planner**          | Multi-story orchestration with dependency ordering and integration PR.                                    |
-| **technical-writer** | Autonomous documentation maintenance. **Owns docs structure and content**, including `docs/runbooks/`.   |
+| **technical-writer** | Autonomous documentation maintenance. **Owns docs structure and content**, including `docs/runbooks/`.    |
 | **housekeeping**     | Lint, type, and test-wiring fixes. Does **not** organize documentation.                                   |
 | **github-ops**       | GitHub consistency — issues, PRs, branches, labels, milestones, merge authority.                          |
 | **ux-engineer**      | UX prototyping, DESIGN.md ownership, mockup generation.                                                   |
@@ -113,6 +113,7 @@ All agents **MUST**:
 - Run `verifier` audit (mandatory, non-skippable) before PR is ready; drift findings route to `product-engineer`
 - Follow test-first design: write tests before implementation code
 - If `memo-cli` is available: read/write entries per role
+- **Foundation documents: resolve the new name, fall back to the old one.** The canonical names are `docs/product.md` and `docs/tech.md`. A repository installed before the rename still carries `docs/product-context.md` and `docs/technical-guidelines.md`, and `dev-tasks update` never renames a consumer-owned file on its own. So when **reading** a foundation document, resolve the new name first and fall back to the old one only when the new name is absent; when **writing**, always write the new name. Propose `dev-tasks migrate docs` on encountering an old name. This applies to every agent and skill that reads these documents, for one release cycle (FR-45)
 - Deliver a runbook in the **same PR** as any new or materially changed script under `templates/scripts/`, workflow under `templates/workflows/` or `.github/workflows/`, or `infra-engineer` change kind (FR-49a). Updating an existing runbook satisfies this
 - Route a docs-structure failure in `validate` to `technical-writer`, never to `housekeeping` (FR-51): `technical-writer` owns documentation structure and content
 - Treat a blocked guard as a decision, not an obstacle: when a hook blocks a tool call, surface the block verbatim, stop that line of work, and **MUST NOT** attempt an alternative command, tool surface, or sequence that achieves the same effect the block just prevented. Using a legitimate alternate mechanism for an unrelated, non-triggering purpose (e.g. `Read` instead of `grep`, `Write` instead of a shell heredoc) is not a route-around and remains allowed

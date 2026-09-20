@@ -35,6 +35,7 @@ const SCAN_ROOTS = [
   "AGENTS.md.template",
   "CLAUDE.md",
   "CLAUDE.md.template",
+  "CHANGELOG.md",
   "README.md",
 ];
 
@@ -72,6 +73,7 @@ const EXEMPT_FILES = new Set([
   "core/distribution/migrate-docs.ts", // the rename pairs themselves (S-002)
   "bin/dev-tasks.ts", // `migrate docs` help text names both renames
   "README.md", // documents the migration for consumers (S-002 AC-8)
+  "CHANGELOG.md", // a changelog records what changed, old names included — the same reason docs/adr/ is excluded
   "test/unit/migrate-docs.test.ts", // seeds old-named fixtures
   "test/unit/distribution-doctor.test.ts", // asserts the doctor detection message
   "test/unit/distribution-update.test.ts", // asserts update never renames them
@@ -127,6 +129,13 @@ const FALLBACK_RULE_FILES = new Set([
   ".claude/skills/activity-init/SKILL.md",
   ".github/skills/activity-init/SKILL.md",
   ".kiro/skills/activity-init/SKILL.md",
+  // The always-loaded contracts, where the rule binds every reader
+  // rather than one skill. Same line-level treatment: the rule line may
+  // name the old documents, every other line may not.
+  "AGENTS.md",
+  "CLAUDE.md",
+  "AGENTS.md.template",
+  "CLAUDE.md.template",
 ]);
 
 /** A line that states the rename, rather than a line that uses an old name. */
@@ -293,5 +302,28 @@ describe("foundation-docs naming guard (PRD FR-44, AC-22)", () => {
     // Directory form fires; the bare memo-cli tag value does not.
     expect(scanContent("seed.md", "- `/docs/product-context/`")).toHaveLength(1);
     expect(scanContent("seed.md", "tags: `technical-guidelines`, domain area")).toHaveLength(0);
+  });
+});
+
+describe("the FR-45 fallback rule reaches every reader", () => {
+  // AC-4 says every skill and agent that reads a foundation document
+  // carries the rule. 32 prompt files name docs/product.md or
+  // docs/tech.md; only activity-init states the rule. Repeating a
+  // paragraph 32 times would drift, so the rule lives in the two
+  // always-loaded contracts — which every agent gets — and this asserts
+  // it stays there rather than that 32 copies exist.
+  const ALWAYS_LOADED = ["AGENTS.md", "CLAUDE.md", "AGENTS.md.template", "CLAUDE.md.template"];
+
+  it.each(ALWAYS_LOADED)("%s states the resolve-new-then-fall-back rule", (relPath) => {
+    const content = readFileSync(join(ROOT, relPath), "utf-8");
+    expect(content).toMatch(/resolve the new name, fall back to the old one/i);
+    expect(content).toContain("docs/product-context.md");
+    expect(content).toContain("dev-tasks migrate docs");
+  });
+
+  it("activity-init still carries the detailed rule for the init flow", () => {
+    for (const relPath of FALLBACK_RULE_FILES) {
+      expect(readFileSync(join(ROOT, relPath), "utf-8")).toMatch(/fall back/i);
+    }
   });
 });

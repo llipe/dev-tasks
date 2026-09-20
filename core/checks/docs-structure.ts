@@ -79,21 +79,44 @@ const STALE_AFTER_DAYS = 90;
 /** Markdown inline links: `[text](target)`. */
 const LINK = /\[[^\]]*\]\(([^)]+)\)/g;
 
-interface Frontmatter {
+export interface Frontmatter {
   values: Record<string, string>;
   related: string[];
 }
 
 /**
- * Parse the five fixed keys from a `---`-delimited block. `related` is
- * read as the span up to the next top-level key, so a list prettier has
- * wrapped across indented lines reads the same as an inline one.
+ * Parse the five fixed keys from a `---`-delimited block.
+ *
+ * Exported so `test/unit/runbook-set.test.ts` uses the parser that ships
+ * rather than a copy of it. A duplicate drifts, and then ten runbooks
+ * stay green in one place while `lint` fails in the other.
+ *
+ * Three input shapes cost nothing to accept and are expensive to get
+ * wrong, because each one fails as "no frontmatter block" — a confident,
+ * wrong report on a file that is fine:
+ *
+ *   - **CRLF.** Any checkout with `core.autocrlf=true` has it, and a
+ *     `\n`-anchored parser calls every runbook malformed.
+ *   - **A leading BOM.** Editors on Windows add one silently.
+ *   - **`related` as a YAML block sequence**, quoted or not. The shipped
+ *     template teaches the inline bracketed form, which is why this tree
+ *     is green — but a consumer writing ordinary YAML would have had
+ *     both the dangling-path rule and the escape-the-repo rule go
+ *     silently blind, with the key still non-empty so the missing-key
+ *     rule did not fire either.
+ *
+ * `related` is read as the span up to the next top-level key, so a list
+ * Prettier has wrapped across indented lines reads like an inline one.
  */
-function parseFrontmatter(content: string): Frontmatter | null {
-  if (!content.startsWith("---\n")) return null;
-  const end = content.indexOf("\n---\n", 4);
+export function parseFrontmatter(content: string): Frontmatter | null {
+  // Normalize before matching, never after: every check below assumes
+  // LF and no BOM.
+  const text = content.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+
+  if (!text.startsWith("---\n")) return null;
+  const end = text.indexOf("\n---\n", 4);
   if (end === -1) return null;
-  const block = content.slice(4, end);
+  const block = text.slice(4, end);
 
   const values: Record<string, string> = {};
   for (const line of block.split("\n")) {
@@ -107,11 +130,41 @@ function parseFrontmatter(content: string): Frontmatter | null {
     const rest = block.slice(at + "related:".length);
     const nextKey = rest.search(/^[a-z_]+:/m);
     const span = nextKey === -1 ? rest : rest.slice(0, nextKey);
-    related = [...span.matchAll(/["']([^"']+)["']/g)].map((m) => m[1]);
+    related = readRelatedList(span);
     values["related"] = span.trim();
   }
 
   return { values, related };
+}
+
+/**
+ * Read the paths out of a `related` value in either form: an inline
+ * bracketed list, or a YAML block sequence of `- path` lines. Quotes are
+ * optional in both.
+ */
+function readRelatedList(span: string): string[] {
+  const quoted = [...span.matchAll(/["']([^"']+)["']/g)].map((m) => m[1]);
+  if (quoted.length > 0) return quoted;
+
+  const items: string[] = [];
+  for (const line of span.split("\n")) {
+    const dashed = line.match(/^\s*-\s+(.+?)\s*$/);
+    if (dashed) {
+      items.push(dashed[1]);
+      continue;
+    }
+    // An inline bracketed list with no quotes: [a/b.sh, c/d.yml]
+    const inline = line.match(/^\s*\[(.+)\]\s*$/);
+    if (inline) {
+      items.push(
+        ...inline[1]
+          .split(",")
+          .map((x) => x.trim())
+          .filter((x) => x.length > 0),
+      );
+    }
+  }
+  return items;
 }
 
 /** Link targets worth resolving: not external, not a bare anchor. */

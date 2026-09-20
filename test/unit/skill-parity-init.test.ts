@@ -71,6 +71,17 @@ describe("activity-init skill parity", () => {
     expect(kiroContent).toContain("freeform");
   });
 
+  it("establishes docs/runbooks/ and its index (AC-7, PRD AC-26)", () => {
+    // The other half of AC-7, which the SIMPLICITY clause alone did not
+    // cover: activity-init must create the runbook index, not merely
+    // leave it to `dev-tasks install`.
+    for (const content of [kiroContent, githubContent, claudeContent]) {
+      expect(content).toContain("docs/runbooks/README.md");
+      expect(content).toContain("runbook-template.md");
+      expect(content).toMatch(/MUST NOT\*{0,2} be overwritten/i);
+    }
+  });
+
   it("confirms the SIMPLICITY.md owner and thresholds with the user (AC-7)", () => {
     for (const content of [kiroContent, githubContent, claudeContent]) {
       expect(content).toContain("## SIMPLICITY.md Confirmation");

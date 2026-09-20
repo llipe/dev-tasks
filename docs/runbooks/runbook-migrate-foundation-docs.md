@@ -13,8 +13,9 @@ related: []
 that rename to a consumer repository.
 
 Nothing is broken if you do not run it. Agents resolve the new name first and
-fall back to the old one. `doctor` reports the old names to tell you the
-migration is available, not that anything failed.
+fall back to the old one. `doctor` reports the old names as a warning — it is
+telling you the migration is available, not that anything failed, and it does
+not change `doctor`'s exit code.
 
 ## Preconditions
 

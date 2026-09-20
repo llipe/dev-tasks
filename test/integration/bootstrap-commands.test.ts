@@ -512,10 +512,12 @@ describe("dev-tasks bootstrap commands (integration)", () => {
       const result = run(["doctor", "--json"], { cwd: tmpDir });
 
       const output = JSON.parse(result.stdout) as {
-        checks: Array<{ name: string; pass: boolean; message: string }>;
+        checks: Array<{ name: string; pass: boolean; warn?: boolean; message: string }>;
       };
       const check = output.checks.find((c) => c.name === "foundation-doc-names");
-      expect(check?.pass).toBe(false);
+      // Warns, never fails (PRD AC-23) — see checkFoundationDocNames.
+      expect(check?.pass).toBe(true);
+      expect(check?.warn).toBe(true);
       expect(check?.message).toMatch(/docs\/product-context\.md/);
       expect(check?.message).toMatch(/docs\/technical-guidelines\.md/);
       expect(check?.message).toMatch(/docs\/product\.md/);

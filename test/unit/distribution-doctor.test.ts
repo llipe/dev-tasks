@@ -136,6 +136,7 @@ describe("core/distribution/doctor", () => {
       writeFileSync(join(tmpDir, "docs", "product.md"), "# Product\n", "utf-8");
       const result = await checkFoundationDocNames(tmpDir);
       expect(result.pass).toBe(true);
+      expect(result.warn).toBeUndefined();
       expect(result.name).toBe("foundation-doc-names");
     });
 
@@ -145,12 +146,17 @@ describe("core/distribution/doctor", () => {
       expect(result.pass).toBe(true);
     });
 
-    it("fails and names both documents, both new names, and the command (PRD AC-23)", async () => {
+    it("warns — never fails — and names both documents, both new names, and the command (PRD AC-23)", async () => {
       writeFileSync(join(tmpDir, "docs", "product-context.md"), "# Product\n", "utf-8");
       writeFileSync(join(tmpDir, "docs", "technical-guidelines.md"), "# Tech\n", "utf-8");
 
       const result = await checkFoundationDocNames(tmpDir);
-      expect(result.pass).toBe(false);
+      // PRD AC-23 says "prints a warning". A consumer on the old names
+      // is not broken — the fallback rule resolves them — so a failing
+      // doctor would report a defect where none exists, and exit 11
+      // would break any script gating on a clean doctor.
+      expect(result.pass).toBe(true);
+      expect(result.warn).toBe(true);
       expect(result.message).toContain("docs/product-context.md");
       expect(result.message).toContain("docs/product.md");
       expect(result.message).toContain("docs/technical-guidelines.md");
@@ -158,10 +164,10 @@ describe("core/distribution/doctor", () => {
       expect(result.message).toContain("dev-tasks migrate docs");
     });
 
-    it("fails when only one old document is present", async () => {
+    it("warns when only one old document is present", async () => {
       writeFileSync(join(tmpDir, "docs", "technical-guidelines.md"), "# Tech\n", "utf-8");
       const result = await checkFoundationDocNames(tmpDir);
-      expect(result.pass).toBe(false);
+      expect(result.warn).toBe(true);
       expect(result.message).toContain("docs/technical-guidelines.md");
       expect(result.message).not.toContain("docs/product-context.md");
     });

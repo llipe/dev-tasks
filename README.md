@@ -174,8 +174,9 @@ The two foundation documents were renamed:
 Nothing breaks if you do not migrate. Agents resolve the new name first and
 fall back to the old one, so a repository installed before the rename keeps
 working — they will just propose this command when they encounter an old name.
-`dev-tasks doctor` reports the old names as a failing check for the same
-reason: to tell you the migration is available, not that anything is broken.
+`dev-tasks doctor` reports the old names as a **warning**, not a failure, for
+the same reason: it is telling you the migration is available, not that
+anything is broken. Your exit code stays `0`.
 
 `dev-tasks migrate docs` is **report-only**. It prints the pending renames and
 the files of your own that still reference the old names, and changes nothing:

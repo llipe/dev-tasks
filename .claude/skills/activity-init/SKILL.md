@@ -147,6 +147,15 @@ Rules:
 
 ---
 
+### Runbooks
+
+Initialization also establishes `docs/runbooks/` (PRD AC-26, S-005 AC-7). Create:
+
+- `docs/runbooks/README.md` — the index, with Runbook / Trigger / Owner / Last verified columns.
+- `docs/runbooks/runbook-template.md` — the form to copy for a new procedure.
+
+`dev-tasks install` delivers both install-if-absent, so in an installed repository they are already present and **MUST NOT** be overwritten. Create them only when absent, and confirm with the user which procedures are worth a runbook now rather than writing placeholder files.
+
 ## SIMPLICITY.md Confirmation
 
 `SIMPLICITY.md` ships at the repository root and states the code-simplicity contract, including section D's tool-enforced thresholds. During initialization you **MUST** confirm two things with the user rather than assuming them:

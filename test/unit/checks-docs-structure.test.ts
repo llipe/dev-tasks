@@ -101,6 +101,33 @@ describe("checkDocsStructure", () => {
     });
   });
 
+  describe("input shapes that must not be mistaken for a broken file", () => {
+    // Each of these failed as "has no frontmatter block" before: a
+    // confident, wrong report on a file that is fine. A checkout with
+    // core.autocrlf=true would have seen every runbook flagged.
+    it("accepts CRLF line endings", () => {
+      const result = checkDocsStructure(fixture("crlf"));
+      expect(result.failures, JSON.stringify(result.failures)).toEqual([]);
+    });
+
+    it("accepts a leading BOM", () => {
+      const result = checkDocsStructure(fixture("bom"));
+      expect(result.failures, JSON.stringify(result.failures)).toEqual([]);
+    });
+
+    it("reads `related` written as an unquoted YAML block sequence", () => {
+      // The silent-blindness case: the key is non-empty, so the
+      // missing-key rule does not fire, and the paths were never read —
+      // so both the dangling-path rule and the escape-the-repo rule went
+      // quiet on a file with two real problems.
+      const result = checkDocsStructure(fixture("related-block-sequence"));
+      const related = result.failures.filter((f) => f.rule === "runbook-related");
+      expect(related).toHaveLength(2);
+      expect(related.some((f) => f.message.includes("scripts/does-not-exist.sh"))).toBe(true);
+      expect(related.some((f) => /outside the repository/.test(f.message))).toBe(true);
+    });
+  });
+
   describe("runbook rules", () => {
     it("fails on a filename that does not match the pattern (AC-4)", () => {
       const result = checkDocsStructure(fixture("runbook-bad-filename"));
@@ -118,6 +145,17 @@ describe("checkDocsStructure", () => {
       const result = checkDocsStructure(fixture("runbook-invalid-date"));
       expect(rules(result.failures)).toContain("runbook-frontmatter");
       expect(result.failures.some((f) => f.message.includes("last_verified"))).toBe(true);
+    });
+
+    it("fails on a runbook with no frontmatter at all (AC-4)", () => {
+      const result = checkDocsStructure(fixture("runbook-no-frontmatter"));
+      expect(rules(result.failures)).toContain("runbook-frontmatter");
+      expect(result.failures.some((f) => /no frontmatter block/.test(f.message))).toBe(true);
+    });
+
+    it("fails on an unterminated frontmatter block (AC-4)", () => {
+      const result = checkDocsStructure(fixture("runbook-unterminated"));
+      expect(result.failures.some((f) => /no frontmatter block/.test(f.message))).toBe(true);
     });
 
     it("fails on a related entry naming a file that does not exist (AC-5)", () => {

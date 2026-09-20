@@ -243,7 +243,9 @@ export async function checkClaudeHooksWiring(repoRoot: string): Promise<DoctorCh
 /**
  * Check that the foundation documents use their current names (FR-45,
  * PRD AC-23). Detection only — `doctor` never renames a consumer-owned
- * file; it names the command that will.
+ * file; it names the command that will. Warns rather than fails: the
+ * old names still work through the fallback rule, so this reports an
+ * available migration, not a defect.
  */
 export async function checkFoundationDocNames(repoRoot: string): Promise<DoctorCheck> {
   const pending = await detectOldFoundationDocs(repoRoot);
@@ -257,9 +259,15 @@ export async function checkFoundationDocNames(repoRoot: string): Promise<DoctorC
   }
 
   const list = pending.map((p) => `${p.from} -> ${p.to}`).join(", ");
+  // A warning, not a failure. PRD AC-23: "`doctor` prints a warning".
+  // A consumer on the old names is not broken — agents resolve the new
+  // name first and fall back — so failing `doctor` would tell them
+  // something is wrong when a migration is merely available, and exit 11
+  // would break any script gating on a clean doctor.
   return {
     name: "foundation-doc-names",
-    pass: false,
+    pass: true,
+    warn: true,
     message:
       `Foundation document(s) still use the pre-rename names: ${list}. ` +
       "Run `dev-tasks migrate docs` to see the proposal, or " +
