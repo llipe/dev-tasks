@@ -34,12 +34,13 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 - `.claude/skills/implement/SKILL.md` - Add decision-log read step (before branch-gate) and citation instruction
 - `.github/instructions/implement.instructions.md` - Mirror
 - `.kiro/steering/implement.md` - Mirror
-- `docs/adr/ADR-008-<slug>.md` - New ADR (exit-gate semantics + install-if-absent category)
+- `docs/adr/ADR-008-grilling-exit-gate-and-install-if-absent-category.md` - New ADR (exit-gate semantics + install-if-absent category)
 - `docs/adr/README.md` - List ADR-008
 - `docs/tech.md` - Add § Grilling config subsection
-- `core/checks/decision-log-format.ts` (or a section within `docs-structure.ts`) - New decision-log format validator
+- `core/checks/decision-log-format.ts` - New decision-log format validator (focused new module, per `SIMPLICITY.md` A4)
+- `core/checks/index.ts` - Export the new check
 - `core/checks/run.ts` - Wire in the new check
-- `core/checks/decision-log-format.test.ts` - Unit tests for the validator
+- `test/unit/checks-decision-log-format.test.ts` - Unit tests for the validator (colocated under `test/unit/`, matching `checks-docs-structure.test.ts` and the `vitest.config.ts` `include` glob, rather than `core/checks/decision-log-format.test.ts` — that path is outside `test/**/*.test.ts` and would not run under `pnpm test`)
 
 ## Tasks
 
@@ -148,22 +149,22 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [ ] 6.11 Verify Acceptance Criterion: AC-4 three-tree parity (extended parity test)
   - [ ] 6.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
 
-- [ ] 7.0 Implement Story S-007: ADR-008, the `docs/tech.md` § Grilling config, and the decision-log format check (#219)
+- [x] 7.0 Implement Story S-007: ADR-008, the `docs/tech.md` § Grilling config, and the decision-log format check (#219)
 
   > Note: Depends on 1.0 (sequenced last only so the ADR text describes shipped, not intended, exit-gate behavior). Adds real TypeScript code (`core/checks/`) — the only story in this set that does.
 
-  - [ ] 7.1 Confirm the next free ADR number is `ADR-008` (verify no in-flight work has already claimed it) and write `docs/adr/ADR-008-<slug>.md` per the ADR-004/ADR-007 format (Status, Context, Decision, Alternatives, Consequences, Related), recording (a) the `activity-grill` hard exit-gate semantics and (b) the platform-agnostic install-if-absent category (`ROOT_PROFILE_TAG` reuse, shipped in Phase 1, documented here retroactively per D-20)
-  - [ ] 7.2 Update `docs/adr/README.md` to list ADR-008
-  - [ ] 7.3 Add the "Grilling" subsection to `docs/tech.md` (placed after "Glossary and Simplicity Baseline Ownership", before "Overview") with the `cap.what`/`cap.how`/`cap.issue` table and documented defaults (25/25/8)
-  - [ ] 7.4 Write a failing test first: `core/checks/decision-log-format.test.ts` — duplicate ID, invalid `Phase` value, dangling `Supersedes` reference, and a clean-fixture pass case; run it and confirm it fails (no implementation yet)
-  - [ ] 7.5 Implement `core/checks/decision-log-format.ts` (or a section within `docs-structure.ts`, implementer's judgment per `SIMPLICITY.md` A4) — hand-parse the fixed table shape, no general Markdown parser dependency (D-49's precedent), and wire it into `core/checks/run.ts`
-  - [ ] 7.6 Run Tests: confirm `core/checks/decision-log-format.test.ts` now passes, and re-run against `workstream/decisions-shared-understanding.md` itself as the "known good, large, real" fixture
-  - [ ] 7.7 Run Tests: confirm the new check runs under `pnpm run lint` (via `tsx core/checks/run.ts`, never a `dist/`-compiled path, per D-48's precedent)
-  - [ ] 7.8 Verify Acceptance Criterion: AC-1 ADR-008 exists with both decisions recorded and the retroactive note for (b) (manual review)
-  - [ ] 7.9 Verify Acceptance Criterion: AC-2 `docs/tech.md` § Grilling subsection present with correct placement and defaults (manual review)
-  - [ ] 7.10 Verify Acceptance Criterion: AC-3 format check catches duplicate IDs, invalid `Phase`, dangling `Supersedes` (unit test)
-  - [ ] 7.11 Verify Acceptance Criterion: AC-4 `docs/adr/README.md` lists ADR-008 (manual review)
-  - [ ] 7.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- decision-log-format`, `pnpm run audit`
+  - [x] 7.1 Confirm the next free ADR number is `ADR-008` (verify no in-flight work has already claimed it) and write `docs/adr/ADR-008-<slug>.md` per the ADR-004/ADR-007 format (Status, Context, Decision, Alternatives, Consequences, Related), recording (a) the `activity-grill` hard exit-gate semantics and (b) the platform-agnostic install-if-absent category (`ROOT_PROFILE_TAG` reuse, shipped in Phase 1, documented here retroactively per D-20)
+  - [x] 7.2 Update `docs/adr/README.md` to list ADR-008
+  - [x] 7.3 Add the "Grilling" subsection to `docs/tech.md` (placed after "Glossary and Simplicity Baseline Ownership", before "Overview") with the `cap.what`/`cap.how`/`cap.issue` table and documented defaults (25/25/8)
+  - [x] 7.4 Write a failing test first: `core/checks/decision-log-format.test.ts` — duplicate ID, invalid `Phase` value, dangling `Supersedes` reference, and a clean-fixture pass case; run it and confirm it fails (no implementation yet)
+  - [x] 7.5 Implement `core/checks/decision-log-format.ts` (or a section within `docs-structure.ts`, implementer's judgment per `SIMPLICITY.md` A4) — hand-parse the fixed table shape, no general Markdown parser dependency (D-49's precedent), and wire it into `core/checks/run.ts`
+  - [x] 7.6 Run Tests: confirm `core/checks/decision-log-format.test.ts` now passes, and re-run against `workstream/decisions-shared-understanding.md` itself as the "known good, large, real" fixture
+  - [x] 7.7 Run Tests: confirm the new check runs under `pnpm run lint` (via `tsx core/checks/run.ts`, never a `dist/`-compiled path, per D-48's precedent)
+  - [x] 7.8 Verify Acceptance Criterion: AC-1 ADR-008 exists with both decisions recorded and the retroactive note for (b) (manual review)
+  - [x] 7.9 Verify Acceptance Criterion: AC-2 `docs/tech.md` § Grilling subsection present with correct placement and defaults (manual review)
+  - [x] 7.10 Verify Acceptance Criterion: AC-3 format check catches duplicate IDs, invalid `Phase`, dangling `Supersedes` (unit test)
+  - [x] 7.11 Verify Acceptance Criterion: AC-4 `docs/adr/README.md` lists ADR-008 (manual review)
+  - [x] 7.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- decision-log-format`, `pnpm run audit`
 
 ## Decisions Consumed
 
