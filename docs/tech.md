@@ -8,6 +8,7 @@
 | 1.1     | 2026-08-18 | Added `qa-engineer` coverage gate to the golden path; named `/TESTING.md`        | technical-writer |
 | 1.2     | 2026-09-19 | Recorded repository shape and the package map (S-005, PRD AC-29)                 | developer        |
 | 1.3     | 2026-09-19 | Root script fan-out contract; glossary and simplicity baseline ownership (S-006) | developer        |
+| 1.4     | 2026-09-21 | Added `Grilling` question-cap configuration subsection (S-007, `shared-understanding#D-55`) | developer        |
 
 ## Package Map
 
@@ -65,6 +66,25 @@ disagreeing with themselves:
   package **MAY** tighten a threshold and **MUST NOT** loosen one, but
   there is no per-package ratchet mechanism and none will be added
   (FR-64). Per-package thresholds turn one contract into N negotiations.
+
+## Grilling
+
+`activity-grill` (the depth-first, one-question-at-a-time interview skill
+invoked by `activity-refine` and `activity-generate-spec`, ADR-008) caps how
+many questions a single session asks before it must stop and ask the user to
+continue or stop rather than auto-deciding either way (`shared-understanding#D-55`,
+FR-9). The caps are configurable here; a repository with no table below uses
+the hardcoded defaults.
+
+| Setting     | Default | Meaning                                |
+| ----------- | ------- | --------------------------------------- |
+| `cap.what`  | 25      | WHAT-phase question cap, Feature Mode  |
+| `cap.how`   | 25      | HOW-phase question cap, Feature Mode   |
+| `cap.issue` | 8       | Total question cap, Issue Mode         |
+
+`activity-grill` reads this table if present; this section is optional
+configuration, not a required file — `activity-init` does not need to
+scaffold it.
 
 ## Overview
 
