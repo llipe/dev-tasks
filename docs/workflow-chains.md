@@ -12,6 +12,8 @@ developer: implement
 
 > `[researcher]` is conditional — invoked when the feature touches existing implementation, spans multiple modules, or the area is unfamiliar. Skipped for greenfield features.
 >
+> `plan` captures the feature's `decision_log_path` (typically `workstream/decisions-<feature>.md`) and passes it unconditionally to `developer`, who reads the log before starting work.
+>
 > When the feature has infrastructure scope, `developer` routes the platform work conditionally to `infra-engineer` (see the Infrastructure Change chain below) rather than running any platform write itself. Skipped when the feature has no infra scope.
 
 ## Single GitHub Issue
@@ -23,6 +25,8 @@ developer: implement
 ```
 
 > `[researcher]` is conditional — invoked when the issue is multi-module, diagnostic, or unfamiliar. Skipped for trivial single-file changes.
+>
+> `plan` captures the feature's `decision_log_path` (if a log exists, typically `workstream/decisions-<feature>.md`) and passes it to `developer`, who reads the log before starting work.
 >
 > When the issue has infrastructure scope, `developer` routes the platform work conditionally to `infra-engineer` (see the Infrastructure Change chain below) rather than running any platform write itself. Skipped when the issue has no infra scope.
 
@@ -55,6 +59,8 @@ product-engineer: refine → generate-spec → generate-stories → publish-gith
                                                                                   ↓
 planner: orchestrate → developer: implement (per story, sequential)
 ```
+
+> `plan` captures the feature's `decision_log_path` (typically `workstream/decisions-<feature>.md`). `planner` passes it unconditionally in every story's `developer` handoff; each developer reads the log before starting work on their story.
 
 ## Quick Fix (Clear Issue, Task List Exists)
 
