@@ -20,6 +20,16 @@
  * HOW-phase invocation, the inline decision-citation + `## Decisions (HOW
  * phase)` section output contract (FR-14), and three-tree parity for
  * activity-generate-spec itself (S-003-AC-4).
+ *
+ * Also covers issue #216 (S-004): the `plan` instruction/skill's inline
+ * decision citation on traceable task-list sub-tasks and its closing
+ * `## Decisions Consumed` section output contract (FR-16), the additive
+ * "cite none if not traceable" invariant (S-004-AC-2), and three-tree
+ * parity across `plan`'s three differently-named platform files —
+ * `.claude/skills/plan/SKILL.md`, `.github/instructions/plan.instructions.md`,
+ * `.kiro/steering/plan.md` (S-004-AC-3). Note `plan` is not a
+ * `.claude/skills/activity-*` skill and has no `.github/skills/plan/` or
+ * `.kiro/skills/plan/` equivalent.
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -44,6 +54,17 @@ const SPEC_SKILL_PATHS = [
   ".github/skills/activity-generate-spec/SKILL.md",
   ".claude/skills/activity-generate-spec/SKILL.md",
   ".kiro/skills/activity-generate-spec/SKILL.md",
+] as const;
+
+/**
+ * `plan` is not a `.claude/skills/activity-*` skill and carries a
+ * different file name per platform — no `.github/skills/plan/SKILL.md`
+ * or `.kiro/skills/plan/SKILL.md` exists.
+ */
+const PLAN_INSTRUCTION_PATHS = [
+  ".github/instructions/plan.instructions.md",
+  ".claude/skills/plan/SKILL.md",
+  ".kiro/steering/plan.md",
 ] as const;
 
 /** One marker string per operative rule (FR-1..FR-11, specification §8.1). */
@@ -221,4 +242,54 @@ describe("activity-generate-spec skill — activity-grill wiring declared (S-003
       }
     });
   }
+});
+
+describe("plan instruction — presence (S-004)", () => {
+  for (const relPath of PLAN_INSTRUCTION_PATHS) {
+    it(`exists at ${relPath}`, () => {
+      expect(existsSync(resolve(ROOT, relPath)), `missing required file: ${relPath}`).toBe(true);
+    });
+  }
+});
+
+describe("plan instruction — three-tree behavioral parity (S-004-AC-3)", () => {
+  it("all three trees have identical behavioural content (ignoring frontmatter)", () => {
+    const contents = PLAN_INSTRUCTION_PATHS.map((p) => stripFrontmatter(read(p)));
+    expect(contents[0]).toBe(contents[1]);
+    expect(contents[0]).toBe(contents[2]);
+  });
+});
+
+/** Markers asserting `plan`'s decision-citation output contract (S-004 AC-1..AC-2, FR-16). */
+const REQUIRED_PLAN_MARKERS: Record<string, string> = {
+  "S-004-AC-1 inline citation guidance": "(d-55)",
+  "S-004-AC-1 Decisions Consumed section": "## decisions consumed",
+  "S-004-AC-2 additive, no fabrication": "cite",
+  "S-004-AC-2 unqualified D-NN form (no cross-feature qualification needed)": "unqualified `d-nn`",
+};
+
+describe("plan instruction — decision-citation contract declared (S-004 AC-1..AC-2)", () => {
+  for (const [label, marker] of Object.entries(REQUIRED_PLAN_MARKERS)) {
+    it(`declares ${label} in all three trees`, () => {
+      for (const relPath of PLAN_INSTRUCTION_PATHS) {
+        const content = read(relPath);
+        expect(
+          content.toLowerCase().includes(marker.toLowerCase()),
+          `${relPath} does not contain marker for ${label} ("${marker}")`,
+        ).toBe(true);
+      }
+    });
+  }
+});
+
+describe("plan instruction — additive-only, does not require fabricating a citation (S-004-AC-2)", () => {
+  it("states a task with no traceable decision cites none, not a fabricated one", () => {
+    for (const relPath of PLAN_INSTRUCTION_PATHS) {
+      const content = read(relPath).toLowerCase();
+      expect(
+        content.includes("must not** fabricate a citation"),
+        `${relPath} does not state the no-fabrication invariant`,
+      ).toBe(true);
+    }
+  });
 });

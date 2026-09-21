@@ -106,18 +106,18 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 3.11 Verify Acceptance Criterion: AC-4 three-tree parity (extended parity test)
   - [x] 3.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
 
-- [ ] 4.0 Implement Story S-004: Cite decisions in `plan`'s task lists (#216)
+- [x] 4.0 Implement Story S-004: Cite decisions in `plan`'s task lists (#216)
 
   > Note: Depends on 2.0 and 3.0. Additive only — a task with no traceable decision cites none.
 
-  - [ ] 4.1 Edit `.claude/skills/plan/SKILL.md`'s task-list output template: add inline citation guidance (`- [ ] 3.2 … (D-55)`) and a closing `## Decisions Consumed` section
-  - [ ] 4.2 Mirror into `.github/instructions/plan.instructions.md` and `.kiro/steering/plan.md`
-  - [ ] 4.3 Run Tests: extend `test/unit/skill-parity-grilling.test.ts` to cover the three `plan`-equivalent files
-  - [ ] 4.4 Run Tests: generate a task list from `workstream/specification-shared-understanding-phase-2.md` as a fixture input and confirm the produced list cites D-53–D-56 where traceable and includes the `## Decisions Consumed` section
-  - [ ] 4.5 Verify Acceptance Criterion: AC-1 inline citations plus `## Decisions Consumed` section present (fixture)
-  - [ ] 4.6 Verify Acceptance Criterion: AC-2 a task with no traceable decision cites none — not fabricated (fixture review)
-  - [ ] 4.7 Verify Acceptance Criterion: AC-3 three-tree parity (extended parity test)
-  - [ ] 4.8 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
+  - [x] 4.1 Edit `.claude/skills/plan/SKILL.md`'s task-list output template: add inline citation guidance (`- [ ] 3.2 … (D-55)`) and a closing `## Decisions Consumed` section
+  - [x] 4.2 Mirror into `.github/instructions/plan.instructions.md` and `.kiro/steering/plan.md`
+  - [x] 4.3 Run Tests: extend `test/unit/skill-parity-grilling.test.ts` to cover the three `plan`-equivalent files
+  - [x] 4.4 Run Tests: generate a task list from `workstream/specification-shared-understanding-phase-2.md` as a fixture input and confirm the produced list cites D-53–D-56 where traceable and includes the `## Decisions Consumed` section
+  - [x] 4.5 Verify Acceptance Criterion: AC-1 inline citations plus `## Decisions Consumed` section present (fixture)
+  - [x] 4.6 Verify Acceptance Criterion: AC-2 a task with no traceable decision cites none — not fabricated (fixture review)
+  - [x] 4.7 Verify Acceptance Criterion: AC-3 three-tree parity (extended parity test)
+  - [x] 4.8 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
 
 - [ ] 5.0 Implement Story S-005: Pass the decision-log path in every `planner` → `developer` handoff (#217)
 
