@@ -88,22 +88,22 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 2.11 Verify Acceptance Criterion: AC-4 three-tree parity (extended parity test)
   - [x] 2.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
 
-- [ ] 3.0 Implement Story S-003: Invoke `activity-grill` from `activity-generate-spec` (HOW phase) (#215)
+- [x] 3.0 Implement Story S-003: Invoke `activity-grill` from `activity-generate-spec` (HOW phase) (#215)
 
   > Note: Depends on 1.0. Runs in parallel with 2.0. The existing conditional pre-step `researcher` call (ADR-004) is sequenced before the HOW phase so its artifact is available to `activity-grill`'s resolve-before-ask step (D-56).
 
-  - [ ] 3.1 Edit `.claude/skills/activity-generate-spec/SKILL.md`: insert the `activity-grill(phase="HOW")` invocation immediately before the "ask targeted technical design questions" step (FR-13)
-  - [ ] 3.2 Confirm the existing pre-step `researcher` call is sequenced before the HOW-phase invocation, not after
-  - [ ] 3.3 Add the "cite decisions inline, list consumed IDs in `## Decisions (HOW phase)`" instruction to the output contract (FR-14)
-  - [ ] 3.4 Mirror into `.github/skills/activity-generate-spec/SKILL.md` and `.kiro/skills/activity-generate-spec/SKILL.md`
-  - [ ] 3.5 Run Tests: extend `test/unit/skill-parity-grilling.test.ts` to assert `activity-generate-spec`'s invocation across all three trees
-  - [ ] 3.6 Run Tests: build an integration fixture — a short mock spec generation — asserting drafting is gated on a simulated HOW-phase confirmation and at least one inline `D-NN` citation appears
-  - [ ] 3.7 Run Tests: manually re-derive this Phase 2 spec's own structure against the new skill text as a sanity check (it should match `workstream/specification-shared-understanding-phase-2.md`, produced by hand before this skill existed)
-  - [ ] 3.8 Verify Acceptance Criterion: AC-1 no spec draft before HOW exit gate (integration fixture)
-  - [ ] 3.9 Verify Acceptance Criterion: AC-2 pre-step researcher call sequenced before HOW phase (manual review)
-  - [ ] 3.10 Verify Acceptance Criterion: AC-3 inline citations and `## Decisions (HOW phase)` section populated (both fixtures)
-  - [ ] 3.11 Verify Acceptance Criterion: AC-4 three-tree parity (extended parity test)
-  - [ ] 3.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
+  - [x] 3.1 Edit `.claude/skills/activity-generate-spec/SKILL.md`: insert the `activity-grill(phase="HOW")` invocation immediately before the "ask targeted technical design questions" step (FR-13)
+  - [x] 3.2 Confirm the existing pre-step `researcher` call is sequenced before the HOW-phase invocation, not after
+  - [x] 3.3 Add the "cite decisions inline, list consumed IDs in `## Decisions (HOW phase)`" instruction to the output contract (FR-14)
+  - [x] 3.4 Mirror into `.github/skills/activity-generate-spec/SKILL.md` and `.kiro/skills/activity-generate-spec/SKILL.md`
+  - [x] 3.5 Run Tests: extend `test/unit/skill-parity-grilling.test.ts` to assert `activity-generate-spec`'s invocation across all three trees
+  - [x] 3.6 Run Tests: build an integration fixture — a short mock spec generation — asserting drafting is gated on a simulated HOW-phase confirmation and at least one inline `D-NN` citation appears
+  - [x] 3.7 Run Tests: manually re-derive this Phase 2 spec's own structure against the new skill text as a sanity check (it should match `workstream/specification-shared-understanding-phase-2.md`, produced by hand before this skill existed)
+  - [x] 3.8 Verify Acceptance Criterion: AC-1 no spec draft before HOW exit gate (integration fixture)
+  - [x] 3.9 Verify Acceptance Criterion: AC-2 pre-step researcher call sequenced before HOW phase (manual review)
+  - [x] 3.10 Verify Acceptance Criterion: AC-3 inline citations and `## Decisions (HOW phase)` section populated (both fixtures)
+  - [x] 3.11 Verify Acceptance Criterion: AC-4 three-tree parity (extended parity test)
+  - [x] 3.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
 
 - [ ] 4.0 Implement Story S-004: Cite decisions in `plan`'s task lists (#216)
 

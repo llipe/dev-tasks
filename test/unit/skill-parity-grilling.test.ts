@@ -13,6 +13,13 @@
  * Refinement mode (Issue Mode, FR-15), the inline decision-citation +
  * `## Decisions` section output contract (FR-14), and three-tree parity
  * for activity-refine itself (S-002-AC-4).
+ *
+ * Also covers issue #215 (S-003): activity-generate-spec's invocation of
+ * activity-grill in HOW phase (FR-13), sequencing confirmation that the
+ * existing conditional pre-step researcher call (ADR-004) runs before the
+ * HOW-phase invocation, the inline decision-citation + `## Decisions (HOW
+ * phase)` section output contract (FR-14), and three-tree parity for
+ * activity-generate-spec itself (S-003-AC-4).
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -31,6 +38,12 @@ const REFINE_SKILL_PATHS = [
   ".github/skills/activity-refine/SKILL.md",
   ".claude/skills/activity-refine/SKILL.md",
   ".kiro/skills/activity-refine/SKILL.md",
+] as const;
+
+const SPEC_SKILL_PATHS = [
+  ".github/skills/activity-generate-spec/SKILL.md",
+  ".claude/skills/activity-generate-spec/SKILL.md",
+  ".kiro/skills/activity-generate-spec/SKILL.md",
 ] as const;
 
 /** One marker string per operative rule (FR-1..FR-11, specification §8.1). */
@@ -160,6 +173,46 @@ describe("activity-refine skill — activity-grill wiring declared (S-002 AC-1..
   for (const [label, marker] of Object.entries(REQUIRED_REFINE_MARKERS)) {
     it(`declares ${label} in all three trees`, () => {
       for (const relPath of REFINE_SKILL_PATHS) {
+        const content = read(relPath);
+        expect(
+          content.toLowerCase().includes(marker.toLowerCase()),
+          `${relPath} does not contain marker for ${label} ("${marker}")`,
+        ).toBe(true);
+      }
+    });
+  }
+});
+
+describe("activity-generate-spec skill — presence (S-003)", () => {
+  for (const relPath of SPEC_SKILL_PATHS) {
+    it(`exists at ${relPath}`, () => {
+      expect(existsSync(resolve(ROOT, relPath)), `missing required file: ${relPath}`).toBe(true);
+    });
+  }
+});
+
+describe("activity-generate-spec skill — three-tree behavioral parity (S-003-AC-4)", () => {
+  it("all three trees have identical behavioural content (ignoring frontmatter)", () => {
+    const contents = SPEC_SKILL_PATHS.map((p) => stripFrontmatter(read(p)));
+    expect(contents[0]).toBe(contents[1]);
+    expect(contents[0]).toBe(contents[2]);
+  });
+});
+
+/** Markers asserting activity-generate-spec's activity-grill wiring (S-003 AC-1..AC-3). */
+const REQUIRED_SPEC_MARKERS: Record<string, string> = {
+  "S-003-AC-1 HOW-phase invocation before drafting": 'activity-grill(phase="how"',
+  "S-003-AC-1 no draft before exit gate (spec)": "must not** produce any specification section",
+  "S-003-AC-2 pre-step researcher call sequenced before HOW phase": "conditional pre-step",
+  "S-003-AC-2 researcher budget reuse (D-56)": "d-56",
+  "S-003-AC-3 inline decision citation": "… (d-nn)",
+  "S-003-AC-3 Decisions (HOW phase) section": "## decisions (how phase)",
+};
+
+describe("activity-generate-spec skill — activity-grill wiring declared (S-003 AC-1..AC-3)", () => {
+  for (const [label, marker] of Object.entries(REQUIRED_SPEC_MARKERS)) {
+    it(`declares ${label} in all three trees`, () => {
+      for (const relPath of SPEC_SKILL_PATHS) {
         const content = read(relPath);
         expect(
           content.toLowerCase().includes(marker.toLowerCase()),
