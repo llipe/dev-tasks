@@ -1,0 +1,55 @@
+# Fidelity Report — Issue #172 / PR #184
+
+## 1. Header / Verdict
+
+- **Fidelity:** High
+- **Highest drift impact present:** None
+- **Scope:** Issue #172 (Task 4.0, `workstream/tasks-claude-runtime-parity-plan.md`) — PR #184, branch `issue/172-withdraw-nextjs-claim` → `integration/claude-runtime-parity-plan`
+
+## 2. Human-Readable Summary
+
+`CLAUDE.md` used to say that the Next.js/React coding conventions get automatically copied into a nested `CLAUDE.md` file inside every React app in a project — but no code anywhere in the repository actually does that copying. That was a false claim about a feature that doesn't exist.
+
+This PR fixes the false claim by removing it and replacing it with an honest statement: there is no automatic delivery for Claude Code, and if you want those conventions to apply, you (the human or agent) have to copy them into your app's `CLAUDE.md` yourself. The team explicitly decided (recorded on the issue, 2026-09-16) to fix the false statement now and treat "actually build the automatic copying feature" as a separate, future piece of work — because building it properly (detecting app roots in different kinds of projects, keeping copies in sync over time, etc.) is a bigger design problem than fits in this cleanup pass.
+
+The PR also adds a new automated test that scans the whole repository (not just the three files it edited) for this specific false claim, so if anyone reintroduces it anywhere else, the test will catch it. I independently re-created the old wording and confirmed the test does fail against it, then confirmed it passes again with the fix restored — so the test is doing real work, not just decorative.
+
+Nothing about this change touches application behavior, only documentation/instruction files and a test. Risk is very low.
+
+## 3. Per-AC Result Table
+
+| AC-ID | Description | Codebase evidence | Workstream evidence | Test evidence | Result |
+|---|---|---|---|---|---|
+| AC-1 | No file in the repository claims a Claude delivery mechanism that does not exist | `CLAUDE.md` and `CLAUDE.md.template` "Domain-Specific Conventions" sections rewritten to state no automatic Claude delivery + manual copy step; `AGENTS.md` Instructions table gets an explicit "Claude gap" note for `nextjs-pages-components`. Verified via `git diff origin/integration/claude-runtime-parity-plan..origin/issue/172-withdraw-nextjs-claim` — diff is scoped exactly to these three sections plus the new test file and task-list checkbox updates. Repo-wide grep for the withdrawn phrasing outside `test/unit/nextjs-claude-parity-claim.test.ts`'s own historical doc-comment found nothing. | `workstream/tasks-claude-runtime-parity-plan.md` 4.0/4.2/4.4/4.5/4.6 now checked `[x]`; decision rationale ("Decided 2026-09-16: withdraw") present at the 4.0 parent-task note, matching the decision comment posted on issue #172. | `test/unit/nextjs-claude-parity-claim.test.ts` — 283 assertions, repo-wide scan of `core/`, `adapters/`, `templates/`, `.claude/`, `.github/`, `.kiro/` (not narrowed to the 3 known files). Ran clean (283/283 pass) against the PR branch. Independently reverted the 3 files to pre-fix content and re-ran: 7 assertions failed as expected (including the `claimsAutomaticScaffolding` and manual-step checks), confirming the test is a real regression gate, not a no-op. Restored files afterward; working tree clean. | **Pass** |
+| AC-2 | `pnpm run test:unit` and `pnpm run format:check` pass | No production code changed; risk of regression is limited to the new test file and the three doc files' Markdown formatting. | PR body reports `pnpm run test:unit` 2051/2051, `pnpm run test` 2262/2262, `lint`/`format:check`/`typecheck`/`audit` all pass. | Independently re-ran `pnpm run test:unit` on the checked-out PR branch: **2051/2051 pass** (94 test files). Independently re-ran `pnpm run format:check`: **all matched files pass**. Both match the PR's self-reported gate results exactly. | **Pass** |
+
+## 4. Drift Catalog
+
+No drift items identified. The delivered change matches the decided scope exactly:
+
+- Withdraws the false claim in `CLAUDE.md` / `CLAUDE.md.template`.
+- Updates the `AGENTS.md` Instructions table to note the Claude gap.
+- Does **not** attempt to build the auto-scaffolding feature that was explicitly rejected for this milestone (confirmed: no new code in `core/distribution/` or elsewhere references Next.js app-root detection or nested-`CLAUDE.md` writing; the PR's own test asserts this via the `core/distribution has no Next.js-app-root detection or nested-CLAUDE.md write path` check).
+- The diff against the correct PR base (`integration/claude-runtime-parity-plan`, not `main`) contains no unrelated changes — an earlier naive diff against `main` surfaced unrelated hook-table and `--body-file` content that turned out to belong to prior merged PRs already on the integration branch, not to this PR. Scoping to the correct base confirms PR #184 itself touches only the 5 files listed in its own file list (`AGENTS.md`, `CLAUDE.md`, `CLAUDE.md.template`, the new test, and the task-list checkbox updates).
+
+No developer or product-engineer follow-up is required for this PR. (Non-blocking note, not drift: the real auto-scaffolding feature remains explicitly deferred as future, separate work per the recorded decision — no action needed here.)
+
+## 5. Edge-Case and Randomized Test Outcomes
+
+A prior Design Mode test plan exists for this scope (`workstream/test-plan-claude-runtime-parity.md`, scenario CP-04) and a traceability matrix (`workstream/traceability-matrix-claude-runtime-parity.md`, AC-1 row / Task 4.0 row).
+
+- **Traceability matrix status:** Both rows currently read "Blocked" / "Planned; Blocked on the 4.1 withdraw-vs-scaffold decision being recorded before final scoring." That decision has now been recorded (2026-09-16, on issue #172, and reflected in the task-list note). Per the test plan's own closing condition ("The two flagged decision points ... are recorded as explicit decisions ... before CP-04 ... [is] scored as passing rather than blocked"), **CP-04 can now be marked resolved/Covered rather than Blocked.** This is a `/workstream` artifact update, not application code — routed to `product-engineer`'s drift-reconciliation (or `developer` closing out the checklist) rather than edited directly here, per verifier's no-direct-edit constraint.
+- **CP-04 scenario coverage:** The delivered test (283 assertions) exceeds the scenario's original design in breadth — it covers positive (states withdrawal + manual step), negative (does not repeat the false claim, including negation-aware matching so corrections aren't false-flagged), and a repo-wide generalization the original matrix language didn't explicitly require but which strengthens AC-1 coverage.
+- No randomized/fuzz tactics were applicable to this scope (static text-scan assertions only); none were claimed in the PR either.
+
+## 6. Recommendations
+
+- **No action needed** for the delivered fix itself — it matches the decided scope, is test-first, and independently reproduces green.
+- **`product-engineer` (low priority, non-blocking):** Update the two "Blocked" statuses for CP-04/AC-1 in `workstream/traceability-matrix-claude-runtime-parity.md` to reflect that the 4.1 decision is now recorded, so the matrix doesn't understate current coverage for future readers. This is a documentation bookkeeping item, not a defect.
+- **No action needed** regarding the deferred auto-scaffolding feature — correctly out of scope per the recorded decision; a future standalone feature request would be the right vehicle if it's ever prioritized.
+
+---
+
+**Independently obtained results:**
+- `verifier_audit`: **PASS**
+- `fidelity_verdict`: **High** (highest drift impact: **None**)

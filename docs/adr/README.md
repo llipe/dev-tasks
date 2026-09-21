@@ -4,7 +4,7 @@ Durable records of architectural decisions for `dev-tasks`. One file per decisio
 
 ## When an ADR Is Required
 
-- Any change to `docs/technical-guidelines.md`.
+- Any change to `docs/tech.md`.
 - Any decision that constrains future implementation choices across modules, artifacts, or platform trees.
 
 ## Index
