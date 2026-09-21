@@ -169,11 +169,11 @@ Execution follows a strict phase-gated flow. You **MUST NOT** advance to the nex
 
 **Audit Mode:**
 
-|                    |                                                                                                                                                                                                                                                    |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Entry criteria** | Phase 2 complete.                                                                                                                                                                                                                                  |
+|                    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Entry criteria** | Phase 2 complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | **Actions**        | Read the codebase implementation (diff/PR/branch), `/workstream` artifacts, and the test suite. Execute or observe test results against delivered code. Collect per-AC evidence (pass/fail/drift). Classify every drift item by impact and intent. Run the docs-structure check for the documentation section of the report: `tsx core/checks/run.ts`, or `checkDocsStructure(repoRoot)` from `core/checks` directly. Report its findings; do **not** re-derive them by reading indexes and runbooks by hand. One implementation, two callers — `lint` enforces, this audit reports. |
-| **Exit criteria**  | Evidence collected for every AC against all four sources (codebase, `/workstream`, tests, PRD/spec intent). Every drift item classified.                                                                                                           |
+| **Exit criteria**  | Evidence collected for every AC against all four sources (codebase, `/workstream`, tests, PRD/spec intent). Every drift item classified.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 ### Phase 4 — Reporting & Publication
 
@@ -242,12 +242,12 @@ new category. Never hold a PR on it.
 
 **Owners**, so the finding names someone rather than the air:
 
-| Work kind | Owner |
-| --------- | ----- |
+| Work kind                           | Owner            |
+| ----------------------------------- | ---------------- |
 | Platform and infrastructure changes | `infra-engineer` |
-| Setup and migration tasks | `developer` |
-| Test-harness setup | `qa-engineer` |
-| Tooling setup | `housekeeping` |
+| Setup and migration tasks           | `developer`      |
+| Test-harness setup                  | `qa-engineer`    |
+| Tooling setup                       | `housekeeping`   |
 
 ## Failure Triage Workflow (Randomized Tests)
 

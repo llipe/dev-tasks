@@ -101,11 +101,11 @@ records:
    differs: one needs a script, the other needs wiring.
 4. Report one row per package:
 
-   | Package | Test command | Reached by root `test` | Finding |
-   | ------- | ------------ | ---------------------- | ------- |
-   | `@acme/api` | `vitest run` | yes | — |
-   | `@acme/web` | `vitest run` | **no** | unreachable from the aggregate |
-   | `@acme/cli` | — | n/a | no test script |
+   | Package     | Test command | Reached by root `test` | Finding                        |
+   | ----------- | ------------ | ---------------------- | ------------------------------ |
+   | `@acme/api` | `vitest run` | yes                    | —                              |
+   | `@acme/web` | `vitest run` | **no**                 | unreachable from the aggregate |
+   | `@acme/cli` | —            | n/a                    | no test script                 |
 
 This is an extension of the single-package procedure, not a parallel
 monorepo path. A single-package repository produces the same table with

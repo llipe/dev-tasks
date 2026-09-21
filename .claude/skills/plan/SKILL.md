@@ -85,7 +85,7 @@ tell the blast radius from the task list without opening the diff.
 - Write the package in the sub-task text, in brackets, first:
   `- [ ] 1.1 [@acme/api] Add the token-refresh endpoint`.
 - A sub-task touching several packages lists them all. A sub-task that
-  touches *most* packages is usually the wrong size — split it.
+  touches _most_ packages is usually the wrong size — split it.
 - In a **single-package repository the bracket is omitted**, not left
   empty. It is optional there, never blank.
 - Non-code tasks (docs, workflow files) that belong to no package use

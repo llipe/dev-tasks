@@ -57,7 +57,7 @@ Every document produced by this activity **MUST** include a **Changelog** table 
 Before starting the interview, the skill **MUST** detect the repository mode and route accordingly. The detection logic is:
 
 1. **Documented-repository mode:** `/docs` directory exists → interview + direct docs generation.
-   This mode is about whether documentation exists, not about how many packages the repository has. Repository *shape* (single-package or monorepo) is detected separately — see Repository Shape Detection below. The mode was called "Mono-Repo" until `shared-understanding#D-44` renamed it to free the term.
+   This mode is about whether documentation exists, not about how many packages the repository has. Repository _shape_ (single-package or monorepo) is detected separately — see Repository Shape Detection below. The mode was called "Mono-Repo" until `shared-understanding#D-44` renamed it to free the term.
 2. **Undocumented / greenfield mode:** no `/docs` → investigation-first flow to bootstrap documentation from the codebase, then interview.
 
 ---
@@ -103,14 +103,14 @@ Before the interview, detect the repository's **shape**. This is independent of 
 
 Detect from these signals (FR-59):
 
-| Signal | Read for |
-| ------ | -------- |
-| `pnpm-workspace.yaml` | Shape **and** the package list |
-| `workspaces` in `package.json` | Shape **and** the package list |
-| `turbo.json` | Shape only |
-| `nx.json` | Shape only |
-| `lerna.json` | Shape only |
-| `[tool.uv.workspace]` in `pyproject.toml` | Shape only |
+| Signal                                    | Read for                       |
+| ----------------------------------------- | ------------------------------ |
+| `pnpm-workspace.yaml`                     | Shape **and** the package list |
+| `workspaces` in `package.json`            | Shape **and** the package list |
+| `turbo.json`                              | Shape only                     |
+| `nx.json`                                 | Shape only                     |
+| `lerna.json`                              | Shape only                     |
+| `[tool.uv.workspace]` in `pyproject.toml` | Shape only                     |
 
 Any signal present → **monorepo**. No signal → **single-package**.
 
@@ -125,9 +125,9 @@ Record the result in `docs/tech.md` as a **Package Map** section, one row per pa
 ```markdown
 ## Package Map
 
-| Package | Path | Purpose | Owner | Canonical scripts | Bounded context |
-| ------- | ---- | ------- | ----- | ----------------- | --------------- |
-| @acme/core | packages/core | Shared domain logic | platform | lint, typecheck, test | Ordering |
+| Package    | Path          | Purpose             | Owner    | Canonical scripts     | Bounded context |
+| ---------- | ------------- | ------------------- | -------- | --------------------- | --------------- |
+| @acme/core | packages/core | Shared domain logic | platform | lint, typecheck, test | Ordering        |
 ```
 
 Rules:
@@ -135,7 +135,7 @@ Rules:
 - A **single-package repository records exactly one row**, for the root, with path `.`. The table has the same shape in both cases, so a reader never has to work out which kind of repository they are looking at.
 - **Purpose** and **Owner** come from the interview. Do not invent an owner; ask.
 - **Canonical scripts** lists the scripts the package actually defines, in the order `lint`, `format:check`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `audit`, `validate`. Absent scripts are omitted, not marked missing.
-- **Bounded context** is filled **freeform at interview time** (`shared-understanding#D-45`). Ask: *"In one phrase, what part of the business or domain does this package own?"* A freeform guess beats an empty column. Phase 3's glossary supersedes these answers with canonical terms; until then this column is a working label, not a contract.
+- **Bounded context** is filled **freeform at interview time** (`shared-understanding#D-45`). Ask: _"In one phrase, what part of the business or domain does this package own?"_ A freeform guess beats an empty column. Phase 3's glossary supersedes these answers with canonical terms; until then this column is a working label, not a contract.
 - A package whose `package.json` has no `name` is listed by its path. Do not invent a name — nothing would match it.
 
 `dev-tasks doctor` warns when the map and the workspace disagree in either direction: a package on disk with no row, or a row for a package that no longer exists. It warns and never fails; structural failures belong to `lint`.
@@ -158,7 +158,7 @@ Initialization also establishes `docs/runbooks/` (PRD AC-26, S-005 AC-7). Create
 1. **Owner** — who is accountable for the contract. The shipped default is `housekeeping`.
 2. **Thresholds** — section D's defaults (function length ≤ 40 lines, cyclomatic complexity ≤ 10, cognitive complexity ≤ 15, nesting depth ≤ 3, parameters ≤ 4, file length ≤ 400 lines). A repository **MAY** tighten a default; it **MUST NOT** loosen one.
 
-Ask: *"SIMPLICITY.md's owner is `housekeeping` and its thresholds are the shipped defaults. Keep both, or tighten anything?"* Record the answer in the file's frontmatter and in the section D table. Wiring the thresholds into a linter is a separate procedure — see `docs/runbooks/runbook-setup-simplicity-tooling.md`.
+Ask: _"SIMPLICITY.md's owner is `housekeeping` and its thresholds are the shipped defaults. Keep both, or tighten anything?"_ Record the answer in the file's frontmatter and in the section D table. Wiring the thresholds into a linter is a separate procedure — see `docs/runbooks/runbook-setup-simplicity-tooling.md`.
 
 ## Part 1 — Product Context
 
@@ -222,22 +222,22 @@ Adapt questions based on context already gathered (e.g., from codebase investiga
 1. **Overview** — Technical vision and guiding principles
 2. **Package Map** — Repository shape and one row per package (see Repository Shape Detection above)
 3. **Technology Stack** — Backend/frontend languages, frameworks, databases, key dependencies
-3. **Architecture Patterns** — System architecture, key decisions and rationale, component organization
-4. **API Design Standards** — Style, naming, request/response formats, error handling
-5. **Authentication & Authorization** — Mechanism, model, permission levels, session management
-6. **Security Requirements** — Encryption, OWASP compliance, API key management, PII handling
-7. **Data & Database Guidelines** — Schema patterns, naming conventions, query optimization, backup
-8. **Integration Methods** — External integrations, patterns, retry/failure handling
-9. **Code Organization & Structure** — Folder/file conventions, module boundaries, naming
-10. **Design Patterns & Principles** — Preferred patterns, SOLID, DRY/KISS/YAGNI
-11. **Testing Strategy** — Frameworks, testing pyramid, coverage, mock strategies
-12. **Code Quality & Standards** — Linting, static analysis, reviews, documentation
-13. **Deployment & DevOps** — Environments, CI/CD, infrastructure-as-code, containers
-14. **Monitoring, Logging & Observability** — Levels, frameworks, alerting, error tracking
-15. **Performance & Scalability** — Response targets, throughput, caching, optimization
-16. **Dependency Management** — Management approach, version pinning, vulnerability scanning
-17. **Development Workflow** — Branching strategy, commit conventions, PR process
-18. **Known Constraints & Trade-offs** — Limitations and rationale
+4. **Architecture Patterns** — System architecture, key decisions and rationale, component organization
+5. **API Design Standards** — Style, naming, request/response formats, error handling
+6. **Authentication & Authorization** — Mechanism, model, permission levels, session management
+7. **Security Requirements** — Encryption, OWASP compliance, API key management, PII handling
+8. **Data & Database Guidelines** — Schema patterns, naming conventions, query optimization, backup
+9. **Integration Methods** — External integrations, patterns, retry/failure handling
+10. **Code Organization & Structure** — Folder/file conventions, module boundaries, naming
+11. **Design Patterns & Principles** — Preferred patterns, SOLID, DRY/KISS/YAGNI
+12. **Testing Strategy** — Frameworks, testing pyramid, coverage, mock strategies
+13. **Code Quality & Standards** — Linting, static analysis, reviews, documentation
+14. **Deployment & DevOps** — Environments, CI/CD, infrastructure-as-code, containers
+15. **Monitoring, Logging & Observability** — Levels, frameworks, alerting, error tracking
+16. **Performance & Scalability** — Response targets, throughput, caching, optimization
+17. **Dependency Management** — Management approach, version pinning, vulnerability scanning
+18. **Development Workflow** — Branching strategy, commit conventions, PR process
+19. **Known Constraints & Trade-offs** — Limitations and rationale
 
 ### JS/TS Package Manager and Script Defaults
 

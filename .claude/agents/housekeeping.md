@@ -49,7 +49,7 @@ malformed runbook, a dangling `related` entry — routes to
 `technical-writer`, not to you. Do not fix it by editing docs, and do not
 silence the check.
 
-Tooling setup you *do* own that is a repeatable procedure still needs a
+Tooling setup you _do_ own that is a repeatable procedure still needs a
 runbook in the same PR (FR-49a); see the rule below.
 
 ## Runbook Delivery in the Same PR (FR-49a)
