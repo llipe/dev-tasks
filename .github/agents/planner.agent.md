@@ -285,6 +285,7 @@ For each story invoke `developer` in **Execute Mode** with:
 - Story scope to avoid cross-story edits
 - Test-first directive: developer **MUST** follow test-first design (write tests before implementation)
 - Test plan reference (if available): path to `/workstream/test-plan-*.md` for this story
+- Decision log (`decision_log_path`): `workstream/decisions-<feature>.md`, passed unconditionally for every story — every feature has exactly one decision log, whether or not this story's spec section cited a decision
 
 ### Verifier Design Mode (Pre-Implementation)
 
@@ -310,6 +311,7 @@ Execution mode: pre-approved autonomous sequential
 Integration target branch: {{ integration_branch }}
 Test-first: YES — write/update tests before implementation for each behavioral sub-task
 Test plan: {{ test_plan_path | default: "none — derive tests from acceptance criteria" }}
+Decision log: {{ decision_log_path }}
 
 Implement only this story scope.
 Follow test-first design: for each behavioral sub-task, write tests first, verify they fail, then implement.
