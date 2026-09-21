@@ -69,20 +69,32 @@ fix(web): stop double-submitting the checkout form
 ## Before Starting Work
 
 1. You **MUST** confirm the GitHub Issue is open.
-2. **Branch gate (hard requirement):** You **MUST** verify you are on a feature branch before any implementation work:
+2. **Decision-log read (non-mutating — runs before any branch is created):** You **MUST** read `workstream/decisions-<feature>.md` in full, alongside (not replacing) the GitHub-issue-open check in step 1 — both checks run before branch creation. This step is ordered before the branch gate (step 3) precisely because it is non-mutating: reading it first lets you answer your own procedural questions (e.g., "was this file's location already decided?") from the log before touching git. If `workstream/decisions-<feature>.md` does not exist — for example, a pre-Phase-2 feature, or a feature for which grilling never ran — you **MUST** proceed without the read, noting its absence in your status output, rather than failing or blocking. This is an enrichment, never a hard gate: a missing decision log never blocks starting work. A decision log that exists but has zero rows is treated the same as present-and-populated — there is simply nothing to cite.
+3. **Branch gate (hard requirement):** You **MUST** verify you are on a feature branch before any implementation work:
    - Run `git rev-parse --abbrev-ref HEAD` to determine the current branch.
    - If HEAD is the default branch (`main`) or does not match `issue/*` or `story/*` pattern, you **MUST** create a new branch from the latest default branch by delegating branch naming and creation to `github-ops` whenever possible.
    - You **MUST NOT** proceed with any implementation sub-task, write any code, create any files, or make any commits until a feature branch is checked out.
-   - If HEAD is already a valid feature branch (matching `issue/*` or `story/*`), proceed to step 3.
+   - If HEAD is already a valid feature branch (matching `issue/*` or `story/*`), proceed to step 4.
    - Branch format: `issue/<issue-number>-<short-description>` or `story/<id>-<short-description>`
-3. You **MUST** open a **draft Pull Request** by delegating to `github-ops` whenever possible.
+4. You **MUST** open a **draft Pull Request** by delegating to `github-ops` whenever possible.
    - A PR requires at least one commit. Open it immediately after the first commit on the feature branch — never before — and you **MUST NOT** continue past that first commit without it.
    - Base branch is the default branch unless an orchestrating caller explicitly provides a base-branch override.
    - PR title **MUST** follow Conventional Commits (e.g., `feat: implement issue 37`).
    - PR description **MUST** include `Closes #<issue-number>`.
-4. You **MUST** ensure the task list in the GitHub Issue matches the local `/workstream/tasks-*.md` file.
+5. You **MUST** ensure the task list in the GitHub Issue matches the local `/workstream/tasks-*.md` file.
 
 If `github-ops` delegation is unavailable in the current runtime, you **MUST** apply `github-ops` conventions directly and explicitly note that fallback in your status output.
+
+---
+
+## Decision-Log Citation
+
+When `workstream/decisions-<feature>.md` exists and was read per step 2 above:
+
+- An implementation commit whose approach was shaped by a decision **MUST** cite it in the commit body — e.g. a trailing line `Follows D-NN: <short form>.` — using the feature's own unqualified `D-NN` form (the file belongs to one feature; the qualified `<feature>#D-NN` cross-file form is `activity-grill`/`activity-refine`/`activity-generate-spec`'s concern, not `implement`'s).
+- The PR body **MUST** reference every consumed decision ID it draws on, in its Completion Report area, alongside the existing `Closes #<issue-number>` line.
+- This is **additive only**, mirroring `plan`'s own citation contract: a commit or PR with no traceable decision cites none. You **MUST NOT** fabricate a citation to give a commit or PR one.
+- When step 2 found no `workstream/decisions-<feature>.md` (absent or empty), there is nothing to cite — omit the citation, do not fabricate one, and do not treat the omission as a defect.
 
 ---
 
