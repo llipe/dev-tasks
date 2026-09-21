@@ -1,0 +1,118 @@
+/**
+ * Structural parity check: verifies that the activity-grill skill has
+ * identical behavioural content across all three platform trees, and that
+ * it declares all eleven operative rules from specification §8.1 (FR-1
+ * through FR-11), plus the story S-001 invariants (no grill-me
+ * attribution per D-53, conversation-only session state per D-54,
+ * configurable cap per D-55, researcher-budget precedence per D-56).
+ *
+ * Covers issue #213 (S-001) AC-9 / S-001-AC-9.
+ */
+
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, it, expect } from "vitest";
+
+const ROOT = resolve(__dirname, "../..");
+
+const SKILL_PATHS = [
+  ".github/skills/activity-grill/SKILL.md",
+  ".claude/skills/activity-grill/SKILL.md",
+  ".kiro/skills/activity-grill/SKILL.md",
+] as const;
+
+/** One marker string per operative rule (FR-1..FR-11, specification §8.1). */
+const REQUIRED_RULE_MARKERS: Record<string, string> = {
+  "FR-1 one question per turn": "one question",
+  "FR-2 depth-first traversal": "depth-first",
+  "FR-3 resolve-before-ask": "resolve-before-ask",
+  "FR-4 append-per-resolution": "append-per-resolution",
+  "FR-5 qualified citation form": "#D-",
+  "FR-6 decision-tree summary cadence": "decision-tree summary",
+  "FR-7 two-phase mode": 'phase="WHAT"',
+  "FR-8 hard exit gate": "do you confirm shared understanding",
+  "FR-9 configurable cap": "25/25/8",
+  "FR-10 issue mode constraints": "Issue Mode",
+  "FR-11 assumption-testing reminder": "reproduces its own assumptions",
+};
+
+/** Story-level invariants (D-53..D-56) that MUST be reflected in the skill text. */
+const REQUIRED_DECISION_MARKERS: Record<string, string> = {
+  "D-53 no grill-me attribution": "grill-me",
+  "D-54 conversation-only session state": "grill-state",
+  "D-55 cap config in docs/tech.md": "docs/tech.md",
+  "D-56 researcher budget precedence": "researcher",
+};
+
+function stripFrontmatter(content: string): string {
+  const match = content.match(/^---\n[\s\S]*?\n---\n/);
+  if (match) {
+    return content.slice(match[0].length).trim();
+  }
+  return content.trim();
+}
+
+function read(relPath: string): string {
+  return readFileSync(resolve(ROOT, relPath), "utf-8");
+}
+
+describe("activity-grill skill — presence", () => {
+  for (const relPath of SKILL_PATHS) {
+    it(`exists at ${relPath}`, () => {
+      expect(existsSync(resolve(ROOT, relPath)), `missing required file: ${relPath}`).toBe(true);
+    });
+  }
+});
+
+describe("activity-grill skill — behavioral parity", () => {
+  it("all three trees have identical behavioural content (ignoring frontmatter)", () => {
+    const contents = SKILL_PATHS.map((p) => stripFrontmatter(read(p)));
+    expect(contents[0]).toBe(contents[1]);
+    expect(contents[0]).toBe(contents[2]);
+  });
+});
+
+describe("activity-grill skill — eleven operative rules declared", () => {
+  for (const [label, marker] of Object.entries(REQUIRED_RULE_MARKERS)) {
+    it(`declares ${label} in all three trees`, () => {
+      for (const relPath of SKILL_PATHS) {
+        const content = read(relPath);
+        expect(
+          content.toLowerCase().includes(marker.toLowerCase()),
+          `${relPath} does not contain marker for ${label} ("${marker}")`,
+        ).toBe(true);
+      }
+    });
+  }
+});
+
+describe("activity-grill skill — story S-001 decision invariants declared", () => {
+  for (const [label, marker] of Object.entries(REQUIRED_DECISION_MARKERS)) {
+    it(`reflects ${label} in all three trees`, () => {
+      for (const relPath of SKILL_PATHS) {
+        const content = read(relPath);
+        expect(
+          content.toLowerCase().includes(marker.toLowerCase()),
+          `${relPath} does not contain marker for ${label} ("${marker}")`,
+        ).toBe(true);
+      }
+    });
+  }
+});
+
+describe("activity-grill skill — no grill-me attribution anywhere (D-53)", () => {
+  it("does not credit or link any grill-me implementation", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      // The only permitted occurrence of "grill-me" is the negative statement
+      // that no attribution is added (D-53) — never a credit line or link.
+      const lines = content.split("\n").filter((line) => /grill-me/i.test(line));
+      for (const line of lines) {
+        expect(
+          /no .*grill-me.* attribution|no attribution/i.test(line),
+          `${relPath} appears to credit grill-me instead of stating no attribution is added: "${line}"`,
+        ).toBe(true);
+      }
+    }
+  });
+});

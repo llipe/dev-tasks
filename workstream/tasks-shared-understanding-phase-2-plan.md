@@ -42,33 +42,33 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 
 ## Tasks
 
-- [ ] 1.0 Implement Story S-001: Build the `activity-grill` core skill (#213)
+- [x] 1.0 Implement Story S-001: Build the `activity-grill` core skill (#213)
 
   > Note: One question per turn, depth-first, resolve-before-ask, append-per-resolution, configurable cap with a mandatory continue/stop prompt, hard exit gate (no inference from tone/silence). No `grill-me` attribution (D-53). Session state lives only in conversation context (D-54).
 
-  - [ ] 1.1 Write `.claude/skills/activity-grill/SKILL.md` per specification §8.1: one-question-per-turn (FR-1), depth-first traversal (FR-2), resolve-before-ask precedence — codebase/docs → prior decision logs → bounded `researcher` call (FR-3, D-56) → user
-  - [ ] 1.2 Add the append-per-resolution rule: every resolved question (asked or self-resolved) becomes one row in `decisions-<feature>.md` immediately (FR-4)
-  - [ ] 1.3 Add the qualified citation form (`<feature>#D-NN` outside the log, `D-NN` inside it) (FR-5)
-  - [ ] 1.4 Add the decision-tree summary cadence: every 10th resolved question, at the cap, and at exit-gate attempt (FR-6)
-  - [ ] 1.5 Add the two-phase mode (WHAT/HOW) with a continuing single ID space (FR-7)
-  - [ ] 1.6 Add the hard exit gate: empty open list AND an explicit confirmation statement, never inferred from tone/silence — write the direct confirmation question text (FR-8)
-  - [ ] 1.7 Add the configurable, enforced cap: default 25/25/8, read from `docs/tech.md` § Grilling if present else hardcoded default; on cap reached, ask continue-or-stop, never auto-decide (FR-9)
-  - [ ] 1.8 Add Issue Mode constraints: cap 8, glossary read-only, scope limited to what the issue changes, keyword-gated reuse of matching answers from any prior `decisions-*.md` (FR-10)
-  - [ ] 1.9 Add the once-per-phase assumption-testing reminder (FR-11)
-  - [ ] 1.10 Mirror the completed skill into `.github/skills/activity-grill/SKILL.md` and `.kiro/skills/activity-grill/SKILL.md`, adapting only platform-specific invocation syntax
-  - [ ] 1.11 Register `activity-grill` in `AGENTS.md` § Skills (Activity Skills table) and `CLAUDE.md`'s skill listing
-  - [ ] 1.12 Run Tests: write `test/fixtures/grilling/codebase-answerable.md`, `cap-reached.md`, `premature-confirmation.md`, `issue-mode-reuse.md` (plus its prior-decisions fixture log) and manually walk each scenario against the skill text
-  - [ ] 1.13 Run Tests: write `test/unit/skill-parity-grilling.test.ts` asserting the three `activity-grill` skill files exist with equivalent required-rule content — `pnpm run test -- skill-parity-grilling`
-  - [ ] 1.14 Verify Acceptance Criterion: AC-1 codebase-answerable question resolved without asking (scenario fixture a)
-  - [ ] 1.15 Verify Acceptance Criterion: AC-2 exactly one question per turn, each with a recommended answer (manual session)
-  - [ ] 1.16 Verify Acceptance Criterion: AC-3 every resolved question appended with a unique ID and full row (scenario fixtures a-d)
-  - [ ] 1.17 Verify Acceptance Criterion: AC-4 decision-tree summary at question 10, at cap, at exit (manual session)
-  - [ ] 1.18 Verify Acceptance Criterion: AC-5 cap-reached continue-or-stop prompt, never auto-decided (scenario fixture b)
-  - [ ] 1.19 Verify Acceptance Criterion: AC-6 exit gate rejects a non-explicit confirmation (scenario fixture c)
-  - [ ] 1.20 Verify Acceptance Criterion: AC-7 Issue Mode cap 8, glossary read-only, prior-decision reuse cited in qualified form (scenario fixture d)
-  - [ ] 1.21 Verify Acceptance Criterion: AC-8 once-per-phase assumption-testing reminder (manual session)
-  - [ ] 1.22 Verify Acceptance Criterion: AC-9 three-tree parity (`skill-parity-grilling` test)
-  - [ ] 1.23 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 1.1 Write `.claude/skills/activity-grill/SKILL.md` per specification §8.1: one-question-per-turn (FR-1), depth-first traversal (FR-2), resolve-before-ask precedence — codebase/docs → prior decision logs → bounded `researcher` call (FR-3, D-56) → user
+  - [x] 1.2 Add the append-per-resolution rule: every resolved question (asked or self-resolved) becomes one row in `decisions-<feature>.md` immediately (FR-4)
+  - [x] 1.3 Add the qualified citation form (`<feature>#D-NN` outside the log, `D-NN` inside it) (FR-5)
+  - [x] 1.4 Add the decision-tree summary cadence: every 10th resolved question, at the cap, and at exit-gate attempt (FR-6)
+  - [x] 1.5 Add the two-phase mode (WHAT/HOW) with a continuing single ID space (FR-7)
+  - [x] 1.6 Add the hard exit gate: empty open list AND an explicit confirmation statement, never inferred from tone/silence — write the direct confirmation question text (FR-8)
+  - [x] 1.7 Add the configurable, enforced cap: default 25/25/8, read from `docs/tech.md` § Grilling if present else hardcoded default; on cap reached, ask continue-or-stop, never auto-decide (FR-9)
+  - [x] 1.8 Add Issue Mode constraints: cap 8, glossary read-only, scope limited to what the issue changes, keyword-gated reuse of matching answers from any prior `decisions-*.md` (FR-10)
+  - [x] 1.9 Add the once-per-phase assumption-testing reminder (FR-11)
+  - [x] 1.10 Mirror the completed skill into `.github/skills/activity-grill/SKILL.md` and `.kiro/skills/activity-grill/SKILL.md`, adapting only platform-specific invocation syntax
+  - [x] 1.11 Register `activity-grill` in `AGENTS.md` § Skills (Activity Skills table) and `CLAUDE.md`'s skill listing
+  - [x] 1.12 Run Tests: write `test/fixtures/grilling/codebase-answerable.md`, `cap-reached.md`, `premature-confirmation.md`, `issue-mode-reuse.md` (plus its prior-decisions fixture log) and manually walk each scenario against the skill text
+  - [x] 1.13 Run Tests: write `test/unit/skill-parity-grilling.test.ts` asserting the three `activity-grill` skill files exist with equivalent required-rule content — `pnpm run test -- skill-parity-grilling`
+  - [x] 1.14 Verify Acceptance Criterion: AC-1 codebase-answerable question resolved without asking (scenario fixture a)
+  - [x] 1.15 Verify Acceptance Criterion: AC-2 exactly one question per turn, each with a recommended answer (manual session)
+  - [x] 1.16 Verify Acceptance Criterion: AC-3 every resolved question appended with a unique ID and full row (scenario fixtures a-d)
+  - [x] 1.17 Verify Acceptance Criterion: AC-4 decision-tree summary at question 10, at cap, at exit (manual session)
+  - [x] 1.18 Verify Acceptance Criterion: AC-5 cap-reached continue-or-stop prompt, never auto-decided (scenario fixture b)
+  - [x] 1.19 Verify Acceptance Criterion: AC-6 exit gate rejects a non-explicit confirmation (scenario fixture c)
+  - [x] 1.20 Verify Acceptance Criterion: AC-7 Issue Mode cap 8, glossary read-only, prior-decision reuse cited in qualified form (scenario fixture d)
+  - [x] 1.21 Verify Acceptance Criterion: AC-8 once-per-phase assumption-testing reminder (manual session)
+  - [x] 1.22 Verify Acceptance Criterion: AC-9 three-tree parity (`skill-parity-grilling` test)
+  - [x] 1.23 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
 - [ ] 2.0 Implement Story S-002: Invoke `activity-grill` from `activity-refine` (WHAT phase and Issue Mode) (#214)
 

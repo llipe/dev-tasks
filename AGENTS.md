@@ -45,6 +45,7 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.cla
 | ---------------------------------------- | --------------------------------------------------------- | ---------------- |
 | activity-init                            | Establish product context and technical guidelines        | product-engineer |
 | activity-refine                          | Issue refinement or full PRD creation                     | product-engineer |
+| activity-grill                           | One-question-at-a-time, depth-first interview to a confirmed shared-understanding exit gate | product-engineer |
 | activity-codebase-research               | Bounded codebase investigation with structured artifact   | researcher       |
 | activity-generate-spec                   | PRD to technical specification                            | product-engineer |
 | activity-generate-stories                | Spec to user stories with coverage validation             | product-engineer |
