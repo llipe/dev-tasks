@@ -27,7 +27,17 @@
  * "cite none if not traceable" invariant (S-004-AC-2), and three-tree
  * parity across `plan`'s three differently-named platform files —
  * `.claude/skills/plan/SKILL.md`, `.github/instructions/plan.instructions.md`,
- * `.kiro/steering/plan.md` (S-004-AC-3). Note `plan` is not a
+ * `.kiro/steering/plan.md` (S-004-AC-3).
+ *
+ * Also covers issue #218 (S-006): `implement`'s "Before Starting Work"
+ * decision-log read step, ordered before the branch-creation gate and
+ * alongside (not replacing) the GitHub-issue-open check (S-006-AC-1); the
+ * commit/PR decision-ID citation instruction (S-006-AC-2); the
+ * graceful-absence handling for a missing `decisions-<feature>.md`
+ * (S-006-AC-3); and three-tree parity across `implement`'s three
+ * differently-named platform files — `.claude/skills/implement/SKILL.md`,
+ * `.github/instructions/implement.instructions.md`,
+ * `.kiro/steering/implement.md` (S-006-AC-4). Note `plan` is not a
  * `.claude/skills/activity-*` skill and has no `.github/skills/plan/` or
  * `.kiro/skills/plan/` equivalent.
  */
@@ -65,6 +75,17 @@ const PLAN_INSTRUCTION_PATHS = [
   ".github/instructions/plan.instructions.md",
   ".claude/skills/plan/SKILL.md",
   ".kiro/steering/plan.md",
+] as const;
+
+/**
+ * `implement` has the same non-`activity-*` path shape as `plan`: a
+ * differently-named file per platform, no `.github/skills/implement/` or
+ * `.kiro/skills/implement/` equivalent.
+ */
+const IMPLEMENT_INSTRUCTION_PATHS = [
+  ".github/instructions/implement.instructions.md",
+  ".claude/skills/implement/SKILL.md",
+  ".kiro/steering/implement.md",
 ] as const;
 
 /** One marker string per operative rule (FR-1..FR-11, specification §8.1). */
@@ -289,6 +310,78 @@ describe("plan instruction — additive-only, does not require fabricating a cit
       expect(
         content.includes("must not** fabricate a citation"),
         `${relPath} does not state the no-fabrication invariant`,
+      ).toBe(true);
+    }
+  });
+});
+
+describe("implement instruction — presence (S-006)", () => {
+  for (const relPath of IMPLEMENT_INSTRUCTION_PATHS) {
+    it(`exists at ${relPath}`, () => {
+      expect(existsSync(resolve(ROOT, relPath)), `missing required file: ${relPath}`).toBe(true);
+    });
+  }
+});
+
+describe("implement instruction — three-tree behavioral parity (S-006-AC-4)", () => {
+  it("all three trees have identical behavioural content (ignoring frontmatter)", () => {
+    const contents = IMPLEMENT_INSTRUCTION_PATHS.map((p) => stripFrontmatter(read(p)));
+    expect(contents[0]).toBe(contents[1]);
+    expect(contents[0]).toBe(contents[2]);
+  });
+});
+
+/** Markers asserting `implement`'s decision-log read step and citation contract (S-006 AC-1..AC-3). */
+const REQUIRED_IMPLEMENT_MARKERS: Record<string, string> = {
+  "S-006-AC-1 decision-log read step present": "workstream/decisions-<feature>.md` in full",
+  "S-006-AC-1 alongside (not replacing) the issue-open check":
+    "alongside (not replacing) the github-issue-open check",
+  "S-006-AC-1 ordered before the branch gate": "ordered before the branch gate",
+  "S-006-AC-2 commit/PR citation instruction": "follows d-nn",
+  "S-006-AC-2 PR body references consumed decision IDs":
+    "pr body **must** reference every consumed decision id",
+  "S-006-AC-3 graceful-absence handling":
+    "you **must** proceed without the read, noting its absence",
+};
+
+describe("implement instruction — decision-log read + citation contract declared (S-006 AC-1..AC-3)", () => {
+  for (const [label, marker] of Object.entries(REQUIRED_IMPLEMENT_MARKERS)) {
+    it(`declares ${label} in all three trees`, () => {
+      for (const relPath of IMPLEMENT_INSTRUCTION_PATHS) {
+        const content = read(relPath);
+        expect(
+          content.toLowerCase().includes(marker.toLowerCase()),
+          `${relPath} does not contain marker for ${label} ("${marker}")`,
+        ).toBe(true);
+      }
+    });
+  }
+});
+
+describe("implement instruction — read step ordered before branch gate, not a hard gate itself (S-006-AC-1/AC-3)", () => {
+  it("the decision-log read step appears before the branch-gate step in Before Starting Work", () => {
+    for (const relPath of IMPLEMENT_INSTRUCTION_PATHS) {
+      const content = read(relPath);
+      const readIdx = content.indexOf("Decision-log read");
+      const branchGateIdx = content.indexOf("Branch gate (hard requirement)");
+      expect(readIdx, `${relPath} is missing the "Decision-log read" step`).toBeGreaterThan(-1);
+      expect(
+        branchGateIdx,
+        `${relPath} is missing the "Branch gate (hard requirement)" step`,
+      ).toBeGreaterThan(-1);
+      expect(
+        readIdx,
+        `${relPath}: decision-log read step must be ordered before the branch gate`,
+      ).toBeLessThan(branchGateIdx);
+    }
+  });
+
+  it("a missing decision log never blocks starting work (S-006-AC-3, additive-only invariant)", () => {
+    for (const relPath of IMPLEMENT_INSTRUCTION_PATHS) {
+      const content = read(relPath).toLowerCase();
+      expect(
+        content.includes("this is an enrichment, never a hard gate"),
+        `${relPath} does not state the graceful-absence / non-blocking invariant`,
       ).toBe(true);
     }
   });

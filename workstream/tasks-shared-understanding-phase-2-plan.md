@@ -132,22 +132,22 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 5.7 Verify Acceptance Criterion: AC-3 parity test fails if any tree omits the field (test itself is the evidence — confirm by temporarily removing the field in one tree and observing the test fail, then restoring it)
   - [x] 5.8 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- planner-merge-gate-parity`
 
-- [ ] 6.0 Implement Story S-006: `implement` reads the decision log before starting work (#218)
+- [x] 6.0 Implement Story S-006: `implement` reads the decision log before starting work (#218)
 
   > Note: Depends on 5.0. The read happens before branch creation since it is non-mutating; a missing decision log is handled gracefully, never as a hard failure.
 
-  - [ ] 6.1 Edit `.claude/skills/implement/SKILL.md`'s "Before Starting Work" checklist: add the `decisions-<feature>.md` read step, ordered before the branch-gate check, alongside (not replacing) the existing "confirm GitHub issue open" check
-  - [ ] 6.2 Add the commit/PR citation instruction: an implementation commit whose approach was shaped by a decision cites it in the commit body; the PR body references consumed decision IDs
-  - [ ] 6.3 Add the graceful-absence handling instruction: a missing `decisions-<feature>.md` does not block starting work — proceed, noting its absence
-  - [ ] 6.4 Mirror into `.github/instructions/implement.instructions.md` and `.kiro/steering/implement.md`
-  - [ ] 6.5 Run Tests: extend `test/unit/skill-parity-grilling.test.ts` (or add a dedicated assertion) to cover `implement`'s read step across all three trees
-  - [ ] 6.6 Run Tests: build an integration fixture task run against a feature with an existing `decisions-<feature>.md` (this Phase 2 feature itself), confirming the read happens before any git operation is described and a sample commit-message template cites a decision ID
-  - [ ] 6.7 Run Tests: manually walk `implement`'s instructions for a feature with no decision log and confirm the graceful-absence path reads correctly (no dead-end instruction)
-  - [ ] 6.8 Verify Acceptance Criterion: AC-1 read step present, ordered before branch gate (fixture)
-  - [ ] 6.9 Verify Acceptance Criterion: AC-2 commit/PR citation instruction present (manual template review)
-  - [ ] 6.10 Verify Acceptance Criterion: AC-3 graceful handling of a missing decision log (manual walkthrough)
-  - [ ] 6.11 Verify Acceptance Criterion: AC-4 three-tree parity (extended parity test)
-  - [ ] 6.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
+  - [x] 6.1 Edit `.claude/skills/implement/SKILL.md`'s "Before Starting Work" checklist: add the `decisions-<feature>.md` read step, ordered before the branch-gate check, alongside (not replacing) the existing "confirm GitHub issue open" check
+  - [x] 6.2 Add the commit/PR citation instruction: an implementation commit whose approach was shaped by a decision cites it in the commit body; the PR body references consumed decision IDs
+  - [x] 6.3 Add the graceful-absence handling instruction: a missing `decisions-<feature>.md` does not block starting work — proceed, noting its absence
+  - [x] 6.4 Mirror into `.github/instructions/implement.instructions.md` and `.kiro/steering/implement.md`
+  - [x] 6.5 Run Tests: extend `test/unit/skill-parity-grilling.test.ts` (or add a dedicated assertion) to cover `implement`'s read step across all three trees
+  - [x] 6.6 Run Tests: build an integration fixture task run against a feature with an existing `decisions-<feature>.md` (this Phase 2 feature itself), confirming the read happens before any git operation is described and a sample commit-message template cites a decision ID
+  - [x] 6.7 Run Tests: manually walk `implement`'s instructions for a feature with no decision log and confirm the graceful-absence path reads correctly (no dead-end instruction)
+  - [x] 6.8 Verify Acceptance Criterion: AC-1 read step present, ordered before branch gate (fixture)
+  - [x] 6.9 Verify Acceptance Criterion: AC-2 commit/PR citation instruction present (manual template review)
+  - [x] 6.10 Verify Acceptance Criterion: AC-3 graceful handling of a missing decision log (manual walkthrough)
+  - [x] 6.11 Verify Acceptance Criterion: AC-4 three-tree parity (extended parity test)
+  - [x] 6.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
 
 - [x] 7.0 Implement Story S-007: ADR-008, the `docs/tech.md` § Grilling config, and the decision-log format check (#219)
 
