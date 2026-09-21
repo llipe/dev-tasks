@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.14.0] - 2026-09-20
+
+### Added
+
+- feat!: retire the dt binary and multi-repo context layer (Phase 0) (#200)
+
+### Fixed
+
+- fix(gitignore): stop ignoring /docs behind a rotting allowlist (#209)
+
+### Changed
+
+- chore: prettier run
+- docs(workstream): Phase 1 specification, stories, and implementation plan (#210)
+- docs: add shared-understanding PRD and simplicity contract (#194)
+
 ## [Unreleased]
 
 ### Added

@@ -42,18 +42,18 @@ Layering is one-directional: `bin/` → `core/`.
 ### Binary
 
 | Binary      | Entry point        | Responsibility                                                                             | Stability |
-| ----------- | ------------------- | -------------------------------------------------------------------------------------------- | --------- |
+| ----------- | ------------------ | ------------------------------------------------------------------------------------------ | --------- |
 | `dev-tasks` | `bin/dev-tasks.ts` | Bootstrap/distribution: `install`, `update`, `status`, `pin`, `unpin`, `doctor`, `migrate` | Stable    |
 
 `bin/parse-args.ts` is the argument parser, and `core/exit-codes.ts` is the exit-code contract; both are dedicated to this one binary.
 
 ### `core/` modules
 
-| Module               | Responsibility                                                                                                                  |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Module               | Responsibility                                                                                                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `core/distribution`  | Install, update with conflict detection, status, pin/unpin, doctor, legacy migration, backup, SHA-256 hashing, install manifest, profile→path mapping, pinned-version fetch from the npm registry |
-| `core/reconcile.ts`  | Generic three-way hash reconciliation (local / origin / package) that decides install, skip, overwrite, or conflict for a single managed file. Used by `core/distribution/update.ts`. |
-| `core/exit-codes.ts` | Process exit-code contract for the `dev-tasks` binary                                                                             |
+| `core/reconcile.ts`  | Generic three-way hash reconciliation (local / origin / package) that decides install, skip, overwrite, or conflict for a single managed file. Used by `core/distribution/update.ts`.             |
+| `core/exit-codes.ts` | Process exit-code contract for the `dev-tasks` binary                                                                                                                                             |
 
 ### Harness content
 
@@ -61,13 +61,13 @@ Eleven agents (`product-engineer`, `developer`, `planner`, `researcher`, `verifi
 
 ## Integrations
 
-| Integration      | Used for                                                                | Status                                                  |
-| ----------------- | ------------------------------------------------------------------------ | -------------------------------------------------------- |
-| Git                | Prerequisite check only: `dev-tasks doctor` requires git >= 2.37          | Active                                                    |
-| npm registry       | Package distribution and pinned-version fetch during `dev-tasks update` | Active (`@llipe.com/dev-tasks`)                          |
-| GitHub             | Issues/PRs as execution state, Releases for bundle assets, Actions for CI | Active                                                    |
-| `memo-cli`         | Cross-session architectural memory for agents                            | Optional; skipped silently when absent                   |
-| MCP servers        | Consumer-owned agent tool extensions                                     | Consumer-configured; not provided by this repository     |
+| Integration  | Used for                                                                  | Status                                               |
+| ------------ | ------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Git          | Prerequisite check only: `dev-tasks doctor` requires git >= 2.37          | Active                                               |
+| npm registry | Package distribution and pinned-version fetch during `dev-tasks update`   | Active (`@llipe.com/dev-tasks`)                      |
+| GitHub       | Issues/PRs as execution state, Releases for bundle assets, Actions for CI | Active                                               |
+| `memo-cli`   | Cross-session architectural memory for agents                             | Optional; skipped silently when absent               |
+| MCP servers  | Consumer-owned agent tool extensions                                      | Consumer-configured; not provided by this repository |
 
 ## Key Runtime Flows
 
@@ -84,9 +84,9 @@ Refine → spec → stories → plan → verifier design → test-first implemen
 Two channels are active in parallel:
 
 | Channel                | Produced by                                                          | Managed-path source of truth    |
-| ----------------------- | ----------------------------------------------------------------------- | ---------------------------------- |
-| npm package             | `pnpm publish` via `.github/workflows/publish-npm.yml`               | `core/distribution/profiles.ts` |
-| GitHub Release tarball  | `scripts/build-bundle.sh` via `.github/workflows/release-bundle.yml` | `bundle-manifest.json`          |
+| ---------------------- | -------------------------------------------------------------------- | ------------------------------- |
+| npm package            | `pnpm publish` via `.github/workflows/publish-npm.yml`               | `core/distribution/profiles.ts` |
+| GitHub Release tarball | `scripts/build-bundle.sh` via `.github/workflows/release-bundle.yml` | `bundle-manifest.json`          |
 
 `dev-tasks.sh` at the repository root is a deprecated notice shim that only prints migration instructions to the npm package.
 
