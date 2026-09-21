@@ -11,18 +11,25 @@
  */
 
 import { checkDocsStructure } from "./docs-structure.js";
+import { checkDecisionLogFormat } from "./decision-log-format.js";
 
-const { failures, staleness } = checkDocsStructure(process.cwd());
+const docsStructure = checkDocsStructure(process.cwd());
+const decisionLog = checkDecisionLogFormat(process.cwd());
+
+const staleness = [...docsStructure.staleness, ...decisionLog.staleness];
+const failures = [...docsStructure.failures, ...decisionLog.failures];
 
 for (const finding of staleness) {
-  process.stdout.write(`docs-structure: stale: ${finding.message}\n`);
+  process.stdout.write(`${finding.rule}: stale: ${finding.message}\n`);
 }
 
 if (failures.length > 0) {
-  process.stderr.write(`docs-structure: ${failures.length} failure(s)\n`);
+  process.stderr.write(`checks: ${failures.length} failure(s)\n`);
   for (const finding of failures) {
     process.stderr.write(`  [${finding.rule}] ${finding.message}\n`);
   }
-  process.stderr.write("\nDocumentation structure is a gate. Fix the files above.\n");
+  process.stderr.write(
+    "\nDocumentation and decision-log structure are a gate. Fix the files above.\n",
+  );
   process.exit(1);
 }
