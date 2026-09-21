@@ -1,76 +1,67 @@
-# Fidelity Report — Story S-009 (Issue #40)
+# Fidelity Report — Story S-009 (Issue #162)
 
-## Header/Verdict
+## Header / Verdict
 
-| Attribute                | Value                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------- |
-| **Overall Fidelity**     | **High**                                                                           |
-| **Highest Drift Impact** | **None**                                                                           |
-| **Scope**                | Story S-009 — `dt extract component` — provenance, human gate, idempotency, report |
-| **PR**                   | [#73](https://github.com/llipe/dev-tasks/pull/73)                                  |
-| **Branch**               | `story/S-009-extract-component` → `integration/mrc-phase1-extraction`              |
-| **Issue**                | [#40](https://github.com/llipe/dev-tasks/issues/40)                                |
+- **Overall fidelity verdict:** **High**
+- **Highest drift impact present:** **Minor**
+- **Scope:** Story S-009 "GitHub Actions workflow templates and Phase 2 registration" · Issue #162 · branch `issue/153-branch-convention-hygiene` · commits `4d58c91`, `8259a58`, `583d1d5`, `58b34bf`, `948f0a3`
+- **Mode:** Audit (grey-box). Non-blocking, additive gate — does not replace `test`/`lint`/`format:check`/`typecheck`/`audit`.
 
----
+## Human-Readable Summary — what changed and why
 
-## Human-Readable Summary
+This story delivered the last piece of the infrastructure agent's Phase 2: the ready-made GitHub Actions files a consumer repo installs to deploy and roll back through the canonical scripts, plus the paperwork that registers the deploy skill everywhere the harness describes itself.
 
-The `dt extract component` feature was delivered as specified. The component extraction pipeline correctly derives fields from detection/extraction outputs, gates inferable fields behind human confirmation, prompts for non-derivable fields interactively, records full provenance with per-field source/confidence/hashes, implements hash-based idempotent reconciliation, generates a comprehensive `extraction_report.json`, and exits with the correct error codes (13 for missing required fields, 14 for reconciliation conflicts). The `dt extract all` command orchestrates the full pipeline end-to-end. All 73 story-specific tests and 446 total tests pass. No drift from the specification was found.
+Three workflow files were added. One deploys the non-production environment automatically whenever code lands on the main branch. One deploys production, but only when a human pushes a properly formatted release tag, and even then it waits behind a required human reviewer before anything happens. The third lets an operator roll a deployment back on demand, optionally to a specific version. Crucially, none of the three contain any deploy commands of their own — they only call the shared scripts, so there is one source of truth for how a deploy actually runs. Cloud access uses short-lived credentials (OIDC) rather than stored keys, and every external action is pinned to a fixed version.
 
----
+The remaining work was bookkeeping: the installer manifest now ships the script and workflow templates as managed content while treating the installed copies as consumer-owned (so a consumer's edits are never overwritten on update); the deploy skill documents when to install the dev workflow; and the registries (AGENTS, CLAUDE, README, system overview, technical guidelines) all list the deploy skill and templates. A test suite of 34 checks locks the workflow behavior in place, and the parity and distribution suites were extended to cover the new wiring.
+
+Two pieces were deliberately deferred and are not defects: the workflow-chain diagram entries and the planner deploy-chain extension both belong to Story S-010, which has not started, so only the planner post-integration handoff was added here. The one live pipeline test (push a real tag, watch the reviewer gate hold the job) was not run because it requires a real GitHub repo with a configured production reviewer.
 
 ## Per-AC Result Table
 
-| AC-ID   | Description                                                                              | Codebase Evidence                                                                                                                                                                       | Workstream Evidence | Test Evidence                                                                                                                                                                                                              | Result   |
-| ------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| AC 9.12 | Derivable fields come from detection/extraction                                          | `component.ts:deriveFields()` — stack, type, provides, datastores, paths, docs, consumes all derived from `ExtractionInputs` (detection + schema/openapi/asyncapi results)              | Task 9.1.1 ✓        | `extract-component.test.ts`: 9 tests verify derivation (stack from detection, type from type_hint, provides from OpenAPI, datastores from schema tables, docs from file paths, consumes from asyncapi)                     | **Pass** |
-| AC 9.13 | Inferable fields require human confirmation; aliases not persisted without confirmation  | `component.ts:applyInference()` — only applies when `confirmed.*` is `true`; `prompt.ts:confirmInference()` returns `false` in non-interactive mode                                     | Task 9.1.2 ✓        | `extract-component.test.ts`: 4 tests (confirmed/unconfirmed description, aliases, subdomain); `extract-component-edge-cases.test.ts`: 2 tests (alias unconfirmed → empty, not in provenance)                               | **Pass** |
-| AC 9.14 | Non-derivable fields prompted; unanswered → empty → invalid manifest                     | `prompt.ts:promptNonDerivableFields()` — TTY detection, returns empty when non-interactive; `component.ts:getMissingRequiredFields()` checks owner/domain/criticality/lifecycle         | Task 9.1.3 + 9.2 ✓  | `extract-prompt.test.ts`: 6 tests; `extract-component-edge-cases.test.ts`: 3 tests (empty values, missing fields reported, exit 13)                                                                                        | **Pass** |
-| AC 9.15 | Every field/artifact carries source + confidence + \_provenance                          | `component.ts:assembleProvenance()` — builds `ProvenanceBlock` with `extracted_at`, `extractor`, `repo_sha`, `detector`, per-field `source`/`confidence`/`confirmed_by`, `field_hashes` | Task 9.3 ✓          | `extract-component.test.ts`: 5 tests in `assembleProvenance()` section (detected→high, inferred→medium+confirmed_by, prompted→high, field_hashes present, empty excluded)                                                  | **Pass** |
-| AC 9.16 | Idempotent re-run; edited fields → conflict + diff; no overwrite without --force         | `component.ts:reconcileComponent()` using `core/reconcile.ts`; `extract-component.ts` and `extract-all.ts` both check reconciliation before writing                                     | Task 9.4 ✓          | `extract-component.test.ts`: 4 reconcile tests; `extract-component-edge-cases.test.ts`: 1 force test; `integration/extract-component.test.ts`: 2 tests (idempotent re-run = skip, edited field = conflict)                 | **Pass** |
-| AC 9.17 | extraction_report.json with strategies, coverage, confidence, unresolved, requires_human | `report.ts:buildExtractionReport()` — assembles all fields; `extract-all.ts` writes the file                                                                                            | Task 9.5 ✓          | `extract-report.test.ts`: 11 tests (timestamp, strategies, coverage metrics, confidence counts, unresolved, requires_human, zero/empty/all-low edge cases, serialization); `integration/extract-component.test.ts`: 1 test | **Pass** |
-| AC 9.18 | Exit 13 on missing required fields; exit 14 on conflict                                  | `exit-codes.ts`: `MissingRequiredField: 13`, `ReconciliationConflict: 14`; both `extract-component.ts` and `extract-all.ts` return these codes in the correct conditions                | Task 9.6 + 9.7 ✓    | `extract-component-edge-cases.test.ts`: 2 tests (exit code values); CLI handlers return correct codes on missing/conflict conditions                                                                                       | **Pass** |
+| AC | Description | Codebase evidence | Workstream evidence | Test evidence | Result |
+| --- | --- | --- | --- | --- | --- |
+| AC-1 | Three templates with correct triggers/targets | `deploy-dev.yml` (push `main` → `deploy.sh dev`), `deploy-prod.yml` (tags `v[0-9]+.[0-9]+.[0-9]+`, `environment: production` → `deploy.sh prod`), `rollback.yml` (`workflow_dispatch` env + to_version → `rollback.sh`) | tasks 9.2, story AC-1 | `infra-workflow-templates.test.ts` triggers/env/script-invocation blocks pass | **Pass** |
+| AC-2 | OIDC + pinned actions, no inline deploy calls | prod `permissions.id-token: write`, `aws-actions/configure-aws-credentials@v4`, flyctl/supabase/yq pinned; no inline `flyctl/aws/supabase deploy` in any template | task 9.2 | AC-2 block (inline-pattern scan, OIDC, version-pin regex) passes | **Pass** |
+| AC-3 | deploy-ops installs `deploy-dev.yml` only when a `production: false` env is declared | `.kiro/skills/deploy-ops/SKILL.md` scaffolding procedure step 2; parity-verified across three trees | tasks 9.3, 8.6 | `skill-parity-infra.test.ts` (deploy-ops) + parity registry block | **Pass** |
+| AC-4 | Manifest managed/consumer-owned paths + distribution tests | `bundle-manifest.json`: `templates/scripts`, `templates/workflows` managed; three `.github/workflows/*.yml` consumer-owned; `build-bundle.sh` MANAGED_DIRS mirrors | task 9.4 | `distribution-install.test.ts` manifest path-registration block passes (63 tests) | **Pass** |
+| AC-5 | Guidelines + registries register deploy-ops and templates | `docs/technical-guidelines.md` (deploy/deploy:verify/deploy:rollback/deploy:status/release); `AGENTS.md`(+template), `CLAUDE.md`(+template), `README.md`, `docs/system-overview.md` (skill count 24→25, names deploy-ops + templates) | task 9.5 | parity registry-file block passes | **Pass (with documented partial)** — `docs/workflow-chains.md` portion deferred to S-010/Task 10.5 |
+| AC-5b | planner deploy handoff + parity assertions; workflow-chains deploy chain extended | planner post-integration deploy handoff added (three trees) | task 9.5b | `infra-engineer-parity.test.ts` planner deploy-handoff + deploy-ops registry blocks pass (60 tests) | **Pass (with documented partial)** — deploy-chain extension deferred to S-010 (chain does not yet exist) |
+| AC-6 | `infra-workflow-templates.test.ts` passes | test file present, 34 assertions | task 9.1 | 34/34 pass on this branch | **Pass** |
+| AC-7 | `pnpm run validate` and `pnpm run audit` pass | typecheck/lint/format:check PASS; `pnpm audit --prod` clean | task 9.8 | Full `pnpm run test` = 1791 passed / 3 failed | **Pass (with caveat)** — 3 failures are documented pre-existing issue-130 `skill-parity-testing-layers.test.ts` (TESTING.md), unrelated and untouched |
 
----
+**AC coverage status:** 7 of 7 ACs (plus AC-5b) covered. No AC uncovered.
 
 ## Drift Catalog
 
-No drift items detected. All acceptance criteria are fully satisfied by the delivered implementation.
+All drift below is **non-blocking to PR/issue completion** per the verifier operating rules.
 
----
+| # | Drift | Impact | Intent | Evidence source | Note |
+| --- | --- | --- | --- | --- | --- |
+| D-1 | AC-5 lists `docs/workflow-chains.md` among the files that register deploy-ops; that file has no deploy-ops content on this branch. | **Minor** | **Intended** | `docs/workflow-chains.md` (no matches); task 9.5 note; parity test comment excludes workflow-chains.md | Deferred to S-010 / Task 10.5, which owns all workflow-chain diagrams. Matches the delivery scope and the S-006/S-010 story split. Confirmed intended. |
+| D-2 | AC-5b calls for extending "the Task 10.5 deploy chain"; only the planner handoff + parity assertions were delivered. | **Minor** | **Intended** | task 9.5b note; S-010 unstarted | The referenced chain does not yet exist (S-010 not started), so the extension is not yet possible. Producer-before-consumer ordering respected. Confirmed intended. |
+| D-3 | Task 9.7 manual pipeline check (real tag push → reviewer gate holds prod job) not executed. | **Minor** | **Intended (Undetermined behavioral coverage)** | task 9.7 not-run note | Requires a real GitHub repo with Actions and a configured production reviewer. Behavior is asserted structurally by the workflow test (`environment: production` present) but not observed live. Reproduction steps recorded in task 9.7. |
+| D-4 | `coverage_gate = SKIPPED(no usable coverage provider installed)`. | **Minor** | **Intended** | gate context | Recorded with a non-empty reason, which satisfies the implement gate (SKIPPED does not block). Owned by `qa-engineer`. |
 
-## Edge-Case and Test Coverage
+No Critical or Major drift found. No Unintended drift found.
 
-| Category                                  | Tests                      | Status |
-| ----------------------------------------- | -------------------------- | ------ |
-| Unanswered prompts → empty + exit 13      | 3 unit tests               | Pass   |
-| --force overwrite bypasses reconciliation | 1 unit test + CLI behavior | Pass   |
-| Alias unconfirmed → not persisted         | 2 unit tests               | Pass   |
-| All-low-confidence repo                   | 1 unit test                | Pass   |
-| Partial prompted values                   | 1 unit test                | Pass   |
-| Null detection/extraction inputs          | 2 unit tests               | Pass   |
-| First extraction (null existing hashes)   | 1 unit test                | Pass   |
-| Idempotent re-run                         | 1 integration test         | Pass   |
-| Manual field edit → conflict              | 1 integration test         | Pass   |
+## Edge-Case / Randomized Test Outcomes
 
----
+No Design-Mode test plan exists for this scope, so no randomized tactics were replayed. Edge cases from the S-009 story matrix are covered structurally:
+
+- "No non-production environment declared → no dev workflow": encoded as the deploy-ops AC-3 install rule (parity-verified), not a runtime assertion.
+- "Tag pushed from non-`main` commit → script refuses": owned by `deploy.sh` (S-008 contract test), not re-tested here.
+- "Workflow file edited by hand → drift on next plan": consumer-owned-path semantics verified by `distribution-install.test.ts`.
 
 ## Recommendations
 
-No remediation actions required. The implementation is complete, well-tested, and faithfully matches the specification.
+| Item | Suggested next step |
+| --- | --- |
+| D-1 (workflow-chains registration) | `no action needed` for S-009; ensure S-010 / Task 10.5 authors the deploy chain and the workflow-chains deploy-ops registration. Route through `product-engineer` `activity-drift-reconciliation` only if S-010 scope needs the AC-5 line clarified. |
+| D-2 (deploy-chain extension) | `no action needed` for S-009; carry into S-010 as planned. |
+| D-3 (manual pipeline check) | `no action needed` to complete S-009 (non-blocking). Run the documented 9.7 repro once a scratch repo with a configured `production` reviewer is available, to convert structural coverage into observed coverage. |
+| D-4 (coverage gate) | `no action needed`; SKIPPED with reason is acceptable. `qa-engineer` may install a coverage provider in a later pass if numeric thresholds are adopted. |
 
----
+## Notes on Source Reconciliation
 
-## Output Contract
-
-| Field                | Value                                                          |
-| -------------------- | -------------------------------------------------------------- |
-| Mode                 | Audit                                                          |
-| Phase                | 4 — Reporting & Publication                                    |
-| Source artifact      | `workstream/tasks-multi-repo-context-plan.md` (tasks 9.0–9.19) |
-| Output file          | `workstream/fidelity-report-S-009.md`                          |
-| GitHub issue         | [#40](https://github.com/llipe/dev-tasks/issues/40)            |
-| AC coverage          | 7/7 covered (100%)                                             |
-| Overall fidelity     | High                                                           |
-| Highest drift impact | None                                                           |
-| Blocking gaps        | None                                                           |
+- The prompt referenced "CP-10" and "test-plan rows 6 and 7" in `specification-infra-engineer.md`. The spec's Testing Strategy table rows for `infra-workflow-templates.test.ts` and `distribution-*.test.ts (extended)` (the 6th and 7th rows) match the delivered behavior exactly. No literal `CP-10` marker exists in the spec; the substantive contract it points to (OIDC + pinned actions + protected `production` environment) is present and verified.
