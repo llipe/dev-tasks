@@ -30,7 +30,7 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 - `.claude/commands/planner.md` - Add `decision_log_path` to Phase 4 handoff
 - `.github/agents/planner.agent.md` - Mirror
 - `.kiro/agents/planner.md` - Mirror
-- `test/unit/planner-merge-gate-parity.test.ts` - Extend with `decision_log_path` field assertion
+- `test/unit/planner-decision-log-parity.test.ts` - New sibling parity test asserting `decision_log_path` appears, identically named, in all three handoff templates
 - `.claude/skills/implement/SKILL.md` - Add decision-log read step (before branch-gate) and citation instruction
 - `.github/instructions/implement.instructions.md` - Mirror
 - `.kiro/steering/implement.md` - Mirror
@@ -119,18 +119,18 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 4.7 Verify Acceptance Criterion: AC-3 three-tree parity (extended parity test)
   - [x] 4.8 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
 
-- [ ] 5.0 Implement Story S-005: Pass the decision-log path in every `planner` → `developer` handoff (#217)
+- [x] 5.0 Implement Story S-005: Pass the decision-log path in every `planner` → `developer` handoff (#217)
 
   > Note: Depends on 4.0. Closes the three-tree parity risk the Phase 2 research pass flagged (research risk #6).
 
-  - [ ] 5.1 Add `decision_log_path` (`workstream/decisions-<feature>.md`) to the Phase 4 handoff template in `.claude/commands/planner.md`, alongside the existing `task_file`/`test_plan_path`/integration-branch/test-first fields
-  - [ ] 5.2 Mirror into `.github/agents/planner.agent.md` and `.kiro/agents/planner.md`, using the identical field name
-  - [ ] 5.3 Run Tests: extend `test/unit/planner-merge-gate-parity.test.ts` (or add a sibling file) asserting `decision_log_path` appears, identically named, in all three handoff templates — `pnpm run test -- planner-merge-gate-parity`
-  - [ ] 5.4 Run Tests: manually run a `planner` orchestration against a small multi-story fixture and confirm the field appears in the delegation context handed to `developer`
-  - [ ] 5.5 Verify Acceptance Criterion: AC-1 field passed unconditionally for every story (fixture orchestration)
-  - [ ] 5.6 Verify Acceptance Criterion: AC-2 field named identically and populated identically across all three trees (parity test)
-  - [ ] 5.7 Verify Acceptance Criterion: AC-3 parity test fails if any tree omits the field (test itself is the evidence — confirm by temporarily removing the field in one tree and observing the test fail, then restoring it)
-  - [ ] 5.8 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- planner-merge-gate-parity`
+  - [x] 5.1 Add `decision_log_path` (`workstream/decisions-<feature>.md`) to the Phase 4 handoff template in `.claude/commands/planner.md`, alongside the existing `task_file`/`test_plan_path`/integration-branch/test-first fields
+  - [x] 5.2 Mirror into `.github/agents/planner.agent.md` and `.kiro/agents/planner.md`, using the identical field name
+  - [x] 5.3 Run Tests: extend `test/unit/planner-merge-gate-parity.test.ts` (or add a sibling file) asserting `decision_log_path` appears, identically named, in all three handoff templates — `pnpm run test -- planner-merge-gate-parity`
+  - [x] 5.4 Run Tests: manually run a `planner` orchestration against a small multi-story fixture and confirm the field appears in the delegation context handed to `developer`
+  - [x] 5.5 Verify Acceptance Criterion: AC-1 field passed unconditionally for every story (fixture orchestration)
+  - [x] 5.6 Verify Acceptance Criterion: AC-2 field named identically and populated identically across all three trees (parity test)
+  - [x] 5.7 Verify Acceptance Criterion: AC-3 parity test fails if any tree omits the field (test itself is the evidence — confirm by temporarily removing the field in one tree and observing the test fail, then restoring it)
+  - [x] 5.8 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- planner-merge-gate-parity`
 
 - [ ] 6.0 Implement Story S-006: `implement` reads the decision log before starting work (#218)
 
