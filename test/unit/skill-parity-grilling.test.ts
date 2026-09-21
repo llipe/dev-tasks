@@ -7,6 +7,12 @@
  * configurable cap per D-55, researcher-budget precedence per D-56).
  *
  * Covers issue #213 (S-001) AC-9 / S-001-AC-9.
+ *
+ * Also covers issue #214 (S-002): activity-refine's invocation of
+ * activity-grill in both PRD Creation mode (WHAT phase, FR-12) and Issue
+ * Refinement mode (Issue Mode, FR-15), the inline decision-citation +
+ * `## Decisions` section output contract (FR-14), and three-tree parity
+ * for activity-refine itself (S-002-AC-4).
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -19,6 +25,12 @@ const SKILL_PATHS = [
   ".github/skills/activity-grill/SKILL.md",
   ".claude/skills/activity-grill/SKILL.md",
   ".kiro/skills/activity-grill/SKILL.md",
+] as const;
+
+const REFINE_SKILL_PATHS = [
+  ".github/skills/activity-refine/SKILL.md",
+  ".claude/skills/activity-refine/SKILL.md",
+  ".kiro/skills/activity-refine/SKILL.md",
 ] as const;
 
 /** One marker string per operative rule (FR-1..FR-11, specification §8.1). */
@@ -115,4 +127,45 @@ describe("activity-grill skill — no grill-me attribution anywhere (D-53)", () 
       }
     }
   });
+});
+
+describe("activity-refine skill — presence (S-002)", () => {
+  for (const relPath of REFINE_SKILL_PATHS) {
+    it(`exists at ${relPath}`, () => {
+      expect(existsSync(resolve(ROOT, relPath)), `missing required file: ${relPath}`).toBe(true);
+    });
+  }
+});
+
+describe("activity-refine skill — three-tree behavioral parity (S-002-AC-4)", () => {
+  it("all three trees have identical behavioural content (ignoring frontmatter)", () => {
+    const contents = REFINE_SKILL_PATHS.map((p) => stripFrontmatter(read(p)));
+    expect(contents[0]).toBe(contents[1]);
+    expect(contents[0]).toBe(contents[2]);
+  });
+});
+
+/** Markers asserting activity-refine's activity-grill wiring (S-002 AC-1..AC-3). */
+const REQUIRED_REFINE_MARKERS: Record<string, string> = {
+  "S-002-AC-1 WHAT-phase invocation before drafting": 'activity-grill(phase="what"',
+  "S-002-AC-1 no draft before exit gate (PRD)": "must not** produce any prd section",
+  "S-002-AC-2 Issue Mode invocation": 'activity-grill(mode="issue"',
+  "S-002-AC-2 Issue Mode cap": "cap.issue",
+  "S-002-AC-2 prior-decision reuse in qualified form": "<other-feature>#d-nn",
+  "S-002-AC-3 inline decision citation": "… (d-nn)",
+  "S-002-AC-3 Decisions section": "## decisions",
+};
+
+describe("activity-refine skill — activity-grill wiring declared (S-002 AC-1..AC-3)", () => {
+  for (const [label, marker] of Object.entries(REQUIRED_REFINE_MARKERS)) {
+    it(`declares ${label} in all three trees`, () => {
+      for (const relPath of REFINE_SKILL_PATHS) {
+        const content = read(relPath);
+        expect(
+          content.toLowerCase().includes(marker.toLowerCase()),
+          `${relPath} does not contain marker for ${label} ("${marker}")`,
+        ).toBe(true);
+      }
+    });
+  }
 });

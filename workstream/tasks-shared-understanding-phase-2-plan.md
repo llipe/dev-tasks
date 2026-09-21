@@ -14,6 +14,7 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 - `test/fixtures/grilling/cap-reached.md` - Scenario fixture (b)
 - `test/fixtures/grilling/premature-confirmation.md` - Scenario fixture (c)
 - `test/fixtures/grilling/issue-mode-reuse.md` - Scenario fixture (d), plus a small prior-decisions fixture log
+- `test/fixtures/grilling/prd-creation-gate.md` - Scenario fixture (e): `activity-refine` PRD Creation mode blocks drafting until the exit gate is satisfied (S-002)
 - `test/unit/skill-parity-grilling.test.ts` - New parity test, extended across S-001 through S-003 and S-006
 - `AGENTS.md` - Register `activity-grill` in the Skills table
 - `CLAUDE.md` - Activity Skills listing
@@ -70,22 +71,22 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 1.22 Verify Acceptance Criterion: AC-9 three-tree parity (`skill-parity-grilling` test)
   - [x] 1.23 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
-- [ ] 2.0 Implement Story S-002: Invoke `activity-grill` from `activity-refine` (WHAT phase and Issue Mode) (#214)
+- [x] 2.0 Implement Story S-002: Invoke `activity-grill` from `activity-refine` (WHAT phase and Issue Mode) (#214)
 
   > Note: Depends on 1.0. Drafting is blocked until the exit gate is satisfied, in both PRD Creation and Issue Refinement modes.
 
-  - [ ] 2.1 Edit `.claude/skills/activity-refine/SKILL.md`: insert the `activity-grill(phase="WHAT")` invocation immediately before PRD Creation mode's drafting step (FR-12)
-  - [ ] 2.2 Insert the `activity-grill` Issue Mode invocation (cap 8, glossary read-only, prior-decision reuse) immediately before Issue Refinement mode's drafting step (FR-15)
-  - [ ] 2.3 Add the "cite decisions inline, list consumed IDs in `## Decisions`" instruction to both modes' output contract (FR-14)
-  - [ ] 2.4 Mirror both edits into `.github/skills/activity-refine/SKILL.md` and `.kiro/skills/activity-refine/SKILL.md`
-  - [ ] 2.5 Run Tests: extend `test/unit/skill-parity-grilling.test.ts` to assert both modes reference `activity-grill` in all three trees
-  - [ ] 2.6 Run Tests: build an integration fixture — a short mock feature request through `activity-refine` PRD Creation mode — asserting no draft is produced before a simulated exit-gate confirmation and at least one inline `D-NN` citation appears
-  - [ ] 2.7 Run Tests: manually run Issue Refinement mode against a fixture GitHub issue, confirming glossary read-only behavior and citation of a seeded prior decision
-  - [ ] 2.8 Verify Acceptance Criterion: AC-1 no PRD draft before WHAT exit gate (integration fixture)
-  - [ ] 2.9 Verify Acceptance Criterion: AC-2 Issue Mode cap 8, glossary read-only, prior-decision reuse (manual Issue Mode run)
-  - [ ] 2.10 Verify Acceptance Criterion: AC-3 inline citations and `## Decisions` section populated (both fixtures)
-  - [ ] 2.11 Verify Acceptance Criterion: AC-4 three-tree parity (extended parity test)
-  - [ ] 2.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
+  - [x] 2.1 Edit `.claude/skills/activity-refine/SKILL.md`: insert the `activity-grill(phase="WHAT")` invocation immediately before PRD Creation mode's drafting step (FR-12)
+  - [x] 2.2 Insert the `activity-grill` Issue Mode invocation (cap 8, glossary read-only, prior-decision reuse) immediately before Issue Refinement mode's drafting step (FR-15)
+  - [x] 2.3 Add the "cite decisions inline, list consumed IDs in `## Decisions`" instruction to both modes' output contract (FR-14)
+  - [x] 2.4 Mirror both edits into `.github/skills/activity-refine/SKILL.md` and `.kiro/skills/activity-refine/SKILL.md`
+  - [x] 2.5 Run Tests: extend `test/unit/skill-parity-grilling.test.ts` to assert both modes reference `activity-grill` in all three trees
+  - [x] 2.6 Run Tests: build an integration fixture — a short mock feature request through `activity-refine` PRD Creation mode — asserting no draft is produced before a simulated exit-gate confirmation and at least one inline `D-NN` citation appears
+  - [x] 2.7 Run Tests: manually run Issue Refinement mode against a fixture GitHub issue, confirming glossary read-only behavior and citation of a seeded prior decision
+  - [x] 2.8 Verify Acceptance Criterion: AC-1 no PRD draft before WHAT exit gate (integration fixture)
+  - [x] 2.9 Verify Acceptance Criterion: AC-2 Issue Mode cap 8, glossary read-only, prior-decision reuse (manual Issue Mode run)
+  - [x] 2.10 Verify Acceptance Criterion: AC-3 inline citations and `## Decisions` section populated (both fixtures)
+  - [x] 2.11 Verify Acceptance Criterion: AC-4 three-tree parity (extended parity test)
+  - [x] 2.12 Run Tests: `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run test -- skill-parity-grilling`
 
 - [ ] 3.0 Implement Story S-003: Invoke `activity-grill` from `activity-generate-spec` (HOW phase) (#215)
 
