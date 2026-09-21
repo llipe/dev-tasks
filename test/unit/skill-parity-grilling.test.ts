@@ -334,11 +334,14 @@ describe("implement instruction — three-tree behavioral parity (S-006-AC-4)", 
 /** Markers asserting `implement`'s decision-log read step and citation contract (S-006 AC-1..AC-3). */
 const REQUIRED_IMPLEMENT_MARKERS: Record<string, string> = {
   "S-006-AC-1 decision-log read step present": "workstream/decisions-<feature>.md` in full",
-  "S-006-AC-1 alongside (not replacing) the issue-open check": "alongside (not replacing) the github-issue-open check",
+  "S-006-AC-1 alongside (not replacing) the issue-open check":
+    "alongside (not replacing) the github-issue-open check",
   "S-006-AC-1 ordered before the branch gate": "ordered before the branch gate",
   "S-006-AC-2 commit/PR citation instruction": "follows d-nn",
-  "S-006-AC-2 PR body references consumed decision IDs": "pr body **must** reference every consumed decision id",
-  "S-006-AC-3 graceful-absence handling": "you **must** proceed without the read, noting its absence",
+  "S-006-AC-2 PR body references consumed decision IDs":
+    "pr body **must** reference every consumed decision id",
+  "S-006-AC-3 graceful-absence handling":
+    "you **must** proceed without the read, noting its absence",
 };
 
 describe("implement instruction — decision-log read + citation contract declared (S-006 AC-1..AC-3)", () => {
