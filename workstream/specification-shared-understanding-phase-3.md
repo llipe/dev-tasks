@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                                                          | Author                    |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.1     | 2026-09-21 | Design Mode corrections (D-70 to D-75): PRD v1.14 wording for AC-07/FR-23; `vocabulary-*` findings are failures and this PRD gains `## Vocabulary` (S-006); seed forbidden synonyms trimmed (`package`/`module` dropped); identifier normalization, `+term` grammar, rule-name union, case rules, fenced-block skipping pinned; `checkGlossary()` silent on absence; `PackageMapRow` in `workspace.ts`; D-68 wording corrected; `activity-generate-spec` runs the Vocabulary check on specs. | verifier / @llipe / product-engineer |
 | 1.0     | 2026-09-21 | Initial version. Glossary file delivered install-if-absent, `## Vocabulary` in PRDs/specs, `core/checks/glossary.ts` shared by `lint` and the `verifier`, `doctor` absence warning, this repository's own glossary populated. First specification drafted behind a live `activity-grill(phase="HOW")` exit gate (D-57 to D-69). | @llipe / product-engineer |
 
 ## 1. Executive Summary
@@ -14,7 +15,7 @@ Phase 3 makes vocabulary a durable, checkable artifact. Every consumer gets `doc
 
 | Document                                                                | Relevance                                                                                                                                                    |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/requirements/prd-shared-understanding-refinement.md` v1.13        | FR-17 to FR-23 (Ubiquitous language), FR-63 (bounded contexts map to the package map), AC-06, AC-07, AC-08, AC-15, Data Requirements § Ubiquitous language, Technical Considerations § Delivery of the two consumer-owned files, § Glossary conformance; OQ-03 (resolved here as D-63); Non-Goals (no term generation from code, no tactical DDD) |
+| `docs/requirements/prd-shared-understanding-refinement.md` v1.14        | FR-17 to FR-23 (Ubiquitous language), FR-63 (bounded contexts map to the package map), AC-06, AC-07, AC-08, AC-15, Data Requirements § Ubiquitous language, Technical Considerations § Delivery of the two consumer-owned files, § Glossary conformance; OQ-03 (resolved here as D-63); Non-Goals (no term generation from code, no tactical DDD) |
 | `docs/tech.md`                                                          | Package map (the target of FR-63's bounded-context resolution; D-45's freeform column is retired by D-69), § Grilling (cap used by this spec's own interview) |
 | `SIMPLICITY.md`                                                         | A4 (no index for one file — D-58; no compiler dependency for one regex — D-60), A10 (burden of proof on adding)                                                |
 | `docs/adr/ADR-008-grilling-exit-gate-and-install-if-absent-category.md` | Records the platform-agnostic install-if-absent category this phase reuses (D-57)                                                                            |
@@ -25,7 +26,7 @@ Phase 3 makes vocabulary a durable, checkable artifact. Every consumer gets `doc
 | `.claude/skills/activity-refine/SKILL.md`, `activity-generate-spec/SKILL.md` (+ mirrors) | Output structures gain `## Vocabulary` after `## Decisions` (D-61)                                                                          |
 | `.claude/agents/verifier.md` (+ mirrors)                                | Audit Mode already calls `checkDocsStructure()`; gains the glossary conformance call (AC-15)                                                                 |
 | `workstream/research-shared-understanding-phase-3.md`                   | Pre-step research artifact (ADR-004) consumed by the HOW-phase interview                                                                                     |
-| `workstream/decisions-shared-understanding.md`                          | D-03, D-12, D-16, D-45 (WHAT/earlier phases); D-57 to D-69 (this phase's HOW decisions)                                                                      |
+| `workstream/decisions-shared-understanding.md`                          | D-03, D-12, D-16, D-45 (WHAT/earlier phases); D-57 to D-75 (this phase's HOW decisions, D-70 to D-75 from Design Mode)                                                                      |
 
 ## 3. Affected Repositories
 
@@ -106,7 +107,7 @@ No database. One new file shape, one existing shape gains a section, one registr
 
 ### `docs/domain/ubiquitous-language.md` (FR-18, FR-19, D-68)
 
-Frontmatter — the same five keys as `TESTING.md`/`SIMPLICITY.md`, so the hand-parser reuses what `docs-structure.ts` already parses (D-68):
+Frontmatter — the same five keys as `TESTING.md`/`SIMPLICITY.md` (D-68). `docs-structure.ts`'s `parseFrontmatter()` is reused; its `REQUIRED_KEYS` are the runbook keys, so the glossary check asserts its own five keys by presence — `owner`'s value is not enforced (D-75):
 
 ```yaml
 ---
@@ -163,7 +164,7 @@ Slots after `## Decisions` in `activity-refine`'s PRD Output Structure and after
 | …    | existing \| proposed \| conflict → D-NN | …      | …                           | …                                   |
 ```
 
-A row is complete when `existing` names a term present in the glossary, or `proposed` carries a bounded context, a definition, and forbidden synonyms (`none` allowed). A PRD with no `## Vocabulary` section, or with an incomplete row, receives the AC-07 named finding `vocabulary-missing` / `vocabulary-incomplete` (D-65). A PRD that genuinely introduces no domain concept carries the section with one line, `None — this PRD introduces no domain concepts.`, which is complete.
+A row is complete when `existing` names a term present in the glossary (case-insensitive), or `proposed` carries a bounded context, a definition, and forbidden synonyms (`none` allowed); `->` and `→` are both accepted in `conflict → D-NN`. A header-only table, or a `proposed` row for a term the glossary already has, is `vocabulary-incomplete` (the latter with a "use `existing`" message) (D-74). A PRD with no `## Vocabulary` section, or with an incomplete row, receives the AC-07 named finding `vocabulary-missing` / `vocabulary-incomplete` (D-65). A PRD that genuinely introduces no domain concept carries the section with one line, `None — this PRD introduces no domain concepts.`, which is complete.
 
 ### `INSTALL_IF_ABSENT_FILES` entry (D-57)
 
@@ -205,11 +206,12 @@ The check module's exported surface, following `decision-log-format.ts`:
 
 ```typescript
 // core/checks/glossary.ts
-export interface GlossaryFinding { rule: string; file: string; message: string; }
+export type GlossaryRule = "glossary-frontmatter" | "glossary-field-missing" | "glossary-status-invalid" | "glossary-superseded-dangling" | "glossary-term-duplicate" | "glossary-context-unresolved" | "glossary-term-removed" | "glossary-package-map-absent" | "glossary-origin-unresolved" | "vocabulary-missing" | "vocabulary-incomplete" | "glossary-forbidden-synonym"; // D-74
+export interface GlossaryFinding { rule: GlossaryRule; file: string; message: string; }
 export interface GlossaryResult { failures: GlossaryFinding[]; staleness: GlossaryFinding[]; }
 
 export function checkGlossaryContent(markdown: string, packageMap: PackageMapRow[] | null): GlossaryResult;   // D-66
-export function checkGlossary(repoRoot: string): GlossaryResult;                                              // reads file + tech.md, wraps the above
+export function checkGlossary(repoRoot: string): GlossaryResult;                                              // reads file + tech.md via `PackageMapRow` (workspace.ts, D-75); resolves archived origins; absent file → no findings (D-75)
 export function checkVocabularySection(prdMarkdown: string, glossaryMarkdown: string): GlossaryResult;        // AC-07, D-65
 export function checkExportedIdentifiers(addedLines: string[], glossaryMarkdown: string): GlossaryResult;     // FR-23, D-60, D-64 — always `staleness`, never `failures` (D-63)
 ```
@@ -242,11 +244,13 @@ stateDiagram-v2
     Pass --> [*]
 ```
 
-Append-only is checked without git: the changelog's latest version row and the term set are both in the file, so the check keeps the previous term set in the file's own `## Changelog` summary convention (`+term-a, +term-b` per version row). A term present in a prior row's `+` list but absent from the body fails `glossary-term-removed`. This keeps the check deterministic and offline, at the cost of a small discipline on the changelog row (the approval append in §8.4 writes it).
+Both parsers skip fenced code blocks — this specification and the PRD's Data Requirements both contain `## Vocabulary` / `## Bounded Context:` examples inside fences (D-74). Context names match the package map exactly (case-sensitive); term uniqueness is case-insensitive, matching the `existing` lookup (D-16, D-74). `PackageMapRow` and its table parser live in `core/distribution/workspace.ts`, shared with `doctor` (D-75).
+
+Append-only is checked without git: the changelog's latest version row and the term set are both in the file, so the check keeps the previous term set in the file's own `## Changelog` summary convention (`+term-a, +term-b` per version row — `+` followed by the term text to the next `,` or end of cell, trimmed, matched case-insensitively to headings, D-74). A term present in a prior row's `+` list but absent from the body fails `glossary-term-removed`. This keeps the check deterministic and offline, at the cost of a small discipline on the changelog row (the approval append in §8.4 writes it).
 
 ### 8.3 Vocabulary section check (FR-20, AC-07, D-65)
 
-`checkVocabularySection()` runs on a PRD (and spec) markdown: locate `## Vocabulary`; absent → `vocabulary-missing`; present → each table row must be `existing` (term found in the glossary, case-insensitive) or `proposed` with all three proposal columns non-empty, or `conflict → D-NN` (a recorded decision resolves it). Anything else → `vocabulary-incomplete` naming the row. No prose is scanned. `activity-refine` runs this before presenting a PRD for review and reports the finding by name; the same function runs under `lint` for every file in `docs/requirements/` so a PRD that predates this phase is not retroactively failed — files without a `## Vocabulary` section **and** without a `## Decisions` section (i.e., pre-Phase-2 PRDs) are skipped, since they were never grilled.
+`checkVocabularySection()` runs on a PRD (and spec) markdown: locate `## Vocabulary`; absent → `vocabulary-missing`; present → each table row must be `existing` (term found in the glossary, case-insensitive) or `proposed` with all three proposal columns non-empty, or `conflict → D-NN` (a recorded decision resolves it). Anything else → `vocabulary-incomplete` naming the row. Both are `failures` — AC-07 says "fails refinement" (D-71). No prose is scanned. `activity-refine` runs this before presenting a PRD for review, and `activity-generate-spec` runs the same call before presenting a spec (D-75), each reporting the finding by name; the same function runs under `lint` for every file in `docs/requirements/` so a PRD that predates this phase is not retroactively failed — files without a `## Vocabulary` section **and** without a `## Decisions` section (i.e., pre-Phase-2 PRDs) are skipped, since they were never grilled.
 
 ### 8.4 Approval append (FR-20, D-61)
 
@@ -258,7 +262,7 @@ When the user approves a PRD, `activity-refine` (not `activity-grill`, whose wri
 
 ### 8.6 Verifier conformance (FR-23, AC-15, D-60, D-63, D-64)
 
-`checkExportedIdentifiers()` takes the added lines of a PR's diff (the `verifier` already has the diff in Audit Mode), matches `^\+\s*export\s+(?:const|let|var|function|class|type|interface|enum|async function)\s+([A-Za-z_$][\w$]*)` and `export \{ … \}` name lists, splits each identifier into words (PascalCase, camelCase, snake_case, SCREAMING_CASE), normalizes case and trailing plural `s`/`es`, and reports a finding when any word — or the joined identifier — equals a forbidden synonym of any glossary term (D-64). The result is always `staleness`, never `failures` (D-63): the `verifier` narrates it as an advisory finding in its audit summary, and it never blocks PR readiness in this release. Unmatched identifiers produce nothing.
+`checkExportedIdentifiers()` takes the added lines of a PR's diff (the `verifier` already has the diff in Audit Mode), matches `^\+\s*export\s+(?:const|let|var|function|class|type|interface|enum|async function)\s+([A-Za-z_$][\w$]*)` and `export \{ … \}` name lists, splits each identifier into words (PascalCase, camelCase, snake_case, SCREAMING_CASE), normalizes case and plural (strip `es` after `s`/`x`/`z`/`ch`/`sh`, else one trailing `s` not preceded by `s`; the same function on both sides, D-73), and reports `glossary-forbidden-synonym` when any word, the joined identifier, or any adjacent word-pair join equals a forbidden synonym normalized the same way (`-`/`_`/spaces stripped) (D-64, D-73). `export { b as c }` yields `c`; a leading diff `+` on a line is optional (D-73). The result is always `staleness`, never `failures` (D-63): the `verifier` narrates it as an advisory finding in its audit summary, and it never blocks PR readiness in this release. Unmatched identifiers produce nothing.
 
 ### 8.7 This repository's own glossary (D-69)
 
@@ -275,7 +279,9 @@ When the user approves a PRD, `activity-refine` (not `activity-grill`, whose wri
 | install-if-absent     | ADR-006, ADR-008, `shared-understanding#D-12`                   |
 | foundation document   | `prd-shared-understanding-refinement.md` FR-44                  |
 
-Forbidden synonyms are recorded only where this PRD's own history supplies one (e.g., `foundation document` forbids `product-context`/`technical-guidelines` — the retired names; `bounded context` forbids `module`/`package` as a vocabulary label, since FR-63 keeps those as package-map concepts). No invented vocabulary.
+Forbidden synonyms are recorded only where this PRD's own history supplies one: `foundation document` forbids `product-context`/`technical-guidelines` — the retired names. `bounded context` carries none (D-72: `package`/`module` were the spec author's addition, not PRD history, and would flag S-002's own `PackageMapRow` export). No invented vocabulary.
+
+Because this PRD carries `## Decisions`, §8.3's skip rule does not skip it; S-006 adds a `## Vocabulary` section to `docs/requirements/prd-shared-understanding-refinement.md` listing the eight terms as `existing`, so `lint` passes on this repository (D-71).
 
 ## 9. Integration Details
 
@@ -339,7 +345,7 @@ Not applicable. No credential, network, or PII surface; the glossary is document
 
 ## 17. Open Questions
 
-None. The seven questions this phase needed a human for were asked one at a time under a live `activity-grill(phase="HOW")` session and recorded as D-63 to D-69; six more were resolved from the codebase and recorded as D-57 to D-62. The exit gate was confirmed explicitly on 2026-09-21.
+None. Design Mode (`workstream/test-plan-shared-understanding-phase-3.md`) flagged 18 ambiguities, A-1 to A-18; all are resolved as D-70 to D-75 (v1.1). The seven questions this phase needed a human for were asked one at a time under a live `activity-grill(phase="HOW")` session and recorded as D-63 to D-69; six more were resolved from the codebase and recorded as D-57 to D-62. The exit gate was confirmed explicitly on 2026-09-21.
 
 ## 18. Decisions (HOW phase)
 
@@ -360,5 +366,11 @@ Recorded in `workstream/decisions-shared-understanding.md`. Numbering continues 
 | D-67 | `doctor` warns on glossary absence only; empty-but-present is silent.                                                                              |
 | D-68 | Five-key frontmatter; owner `product-engineer`; `status: unfilled` is never permission.                                                             |
 | D-69 | Extends D-45: this repository's glossary ships populated with the terms this PRD introduced; the package-map placeholder becomes the canonical context. |
+| D-70 | PRD v1.14: AC-07 and FR-23 reworded to their testable forms (Design Mode A-1/A-2), with explicit human confirmation.                                 |
+| D-71 | `vocabulary-*` findings are failures; this PRD gains `## Vocabulary` in S-006 so `lint` passes on this repository.                                    |
+| D-72 | Seed glossary: `package`/`module` dropped from `bounded context`'s forbidden synonyms.                                                                 |
+| D-73 | Identifier rules: plural normalization order, `as` right-hand name, optional `+` prefix, multi-word synonym joining.                                   |
+| D-74 | Grammar rules: `+term` grammar, `GlossaryRule` union, Vocabulary edge grammar, exact-case contexts, case-insensitive terms, fenced blocks skipped.     |
+| D-75 | Module shape: `checkGlossary()` silent on absence, resolution in the filesystem wrapper, `PackageMapRow` in `workspace.ts`, D-68 wording corrected, spec check in `activity-generate-spec`. |
 
 Earlier decisions consumed: `shared-understanding#D-03` (strategic DDD only), `#D-12` (install-if-absent semantics), `#D-16` (one root glossary, contexts map to packages), `#D-45` (freeform bounded context until this phase), `#D-48`/`#D-49` (tsx invocation, hand-parsing), `#D-53` to `#D-56` (Phase 2 grilling mechanics this spec was produced under).

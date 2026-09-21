@@ -4,13 +4,14 @@
 
 | Version | Date       | Summary                                                                                                                                                                                              | Author           |
 | ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.1     | 2026-09-21 | Design Mode corrections (D-70 to D-75): S-002 exports `PackageMapRow` from `workspace.ts`, `checkGlossary()` silent on absence, fenced blocks skipped, rule-name union; S-003 `vocabulary-*` are failures and `activity-generate-spec` runs the check on specs; S-005 normalization rules pinned; S-006 seed synonyms trimmed and this PRD gains `## Vocabulary`. | verifier / @llipe / product-engineer |
 | 1.0     | 2026-09-21 | Initial version. Six stories: glossary delivery + `doctor`, `core/checks/glossary.ts` structure check, `## Vocabulary` + AC-07 + approval append, `activity-grill` FR-21 conflicts, `verifier` conformance, this repository's populated glossary. | product-engineer |
 
 ## Source Documents
 
-- PRD: `docs/requirements/prd-shared-understanding-refinement.md` v1.13 — FR-17 to FR-23, FR-63, AC-06, AC-07, AC-08, AC-15
-- Specification: `workstream/specification-shared-understanding-phase-3.md` v1.0
-- Decision log: `workstream/decisions-shared-understanding.md` — D-57 to D-69 (this phase), D-03, D-12, D-16, D-45, D-48, D-49
+- PRD: `docs/requirements/prd-shared-understanding-refinement.md` v1.14 — FR-17 to FR-23, FR-63, AC-06, AC-07, AC-08, AC-15
+- Specification: `workstream/specification-shared-understanding-phase-3.md` v1.1
+- Decision log: `workstream/decisions-shared-understanding.md` — D-57 to D-75 (this phase), D-03, D-12, D-16, D-45, D-48, D-49
 
 ## Delivery Shape
 
@@ -130,6 +131,7 @@ FR-18, FR-19, FR-63. The new `core/checks/glossary.ts` module (D-59) with `check
 - [ ] AC-3: A glossary with zero terms passes; malformed frontmatter (missing one of the five keys) fails, the same rule runbooks have.
 - [ ] AC-4: The check runs under `pnpm run lint` via `tsx core/checks/run.ts` and is exported from `core/checks/index.ts` for the `verifier` (one implementation, two callers, D-59).
 - [ ] AC-5: The module imports no `yaml` or Markdown parser (D-49).
+- [ ] AC-6: Findings carry a `GlossaryRule` typed union (D-74); both parsers skip fenced code blocks; `checkGlossary()` on an absent file returns no findings (D-75); `PackageMapRow` and its table parser are exported from `core/distribution/workspace.ts` and shared with `doctor` (D-75); context names match exactly, term uniqueness is case-insensitive (D-74).
 
 #### Business Rules
 
@@ -139,7 +141,7 @@ FR-18, FR-19, FR-63. The new `core/checks/glossary.ts` module (D-59) with `check
 #### Technical Notes
 
 - Specification §6 (exported surface), §8.2 (state diagram), §13.
-- Package-map read reuses `doctor.ts`'s `checkPackageMap()` table parse — extract to a shared helper if that avoids a second copy (A1 allows two, A4 prefers one).
+- Package-map read: new exported `PackageMapRow` + parser in `core/distribution/workspace.ts`, consumed by both `doctor` and this check (D-75). Frontmatter: reuse `parseFrontmatter()` only; assert the five glossary keys by presence, `owner` value not enforced (D-75).
 - Append-only detection reads the file's own `## Changelog` `+term` convention (spec §8.2), no git.
 
 #### Testing Requirements
@@ -204,6 +206,7 @@ FR-20, AC-07. `checkVocabularySection()` joins `core/checks/glossary.ts` (D-65 �
 - [ ] AC-4: On PRD approval, `activity-refine` appends each `proposed` row to the glossary under its bounded context (creating the heading if it resolves per FR-63), sets `Origin` to the PRD path and `Status: active`, adds a `+term` changelog row, bumps `version`, and flips `status: unfilled` → `active` on first append; a `conflict → D-NN` that superseded a term marks the old entry `superseded by …` and keeps it (FR-19, spec §8.4).
 - [ ] AC-5: The append is `activity-refine`'s write — `activity-grill`'s Write Authority section is unchanged (D-61).
 - [ ] AC-6: Three-tree parity for both skills.
+- [ ] AC-7: `vocabulary-missing`/`vocabulary-incomplete` are `failures` (D-71); `activity-generate-spec` runs the same pre-review check on specs (D-75); header-only table and `proposed`-but-present rows are incomplete, `->`/`→` both accepted (D-74).
 
 #### Business Rules
 
@@ -340,7 +343,7 @@ FR-23, AC-15. `checkExportedIdentifiers()` in `core/checks/glossary.ts`: regex o
 
 #### Acceptance Criteria
 
-- [ ] AC-1: `checkExportedIdentifiers(addedLines, glossary)` matches `export (const|let|var|function|async function|class|type|interface|enum) <Name>` and `export { a, b as c }` lists, splits each identifier by PascalCase/camelCase/snake_case/SCREAMING_CASE, normalizes case and trailing `s`/`es`, and returns a finding when any word or the joined identifier equals a forbidden synonym of any glossary term (D-60, D-64).
+- [ ] AC-1: `checkExportedIdentifiers(addedLines, glossary)` matches `export (const|let|var|function|async function|class|type|interface|enum) <Name>` and `export { a, b as c }` lists (right-hand name), accepts an optional leading diff `+`, splits each identifier by PascalCase/camelCase/snake_case/SCREAMING_CASE, normalizes case and plural (strip `es` after `s`/`x`/`z`/`ch`/`sh`, else one trailing `s` not preceded by `s`, same function both sides), and returns `glossary-forbidden-synonym` when any word, the joined identifier, or an adjacent word-pair join equals a forbidden synonym normalized the same way (`-`/`_`/spaces stripped) (D-60, D-64, D-73).
 - [ ] AC-2: Identifiers matching no glossary term produce no finding (D-64).
 - [ ] AC-3: Every finding is in `staleness`, never `failures`; `lint` exit code is unaffected (D-63).
 - [ ] AC-4: The `verifier`'s Audit Mode calls the function on the PR's added lines and narrates hits as an advisory finding class, in all three trees (PRD AC-15).
@@ -415,6 +418,7 @@ D-69 (extends D-45), D-62. Eight terms under one context, `AI-assisted developme
 - [ ] AC-3: `docs/tech.md`'s package map sentence "The bounded-context value is a freeform working label (`shared-understanding#D-45`). Phase 3's glossary supersedes it with a canonical term." is replaced by a pointer to the glossary; the column value is unchanged (it is now the canonical context name) (D-45 closed by D-69).
 - [ ] AC-4: `activity-init`'s bounded-context question gains one sentence naming the glossary as canonical, in all three trees (D-62); no new interview step.
 - [ ] AC-5: No invented vocabulary — every term traces to a PRD FR or a decision ID.
+- [ ] AC-6: `docs/requirements/prd-shared-understanding-refinement.md` gains a `## Vocabulary` section listing the eight terms as `existing`, so `pnpm run lint`'s Vocabulary walk passes on this repository (D-71).
 
 #### Business Rules
 
@@ -423,7 +427,7 @@ D-69 (extends D-45), D-62. Eight terms under one context, `AI-assisted developme
 #### Technical Notes
 
 - Specification §8.7 (term table and forbidden synonyms), D-62, D-69.
-- `foundation document` forbids the retired names `product-context` / `technical-guidelines`; `bounded context` forbids `module` / `package` as vocabulary labels.
+- `foundation document` forbids the retired names `product-context` / `technical-guidelines`; `bounded context` carries no forbidden synonyms (D-72).
 
 #### Testing Requirements
 
@@ -443,12 +447,14 @@ Not applicable.
 1. Add the real-file assertion to the glossary test first; confirm it fails on the empty template.
 2. Populate `docs/domain/ubiquitous-language.md` per spec §8.7.
 3. Edit `docs/tech.md` (package-map note) and `activity-init` (three trees).
+3a. Add `## Vocabulary` to `docs/requirements/prd-shared-understanding-refinement.md` with the eight terms as `existing` (D-71).
 4. Confirm `lint`, the real-file test, and the `activity-init` parity test pass.
 
 #### Files to Create/Modify
 
 - `docs/domain/ubiquitous-language.md` - populated glossary (this repository's copy)
 - `docs/tech.md` - package-map note
+- `docs/requirements/prd-shared-understanding-refinement.md` - `## Vocabulary` section (D-71)
 - `.claude/skills/activity-init/SKILL.md` (+ `.github`, `.kiro`) - pointer sentence
 - `test/unit/checks-glossary.test.ts` - real-file assertion
 - `test/unit/skill-parity-init.test.ts` - extend

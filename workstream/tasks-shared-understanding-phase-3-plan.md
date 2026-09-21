@@ -1,8 +1,8 @@
 # Implementation Plan - Shared Understanding Phase 3 (Ubiquitous Language)
 
-Source: `workstream/user-stories-shared-understanding-phase-3.md` v1.0 — all 6 stories selected.
-Spec: `workstream/specification-shared-understanding-phase-3.md` v1.0
-Decisions: `workstream/decisions-shared-understanding.md` (D-57…D-69 for this phase)
+Source: `workstream/user-stories-shared-understanding-phase-3.md` v1.1 — all 6 stories selected.
+Spec: `workstream/specification-shared-understanding-phase-3.md` v1.1
+Decisions: `workstream/decisions-shared-understanding.md` (D-57…D-75 for this phase; D-70…D-75 from Design Mode)
 Repository shape: single-package — package brackets omitted per `docs/tech.md`.
 
 ## Relevant Files
@@ -56,7 +56,8 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   > Note: Depends on 1.0. Separate hand-parsed module, `tsx`-invoked, one implementation for `lint` and the `verifier` (D-59, D-48, D-49). Fail-vs-report split per D-66.
 
   - [ ] 2.1 Write `test/unit/checks-glossary.test.ts` first with one fixture per D-66 failure rule (missing field, invalid `Status`, dangling `superseded by`, duplicate term, unresolved bounded context, removed term), both report cases (no package map → exactly one finding; archived-origin `feature#D-NN`), zero-terms pass, and five-key frontmatter failure; confirm it fails (module absent)
-  - [ ] 2.2 Implement `core/checks/glossary.ts`: frontmatter parse (the five fixed keys), `## Bounded Context:` → `### <Term>` → five-bullet walk, package-map resolution against `docs/tech.md` (reuse or extract `doctor.ts`'s table parse per A1/A4), append-only detection via the file's own `+term` changelog rows, `checkGlossaryContent()` and `checkGlossary()` (D-59, D-66)
+  - [ ] 2.2 Add `PackageMapRow` and its table parser to `core/distribution/workspace.ts`, shared with `doctor` (D-75)
+  - [ ] 2.2a Implement `core/checks/glossary.ts`: `parseFrontmatter()` reuse asserting the five glossary keys by presence (D-75), `## Bounded Context:` → `### <Term>` → five-bullet walk skipping fenced code blocks (D-74), exact-case context resolution against `PackageMapRow[]`, case-insensitive term uniqueness (D-74), append-only via `+term` rows (grammar D-74), a `GlossaryRule` typed union (D-74); `checkGlossaryContent()` pure, `checkGlossary(repoRoot)` doing filesystem work and returning no findings on an absent file (D-75) (D-59, D-66)
   - [ ] 2.3 Export from `core/checks/index.ts`; call from `core/checks/run.ts` — failures → stderr + exit 1, staleness → stdout (D-48)
   - [ ] 2.4 Verify Acceptance Criterion: AC-1 each structural rule fails `lint`
   - [ ] 2.5 Verify Acceptance Criterion: AC-2 absent package map and archived origin report without failing
@@ -71,9 +72,9 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   > Note: Depends on 2.0. No prose scanning — structural Vocabulary-section check only (D-65). Append happens at approval, by `activity-refine`, never `activity-grill` (D-61).
 
   - [ ] 3.1 Write `checkVocabularySection()` unit tests first: missing section → `vocabulary-missing`; incomplete row → `vocabulary-incomplete` naming the row; `existing` term absent from glossary; complete `proposed` row; `conflict → D-NN`; the `None — this PRD introduces no domain concepts.` sentinel; pre-Phase-2 skip (no `## Vocabulary` and no `## Decisions`) (D-65); confirm they fail
-  - [ ] 3.2 Implement `checkVocabularySection()` in `core/checks/glossary.ts`; add the `docs/requirements/*.md` walk to `run.ts` with the pre-Phase-2 skip
+  - [ ] 3.2 Implement `checkVocabularySection()` in `core/checks/glossary.ts` — findings in `failures` (D-71); header-only table and `proposed`-but-present → incomplete, `->`/`→` accepted (D-74); add the `docs/requirements/*.md` walk to `run.ts` with the pre-Phase-2 skip
   - [ ] 3.3 Edit `activity-refine` (three trees): `## Vocabulary` after `## Decisions` in the PRD Output Structure with the spec §5 table; call the check before presenting for review and report the finding by name; add the approval-append step — append `proposed` rows under their bounded context (create heading only if it resolves per FR-63), `Origin` = PRD path, `Status: active`, `+term` changelog row, `version` bump, `status: unfilled` → `active` on first append; `conflict → D-NN` marks the superseded term and keeps it (D-61, spec §8.4)
-  - [ ] 3.4 Edit `activity-generate-spec` (three trees): `## Vocabulary` after `## Decisions (HOW phase)` (D-61)
+  - [ ] 3.4 Edit `activity-generate-spec` (three trees): `## Vocabulary` after `## Decisions (HOW phase)` (D-61); run the same pre-review Vocabulary check on specs (D-75)
   - [ ] 3.5 Add `test/fixtures/grilling/vocabulary-approval.md` (proposed rows → approval → exact glossary diff) and its README row
   - [ ] 3.6 Extend `test/unit/skill-parity-grilling.test.ts`: Vocabulary markers in both skills, approval-append markers in `activity-refine`, negative assertion that `activity-grill`'s Write Authority is unchanged (D-61)
   - [ ] 3.7 Verify Acceptance Criterion: AC-1 Vocabulary section in both Output Structures
@@ -103,7 +104,7 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   > Note: Depends on 2.0. Regex over added `export` lines, not the TypeScript compiler API (D-60). Forbidden-synonym hits only (D-64). Always advisory in this release (D-63).
 
   - [ ] 5.1 Write `checkExportedIdentifiers()` unit tests first: each `export` form (`const|let|var|function|async function|class|type|interface|enum`, `export { a, b as c }`), each casing split (PascalCase, camelCase, snake_case, SCREAMING_CASE), plural normalization (`s`/`es`), a forbidden-synonym hit on a word and on a whole identifier, an unmatched identifier → nothing (D-64), result always in `staleness` never `failures` (D-63); confirm they fail
-  - [ ] 5.2 Implement `checkExportedIdentifiers(addedLines, glossaryMarkdown)` in `core/checks/glossary.ts`; export it (D-60)
+  - [ ] 5.2 Implement `checkExportedIdentifiers(addedLines, glossaryMarkdown)` in `core/checks/glossary.ts`; export it — right-hand `as` name, optional leading `+`, plural rule (`es` after `s`/`x`/`z`/`ch`/`sh`, else one trailing `s` not after `s`), multi-word synonym joining, rule `glossary-forbidden-synonym` (D-60, D-73, D-74)
   - [ ] 5.3 Edit `verifier.md` (three trees): in Audit Mode, beside the existing `checkDocsStructure()` call, run the function over the PR's added lines (`git diff <base>...HEAD`) and narrate hits as an advisory finding class that never blocks readiness (D-63)
   - [ ] 5.4 Extend the parity test (or add a `verifier` parity file — implementer's choice) with the conformance-call markers across the three `verifier` files
   - [ ] 5.5 Verify Acceptance Criterion: AC-1 extraction forms, splitting, normalization, hit semantics
@@ -119,8 +120,9 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   > Note: Depends on 2.0 and 3.0. Runs last so the finished check validates the file. Eight terms only — no invented vocabulary (D-69). One pointer sentence in `activity-init`, no new step (D-62).
 
   - [ ] 6.1 Add the real-file assertion to `test/unit/checks-glossary.test.ts` first (reads `docs/domain/ubiquitous-language.md`, asserts zero failures and that the `## Bounded Context:` heading matches `docs/tech.md`'s column value exactly); confirm it fails against the empty template
-  - [ ] 6.2 Populate `docs/domain/ubiquitous-language.md` per spec §8.7: `## Bounded Context: AI-assisted development workflow`; the eight terms (`decision log`, `grilling`, `exit gate`, `bounded context`, `package map`, `runbook`, `install-if-absent`, `foundation document`) with all five fields, `Origin` per the spec table, `Status: active`; forbidden synonyms only where this PRD's history supplies them; frontmatter `status: active`, `version` bumped, one `+term` changelog row (D-69)
+  - [ ] 6.2 Populate `docs/domain/ubiquitous-language.md` per spec §8.7: `## Bounded Context: AI-assisted development workflow`; the eight terms (`decision log`, `grilling`, `exit gate`, `bounded context`, `package map`, `runbook`, `install-if-absent`, `foundation document`) with all five fields, `Origin` per the spec table, `Status: active`; forbidden synonyms only where this PRD's history supplies them (`bounded context` carries none, D-72); frontmatter `status: active`, `version` bumped, one `+term` changelog row (D-69)
   - [ ] 6.3 Edit `docs/tech.md`: replace the "freeform working label (`shared-understanding#D-45`) … Phase 3's glossary supersedes it" sentence with a pointer to the glossary; leave the column value unchanged (D-69 closes D-45)
+  - [ ] 6.3a Add `## Vocabulary` to `docs/requirements/prd-shared-understanding-refinement.md` listing the eight terms as `existing` (D-71)
   - [ ] 6.4 Edit `activity-init` (three trees): one sentence on the bounded-context question naming the glossary as canonical (D-62); extend `test/unit/skill-parity-init.test.ts`
   - [ ] 6.5 Verify Acceptance Criterion: AC-1 exactly eight terms, all fields, origins resolve, changelog row present
   - [ ] 6.6 Verify Acceptance Criterion: AC-2 `pnpm run lint` passes; `checkExportedIdentifiers()` over this phase's diff reports nothing (5.9)
@@ -149,3 +151,9 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 | D-67 | `doctor` warns on absence only.                                                                                          |
 | D-68 | Five-key frontmatter; owner `product-engineer`; `unfilled` is never permission.                                          |
 | D-69 | This repository's glossary ships populated with eight terms; D-45's placeholder becomes the canonical context.           |
+| D-70 | PRD v1.14: AC-07 and FR-23 reworded to testable forms.                                                                  |
+| D-71 | `vocabulary-*` are failures; this PRD gains `## Vocabulary`.                                                            |
+| D-72 | Seed: `package`/`module` dropped from `bounded context`'s forbidden synonyms.                                            |
+| D-73 | Identifier rules: plural order, `as` right-hand name, optional `+`, multi-word synonyms.                                 |
+| D-74 | Grammar rules: `+term`, `GlossaryRule` union, Vocabulary edge grammar, case rules, fenced blocks skipped.                |
+| D-75 | Module shape: silent on absence, `PackageMapRow` in `workspace.ts`, D-68 corrected, spec check in `activity-generate-spec`. |
