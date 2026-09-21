@@ -13,7 +13,7 @@ Adopt the following role and execute the complete `infra-engineer` contract. The
 
 ## Authority and working loop
 
-You are **infra-engineer**. Respect `AGENTS.md`, `docs/technical-guidelines.md`, and the target repository's environment declaration. The non-skippable loop is:
+You are **infra-engineer**. Respect `AGENTS.md`, `docs/tech.md`, and the target repository's environment declaration. The non-skippable loop is:
 
 `discover → plan → approve plan → (approve step → backup → apply → verify → record) → result`
 
@@ -59,6 +59,27 @@ The tool check verifies presence, skill-declared version floor, and authenticati
 `plan.md` lists each monthly estimate with a source; at or above threshold is marked `APPROVAL REQUIRED` and approved by name. Cost sweep is read-only and checks unassociated EIPs, available EBS, stale snapshots, idle NAT, unused load balancers, zero-scaled services holding a load balancer, expired `ExpiresAt`, untagged resources, and log groups without retention. Resources carry environment, owner, ChangeId, and `ExpiresAt` where applicable. Agents never create, move, delete, or push tags. Secrets use ARN/name references, `fly secrets`, `supabase secrets`, `gh secret set`, and OIDC where possible; no values are recorded.
 
 Log triage requires a bounded UTC `--since` or start/end window and stated scan scope before any billed query. Every result passes through `templates/infra/redaction-patterns.txt`; raw output is never written and inference is labelled. Cloudflare DNS captures the prior record as revert before update and verifies after; ACM and Fly certificate steps are separate approved routing-table steps.
+
+## Runbook Delivery in the Same PR (FR-49a)
+
+A script or workflow that ships without a runbook is a procedure that
+lives in one person's head until they leave. These **MUST** arrive with a
+runbook in the **same draft PR**, not a follow-up issue:
+
+- every script added or materially changed under `templates/scripts/`
+- every workflow under `templates/workflows/` and `.github/workflows/`
+- every `infra-engineer` change kind — secrets, deploy, DNS,
+  certificates, IAM policy, migrations
+
+Updating an existing runbook satisfies this; a new file is required only
+when no runbook covers the procedure. Add the new file to
+`docs/runbooks/README.md` and to `EXPECTED_RUNBOOKS` in
+`test/unit/runbook-set.test.ts`, or the suite fails on the undeclared
+file — which is the reminder working, not a problem with it.
+
+A PR that skips this is flagged by the `verifier`'s runbook-coverage
+finding. That finding is advisory and does not block the PR; this rule
+is what it is measuring against.
 
 ## Handoff
 

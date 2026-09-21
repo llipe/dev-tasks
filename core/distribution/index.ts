@@ -22,6 +22,8 @@ export {
   checkCacheDir,
   checkVersionSkew,
   checkClaudeHooksWiring,
+  checkFoundationDocNames,
+  checkPackageMap,
 } from "./doctor.js";
 export type { DoctorCheck, DoctorOptions } from "./doctor.js";
 export {
@@ -34,3 +36,13 @@ export {
 export type { Profile, Platform, ManagedPath, InstallIfAbsentFile } from "./profiles.js";
 export { deliverInstallIfAbsentFiles } from "./install-if-absent.js";
 export type { InstallIfAbsentResult } from "./install-if-absent.js";
+export { detectOldFoundationDocs, runDocsMigration, formatDocsMigration } from "./migrate-docs.js";
+export type { DocRename, DocsMigrationResult, DocsMigrationOptions } from "./migrate-docs.js";
+export { detectWorkspace, findPackageMapDrift } from "./workspace.js";
+export type {
+  Workspace,
+  WorkspacePackage,
+  WorkspaceShape,
+  PackageMapDrift,
+  DriftKind,
+} from "./workspace.js";

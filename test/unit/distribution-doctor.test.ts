@@ -4,9 +4,11 @@ import {
   checkGitVersion,
   checkCacheDir,
   checkVersionSkew,
+  checkFoundationDocNames,
+  checkPackageMap,
   runDoctor,
 } from "#core/distribution/doctor.js";
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -118,6 +120,94 @@ describe("core/distribution/doctor", () => {
     });
   });
 
+  describe("checkFoundationDocNames", () => {
+    let tmpDir: string;
+
+    beforeEach(() => {
+      tmpDir = mkdtempSync(join(tmpdir(), "dev-tasks-doctor-docnames-"));
+      mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    });
+
+    afterEach(() => {
+      rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    it("passes when neither old document is present", async () => {
+      writeFileSync(join(tmpDir, "docs", "product.md"), "# Product\n", "utf-8");
+      const result = await checkFoundationDocNames(tmpDir);
+      expect(result.pass).toBe(true);
+      expect(result.warn).toBeUndefined();
+      expect(result.name).toBe("foundation-doc-names");
+    });
+
+    it("passes when there is no docs directory at all", async () => {
+      rmSync(join(tmpDir, "docs"), { recursive: true, force: true });
+      const result = await checkFoundationDocNames(tmpDir);
+      expect(result.pass).toBe(true);
+    });
+
+    it("warns — never fails — and names both documents, both new names, and the command (PRD AC-23)", async () => {
+      writeFileSync(join(tmpDir, "docs", "product-context.md"), "# Product\n", "utf-8");
+      writeFileSync(join(tmpDir, "docs", "technical-guidelines.md"), "# Tech\n", "utf-8");
+
+      const result = await checkFoundationDocNames(tmpDir);
+      // PRD AC-23 says "prints a warning". A consumer on the old names
+      // is not broken — the fallback rule resolves them — so a failing
+      // doctor would report a defect where none exists, and exit 11
+      // would break any script gating on a clean doctor.
+      expect(result.pass).toBe(true);
+      expect(result.warn).toBe(true);
+      expect(result.message).toContain("docs/product-context.md");
+      expect(result.message).toContain("docs/product.md");
+      expect(result.message).toContain("docs/technical-guidelines.md");
+      expect(result.message).toContain("docs/tech.md");
+      expect(result.message).toContain("dev-tasks migrate docs");
+    });
+
+    it("warns when only one old document is present", async () => {
+      writeFileSync(join(tmpDir, "docs", "technical-guidelines.md"), "# Tech\n", "utf-8");
+      const result = await checkFoundationDocNames(tmpDir);
+      expect(result.warn).toBe(true);
+      expect(result.message).toContain("docs/technical-guidelines.md");
+      expect(result.message).not.toContain("docs/product-context.md");
+    });
+
+    it("renames nothing — the check is read-only", async () => {
+      writeFileSync(join(tmpDir, "docs", "product-context.md"), "# Product\n", "utf-8");
+      await checkFoundationDocNames(tmpDir);
+      expect(existsSync(join(tmpDir, "docs", "product-context.md"))).toBe(true);
+      expect(existsSync(join(tmpDir, "docs", "product.md"))).toBe(false);
+      expect(existsSync(join(tmpDir, ".dev-tasks"))).toBe(false);
+    });
+  });
+
+  describe("checkPackageMap", () => {
+    const FIXTURES = join(import.meta.dirname, "../fixtures");
+
+    it("passes when the map matches the workspace", () => {
+      const result = checkPackageMap(join(FIXTURES, "workspace-mono"));
+      expect(result.name).toBe("package-map");
+      expect(result.pass).toBe(true);
+      expect(result.warn).toBeUndefined();
+    });
+
+    it("warns without failing when the map and the workspace disagree (AC-6)", () => {
+      // The whole point: a stale table is a documentation problem, and
+      // failing doctor on it would block a consumer over a column they
+      // have not filled in. Structural failures belong to lint (S-004).
+      const result = checkPackageMap(join(FIXTURES, "workspace-unnamed"));
+      expect(result.pass).toBe(true);
+      expect(result.warn).toBe(true);
+      expect(result.message).toContain("packages/gone");
+    });
+
+    it("passes quietly when there is no package map at all", () => {
+      const result = checkPackageMap(join(FIXTURES, "workspace-nx"));
+      expect(result.pass).toBe(true);
+      expect(result.warn).toBeUndefined();
+    });
+  });
+
   describe("runDoctor", () => {
     let tmpDir: string;
 
@@ -168,6 +258,8 @@ describe("core/distribution/doctor", () => {
       expect(names).toContain("git-version");
       expect(names).toContain("cache-dir");
       expect(names).toContain("version-skew");
+      expect(names).toContain("foundation-doc-names");
+      expect(names).toContain("package-map");
     });
   });
 });

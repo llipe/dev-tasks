@@ -86,6 +86,31 @@ Non-JS packages are **not** held to these names. Record their equivalent command
 
 Report per package: reached, or missed with the gate that fails to reach it.
 
+### Per-package procedure (monorepo)
+
+The checklist above is per package, not per repository. Run it once for
+each package, from the same list the package map in `docs/tech.md`
+records:
+
+1. Enumerate packages from the package map. Where it is absent or stale,
+   fall back to the workspace signals themselves.
+2. For each package, record the test command it actually defines and
+   whether the aggregate root command reaches it.
+3. **A package with no test script is a finding, not a pass.** Record it
+   as `no test script` — distinct from `unreachable`, because the fix
+   differs: one needs a script, the other needs wiring.
+4. Report one row per package:
+
+   | Package | Test command | Reached by root `test` | Finding |
+   | ------- | ------------ | ---------------------- | ------- |
+   | `@acme/api` | `vitest run` | yes | — |
+   | `@acme/web` | `vitest run` | **no** | unreachable from the aggregate |
+   | `@acme/cli` | — | n/a | no test script |
+
+This is an extension of the single-package procedure, not a parallel
+monorepo path. A single-package repository produces the same table with
+one row.
+
 ### Worked example
 
 A monorepo defines `test:node` as `app && scraper && db` while the `api` package holds the largest suite. Every script name is canonical. The CI job and the deploy quality gate both run the aggregate.

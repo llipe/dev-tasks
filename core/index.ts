@@ -8,3 +8,4 @@ export { reconcile } from "./reconcile.js";
 export type { ReconcileAction } from "./reconcile.js";
 
 export * as distribution from "./distribution/index.js";
+export * as checks from "./checks/index.js";

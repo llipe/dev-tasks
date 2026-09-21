@@ -122,6 +122,12 @@
       "description": "GitHub Actions deploy/rollback workflow templates",
       "pattern": "*",
       "recursive": true
+    },
+    {
+      "path": "templates/runbooks",
+      "description": "Runbook index and template (install-if-absent into docs/runbooks/)",
+      "pattern": "*",
+      "recursive": true
     }
   ],
   "consumer_owned_paths": [
@@ -134,7 +140,8 @@
     "infra/",
     ".github/workflows/deploy-dev.yml",
     ".github/workflows/deploy-prod.yml",
-    ".github/workflows/rollback.yml"
+    ".github/workflows/rollback.yml",
+    "docs/runbooks/"
   ],
   "version_file": ".dev-tasks-version",
   "backup_dir": ".dev-tasks-backup",

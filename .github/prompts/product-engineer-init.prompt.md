@@ -1,6 +1,6 @@
 ---
 agent: product-engineer
-description: "Initialize project foundation — create product-context.md and technical-guidelines.md."
+description: "Initialize project foundation — create product.md and tech.md."
 ---
 
 Run the `product-engineer` agent to establish foundation documents for this project:
@@ -10,12 +10,12 @@ Run the `product-engineer` agent to establish foundation documents for this proj
 
 The agent will invoke the `activity-init` skill which first **detects the repository mode**:
 
-- **Mono-repo** (`/docs` present): standard interview flow
+- **Documented repository** (`/docs` present): standard interview flow
 - **Undocumented/greenfield** (`/docs` absent): investigates the codebase directly, then interview
 
 Then creates:
 
-- `docs/product-context.md` — Product context and strategic goals
-- `docs/technical-guidelines.md` — Technical standards and patterns
+- `docs/product.md` — Product context and strategic goals
+- `docs/tech.md` — Technical standards and patterns
 
 These documents serve as the "constitution" for all future development. Run this once per project or on major strategic/technical pivots.

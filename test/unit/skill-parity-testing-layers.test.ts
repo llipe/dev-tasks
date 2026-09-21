@@ -9,7 +9,7 @@
  * and this file's checks were updated accordingly: its TESTING.md-facing
  * assertions (AC-6, test:contract) and the workflow-chains.md Step 4
  * assertion are removed, matching TESTING.md's and workflow-chains.md's
- * own S-005 edits.
+ * own Phase 0 edits.
  *
  * Also validates TESTING.md taxonomy updates and qa-engineer procedure extension.
  *
@@ -318,11 +318,111 @@ describe("issue-130 — SC-21: docs/workflow-chains.md updated", () => {
   });
 });
 
+// --- S-006: per-package reachability and the fan-out contract ---
+
+describe("S-006 — activity-test-standards is per-package", () => {
+  const VARIANTS = [
+    ".claude/skills/activity-test-standards/SKILL.md",
+    ".github/skills/activity-test-standards/SKILL.md",
+    ".kiro/skills/activity-test-standards/SKILL.md",
+  ];
+
+  for (const relPath of VARIANTS) {
+    it(`${relPath} extends the reachability procedure per package (AC-3)`, () => {
+      const c = read(relPath);
+      expect(c).toContain("### Per-package procedure");
+      expect(c).toContain("one row per package");
+    });
+
+    it(`${relPath} treats a package with no test script as a finding, not a pass`, () => {
+      // The quiet failure: a package with nothing to run looks green.
+      const c = read(relPath);
+      expect(c).toMatch(/no test script.*is a finding, not a pass/i);
+    });
+
+    it(`${relPath} extends the existing procedure rather than adding a parallel path`, () => {
+      expect(read(relPath)).toMatch(/not a parallel\s*\n?\s*monorepo path/i);
+    });
+  }
+});
+
+describe("S-006 — the documented contracts", () => {
+  it("TESTING.md declares the per-package runner contract (AC-3)", () => {
+    const c = read("TESTING.md");
+    expect(c).toContain("### Per-package runners");
+    expect(c).toMatch(/Every package gets a row/i);
+    expect(c).toMatch(/no test script/i);
+  });
+
+  it("docs/tech.md documents root-script fan-out with validate as the entry point (AC-2)", () => {
+    const c = read("docs/tech.md");
+    expect(c).toContain("## Root Script Fan-Out");
+    expect(c).toMatch(/Root `validate` stays the single entry point/i);
+    // The Non-Goal this protects: no second validation command.
+    expect(c).toMatch(/no second\s*\n?\s*command/i);
+  });
+
+  it("docs/tech.md keeps the glossary and simplicity baseline at the root (AC-4, AC-5)", () => {
+    const c = read("docs/tech.md");
+    expect(c).toMatch(/One glossary, at the root/i);
+    expect(c).toMatch(/no per-package glossaries/i);
+    expect(c).toMatch(/One simplicity baseline, at the root, keyed by path/i);
+    expect(c).toMatch(/no per-package ratchet/i);
+  });
+
+  it("scoping the gate to affected packages is left to Phase 4 (business rule)", () => {
+    // This story delivers agent behavior and the contract, not the CI
+    // template. Asserting the boundary keeps it from creeping in.
+    expect(read("docs/tech.md")).toMatch(/Phase 4 CI templates \(FR-41, FR-42\)/);
+  });
+});
+
+describe("S-006 — plan and implement carry package scope (AC-1, AC-6)", () => {
+  const PLAN = [
+    ".claude/skills/plan/SKILL.md",
+    ".github/instructions/plan.instructions.md",
+    ".kiro/steering/plan.md",
+  ];
+  const IMPLEMENT = [
+    ".claude/skills/implement/SKILL.md",
+    ".github/instructions/implement.instructions.md",
+    ".kiro/steering/implement.md",
+  ];
+
+  for (const relPath of PLAN) {
+    it(`${relPath} requires each task to name its package`, () => {
+      const c = read(relPath);
+      expect(c).toContain("## Package Attribution");
+      expect(c).toMatch(/single-package repository the bracket is omitted/i);
+    });
+  }
+
+  for (const relPath of IMPLEMENT) {
+    it(`${relPath} makes the package the Conventional Commits scope`, () => {
+      const c = read(relPath);
+      expect(c).toContain("## Package Scope in Commits");
+      expect(c).toContain("feat(api):");
+    });
+
+    it(`${relPath} forbids an empty scope in a single-package repository`, () => {
+      // `feat():` is not valid Conventional Commits and the commit hook
+      // rejects it — the instruction has to say omit, not blank.
+      const c = read(relPath);
+      expect(c).toMatch(/single-package repository the scope is optional/i);
+      expect(c).toContain("feat():");
+    });
+
+    it(`${relPath} says what to do with a name that is not a valid scope`, () => {
+      expect(read(relPath)).toMatch(/not a valid scope/i);
+    });
+  }
+});
+
 // --- SC-23: technical-guidelines Layer 2.5 ---
 
 describe("issue-130 — SC-23: technical-guidelines references Layer 2.5", () => {
   it("mentions Layer 2.5 or Integration tests", () => {
-    const content = read("docs/technical-guidelines.md");
+    const content = read("docs/tech.md");
     expect(content).toMatch(/Layer 2\.5|Integration tests/i);
   });
 });

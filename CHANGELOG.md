@@ -23,6 +23,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **`dev-tasks migrate docs`** — proposes the foundation-document rename to a consumer repository and applies it under `--force`, backing the originals up first. Report-only by default; exits `14` when a rename is skipped because its target already exists. `--json` on every path. Note the deliberate asymmetry with the bare `dev-tasks migrate`, which applies immediately (`shared-understanding#D-52`).
+- **`dev-tasks doctor`** gains two checks: `foundation-doc-names` (fails when a repository still carries the pre-rename names and names the command that fixes it) and `package-map` (warns, never fails, when `docs/tech.md`'s package map and the workspace disagree).
+- **`docs/runbooks/`** — ten runbooks covering install, branch protection, the foundation-doc migration, npm release, deploy, rollback, hook troubleshooting, local Supabase, simplicity tooling, and the `dt` retirement. `install` scaffolds the directory, its index, and a template into a consumer repository with install-if-absent semantics.
+- **`core/checks/`** with the docs-structure check, chained into `lint`. Fails on a broken docs index, a malformed runbook, or a dangling `related` path; reports a `last_verified` over 90 days without failing.
+- **Repository-shape detection** (`core/distribution/workspace.ts`) — single-package or monorepo from six signals, with the package map recorded in `docs/tech.md`.
+
+### Changed
+
+- **Foundation documents renamed:** `docs/product-context.md` → `docs/product.md`, `docs/technical-guidelines.md` → `docs/tech.md`. Content is byte-identical. Agents resolve the new name first and fall back to the old one for one release cycle, so a repository installed before the rename keeps working; `dev-tasks update` never renames a consumer-owned file on its own.
+- `INSTALL_IF_ABSENT_FILES` accepts a platform-agnostic entry, so a file belonging to the repository rather than to one platform is delivered once per run.
+- `researcher`, `plan`, `implement`, and `activity-test-standards` are package-aware: findings, tasks, and commit scopes name their package in a monorepo, and reachability is verified per package. Optional — never blank — in a single-package repository.
+- `verifier` reports a runbook-coverage finding when a PR performs a repeatable procedure and leaves no runbook. Advisory; never blocks PR readiness.
+- Documentation ownership is explicit: `technical-writer` owns docs structure and content, `housekeeping` does not, and a docs-structure failure in `validate` routes to `technical-writer`.
+- `activity-init`'s "Mode A — Mono-Repo" renamed to "Mode A — Documented Repository", freeing the term for repository shape (`shared-understanding#D-44`).
+
 ### Removed
 
 - **`dt` binary and the entire multi-repo context layer** (ADR-007). Restore path: tag `v0.13.0`, commit `0a6f35e`.

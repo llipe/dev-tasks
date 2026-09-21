@@ -1,0 +1,7 @@
+{
+  "name": "@mono/core",
+  "scripts": {
+    "test": "vitest run",
+    "lint": "eslint ."
+  }
+}

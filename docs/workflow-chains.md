@@ -104,11 +104,12 @@ developer/planner: implement (feature + tests from test plan)
 ```text
 product-engineer (init mode): activity-init
                                   ↓
-                    detect mode: /docs?    → mono-repo
-                                neither?   → greenfield
+                    detect mode:  /docs?   → documented
+                                  absent?  → greenfield
+                    detect shape: workspace signal? → monorepo, else single-package
                                   ↓
-    mono-repo:    interview → product-context.md + technical-guidelines.md
-    greenfield:   investigate codebase directly → interview → product-context.md + technical-guidelines.md
+    documented:   interview → product.md + tech.md (incl. package map)
+    greenfield:   investigate codebase directly → interview → product.md + tech.md
 ```
 
 ## Testing Standard (QA)

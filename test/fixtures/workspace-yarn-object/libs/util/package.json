@@ -1,0 +1,6 @@
+{
+  "name": "@yarn/util",
+  "scripts": {
+    "test": "vitest run"
+  }
+}

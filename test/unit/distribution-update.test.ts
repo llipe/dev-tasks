@@ -965,4 +965,60 @@ describe("core/distribution/update — runUpdate()", () => {
       expect(existsSync(join(repoRoot, ".claude/settings.json"))).toBe(false);
     });
   });
+  describe("foundation documents are never renamed by update (S-002 AC-5)", () => {
+    it("leaves an old-named foundation doc exactly where it is", async () => {
+      // FR-45: the rename is the consumer's to make, via
+      // `dev-tasks migrate docs`. `update` touching it would rewrite a
+      // consumer-owned file behind their back — the one thing this whole
+      // story exists to avoid.
+      const repoRoot = setup();
+      const packageRoot = join(repoRoot, "__pkg__");
+
+      const oldProduct = "# Product Context\n\nConsumer's own content.\n";
+      const oldTech = "# Technical Guidelines\n\nConsumer's own content.\n";
+      createFile(repoRoot, "docs/product-context.md", oldProduct);
+      createFile(repoRoot, "docs/technical-guidelines.md", oldTech);
+
+      // The package ships the new names; update must not treat that as a
+      // reason to move the consumer's files onto them.
+      createFile(packageRoot, "docs/product.md", "# Product\n");
+      createFile(packageRoot, "docs/tech.md", "# Tech\n");
+
+      const tracked = "# Claude Dev";
+      createFile(repoRoot, ".claude/agents/developer.md", tracked);
+      createFile(packageRoot, ".claude/agents/developer.md", tracked);
+
+      writeManifest(repoRoot, {
+        version: "0.8.0",
+        pinned: "0.8.0",
+        installed_at: "2024-01-01T00:00:00.000Z",
+        files: [
+          {
+            path: ".claude/agents/developer.md",
+            profile: "claude",
+            sha256: hashContent(tracked),
+            origin_sha256: hashContent(tracked),
+          },
+        ],
+        extraction: {},
+      });
+
+      const result = await runUpdate({
+        targetDir: repoRoot,
+        sourceDir: packageRoot,
+        force: true,
+        version: "0.9.0",
+      });
+
+      expect(readFileSync(join(repoRoot, "docs/product-context.md"), "utf-8")).toBe(oldProduct);
+      expect(readFileSync(join(repoRoot, "docs/technical-guidelines.md"), "utf-8")).toBe(oldTech);
+      expect(existsSync(join(repoRoot, "docs/product.md"))).toBe(false);
+      expect(existsSync(join(repoRoot, "docs/tech.md"))).toBe(false);
+
+      const touched = [...result.installed, ...result.updated, ...result.conflicts].map(
+        (f) => f.path,
+      );
+      expect(touched.filter((p) => p.startsWith("docs/"))).toEqual([]);
+    });
+  });
 });

@@ -8,12 +8,13 @@
 | 1.1     | 2026-09-19 | S-002 gains AC-8: `README.md` must document the `migrate docs` process so a consumer upgrading across the release learns it from the README alone. | @llipe / product-engineer |
 | 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-46 to D-52). S-001: AC-2 scoped to rewritable files with ADRs/PRDs/`workstream/` excluded (D-50), AC-3 must not copy Phase 0's scan roots, new AC-8 for `.gitignore`, count corrected to 51. S-003: AC-5 names `templates/scripts/release.sh`, not this repo's `scripts/release.sh`. S-004: AC-1 "pure" restated, AC-4 gains a checkable filename regex and hand-parsed frontmatter (D-49), AC-7 pinned to `tsx` not `dist/` (D-48), new AC-10 for the two false-failure constraints. | verifier / product-engineer |
 | 1.3     | 2026-09-19 | Synced to `main` at `c14905e`: S-001 AC-8 marked delivered ahead by PR #209 (verify, do not re-implement), reference count corrected 51 → 50 with root back to 5. | product-engineer |
+| 1.4     | 2026-09-19 | D-51 and D-52 accepted. FR-49a's 18 infra change kinds deferred; S-002's Context corrected — the existing `migrate` is detect-and-apply, so `migrate docs` is the first sub-verb to propose by default and AC-8's README section must state the asymmetry. No open items remain. | @llipe / product-engineer |
 
 ## Source Documents
 
 - PRD: `docs/requirements/prd-shared-understanding-refinement.md` (FR-44 to FR-51, FR-59 to FR-64; AC-22 to AC-26, AC-29 to AC-32, AC-31)
-- Specification: `workstream/specification-shared-understanding-phase-1.md` (v1.3)
-- Decisions: `workstream/decisions-shared-understanding.md` (D-16, D-21, D-42 to D-52; D-51 and D-52 still pending)
+- Specification: `workstream/specification-shared-understanding-phase-1.md` (v1.4)
+- Decisions: `workstream/decisions-shared-understanding.md` (D-16, D-21, D-42 to D-52 — all resolved)
 - Design Mode: `workstream/test-plan-shared-understanding-phase-1.md`, `workstream/traceability-matrix-shared-understanding-phase-1.md`
 - Predecessor: Phase 0, merged as `a9f7eef` (PR #200)
 
@@ -135,7 +136,9 @@ So that I adopt the new names deliberately rather than discovering broken refere
 
 #### Context
 
-`update` must never rename consumer-owned files on its own (FR-45). The existing `migrate` command already implements detect-and-propose for legacy shell installs; this story extends that command with a second, named migration step rather than inventing a new mechanism.
+`update` must never rename consumer-owned files on its own (FR-45). This story extends the existing `migrate` command with a second, named sub-verb rather than inventing a new mechanism.
+
+Note the precedent is weaker than FR-45 originally claimed (D-52, PRD v1.13): `migrate` today is detect-and-**apply** — `runMigration()` takes no options and writes the manifest unconditionally once a legacy install is detected. `migrate docs` is the first sub-verb to propose by default. The legacy path stays as-is, because adding a dry-run to it would change a shipped command's default behavior, so the two sub-verbs differ on purpose. AC-8's README section states that difference plainly rather than glossing it.
 
 #### Acceptance Criteria
 
@@ -620,12 +623,14 @@ Not applicable.
 
 ## Open Items for Confirmation
 
-Resolved at Design Mode: the tenth runbook (`D-46`, arithmetic independently confirmed) and the one-consolidated-PR shape (`D-47`).
+**None. All four are resolved.**
 
-Two remain, both scope calls on PRD requirements rather than design details:
-
-1. **FR-49a's infra change kinds (`D-51`, pending).** FR-49a requires a runbook for "every `infra-engineer` change kind." There are 18. Recommendation: defer, recorded rather than silent — five are read-only discovery (discover AWS/Fly/Supabase, log triage, cost sweep) and are not procedures worth a runbook, and the rest have no script or workflow for FR-49a's "same draft PR" rule to attach to. S-007 AC-4 states the rule going forward, so the next `infra-engineer` change that touches a kind brings its runbook. Authoring 18 now would be the largest single item in the phase, for content nobody has exercised.
-2. **The `migrate` contract description (`D-52`, pending).** FR-45 and the spec both describe `dev-tasks migrate` as "detect-and-propose." It is not: `runMigration()` takes no options and writes the manifest unconditionally. Recommendation: correct the description only. Adding a dry-run to the legacy path changes a shipped command's default behavior — a breaking CLI change to Phase 0 code, outside this phase's scope. The resulting asymmetry (`migrate` applies, `migrate docs` proposes) is then documented rather than papered over.
+| Item | Resolution |
+| ---- | ---------- |
+| Tenth runbook (`runbook-deploy-service`) | Confirmed as `D-46`; Design Mode independently reproduced the coverage arithmetic. |
+| One consolidated PR vs. three by family | One, as `D-47`. |
+| FR-49a's 18 `infra-engineer` change kinds | **Deferred** as `D-51`. Five are read-only discovery and are not procedures worth a runbook; the other thirteen have no script or workflow for FR-49a's "same draft PR" rule to attach to. S-007 AC-4 states the rule going forward, so the next `infra-engineer` change that touches a kind brings its runbook with it. Recorded as a deliberate deferral, not an oversight. |
+| FR-45's "detect-and-propose" description | **Corrected** as `D-52`. PRD v1.13 amends FR-45 to say detect-and-**apply**; the legacy path's behavior is unchanged. |
 
 ## Execution Plan
 

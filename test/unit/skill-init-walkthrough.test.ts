@@ -2,7 +2,7 @@
  * Dry-run walkthrough tests for the activity-init skill.
  *
  * These validate the documented behavioral branches for each mode:
- * - Mono-repo: current flow unchanged
+ * - Documented repository: current flow unchanged
  * - Undocumented/greenfield: direct codebase investigation + interview
  *
  * The former Multi-Repo mode (which invoked the retired binary and handled
@@ -23,8 +23,18 @@ const skillContent = readFileSync(SKILL_PATH, "utf-8");
 
 describe("activity-init dry-run walkthroughs", () => {
   describe("Mode detection logic", () => {
-    it("documents /docs as the mono-repo trigger", () => {
-      expect(skillContent).toContain("`/docs` directory exists → current single-repo flow");
+    it("documents /docs as the documented-repository trigger", () => {
+      expect(skillContent).toContain(
+        "`/docs` directory exists → interview + direct docs generation",
+      );
+    });
+
+    it("separates repository mode from repository shape (D-44)", () => {
+      // The rename exists so these two cannot be confused: mode is about
+      // whether docs exist, shape is about how many packages there are.
+      expect(skillContent).toContain(
+        "This mode is about whether documentation exists, not about how many packages",
+      );
     });
 
     it("documents absence of /docs as the undocumented/greenfield trigger", () => {
@@ -32,12 +42,12 @@ describe("activity-init dry-run walkthroughs", () => {
     });
   });
 
-  describe("Mono-repo mode (Mode A) — current flow unchanged", () => {
+  describe("Documented-repository mode (Mode A) — current flow unchanged", () => {
     it("preserves the standard interview flow", () => {
       expect(skillContent).toContain("Receive Initial Brief");
       expect(skillContent).toContain("Ask Clarifying Questions");
-      expect(skillContent).toContain("Generate Product Context Document");
-      expect(skillContent).toContain("Generate Technical Guidelines Document");
+      expect(skillContent).toContain("Generate Product Document");
+      expect(skillContent).toContain("Generate Technical Document");
       expect(skillContent).toContain("Save Output");
     });
 
@@ -63,7 +73,7 @@ describe("activity-init dry-run walkthroughs", () => {
 
     it("conducts the standard interview after investigation", () => {
       expect(skillContent).toContain(
-        "Proceed with the standard clarifying questions for product context and technical guidelines",
+        "Proceed with the standard clarifying questions for product and technical context",
       );
     });
 

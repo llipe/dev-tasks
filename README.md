@@ -76,8 +76,8 @@ Or configure it via **Settings → Branches → Branch protection rules** in the
 
 Invoke the `product-engineer` agent in Init Mode (via `@product-engineer` or the `product-engineer-init` prompt). This creates:
 
-- `docs/product-context.md` — what your product is and who it's for
-- `docs/technical-guidelines.md` — stack, conventions, and constraints
+- `docs/product.md` — what your product is and who it's for
+- `docs/tech.md` — stack, conventions, and constraints
 
 Run this once per project.
 
@@ -136,8 +136,9 @@ dev-tasks update [--force]            # Reconcile with hash-based conflict detec
 dev-tasks status                      # Compare installed/pinned/latest versions
 dev-tasks pin <version>               # Pin to a specific version
 dev-tasks unpin                       # Remove the version pin
-dev-tasks doctor                      # Check Node ≥20, git ≥2.37, cache writable
+dev-tasks doctor                      # Check Node ≥24, git ≥2.37, cache writable
 dev-tasks migrate                     # Migrate from legacy shell-script install
+dev-tasks migrate docs [--force]      # Rename the foundation docs to their current names
 ```
 
 ### Version Pinning
@@ -160,6 +161,46 @@ dev-tasks unpin        # Remove the pin (update will use the local package versi
 | `--json`           | both       | Machine-readable output                                             |
 
 `update` never overwrites a locally modified managed file without `--force`; it reports the conflict and exits `14`.
+
+### Foundation Document Migration
+
+The two foundation documents were renamed:
+
+| Before                         | After             |
+| ------------------------------ | ----------------- |
+| `docs/product-context.md`      | `docs/product.md` |
+| `docs/technical-guidelines.md` | `docs/tech.md`    |
+
+Nothing breaks if you do not migrate. Agents resolve the new name first and
+fall back to the old one, so a repository installed before the rename keeps
+working — they will just propose this command when they encounter an old name.
+`dev-tasks doctor` reports the old names as a **warning**, not a failure, for
+the same reason: it is telling you the migration is available, not that
+anything is broken. Your exit code stays `0`.
+
+`dev-tasks migrate docs` is **report-only**. It prints the pending renames and
+the files of your own that still reference the old names, and changes nothing:
+
+```bash
+dev-tasks migrate docs           # Show what would change
+dev-tasks migrate docs --force   # Perform the renames
+```
+
+`--force` renames the files with their content unchanged, after copying the
+originals into `.dev-tasks/backup/<timestamp>/`. A rename whose target already
+exists is skipped rather than overwritten — if you half-migrated by hand, your
+file stays — and the command exits `14` so the skip is visible to a script.
+Both forms accept `--json`.
+
+Files you own are yours to update. The command reports which of them still
+name the old documents; it does not edit them, and neither does
+`dev-tasks update`.
+
+**Note the asymmetry with the bare `migrate` command.** `dev-tasks migrate`
+(no sub-verb) migrates a legacy shell-script install and applies its change
+immediately. `dev-tasks migrate docs` proposes by default. The difference is
+deliberate: `migrate` shipped with that behavior, and quietly turning it into
+a dry run would break anyone already scripting it.
 
 ---
 
@@ -201,7 +242,7 @@ Agents are autonomous personas that orchestrate skills and activities.
 
 Preparation agent — owns the full pre-coding chain:
 
-- **Init Mode**: `activity-init` → product-context.md + technical-guidelines.md
+- **Init Mode**: `activity-init` → product.md + tech.md
 - **Feature Mode**: `activity-refine` → `activity-generate-spec` → `activity-generate-stories` → `activity-publish-github` → `plan`
 - **Issue Mode**: `activity-refine` → `plan`
 

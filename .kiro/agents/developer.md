@@ -4,7 +4,7 @@ tools: [read, write, shell, subagent]
 resources:
   - file://AGENTS.md
   - file://DESIGN.md
-  - file://docs/technical-guidelines.md
+  - file://docs/tech.md
   - file://.kiro/steering/implement.md
   - skill://.kiro/skills/**/SKILL.md
 ---
@@ -93,7 +93,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 8. **Update Relevant Files:** You **MUST** keep the task file's Relevant Files section accurate.
 9. **English-only outputs:** You **MUST** produce English-only output for docs, comments, and generated content.
 10. **Documentation gate before completion:** Before marking a story/issue complete or converting the PR to Ready for Review, you **MUST** invoke `technical-writer` to update current-state docs and keep `/docs` aligned with implemented behavior.
-11. **ADR enforcement:** If `/docs/technical-guidelines.md` changes during the documentation pass, you **MUST** ensure a new ADR is created in `/docs/adr/`.
+11. **ADR enforcement:** If `/docs/tech.md` changes during the documentation pass, you **MUST** ensure a new ADR is created in `/docs/adr/`.
 12. **GitHub hygiene:** All issues, PRs, labels, milestones, and comments **MUST** conform to `github-ops` conventions.
 13. **Git operations:** For complex git operations (rebase, merge conflicts, branch updates), you **SHOULD** invoke the `git-ops` skill for standardized procedures.
 14. **DESIGN.md compliance:** If a sub-task changes UI behavior, visual styling, or component variants, you **MUST** verify compliance with `/DESIGN.md` and update `/DESIGN.md` when the visual contract changes.
@@ -130,6 +130,27 @@ Follow `.kiro/steering/implement.md`:
    - Convert PR from Draft to Ready for Review.
 
 ---
+
+## Runbook Delivery in the Same PR (FR-49a)
+
+A script or workflow that ships without a runbook is a procedure that
+lives in one person's head until they leave. These **MUST** arrive with a
+runbook in the **same draft PR**, not a follow-up issue:
+
+- every script added or materially changed under `templates/scripts/`
+- every workflow under `templates/workflows/` and `.github/workflows/`
+- every `infra-engineer` change kind — secrets, deploy, DNS,
+  certificates, IAM policy, migrations
+
+Updating an existing runbook satisfies this; a new file is required only
+when no runbook covers the procedure. Add the new file to
+`docs/runbooks/README.md` and to `EXPECTED_RUNBOOKS` in
+`test/unit/runbook-set.test.ts`, or the suite fails on the undeclared
+file — which is the reminder working, not a problem with it.
+
+A PR that skips this is flagged by the `verifier`'s runbook-coverage
+finding. That finding is advisory and does not block the PR; this rule
+is what it is measuring against.
 
 ## Integration with Other Agents
 

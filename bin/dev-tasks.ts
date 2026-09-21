@@ -15,6 +15,7 @@ import { writePin, removePin } from "#core/distribution/pin.js";
 import { getStatus } from "#core/distribution/status.js";
 import { runDoctor } from "#core/distribution/doctor.js";
 import { runMigration } from "#core/distribution/migrate.js";
+import { runDocsMigration, formatDocsMigration } from "#core/distribution/migrate-docs.js";
 
 const COMMANDS = ["install", "update", "status", "pin", "unpin", "doctor", "migrate"] as const;
 
@@ -79,6 +80,12 @@ Commands:
   unpin      Remove the version pin
   doctor     Check environment prerequisites
   migrate    Migrate from legacy dev-tasks.sh installation
+
+Sub-commands:
+  migrate docs   Report the foundation-document rename
+                 (docs/product-context.md -> docs/product.md,
+                 docs/technical-guidelines.md -> docs/tech.md).
+                 Report-only; --force applies it, backing up first.
 
 Options:
   --profile <p>  Platform profile: copilot, claude, kiro, both, all (default: all)
@@ -226,7 +233,9 @@ async function main(): Promise<void> {
         );
       } else {
         for (const check of checks) {
-          const icon = check.pass ? "✓" : "✗";
+          // A warning passes: `doctor`'s exit code follows `pass` alone,
+          // so a drift report never blocks a consumer (S-005 AC-6).
+          const icon = check.pass ? (check.warn === true ? "⚠" : "✓") : "✗";
           process.stdout.write(`  ${icon} ${check.name}: ${check.message}\n`);
         }
         const allPass = checks.every((c) => c.pass);
@@ -333,6 +342,50 @@ async function main(): Promise<void> {
     }
 
     case "migrate": {
+      // `migrate docs` is the foundation-document rename (FR-45). The
+      // bare `migrate` below is the legacy shell-install migration and
+      // is deliberately left as it was: it is detect-and-apply, while
+      // this sub-verb proposes by default (D-52). Changing the legacy
+      // default would alter a shipped command's behavior.
+      if (args.positional[0] === "docs") {
+        const docsResult = await runDocsMigration(targetDir, { apply: args.flags.force });
+
+        if (args.flags.json) {
+          process.stdout.write(
+            JSON.stringify(
+              {
+                command: "migrate docs",
+                applied: docsResult.applied,
+                renames: docsResult.renames.map((r) => ({
+                  from: r.from,
+                  to: r.to,
+                  targetExists: r.targetExists,
+                  skipped: r.skipped ?? null,
+                  error: r.error ?? null,
+                })),
+                consumerReferences: docsResult.consumerReferences,
+                backupPath: docsResult.backupPath ?? null,
+              },
+              null,
+              2,
+            ) + "\n",
+          );
+        } else {
+          process.stdout.write(formatDocsMigration(docsResult) + "\n");
+        }
+
+        const failed = docsResult.renames.some((r) => r.error);
+        const skipped = docsResult.renames.some((r) => r.skipped);
+        process.exit(
+          failed
+            ? ExitCode.GeneralError
+            : skipped
+              ? ExitCode.ReconciliationConflict
+              : ExitCode.Success,
+        );
+        break;
+      }
+
       const result = await runMigration(targetDir);
 
       if (args.flags.json) {

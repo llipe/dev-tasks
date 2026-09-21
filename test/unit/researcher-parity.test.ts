@@ -212,6 +212,27 @@ describe("researcher — AC-6: planner caller wiring", () => {
 
 // ─── AC-9: Registry and documentation consistency ────────────────────────────
 
+describe("researcher — S-006 AC-1: findings name their package", () => {
+  for (const relPath of AGENT_VARIANTS) {
+    it(`${relPath} requires package attribution on every finding`, () => {
+      const content = read(relPath);
+      expect(content).toContain("## Package Attribution");
+      expect(content).toMatch(/MUST\*{0,2} name the package/i);
+    });
+
+    it(`${relPath} makes attribution optional, not empty, in a single-package repository`, () => {
+      // The edge case a reader gets wrong without being told: one
+      // package needs no prefix, and "(root)" on every line is noise.
+      const content = read(relPath);
+      expect(content).toMatch(/single-package repository the attribution is optional/i);
+    });
+
+    it(`${relPath} points at the package map as the source of the list`, () => {
+      expect(read(relPath)).toContain("docs/tech.md");
+    });
+  }
+});
+
 describe("researcher — AC-9: registries and docs list researcher", () => {
   for (const relPath of REGISTRY_FILES) {
     it(`${relPath} mentions researcher`, () => {

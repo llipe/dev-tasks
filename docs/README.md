@@ -10,17 +10,19 @@ Entry point for `dev-tasks` documentation. Each document below is the single sou
 | Understand what the system is and how it fits together | [`system-overview.md`](system-overview.md)             |
 | Look up a `dev-tasks` command                          | [`dev-tasks-user-manual.md`](dev-tasks-user-manual.md) |
 | Know which agent to invoke, in what order              | [`workflow-chains.md`](workflow-chains.md)             |
+| Run a multi-step operational procedure                 | [`runbooks/`](runbooks/README.md)                      |
 
 ## Reference
 
 | Document                                             | Subject                                                                     |
 | ---------------------------------------------------- | --------------------------------------------------------------------------- |
 | [`system-overview.md`](system-overview.md)           | Purpose, architecture, components, integrations, runtime flows, NFR posture |
-| [`product-context.md`](product-context.md)           | Product constitution: problem, users, goals, metrics, constraints           |
-| [`technical-guidelines.md`](technical-guidelines.md) | Enforceable engineering rules and quality gates                             |
+| [`product.md`](product.md)                           | Product constitution: problem, users, goals, metrics, constraints           |
+| [`tech.md`](tech.md)                                 | Enforceable engineering rules and quality gates                             |
 | [`agents-md-guidelines.md`](agents-md-guidelines.md) | Sizing and content rules for `AGENTS.md`                                    |
 | [`adr/`](adr/README.md)                              | Architecture decision records                                               |
 | [`requirements/`](requirements/)                     | Product requirements documents                                              |
+| [`runbooks/`](runbooks/README.md)                    | Operational procedures: preconditions, steps, verification, rollback        |
 
 ## Registries and Contracts
 
