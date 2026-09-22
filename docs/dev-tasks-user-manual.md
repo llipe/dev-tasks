@@ -53,6 +53,7 @@ Some managed files must survive customization more strictly than a `consumer_own
 | File                    | Purpose                                                                                                                                          | Delivered under                     |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
 | `.claude/settings.json` | Wires the shipped Claude hook scripts (`.claude/hooks/*.sh`) into Claude Code's `PreToolUse` lifecycle; carries your `permissions.allow` entries | `--profile claude` / `both` / `all` |
+| `docs/domain/ubiquitous-language.md` | Canonical domain vocabulary by bounded context, shipped unfilled; yours to fill and never overwritten | Every profile (platform-agnostic) |
 
 Unlike root files and managed-directory files, install-if-absent files are **not** recorded in `.dev-tasks/manifest.json` — see [ADR-006](adr/ADR-006-claude-settings-ownership.md) for the rationale. `dev-tasks doctor` separately checks that every installed `.claude/hooks/*.sh` script is wired into `.claude/settings.json` and warns by script name if not.
 
@@ -309,6 +310,7 @@ dev-tasks doctor --json  # Machine-readable output
 | Cache directory     | `~/.dev-tasks/cache/` is writable                                                                                                                                                    |
 | Version skew        | Installed version matches pinned version (if pinned)                                                                                                                                 |
 | Claude hooks wiring | Every `.claude/hooks/*.sh` script is referenced by a `PreToolUse` entry in `.claude/settings.json` (warns by script name otherwise; silent when there are no hooks or all are wired) |
+| Glossary presence | `docs/domain/ubiquitous-language.md` exists (warns and proposes `dev-tasks update` when absent; never fails, and never reports on its contents) |
 
 ---
 

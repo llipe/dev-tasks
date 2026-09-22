@@ -21,6 +21,7 @@ Entry point for `dev-tasks` documentation. Each document below is the single sou
 | [`tech.md`](tech.md)                                 | Enforceable engineering rules and quality gates                             |
 | [`agents-md-guidelines.md`](agents-md-guidelines.md) | Sizing and content rules for `AGENTS.md`                                    |
 | [`adr/`](adr/README.md)                              | Architecture decision records                                               |
+| [`domain/`](domain/ubiquitous-language.md)           | Ubiquitous language: canonical domain vocabulary, by bounded context        |
 | [`requirements/`](requirements/)                     | Product requirements documents                                              |
 | [`runbooks/`](runbooks/README.md)                    | Operational procedures: preconditions, steps, verification, rollback        |
 

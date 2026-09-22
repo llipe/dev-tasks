@@ -128,6 +128,12 @@
       "description": "Runbook index and template (install-if-absent into docs/runbooks/)",
       "pattern": "*",
       "recursive": true
+    },
+    {
+      "path": "templates/domain",
+      "description": "Ubiquitous-language glossary template (install-if-absent into docs/domain/)",
+      "pattern": "*",
+      "recursive": true
     }
   ],
   "consumer_owned_paths": [
@@ -141,7 +147,8 @@
     ".github/workflows/deploy-dev.yml",
     ".github/workflows/deploy-prod.yml",
     ".github/workflows/rollback.yml",
-    "docs/runbooks/"
+    "docs/runbooks/",
+    "docs/domain/ubiquitous-language.md"
   ],
   "version_file": ".dev-tasks-version",
   "backup_dir": ".dev-tasks-backup",
