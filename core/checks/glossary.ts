@@ -98,13 +98,15 @@ const SUPERSEDED = /^superseded by\s+(.+?)\s+\(\s*([A-Za-z0-9._/-]+#D-\d+)\s*\)$
  * `feature#D-NN`.
  *
  * Anchored, and applied per comma-separated element rather than to the
- * whole field. A real `Origin` cites more than one source — `FR-1,
- * shared-understanding#D-01` — and matching the whole field meant every
- * such list matched nothing at all, which made the archived-origin rule
- * dead against this repository's own glossary, where seven of eight
- * Origins are lists (S-006 F-1). Elements that are not decisions — a
- * PRD path, `FR-4`, `ADR-006`, prose — still match nothing, which is
- * what keeps this to decision citations only.
+ * whole field. An `Origin` names its sources the way a person would —
+ * `FR-1, shared-understanding#D-01`, or a bare PRD path — and anchoring
+ * to the whole field meant none of this repository's eight Origins
+ * matched, not one, so the archived-origin rule had never fired since
+ * S-002 and all four `#D-NN` citations here were invisible (S-006 F-1).
+ * Comma lists are simply the most common shape (four of the eight).
+ * Elements that are not decisions — a PRD path, `FR-4`, `ADR-006`,
+ * prose — still match nothing, which is what keeps this to decision
+ * citations only.
  */
 const DECISION_ORIGIN = /^([A-Za-z0-9._-]+)#D-\d+$/;
 

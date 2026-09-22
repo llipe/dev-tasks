@@ -472,11 +472,12 @@ describe("checkGlossary — filesystem wrapper (UT-G10, UT-G11, CT-6, EC-33)", (
   /*
    * Comma-separated Origins (S-006 F-1).
    *
-   * A real Origin cites more than one source: `FR-1,
-   * shared-understanding#D-01`. The rule above was anchored to the
-   * whole field, so every one of those lists matched nothing and the
-   * check never fired — against this repository's own glossary
-   * included, where seven of eight Origins are lists. Each element is
+   * An Origin names its sources the way a person would: `FR-1,
+   * shared-understanding#D-01`, or a bare PRD path. The rule above was
+   * anchored to the whole field, so none of this repository's eight
+   * Origins matched — not one — and the check had never fired since
+   * S-002, leaving all four `#D-NN` citations invisible. Comma lists
+   * are just the most common shape (four of the eight). Each element is
    * now tested on its own. The reporting semantics of D-66 are
    * unchanged: staleness, never a failure, deduplicated per feature.
    */
