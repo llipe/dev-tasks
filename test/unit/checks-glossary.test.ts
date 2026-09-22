@@ -23,7 +23,7 @@
  * `glossary-origin-unresolved`.
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { readFileSync, readdirSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -35,6 +35,7 @@ import {
   checkExportedIdentifiers,
   splitIdentifierWords,
   normalizeVocabularyWord,
+  REQUIREMENTS_DIR,
 } from "../../core/checks/glossary.js";
 import type { GlossaryFinding } from "../../core/checks/glossary.js";
 import * as checksIndex from "../../core/checks/index.js";
@@ -1158,9 +1159,87 @@ describe("checkVocabularyFiles — the docs/requirements walk (UT-R1, UT-R2, UT-
 });
 
 describe("checkVocabularySection — this repository's own PRDs (IT-7, A-8)", () => {
+  /** Every PRD on disk, and the ones §8.3's skip rule does not skip. */
+  function realPrds(): { all: string[]; walked: string[] } {
+    const dir = join(REPO_ROOT, REQUIREMENTS_DIR);
+    const all = readdirSync(dir)
+      .filter((f) => f.endsWith(".md"))
+      .sort();
+    const walked = all.filter((f) => {
+      const markdown = readFileSync(join(dir, f), "utf-8");
+      return (
+        /^##(?!#)\s+Vocabulary\s*$/m.test(markdown) || /^##(?!#)\s+Decisions\b/m.test(markdown)
+      );
+    });
+    return { all, walked };
+  }
+
   it("reports nothing over the real docs/requirements tree", () => {
     const result = checkVocabularyFiles(REPO_ROOT);
+    // Both halves. The glossary self-check above learned this the hard
+    // way: a sibling fixture asserted `failures` alone and let a
+    // `staleness` finding print on every `lint` run across three merges
+    // with the suite fully green. `checkVocabularyFiles` returns an
+    // empty `staleness` today, and this is what notices if it stops.
     expect(result.failures, JSON.stringify(result.failures, null, 2)).toEqual([]);
+    expect(result.staleness, JSON.stringify(result.staleness, null, 2)).toEqual([]);
+  });
+
+  it("walks at least one real PRD, so the clean result above is not a clean nothing", () => {
+    // The assertion above passes identically when the walk reads no
+    // file at all — an empty `docs/requirements/`, a rename that moves
+    // the tree, or a skip rule that widens until it swallows every PRD.
+    // Three of this repository's four PRDs are already grandfathered
+    // out by §8.3 (D-65), so "reaches nothing" is one edit away and
+    // would take AC-07's self-application with it, silently, under a
+    // green `lint`.
+    const { all, walked } = realPrds();
+    expect(all.length, `no PRDs in ${REQUIREMENTS_DIR}`).toBeGreaterThan(0);
+    expect(walked, `every PRD in ${REQUIREMENTS_DIR} is skipped by the §8.3 rule`).toContain(
+      "prd-shared-understanding-refinement.md",
+    );
+  });
+
+  it("names the real grilled PRD when its own Vocabulary breaks — the control", () => {
+    // Mirrors the real tree rather than a synthetic one: this is what
+    // proves the walk reaches *this* repository's PRD by name, parses
+    // the section the live file actually carries, and still skips the
+    // three that carry neither section. A synthetic fixture proves the
+    // grammar; only the real file proves the reach.
+    const root = mkdtempSync(join(tmpdir(), "vocab-real-"));
+    try {
+      const dir = join(REPO_ROOT, REQUIREMENTS_DIR);
+      mkdirSync(join(root, REQUIREMENTS_DIR), { recursive: true });
+      mkdirSync(join(root, "docs/domain"), { recursive: true });
+      writeFileSync(
+        join(root, GLOSSARY_PATH),
+        readFileSync(join(REPO_ROOT, GLOSSARY_PATH), "utf-8"),
+        "utf-8",
+      );
+
+      const { all } = realPrds();
+      const target = "prd-shared-understanding-refinement.md";
+      for (const file of all) {
+        const markdown = readFileSync(join(dir, file), "utf-8");
+        // One cell, in the one grilled PRD: `existing` becomes a status
+        // the grammar does not know, which is `vocabulary-incomplete`.
+        const broken =
+          file === target ? markdown.replace(/\| existing  /, "| bogus     ") : markdown;
+        if (file === target) expect(broken, "the status cell did not change").not.toBe(markdown);
+        writeFileSync(join(root, REQUIREMENTS_DIR, file), broken, "utf-8");
+      }
+
+      const result = checkVocabularyFiles(root);
+      expect(rules(result.failures)).toContain("vocabulary-incomplete");
+      // Only the grilled PRD. The other three carry neither section and
+      // must stay skipped; a finding against one of them means the §8.3
+      // rule stopped grandfathering.
+      expect([...new Set(result.failures.map((f) => f.file))]).toEqual([
+        `${REQUIREMENTS_DIR}/${target}`,
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("is exported from core/checks/index.ts for the verifier and activity-refine", () => {
