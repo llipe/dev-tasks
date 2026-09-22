@@ -85,6 +85,25 @@ The generated Specification document **MUST** include:
 16. **Dependencies & Risks** — Technology dependencies, known risks, mitigation strategies
 17. **Open Questions** — Remaining technical decisions
 18. **Decisions (HOW phase)** — Table (`ID | Decision (short form)`) listing every `activity-grill` decision ID consumed by this specification (FR-14, S-003-AC-3), in qualified `<feature>#D-NN` form when reusing a decision from another feature's log; may legitimately be empty for a trivial specification that needed no decisions, but the `activity-grill` interview and exit-gate confirmation still ran
+19. **Vocabulary** — `## Vocabulary` table listing every domain term the specification uses and where each one stands against the glossary: `existing`, `proposed`, or settled by a decision (FR-20, D-61). See "Vocabulary Section" below
+
+## Vocabulary Section (FR-20, D-61, D-75)
+
+The specification carries a `## Vocabulary` section immediately after `## Decisions (HOW phase)`, in the same shape `activity-refine` uses for PRDs:
+
+```markdown
+## Vocabulary
+
+| Term | Status in glossary | Bounded context | Definition (proposals only) | Forbidden synonyms (proposals only) |
+| ---- | ------------------ | --------------- | --------------------------- | ----------------------------------- |
+| …    | existing \| proposed \| conflict → D-NN | … | … | … |
+```
+
+A row is complete when `existing` names a term `docs/domain/ubiquitous-language.md` already defines (case-insensitively), when `proposed` carries a bounded context, a definition, and forbidden synonyms (`none` is an answer), or when `conflict → D-NN` cites the decision that settled a clash — `->` and `→` are both accepted. A specification that introduces no domain concept of its own carries the section with one line: `None — this PRD introduces no domain concepts.`
+
+A specification introduces implementation vocabulary as readily as a PRD introduces product vocabulary, and the term that enters the codebase through a module name is the one nobody ever agreed on. Terms are identified during HOW-phase grilling, never by scanning the drafted prose (D-65).
+
+The glossary append itself is `activity-refine`'s write at PRD approval, not this skill's (D-61). A term a specification proposes is carried back to the PRD's `## Vocabulary` section for approval.
 
 ## Diagram Guidelines
 
@@ -130,7 +149,8 @@ The specification **MUST** clearly show how:
 2. You **MUST** read the referenced PRD and Technical Guidelines documents.
 3. You **MUST** ask clarifying questions about the technical implementation approach, conducted through `activity-grill(phase="HOW")` — you **MUST NOT** draft any part of the specification until `activity-grill`'s exit gate returns satisfied (FR-13).
 4. You **MUST** ensure the specification clearly maps PRD requirements to technical solutions.
-5. You **MUST** present the specification for user review.
-6. You **MUST** save the finalized version.
-7. When updating an existing specification, you **MUST** add a new row to the Changelog table with an incremented version, the current date, a summary of changes, and the responsible author/agent.
-8. You **MUST** cite every decision that shaped a technical design choice inline (`… (D-NN)`), and **MUST** populate the document's `## Decisions (HOW phase)` section with every ID consumed from the `activity-grill` session, in qualified `<feature>#D-NN` form when reusing a decision from another feature's log (FR-14).
+5. Before presenting the specification for review, you **MUST** run `checkVocabularySection()` from `core/checks/glossary.ts` over the draft and the repository's glossary, and **MUST** report every finding by its rule name — `vocabulary-missing` or `vocabulary-incomplete` naming the row (D-75).
+6. You **MUST** present the specification for user review.
+7. You **MUST** save the finalized version.
+8. When updating an existing specification, you **MUST** add a new row to the Changelog table with an incremented version, the current date, a summary of changes, and the responsible author/agent.
+9. You **MUST** cite every decision that shaped a technical design choice inline (`… (D-NN)`), and **MUST** populate the document's `## Decisions (HOW phase)` section with every ID consumed from the `activity-grill` session, in qualified `<feature>#D-NN` form when reusing a decision from another feature's log (FR-14).
