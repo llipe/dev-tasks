@@ -16,7 +16,7 @@ The caller passes:
 
 - `phase` — `"WHAT"` (invoked by `activity-refine` PRD Creation mode, before drafting) or `"HOW"` (invoked by `activity-generate-spec`, before drafting). Both phases share one continuing ID space in the decision log — there is no phase-local restart (FR-7).
 - `cap` — the question cap for this phase (see Cap Configuration below).
-- `mode` — `"feature"` (default) or `"issue"` (Issue Mode, invoked by `activity-refine` Issue Refinement mode).
+- `mode` — `"feature"` (default) or `"issue"` (Issue Mode, invoked by `activity-refine` Issue Refinement mode). Issue Mode is invoked without a `phase` argument — `activity-refine` passes `mode` and `cap` only.
 - `feature` — the slug used to name `workstream/decisions-<feature>.md`.
 
 ## Context
@@ -51,7 +51,7 @@ Only if none of the four resolve the question does the skill ask the user. A que
 
 ### 3a. Vocabulary conflicts are questions, never resolutions (FR-21)
 
-This rule belongs to the WHAT phase (`phase="WHAT"`), where the feature's domain language is still being settled.
+This rule belongs to the two invocations where the feature's domain language is still being settled: the WHAT phase (`phase="WHAT"`) and Issue Mode (`mode="issue"`, which `activity-refine` invokes without a `phase` argument — see step 10). It does not run in the HOW phase.
 
 Once the open branch reaches what the feature *is*, ask the user plainly **which domain concepts this feature introduces or changes** — one question, with a recommendation, like every other. For each term the user names, consult the glossary (step 3's second source) and check two things:
 

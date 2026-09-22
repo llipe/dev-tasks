@@ -685,6 +685,64 @@ describe("activity-grill skill — FR-21 vocabulary-conflict rule (S-004, PT-1)"
       ).toBe(true);
     }
   });
+
+  /**
+   * D-3 (verifier audit of #232): Issue Mode's read-only rule sends the
+   * reader to "the conflict checks in step 3a", but step 3a scoped
+   * itself to `phase="WHAT"` and `activity-refine` invokes Issue Mode
+   * with `mode` and `cap` only — no `phase` at all. Read together, the
+   * two statements contradict: the rule Issue Mode is pointed at
+   * excludes Issue Mode. The resolution is that step 3a names both
+   * vocabulary-settling callers explicitly.
+   *
+   * Section-scoped on purpose. `mode="issue"` appears in the Issue Mode
+   * section too, so a whole-file `includes` passes even with step 3a's
+   * clause reverted to WHAT-only — exactly the hole 7c1b190 closed for
+   * the recommendation marker.
+   */
+  it("scopes the FR-21 rule to both vocabulary-settling callers — WHAT phase and Issue Mode (D-3)", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      const start = content.indexOf("### 3a. Vocabulary conflicts are questions");
+      expect(start, `${relPath} is missing the FR-21 conflict rule heading`).toBeGreaterThan(-1);
+      const end = content.indexOf("\n### ", start + 1);
+      expect(
+        end,
+        `${relPath}: the FR-21 rule is not followed by another step heading`,
+      ).toBeGreaterThan(start);
+      const rule = content.slice(start, end).toLowerCase();
+      expect(
+        rule.includes('phase="what"'),
+        `${relPath}: the FR-21 rule no longer names the WHAT phase (spec §8.5)`,
+      ).toBe(true);
+      expect(
+        rule.includes('mode="issue"'),
+        `${relPath}: the FR-21 rule does not name Issue Mode, but step 10 sends Issue Mode here for "the conflict checks in step 3a" — the two contradict (verifier D-3)`,
+      ).toBe(true);
+    }
+  });
+
+  /**
+   * The other half of D-3: `## Invocation` documents `phase` as if every
+   * caller passes one. Issue Mode does not. Scoped to the Invocation
+   * section so that the statement cannot be satisfied by prose elsewhere.
+   */
+  it("records in ## Invocation that Issue Mode passes no phase (D-3)", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      const start = content.indexOf("## Invocation");
+      expect(start, `${relPath} is missing the Invocation section`).toBeGreaterThan(-1);
+      const end = content.indexOf("\n## ", start + 1);
+      expect(end, `${relPath}: the Invocation section has no following section`).toBeGreaterThan(
+        start,
+      );
+      const invocation = content.slice(start, end).toLowerCase();
+      expect(
+        invocation.includes("without a `phase`"),
+        `${relPath}: ## Invocation does not state that Issue Mode is invoked without a \`phase\` argument — \`activity-refine\` passes \`mode\` and \`cap\` only (verifier D-3)`,
+      ).toBe(true);
+    }
+  });
 });
 
 describe("activity-grill skill — Phase-3 placeholders removed (S-004-AC-2)", () => {
