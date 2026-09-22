@@ -1645,9 +1645,9 @@ function headings(markdown: string): string[] {
 function termBlock(markdown: string, name: string): string {
   const start = markdown.indexOf(`### ${name}\n`);
   expect(start, `no '### ${name}' heading in ${GLOSSARY_PATH}`).toBeGreaterThan(-1);
-  const rest = markdown.slice(start + 1);
-  const end = rest.search(/^#{2,3}\s/m);
-  return end === -1 ? rest : rest.slice(0, end);
+  const body = markdown.slice(start + `### ${name}\n`.length);
+  const end = body.search(/^#{2,3}\s/m);
+  return end === -1 ? body : body.slice(0, end);
 }
 
 describe("this repository's own glossary (UT-G17, E2E-11, S-006 AC-1/AC-5, D-69)", () => {

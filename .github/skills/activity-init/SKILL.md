@@ -135,7 +135,7 @@ Rules:
 - A **single-package repository records exactly one row**, for the root, with path `.`. The table has the same shape in both cases, so a reader never has to work out which kind of repository they are looking at.
 - **Purpose** and **Owner** come from the interview. Do not invent an owner; ask.
 - **Canonical scripts** lists the scripts the package actually defines, in the order `lint`, `format:check`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `audit`, `validate`. Absent scripts are omitted, not marked missing.
-- **Bounded context** is filled **freeform at interview time** (`shared-understanding#D-45`). Ask: _"In one phrase, what part of the business or domain does this package own?"_ A freeform guess beats an empty column. Phase 3's glossary supersedes these answers with canonical terms; until then this column is a working label, not a contract.
+- **Bounded context** is filled **freeform at interview time** (`shared-understanding#D-45`). Ask: _"In one phrase, what part of the business or domain does this package own?"_ A freeform guess beats an empty column. Once `docs/domain/ubiquitous-language.md` defines a bounded context, that file is canonical: copy the name from its `## Bounded Context:` heading character for character, because `lint`'s glossary check matches the two exactly (`shared-understanding#D-69`, closing `#D-45`).
 - A package whose `package.json` has no `name` is listed by its path. Do not invent a name — nothing would match it.
 
 `dev-tasks doctor` warns when the map and the workspace disagree in either direction: a package on disk with no row, or a row for a package that no longer exists. It warns and never fails; structural failures belong to `lint`.

@@ -21,17 +21,17 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 - `.claude/agents/verifier.md`, `.github/agents/verifier.agent.md`, `.kiro/agents/verifier.md` - Conformance call, advisory finding class
 - `.claude/skills/activity-init/SKILL.md` (+ mirrors) - Glossary-is-canonical pointer sentence
 - `docs/domain/ubiquitous-language.md` - This repository's populated glossary
-- `docs/tech.md` - Package-map note replaced by a glossary pointer
+- `docs/tech.md` - Package-map note replaced by a glossary pointer; Bounded context cell unchanged; changelog row 1.5
 - `test/integration/install-parity.test.ts` - Extend for per-profile delivery and byte-identical re-run
 - `test/unit/doctor-glossary.test.ts` (or existing doctor test) - Absence warn / present silent
 - `test/unit/root-doc-template-parity.test.ts` - Extend if it enumerates templates
-- `test/unit/checks-glossary.test.ts` - Unit tests for all four check functions + real-file fixture
+- `test/unit/checks-glossary.test.ts` - Unit tests for all four check functions + the real-file fixture (UT-G17/E2E-11, asserting `failures` **and** `staleness`), PT-6 over `docs/tech.md`, and the 6.3b PRD-Vocabulary-to-glossary coupling
 - `test/fixtures/glossary/*.md` - Structure-rule fixtures
 - `test/unit/verifier-glossary-conformance-parity.test.ts` - S-005's three-tree conformance markers, scoped to the Audit Mode Actions row and the report bullet (the implementer's choice offered by task 5.4)
 - `test/integration/checks-run.test.ts` - S-005 AC-3: the scan is not a `lint` gate, proved through the process boundary
 - `test/unit/checks-decision-log-format.test.ts` - Real-log fixture now asserts `staleness` as well as `failures` (the D-60 escaped-pipe defect)
 - `test/unit/skill-parity-grilling.test.ts` - Extend for `activity-refine`, `activity-generate-spec`, `activity-grill`, `verifier` markers
-- `test/unit/skill-parity-init.test.ts` - Extend for the `activity-init` pointer
+- `test/unit/skill-parity-init.test.ts` - Extend for the `activity-init` pointer, the retired deferral sentence, and the numbered-step/section counts that pin "one sentence, not a step" (PT-5)
 - `test/fixtures/grilling/vocabulary-approval.md`, `vocabulary-conflict.md`, `README.md` - Scenario fixtures
 - `docs/requirements/prd-shared-understanding-refinement.md` - `## Vocabulary` section added in 3.0, not 6.3a: wiring the `run.ts` walk makes `lint` report `vocabulary-missing` against this PRD immediately (test plan A-8), so the section had to land in the same PR as the walk. Its eight rows are `proposed` until the glossary exists; **task 6.3a is now a flip of those rows to `existing`**, which `lint` enforces once S-006 populates the file (D-74's `proposed`-but-present rule)
 
@@ -116,26 +116,26 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 5.6 Verify Acceptance Criterion: AC-2 unmatched identifiers produce nothing
   - [x] 5.7 Verify Acceptance Criterion: AC-3 findings only in `staleness`; `lint` exit code unaffected
   - [x] 5.8 Verify Acceptance Criterion: AC-4 `verifier` call present in all three trees
-  - [ ] 5.9 Verify Acceptance Criterion: AC-5 run the function over this phase's own diff with the populated glossary (after 6.0) — nothing reported, or hits fixed in the same PR — **deferred to 6.6 by design:** the run needs S-006's populated glossary, which does not exist on this branch.
+  - [x] 5.9 Verify Acceptance Criterion: AC-5 run the function over this phase's own diff with the populated glossary (after 6.0) — nothing reported, or hits fixed in the same PR — **deferred to 6.6 by design:** the run needs S-006's populated glossary, which does not exist on this branch.
   - [x] 5.10 Run Tests: edge cases — `export default class`, `export * from`, `as` alias, identifier equal to a canonical term (no finding), glossary with zero forbidden synonyms
   - [x] 5.11 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
-- [ ] 6.0 Implement Story S-006: Populate this repository's glossary and retire the package-map placeholder (#234)
+- [x] 6.0 Implement Story S-006: Populate this repository's glossary and retire the package-map placeholder (#234)
 
   > Note: Depends on 2.0 and 3.0. Runs last so the finished check validates the file. Eight terms only — no invented vocabulary (D-69). One pointer sentence in `activity-init`, no new step (D-62).
 
-  - [ ] 6.1 Add the real-file assertion to `test/unit/checks-glossary.test.ts` first (reads `docs/domain/ubiquitous-language.md`, asserts zero failures and that the `## Bounded Context:` heading matches `docs/tech.md`'s column value exactly); confirm it fails against the empty template
-  - [ ] 6.2 Populate `docs/domain/ubiquitous-language.md` per spec §8.7: `## Bounded Context: AI-assisted development workflow`; the eight terms (`decision log`, `grilling`, `exit gate`, `bounded context`, `package map`, `runbook`, `install-if-absent`, `foundation document`) with all five fields, `Origin` per the spec table, `Status: active`; forbidden synonyms only where this PRD's history supplies them (`bounded context` carries none, D-72); frontmatter `status: active`, `version` bumped, one `+term` changelog row (D-69)
-  - [ ] 6.3 Edit `docs/tech.md`: replace the "freeform working label (`shared-understanding#D-45`) … Phase 3's glossary supersedes it" sentence with a pointer to the glossary; leave the column value unchanged (D-69 closes D-45)
-  - [ ] 6.3a Flip the eight rows of `docs/requirements/prd-shared-understanding-refinement.md`'s `## Vocabulary` from `proposed` to `existing` (D-71). The section itself landed in 3.0, not here: wiring the `run.ts` walk made `lint` report `vocabulary-missing` against this PRD immediately (A-8), so the section had to ship in that PR, with its rows `proposed` because the glossary was still empty. **The flip is matched on the exact term string.** A term whose spelling in 6.2's glossary differs from the PRD row leaves that row `proposed` and `lint` green — a `proposed` row only fails when the glossary *does* define the term (D-74) — so check the eight strings against the glossary headings one by one rather than assuming the flip is mechanical
-  - [ ] 6.3b Add a test asserting every term in `docs/requirements/prd-shared-understanding-refinement.md`'s `## Vocabulary` table matches a `### <Term>` heading in `docs/domain/ubiquitous-language.md` exactly, so the 6.3a flip fails loudly instead of silently — a `proposed` row whose term the glossary does not define leaves `lint` green (D-76, audit finding D-8 on issue #231)
-  - [ ] 6.4 Edit `activity-init` (three trees): one sentence on the bounded-context question naming the glossary as canonical (D-62); extend `test/unit/skill-parity-init.test.ts`
-  - [ ] 6.5 Verify Acceptance Criterion: AC-1 exactly eight terms, all fields, origins resolve, changelog row present
-  - [ ] 6.6 Verify Acceptance Criterion: AC-2 `pnpm run lint` passes; `checkExportedIdentifiers()` over this phase's diff reports nothing (5.9)
-  - [ ] 6.7 Verify Acceptance Criterion: AC-3 `docs/tech.md` note replaced, column value unchanged
-  - [ ] 6.8 Verify Acceptance Criterion: AC-4 `activity-init` pointer in all three trees; no new interview step
-  - [ ] 6.9 Verify Acceptance Criterion: AC-5 every term traces to a PRD FR or a decision ID (manual review of `Origin` values)
-  - [ ] 6.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-init`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run audit`
+  - [x] 6.1 Add the real-file assertion to `test/unit/checks-glossary.test.ts` first (reads `docs/domain/ubiquitous-language.md`, asserts zero failures and that the `## Bounded Context:` heading matches `docs/tech.md`'s column value exactly); confirm it fails against the empty template
+  - [x] 6.2 Populate `docs/domain/ubiquitous-language.md` per spec §8.7: `## Bounded Context: AI-assisted development workflow`; the eight terms (`decision log`, `grilling`, `exit gate`, `bounded context`, `package map`, `runbook`, `install-if-absent`, `foundation document`) with all five fields, `Origin` per the spec table, `Status: active`; forbidden synonyms only where this PRD's history supplies them (`bounded context` carries none, D-72); frontmatter `status: active`, `version` bumped, one `+term` changelog row (D-69)
+  - [x] 6.3 Edit `docs/tech.md`: replace the "freeform working label (`shared-understanding#D-45`) … Phase 3's glossary supersedes it" sentence with a pointer to the glossary; leave the column value unchanged (D-69 closes D-45)
+  - [x] 6.3a Flip the eight rows of `docs/requirements/prd-shared-understanding-refinement.md`'s `## Vocabulary` from `proposed` to `existing` (D-71). The section itself landed in 3.0, not here: wiring the `run.ts` walk made `lint` report `vocabulary-missing` against this PRD immediately (A-8), so the section had to ship in that PR, with its rows `proposed` because the glossary was still empty. **The flip is matched on the exact term string.** A term whose spelling in 6.2's glossary differs from the PRD row leaves that row `proposed` and `lint` green — a `proposed` row only fails when the glossary *does* define the term (D-74) — so check the eight strings against the glossary headings one by one rather than assuming the flip is mechanical
+  - [x] 6.3b Add a test asserting every term in `docs/requirements/prd-shared-understanding-refinement.md`'s `## Vocabulary` table matches a `### <Term>` heading in `docs/domain/ubiquitous-language.md` exactly, so the 6.3a flip fails loudly instead of silently — a `proposed` row whose term the glossary does not define leaves `lint` green (D-76, audit finding D-8 on issue #231)
+  - [x] 6.4 Edit `activity-init` (three trees): one sentence on the bounded-context question naming the glossary as canonical (D-62); extend `test/unit/skill-parity-init.test.ts`
+  - [x] 6.5 Verify Acceptance Criterion: AC-1 exactly eight terms, all fields, origins resolve, changelog row present
+  - [x] 6.6 Verify Acceptance Criterion: AC-2 `pnpm run lint` passes; `checkExportedIdentifiers()` over this phase's diff reports nothing (5.9)
+  - [x] 6.7 Verify Acceptance Criterion: AC-3 `docs/tech.md` note replaced, column value unchanged
+  - [x] 6.8 Verify Acceptance Criterion: AC-4 `activity-init` pointer in all three trees; no new interview step
+  - [x] 6.9 Verify Acceptance Criterion: AC-5 every term traces to a PRD FR or a decision ID (manual review of `Origin` values)
+  - [x] 6.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-init`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run audit`
 
 ## Decisions Consumed
 

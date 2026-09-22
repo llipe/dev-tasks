@@ -9,6 +9,7 @@
 | 1.2     | 2026-09-19 | Recorded repository shape and the package map (S-005, PRD AC-29)                 | developer        |
 | 1.3     | 2026-09-19 | Root script fan-out contract; glossary and simplicity baseline ownership (S-006) | developer        |
 | 1.4     | 2026-09-21 | Added `Grilling` question-cap configuration subsection (S-007, `shared-understanding#D-55`) | developer        |
+| 1.5     | 2026-09-22 | Package-map bounded context is now a canonical glossary term; the D-45 freeform placeholder retired (S-006, `shared-understanding#D-69`) | developer        |
 
 ## Package Map
 
@@ -26,9 +27,11 @@ direction — a package on disk with no row, or a row for a package that no
 longer exists. It warns and never fails; structural failures are `lint`'s
 (see `core/checks/`).
 
-The bounded-context value is a freeform working label
-(`shared-understanding#D-45`). Phase 3's glossary supersedes it with a
-canonical term.
+The bounded-context value is a canonical term, defined in
+`docs/domain/ubiquitous-language.md` (`shared-understanding#D-69`, closing
+`#D-45`). The glossary's `## Bounded Context:` headings and this column must
+read the same, character for character — `lint`'s glossary check matches them
+exactly, so a rename here is a rename there.
 
 ## Root Script Fan-Out
 
