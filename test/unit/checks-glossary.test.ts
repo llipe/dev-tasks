@@ -32,7 +32,11 @@ import {
   checkGlossary,
   checkVocabularySection,
   checkVocabularyFiles,
+  checkExportedIdentifiers,
+  splitIdentifierWords,
+  normalizeVocabularyWord,
 } from "../../core/checks/glossary.js";
+import type { GlossaryFinding } from "../../core/checks/glossary.js";
 import * as checksIndex from "../../core/checks/index.js";
 import { readPackageMap } from "../../core/distribution/workspace.js";
 import type { PackageMapRow } from "../../core/distribution/workspace.js";
@@ -1039,5 +1043,495 @@ describe("checkVocabularySection — this repository's own PRDs (IT-7, A-8)", ()
   it("is exported from core/checks/index.ts for the verifier and activity-refine", () => {
     expect(typeof checksIndex.checkVocabularySection).toBe("function");
     expect(typeof checksIndex.checkVocabularyFiles).toBe("function");
+  });
+});
+
+/* -------------------------------------------------------------------------
+ * `checkExportedIdentifiers` — the verifier's conformance scan
+ * (S-005; specification §8.6; UT-X1..UT-X15, RT-1..RT-3, EC-16..EC-21)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * A glossary whose single term forbids `synonyms`, for the scan.
+ *
+ * The term name is deliberately not a word any fixture identifier
+ * contains: D-64 reports forbidden synonyms and never canonical terms,
+ * and a fixture where the two overlap cannot tell the two rules apart.
+ */
+function forbidding(synonyms: string, termName = "bounded context"): string {
+  return doc(CONTEXT + term(termName, { "Forbidden synonyms": synonyms }));
+}
+
+/** The scan, with the D-63 invariant asserted on every single call. */
+function scan(lines: string[], glossaryMarkdown: string): GlossaryFinding[] {
+  const result = checkExportedIdentifiers(lines, glossaryMarkdown);
+  // UT-X9: not a separate case but a property of every case. A rule
+  // that is advisory in fourteen tests and blocking in the fifteenth is
+  // a rule nobody can rely on.
+  expect(result.failures, "D-63: the scan never produces failures").toEqual([]);
+  for (const finding of result.staleness) expect(finding.rule).toBe("glossary-forbidden-synonym");
+  return result.staleness;
+}
+
+describe("checkExportedIdentifiers — declaration forms (UT-X1, AC-1)", () => {
+  const GLOSSARY = forbidding("module");
+
+  const FORMS = [
+    "+export const moduleLoader = 1;",
+    "+export let moduleLoader = 1;",
+    "+export var moduleLoader = 1;",
+    "+export function moduleLoader() {}",
+    "+export async function moduleLoader() {}",
+    "+export class moduleLoader {}",
+    "+export type moduleLoader = string;",
+    "+export interface moduleLoader {}",
+    "+export enum moduleLoader {}",
+  ];
+
+  for (const line of FORMS) {
+    it(`extracts the identifier from \`${line.trim()}\``, () => {
+      const findings = scan([line], GLOSSARY);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].message).toContain("moduleLoader");
+      expect(findings[0].message).toContain("module");
+    });
+  }
+
+  it("does not match a non-export line that happens to name the word", () => {
+    // The negative half of the same rule: the scan reads added exports,
+    // not added code.
+    expect(scan(["+const moduleLoader = 1;", "+// module loader here"], GLOSSARY)).toEqual([]);
+  });
+
+  it("does not match `export` used as part of a longer word", () => {
+    expect(scan(["+exportConst moduleLoader = 1;", "+exports.moduleLoader = 1;"], GLOSSARY)).toEqual(
+      [],
+    );
+  });
+});
+
+describe("checkExportedIdentifiers — brace lists (UT-X2, UT-X12, AC-1, D-73)", () => {
+  it("takes the right-hand name of `as` and leaves the local name alone", () => {
+    // `export { packageIndex as PackageTable }`: the exported name is
+    // what a consumer types, and the local name is invisible to them.
+    const findings = scan(
+      ["+export { helper, packageIndex as PackageTable };"],
+      forbidding("package"),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toContain("PackageTable");
+    expect(findings[0].message).not.toContain("packageIndex");
+  });
+
+  it("reports nothing when only the *local* side carries the synonym", () => {
+    // The negative of A-10, and the case that proves the sides are not
+    // simply both scanned: `moduleThing as Renamed` exports `Renamed`.
+    expect(scan(["+export { moduleThing as renamed };"], forbidding("module"))).toEqual([]);
+  });
+
+  it("handles a re-export list and `export type { … }` (UT-X12)", () => {
+    expect(scan(['+export { Module } from "./m";'], forbidding("module"))).toHaveLength(1);
+    expect(scan(['+export type { Module } from "./m";'], forbidding("module"))).toHaveLength(1);
+    expect(scan(["+export { type Module, other };"], forbidding("module"))).toHaveLength(1);
+  });
+
+  it("reports nothing for a star re-export — there is no identifier (UT-X12)", () => {
+    expect(scan(['+export * from "./module";'], forbidding("module"))).toEqual([]);
+    expect(scan(['+export * as modules from "./m";'], forbidding("module"))).toEqual([]);
+  });
+
+  it("reports nothing for `export default class` — the documented D-60 miss (UT-X11)", () => {
+    // A regex over declarations cannot see a default export's name
+    // without a parser, and D-60 chose the regex. Recording the miss as
+    // a test is how the next reader learns it is a choice, not a bug.
+    expect(scan(["+export default class ModuleRegistry {}"], forbidding("module"))).toEqual([]);
+  });
+});
+
+describe("checkExportedIdentifiers — splitting (UT-X3, EC-16, EC-17, EC-18, AC-1)", () => {
+  const GLOSSARY = forbidding("loader");
+
+  for (const line of [
+    "+export class ProductContextLoader {}",
+    "+export const productContextLoader = 1;",
+    "+export const product_context_loader = 1;",
+    "+export const PRODUCT_CONTEXT_LOADER = 1;",
+  ]) {
+    it(`splits \`${line.trim()}\` into words`, () => {
+      expect(scan([line], GLOSSARY)).toHaveLength(1);
+    });
+  }
+
+  it("splits an acronym at its boundary: `HTTPModule` → http, module (EC-18)", () => {
+    expect(scan(["+export class HTTPModule {}"], forbidding("module"))).toHaveLength(1);
+    expect(scan(["+export class HTTPModule {}"], forbidding("http"))).toHaveLength(1);
+  });
+
+  it("keeps a digit with the preceding word: `V2ModuleLoader` (EC-16)", () => {
+    expect(splitIdentifierWords("V2ModuleLoader")).toEqual(["v2", "module", "loader"]);
+  });
+
+  it("does not split a trailing digit off a word: `module2` misses `module` (EC-16)", () => {
+    // The spec normalizes case and plural, and nothing else. A digit
+    // stripper would make `module2` a hit, which is a rule no one wrote.
+    expect(splitIdentifierWords("module2")).toEqual(["module2"]);
+    expect(scan(["+export const module2 = 1;"], forbidding("module"))).toEqual([]);
+  });
+
+  it("strips a leading `_` or `$` before splitting (EC-17)", () => {
+    expect(splitIdentifierWords("_module")).toEqual(["module"]);
+    expect(splitIdentifierWords("$package")).toEqual(["package"]);
+    expect(scan(["+export const _module = 1;"], forbidding("module"))).toHaveLength(1);
+  });
+
+  it("reports nothing for a single-letter identifier (EC-18)", () => {
+    expect(scan(["+export const X = 1;"], forbidding("module"))).toEqual([]);
+  });
+});
+
+describe("checkExportedIdentifiers — normalization (UT-X4, UT-X13, EC-19, D-73)", () => {
+  it("normalizes a trailing `s`: `Modules` hits `module` (UT-X4)", () => {
+    expect(scan(["+export const Modules = 1;"], forbidding("module"))).toHaveLength(1);
+    expect(scan(["+export type Packages = string;"], forbidding("package"))).toHaveLength(1);
+  });
+
+  it("strips `es` only after s/x/z/ch/sh, so `types` does not become `typ` (EC-19)", () => {
+    expect(normalizeVocabularyWord("classes")).toBe("class");
+    expect(normalizeVocabularyWord("boxes")).toBe("box");
+    expect(normalizeVocabularyWord("branches")).toBe("branch");
+    expect(normalizeVocabularyWord("types")).toBe("type");
+    expect(normalizeVocabularyWord("packages")).toBe("package");
+  });
+
+  it("applies the same function to both sides, so `status` still matches (UT-X13)", () => {
+    // Both sides become `statu`. The normalizer being wrong about
+    // English is survivable; the two sides disagreeing is not.
+    expect(normalizeVocabularyWord("status")).toBe("statu");
+    expect(scan(["+export const statusCode = 1;"], forbidding("status"))).toHaveLength(1);
+  });
+
+  it("does not strip an `s` preceded by an `s` (EC-19)", () => {
+    expect(normalizeVocabularyWord("staleness")).toBe("staleness");
+    expect(normalizeVocabularyWord("class")).toBe("class");
+  });
+
+  it("is case-insensitive on both sides", () => {
+    expect(scan(["+export const MODULE = 1;"], forbidding("Module"))).toHaveLength(1);
+  });
+});
+
+describe("checkExportedIdentifiers — multi-word synonyms (UT-X5, EC-20, D-73)", () => {
+  it("matches the joined identifier against a hyphenated synonym (UT-X5)", () => {
+    const findings = scan(["+export const productContext = 1;"], forbidding("product-context"));
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toContain("product-context");
+  });
+
+  it("matches an adjacent word pair inside a longer identifier (EC-20)", () => {
+    expect(
+      scan(["+export const productContextLoader = 1;"], forbidding("product context")),
+    ).toHaveLength(1);
+    expect(
+      scan(["+export const loadProductContext = 1;"], forbidding("product_context")),
+    ).toHaveLength(1);
+  });
+
+  it("does not match a non-adjacent word pair", () => {
+    // `product…loader…context` is not `product context`. Matching any
+    // two words in any order would flag half the codebase.
+    expect(
+      scan(["+export const productLoaderContext = 1;"], forbidding("product context")),
+    ).toEqual([]);
+  });
+
+  it("does not match a single word of a multi-word synonym", () => {
+    expect(scan(["+export const contextLoader = 1;"], forbidding("product-context"))).toEqual([]);
+  });
+});
+
+describe("checkExportedIdentifiers — what is never reported (UT-X6, UT-X7, UT-X8, AC-2, D-64)", () => {
+  it("reports nothing for an identifier matching no synonym (UT-X6)", () => {
+    const result = checkExportedIdentifiers(
+      ["+export const readFileSafely = 1;"],
+      forbidding("module"),
+    );
+    expect(result).toEqual({ failures: [], staleness: [] });
+  });
+
+  it("reports nothing for an identifier equal to a canonical term (UT-X7)", () => {
+    // FR-23's literal wording says "match glossary terms"; D-64 says
+    // forbidden synonyms only, and this is the case that separates them.
+    const glossary = doc(CONTEXT + term("decision log", { "Forbidden synonyms": "changelog" }));
+    expect(scan(["+export class DecisionLog {}"], glossary)).toEqual([]);
+  });
+
+  it("reports nothing when every term forbids `none` (UT-X8)", () => {
+    expect(scan(["+export const moduleLoader = 1;"], forbidding("none"))).toEqual([]);
+  });
+
+  it("reports nothing against a glossary with no terms at all", () => {
+    expect(scan(["+export const moduleLoader = 1;"], doc(""))).toEqual([]);
+  });
+
+  it("reports nothing for an empty line list", () => {
+    expect(scan([], forbidding("module"))).toEqual([]);
+  });
+});
+
+describe("checkExportedIdentifiers — diff line prefixes (UT-X10, D-73, A-11)", () => {
+  const GLOSSARY = forbidding("module");
+
+  it("accepts a line with the diff `+` and one without it", () => {
+    expect(scan(["+export const moduleLoader = 1;"], GLOSSARY)).toHaveLength(1);
+    expect(scan(["export const moduleLoader = 1;"], GLOSSARY)).toHaveLength(1);
+    expect(scan(["+  export const moduleLoader = 1;"], GLOSSARY)).toHaveLength(1);
+  });
+
+  it("ignores a removed line — `-export const moduleLoader`", () => {
+    // The scan is about what the PR *adds*. Reporting a deletion would
+    // ask the author to fix vocabulary they just removed.
+    expect(scan(["-export const moduleLoader = 1;"], GLOSSARY)).toEqual([]);
+  });
+
+  it("ignores an unchanged context line — a leading space, no `+`", () => {
+    expect(scan([" export const moduleLoader = 1;"], GLOSSARY)).toEqual([]);
+  });
+
+  it("ignores diff headers that mention an export", () => {
+    expect(
+      scan(["+++ b/core/module.ts", "@@ -1,3 +1,4 @@ export const moduleLoader"], GLOSSARY),
+    ).toEqual([]);
+  });
+});
+
+describe("checkExportedIdentifiers — finding shape and multiplicity (UT-X14, UT-X15, AC-3)", () => {
+  it("reports one finding per exported identifier, without deduplicating (UT-X14)", () => {
+    const findings = scan(
+      ["+export const moduleA = 1;", "+export const moduleB = 2;"],
+      forbidding("module"),
+    );
+    expect(findings).toHaveLength(2);
+    expect(findings.map((f) => f.message.includes("moduleA"))).toEqual([true, false]);
+  });
+
+  it("names the identifier, the matched text, the synonym, the term, and `advisory` (UT-X15)", () => {
+    const findings = scan(
+      ["+export const productContextLoader = 1;"],
+      forbidding("product-context", "foundation document"),
+    );
+    expect(findings).toHaveLength(1);
+    const { rule, file, message } = findings[0];
+    expect(rule).toBe("glossary-forbidden-synonym");
+    expect(file).toBe(GLOSSARY_PATH);
+    expect(message).toContain("productContextLoader");
+    expect(message).toContain("productcontext");
+    expect(message).toContain("product-context");
+    expect(message).toContain("foundation document");
+    expect(message.toLowerCase()).toContain("advisory");
+  });
+
+  it("names every term that forbids the same synonym, in one finding", () => {
+    const glossary = doc(
+      CONTEXT +
+        term("foundation document", { "Forbidden synonyms": "module" }) +
+        "\n" +
+        term("bounded context", { "Forbidden synonyms": "module" }),
+    );
+    const findings = scan(["+export const moduleLoader = 1;"], glossary);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toContain("foundation document");
+    expect(findings[0].message).toContain("bounded context");
+  });
+
+  it("reports one finding per distinct synonym an identifier hits", () => {
+    const glossary = doc(
+      CONTEXT +
+        term("foundation document", { "Forbidden synonyms": "module, loader" }) +
+        "\n" +
+        term("bounded context"),
+    );
+    expect(scan(["+export const moduleLoader = 1;"], glossary)).toHaveLength(2);
+  });
+
+  it("is pure: the same input twice gives identical results", () => {
+    const lines = ["+export const moduleLoader = 1;"];
+    const glossary = forbidding("module");
+    expect(checkExportedIdentifiers(lines, glossary)).toEqual(
+      checkExportedIdentifiers(lines, glossary),
+    );
+  });
+
+  it("is exported from core/checks/index.ts for the verifier (CT-8)", () => {
+    expect(typeof checksIndex.checkExportedIdentifiers).toBe("function");
+  });
+
+  it("imports no TypeScript compiler API (D-60)", () => {
+    // The module ships inside `dist/core/` to consumers, where
+    // devDependencies — `typescript` among them — are simply absent.
+    const source = readFileSync(join(REPO_ROOT, "core/checks/glossary.ts"), "utf-8");
+    expect(source).not.toMatch(/from\s+["']typescript["']/);
+    expect(source).not.toMatch(/require\(["']typescript["']\)/);
+  });
+});
+
+/**
+ * Seeded fixture tactics (RT-1, RT-2, RT-3).
+ *
+ * The rows below were produced by the LCG the test plan pins —
+ * `x = (x * 1103515245 + 12345) mod 2^31`, reading the high bits, which
+ * the low bits of that generator make necessary — and are committed
+ * literally so a failure replays byte-identically. The generator is not
+ * run here; regenerating is a deliberate act, not a side effect of
+ * running the suite.
+ */
+const RT_WORDS = [
+  "module","package","context","loader","registry","runbook","glossary","vocabulary",
+  "decision","term","synonym","verifier","planner","developer","harness","profile",
+  "manifest","workspace","document","template","index","gate","finding","staleness",
+  "audit","story","epic","backlog","diff","branch","commit","checklist","guard","hook",
+  "skill","command","agent","parity","fixture","seed",
+];
+
+/** RT-1: identifier → the word list it was joined from (SEED = 20260921). */
+const RT1_ROWS: [string, string[]][] = [
+  ["HOOK_BACKLOG", ["hook", "backlog"]],
+  ["agent", ["agent"]],
+  ["PROFILE_PROFILE_PACKAGE_GLOSSARY", ["profile", "profile", "package", "glossary"]],
+  ["staleness", ["staleness"]],
+  ["audit_module_gate", ["audit", "module", "gate"]],
+  ["vocabulary_parity_backlog_module", ["vocabulary", "parity", "backlog", "module"]],
+  ["RUNBOOK_DEVELOPER_BRANCH_BACKLOG", ["runbook", "developer", "branch", "backlog"]],
+  ["BRANCH_PLANNER_COMMIT_BACKLOG", ["branch", "planner", "commit", "backlog"]],
+  ["BACKLOG_AUDIT", ["backlog", "audit"]],
+  ["GATE_PACKAGE_SEED", ["gate", "package", "seed"]],
+  ["checklist_gate", ["checklist", "gate"]],
+  ["GATE_DECISION_GLOSSARY_LOADER", ["gate", "decision", "glossary", "loader"]],
+  ["Developer", ["developer"]],
+  ["runbookFixture", ["runbook", "fixture"]],
+  ["TEMPLATE", ["template"]],
+  ["branch_glossary_index", ["branch", "glossary", "index"]],
+  ["workspaceSkillTermFixture", ["workspace", "skill", "term", "fixture"]],
+  ["skillProfile", ["skill", "profile"]],
+  ["command", ["command"]],
+  ["DecisionIndexSkillGuard", ["decision", "index", "skill", "guard"]],
+  ["findingPackage", ["finding", "package"]],
+  ["DocumentVerifier", ["document", "verifier"]],
+  ["module", ["module"]],
+  ["fixture", ["fixture"]],
+  ["templateRegistrySkillCommit", ["template", "registry", "skill", "commit"]],
+  ["AgentDecisionParity", ["agent", "decision", "parity"]],
+  ["AUDIT_FIXTURE", ["audit", "fixture"]],
+  ["context_story_hook_finding", ["context", "story", "hook", "finding"]],
+  ["decisionRegistry", ["decision", "registry"]],
+  ["EPIC_PLANNER_SKILL_WORKSPACE", ["epic", "planner", "skill", "workspace"]],
+  ["commit_story_context_registry", ["commit", "story", "context", "registry"]],
+  ["FINDING_EPIC", ["finding", "epic"]],
+  ["Profile", ["profile"]],
+  ["branch_module_parity_synonym", ["branch", "module", "parity", "synonym"]],
+  ["BACKLOG", ["backlog"]],
+  ["harness", ["harness"]],
+  ["runbookAuditContextContext", ["runbook", "audit", "context", "context"]],
+  ["vocabulary_hook", ["vocabulary", "hook"]],
+  ["harnessRunbookStoryHarness", ["harness", "runbook", "story", "harness"]],
+  ["RunbookDecisionSynonym", ["runbook", "decision", "synonym"]],
+];
+
+describe("RT-1 — the splitter round-trips every casing (SEED 20260921)", () => {
+  it("covers 40 committed rows across all four casings", () => {
+    expect(RT1_ROWS).toHaveLength(40);
+    expect(RT1_ROWS.some(([id]) => /^[A-Z][a-z]/.test(id) && !id.includes("_"))).toBe(true);
+    expect(RT1_ROWS.some(([id]) => /^[a-z]+[A-Z]/.test(id))).toBe(true);
+    expect(RT1_ROWS.some(([id]) => /^[a-z_]+$/.test(id) && id.includes("_"))).toBe(true);
+    expect(RT1_ROWS.some(([id]) => /^[A-Z_]+$/.test(id) && id.includes("_"))).toBe(true);
+  });
+
+  it.each(RT1_ROWS)("splits %s back into its words", (identifier, words) => {
+    expect(splitIdentifierWords(identifier)).toEqual(words);
+  });
+});
+
+describe("RT-2 — normalizer properties on the same word list (SEED 20260921)", () => {
+  it.each(RT_WORDS)("normalize(normalize(%s)) === normalize(%s)", (word) => {
+    expect(normalizeVocabularyWord(normalizeVocabularyWord(word))).toBe(
+      normalizeVocabularyWord(word),
+    );
+  });
+
+  it.each(RT_WORDS)("normalize(%s.toUpperCase()) === normalize(%s)", (word) => {
+    expect(normalizeVocabularyWord(word.toUpperCase())).toBe(normalizeVocabularyWord(word));
+  });
+
+  it.each(RT_WORDS.filter((w) => !w.endsWith("s")))("normalize(%ss) === normalize(%s)", (word) => {
+    expect(normalizeVocabularyWord(`${word}s`)).toBe(normalizeVocabularyWord(word));
+  });
+
+  it("is not idempotent on a word whose singular itself ends in `s` — a known edge of D-73", () => {
+    // `buses` → `bus` → `bu`. Harmless, because both sides are
+    // normalized exactly once and agree; recorded because a future
+    // reader who assumes idempotence everywhere will be wrong here.
+    expect(normalizeVocabularyWord("buses")).toBe("bus");
+    expect(normalizeVocabularyWord("bus")).toBe("bu");
+  });
+});
+
+/** RT-3: identifier → the spliced forbidden synonym, or null (SEED 20260922). */
+const RT3_SYNONYMS = ["loader", "developer", "planner", "glossary", "synonym"];
+const RT3_ROWS: [string, string | null][] = [
+  ["agentGuardCommitPlanner", "planner"],
+  ["stalenessHook", null],
+  ["seedGuardSkillLoader", "loader"],
+  ["guardChecklist", null],
+  ["auditSeed", null],
+  ["auditSkillSynonym", "synonym"],
+  ["backlogBranchParityDeveloper", "developer"],
+  ["parityParityGlossary", "glossary"],
+  ["hookSkillLoader", "loader"],
+  ["stalenessSkillSkill", null],
+  ["skillIndex", null],
+  ["findingBacklog", null],
+  ["diffSeed", null],
+  ["parityCommand", null],
+  ["findingCommitAgent", null],
+  ["findingParityStory", null],
+  ["skillChecklistGate", null],
+  ["diffAudit", null],
+  ["hookAgentDiffDeveloper", "developer"],
+  ["hookAgentHook", null],
+  ["parityChecklistFinding", null],
+  ["storyParityBranch", null],
+  ["seedParitySynonym", "synonym"],
+  ["auditParityDiff", null],
+  ["checklistAgentCommandPlanner", "planner"],
+  ["storyCommandBranch", null],
+  ["auditSkillStaleness", null],
+  ["epicGateCommitDeveloper", "developer"],
+  ["stalenessIndexCommit", null],
+  ["findingParityGuard", null],
+];
+
+describe("RT-3 — no false positives, no false negatives (SEED 20260922)", () => {
+  const GLOSSARY = forbidding(RT3_SYNONYMS.join(", "));
+  const lines = RT3_ROWS.map(([id]) => `+export const ${id} = 1;`);
+
+  it("splices exactly ten hits into thirty identifiers", () => {
+    expect(RT3_ROWS).toHaveLength(30);
+    expect(RT3_ROWS.filter(([, hit]) => hit !== null)).toHaveLength(10);
+  });
+
+  it("reports the ten spliced identifiers and nothing else", () => {
+    const findings = scan(lines, GLOSSARY);
+    const expected = RT3_ROWS.filter(([, hit]) => hit !== null);
+    expect(findings).toHaveLength(expected.length);
+    for (const [index, [identifier, synonym]] of expected.entries()) {
+      expect(findings[index].message).toContain(identifier);
+      expect(findings[index].message).toContain(synonym as string);
+    }
+  });
+
+  it("reports nothing at all once the synonyms are drawn from the disjoint list", () => {
+    // The same thirty lines against a glossary forbidding words none of
+    // them contain: if this reported anything, the run above would be
+    // proving nothing.
+    expect(scan(lines, forbidding("widget, sprocket"))).toEqual([]);
   });
 });
