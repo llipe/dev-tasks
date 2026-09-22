@@ -84,6 +84,24 @@ If any required input is missing, ask one focused question with a default option
 
 ---
 
+## memo-cli Integration (When Available)
+
+### Bank Declaration
+
+This agent's bank id is `planner-memory`, stable for the agent's life (PRD §15). Export it before any memo command in the session:
+
+```bash
+export MEMO_BANK=planner-memory
+```
+
+`planner` does not read or write memo entries itself — orchestration-scoped context comes from the task file/GitHub milestone, and each delegated `developer` subagent runs its own `memo recall`/`memo write` sequence scoped to `developer-memory`. This declaration exists for AC parity with the other long-lived agent definitions and for any future orchestration-level use of `--bank $MEMO_BANK`.
+
+### Session Close
+
+No memo action in Phase 2. `memo used` and `memo decay` arrive with memo-cli 1.4.0.
+
+---
+
 ## Codebase Research for Pre-Orchestration (Conditional)
 
 Before parsing stories and building the dependency graph, you **SHOULD** invoke `researcher` if:

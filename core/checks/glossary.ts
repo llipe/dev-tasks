@@ -34,7 +34,7 @@
  * business, not `lint`'s (D-67, D-75).
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { parseFrontmatter } from "./docs-structure.js";
@@ -363,4 +363,250 @@ export function checkGlossary(repoRoot: string): GlossaryResult {
   }
 
   return result;
+}
+
+/* -------------------------------------------------------------------------
+ * `## Vocabulary` in PRDs and specifications (S-003; §5, §8.3, D-65, D-71)
+ * ---------------------------------------------------------------------- */
+
+/** Where PRDs live, and the only tree `lint` walks for §8.3. */
+export const REQUIREMENTS_DIR = "docs/requirements";
+
+/** The one line a document with no domain concept carries (spec §5). */
+const NO_CONCEPTS = /^None\s*[—–-]\s*\S.*$/;
+
+/** `conflict → D-NN`, `conflict -> feature#D-NN` — both arrows (D-74). */
+const CONFLICT = /^conflict\s*(?:→|->)\s*(?:[A-Za-z0-9._/-]+#)?D-\d+$/i;
+
+/** Cells whose content is a placeholder rather than an answer. */
+const PLACEHOLDER = new Set(["", "—", "–", "-", "n/a", "na", "tbd", "?"]);
+
+/**
+ * The lines of a level-2 section, or null when the section is absent.
+ *
+ * Fenced blocks are skipped in both directions (D-74): a `##
+ * Vocabulary` inside a fence does not open a section, and a fenced
+ * example inside a real section is not part of the section's content.
+ * Both halves are load-bearing and for the same reason. This
+ * specification's own §5 shows the Vocabulary table inside a fence; a
+ * parser that reads the opening fence declares every document
+ * describing the format compliant, and a parser that reads the fence
+ * body reports rows against a real document for an example it was shown
+ * — including a fenced `None —` line, which would pass the whole
+ * section on nothing.
+ *
+ * The section ends at the next ATX heading of depth 1 or 2. A `#` that
+ * did not close it made every table in the remainder of the file a
+ * Vocabulary table (§8.3 describes no such reach).
+ */
+function sectionLines(markdown: string, heading: RegExp): string[] | null {
+  const lines = normalize(markdown).split("\n");
+  let fenced = false;
+  let collecting = false;
+  const collected: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^(```|~~~)/.test(trimmed)) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced) continue;
+
+    if (/^#{1,2}(?!#)\s/.test(trimmed)) {
+      if (collecting) return collected;
+      if (heading.test(trimmed)) {
+        collecting = true;
+        continue;
+      }
+      continue;
+    }
+    if (collecting) collected.push(line);
+  }
+
+  return collecting ? collected : null;
+}
+
+/** True for a Markdown table delimiter row: `| --- |`, `| - |`, `|:-:|`. */
+function isDelimiterRow(line: string): boolean {
+  return /^\|[\s:|-]+\|$/.test(line.trim());
+}
+
+/** Trim, fold non-breaking spaces, and drop the Markdown code ticks. */
+function cell(value: string): string {
+  return value.replace(/ /g, " ").replace(/`/g, "").trim();
+}
+
+function isEmpty(value: string): boolean {
+  return PLACEHOLDER.has(value.toLowerCase());
+}
+
+/**
+ * Check one document's `## Vocabulary` section against the glossary.
+ *
+ * Pure over `(markdown, glossaryMarkdown)`; `file` only names the
+ * document in the findings, so the same function serves `lint`'s walk,
+ * `activity-refine` before it presents a PRD, and
+ * `activity-generate-spec` before it presents a specification (D-75).
+ *
+ * Structural only (D-65). No prose is read: a document may say "widget"
+ * two hundred times and this function will never mention it. A checker
+ * that guesses which nouns are domain terms produces findings nobody
+ * can act on, and a gate nobody can act on is a gate everybody learns
+ * to skip.
+ *
+ * `glossaryMarkdown` is null when the repository has no glossary yet,
+ * and then `existing` rows are taken at their word — there is nothing
+ * to resolve against, and absence is `doctor`'s warning (D-67, D-75).
+ *
+ * Both rules are `failures`: AC-07 says an unaccounted term fails
+ * refinement (D-71).
+ */
+export function checkVocabularySection(
+  markdown: string,
+  glossaryMarkdown: string | null,
+  file = "<document>",
+): GlossaryResult {
+  const failures: GlossaryFinding[] = [];
+  const report = (rule: GlossaryRule, message: string): void => {
+    failures.push({ rule, file, message });
+  };
+
+  const section = sectionLines(markdown, /^##(?!#)\s+Vocabulary\s*$/);
+  if (section === null) {
+    report(
+      "vocabulary-missing",
+      `${file} has no '## Vocabulary' section. Every term the document uses must be listed as existing, proposed, or resolved by a decision.`,
+    );
+    return { failures, staleness: [] };
+  }
+
+  const known = new Set<string>();
+  if (glossaryMarkdown !== null) {
+    for (const term of parseGlossary(glossaryMarkdown).terms) known.add(term.name.toLowerCase());
+  }
+
+  // The sentinel stands for the whole section, and only then: spec §5
+  // says a document with no domain concept "carries the section with
+  // one line". Accepting it wherever it appears turned any prose
+  // opening with `None —` into a clean result before a single row was
+  // read, which is an author bypassing AC-07 by writing a sentence.
+  const content = section.filter((line) => line.trim().length > 0);
+  if (content.length === 1 && NO_CONCEPTS.test(content[0].trim())) {
+    return { failures, staleness: [] };
+  }
+
+  const rows: string[][] = [];
+  for (const line of section) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("|")) continue;
+    if (isDelimiterRow(trimmed)) continue;
+    const cells = trimmed
+      .replace(/\|\s*$/, "")
+      .split("|")
+      .slice(1)
+      .map(cell);
+    if (cells.length === 0) continue;
+    if (cells[0].toLowerCase() === "term") continue;
+    rows.push(cells);
+  }
+
+  if (rows.length === 0) {
+    report(
+      "vocabulary-incomplete",
+      `${file}: the '## Vocabulary' section has no rows. List the document's terms, or state 'None — this PRD introduces no domain concepts.'`,
+    );
+    return { failures, staleness: [] };
+  }
+
+  for (const cells of rows) {
+    const term = cells[0].length > 0 ? cells[0] : "(unnamed row)";
+    const status = (cells[1] ?? "").replace(/\s+/g, " ");
+    const lower = status.toLowerCase();
+
+    if (lower === "existing") {
+      if (glossaryMarkdown !== null && !known.has(term.toLowerCase())) {
+        report(
+          "vocabulary-incomplete",
+          `${file}: row '${term}' is marked 'existing' but ${GLOSSARY_FILE} has no such term. Propose it instead, or correct the spelling.`,
+        );
+      }
+      continue;
+    }
+
+    if (lower === "proposed") {
+      if (known.has(term.toLowerCase())) {
+        report(
+          "vocabulary-incomplete",
+          `${file}: row '${term}' is marked 'proposed' but ${GLOSSARY_FILE} already defines it. Use 'existing'.`,
+        );
+        continue;
+      }
+      const missing = (["bounded context", "definition", "forbidden synonyms"] as const).filter(
+        (_label, index) => isEmpty(cells[index + 2] ?? ""),
+      );
+      if (missing.length > 0) {
+        report(
+          "vocabulary-incomplete",
+          `${file}: proposed row '${term}' is missing ${missing.join(", ")}. A proposal carries all three, and 'none' is an answer.`,
+        );
+      }
+      continue;
+    }
+
+    if (CONFLICT.test(status)) continue;
+
+    report(
+      "vocabulary-incomplete",
+      `${file}: row '${term}' has status '${status}', expected 'existing', 'proposed', or 'conflict → D-NN'.`,
+    );
+  }
+
+  return { failures, staleness: [] };
+}
+
+/**
+ * Run the Vocabulary check over every PRD in `docs/requirements/`.
+ *
+ * The skip rule lives here rather than in the check, because it is
+ * about `lint`'s reach and not about what a Vocabulary section means
+ * (§8.3). A PRD with neither `## Vocabulary` nor `## Decisions`
+ * predates the grilling phases entirely: it was never interviewed, so
+ * failing it now would turn this gate red on every repository that
+ * adopted the harness before today, and a gate that is red on arrival
+ * is a gate its owners turn off.
+ *
+ * Specifications under `workstream/` are not walked. They are checked
+ * by `activity-generate-spec` before presentation (D-75), where the
+ * author is present to answer; `lint` has no business failing a
+ * working draft.
+ */
+export function checkVocabularyFiles(repoRoot: string): GlossaryResult {
+  const dir = join(repoRoot, REQUIREMENTS_DIR);
+  if (!existsSync(dir)) return { failures: [], staleness: [] };
+
+  const glossaryPath = join(repoRoot, GLOSSARY_FILE);
+  const glossaryMarkdown = existsSync(glossaryPath) ? readFileSync(glossaryPath, "utf-8") : null;
+
+  const failures: GlossaryFinding[] = [];
+  for (const entry of readdirSync(dir)
+    .filter((f) => f.endsWith(".md"))
+    .sort()) {
+    // A *directory* named `*.md` is legal and rare, and reading one
+    // throws EISDIR out of `lint` with a message that points nowhere
+    // near this file.
+    const path = join(dir, entry);
+    if (!statSync(path).isFile()) continue;
+    const markdown = readFileSync(path, "utf-8");
+    const hasVocabulary = sectionLines(markdown, /^##(?!#)\s+Vocabulary\s*$/) !== null;
+    const hasDecisions = sectionLines(markdown, /^##(?!#)\s+Decisions\b.*$/) !== null;
+    if (!hasVocabulary && !hasDecisions) continue;
+
+    failures.push(
+      ...checkVocabularySection(markdown, glossaryMarkdown, `${REQUIREMENTS_DIR}/${entry}`)
+        .failures,
+    );
+  }
+
+  return { failures, staleness: [] };
 }

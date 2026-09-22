@@ -14,5 +14,12 @@ export { checkDocsStructure } from "./docs-structure.js";
 export type { DocsStructureFinding, DocsStructureResult } from "./docs-structure.js";
 export { checkDecisionLogFormat, checkDecisionLogContent } from "./decision-log-format.js";
 export type { DecisionLogFinding, DecisionLogResult } from "./decision-log-format.js";
-export { checkGlossary, checkGlossaryContent, GLOSSARY_FILE } from "./glossary.js";
+export {
+  checkGlossary,
+  checkGlossaryContent,
+  checkVocabularySection,
+  checkVocabularyFiles,
+  GLOSSARY_FILE,
+  REQUIREMENTS_DIR,
+} from "./glossary.js";
 export type { GlossaryRule, GlossaryFinding, GlossaryResult } from "./glossary.js";

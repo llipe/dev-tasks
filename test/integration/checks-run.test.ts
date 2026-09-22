@@ -265,3 +265,141 @@ describe("core/checks/run.ts — glossary check (S-002 AC-1/AC-2/AC-4, IT-8)", (
     expect(result.stderr).toBe("");
   });
 });
+
+/**
+ * The `docs/requirements/` Vocabulary walk through the same process
+ * boundary (S-003 AC-3, UT-R1/UT-R2, IT-7).
+ *
+ * The unit tests prove the skip rule and the row grammar. What only a
+ * process run proves is that the walk is actually wired into `run.ts`
+ * and its findings are concatenated into the exit code: a test that
+ * greps `run.ts` for `checkVocabularyFiles` passes just as happily
+ * against a call whose result is discarded — which is exactly the gap
+ * S-002's merge gate found in its own wiring assertion.
+ */
+describe("core/checks/run.ts — docs/requirements Vocabulary walk (S-003 AC-3)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), "dt-checks-vocab-"));
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function writeFile(relPath: string, content: string): void {
+    const full = join(tmpDir, relPath);
+    mkdirSync(join(full, ".."), { recursive: true });
+    writeFileSync(full, content, "utf-8");
+  }
+
+  const DECISIONS = ["## Decisions", "", "| ID | Decision |", "| -- | -------- |", ""].join("\n");
+
+  const SECTION_HEADER = [
+    "## Vocabulary",
+    "",
+    "| Term | Status in glossary | Bounded context | Definition (proposals only) | Forbidden synonyms (proposals only) |",
+    "| ---- | ------------------ | --------------- | --------------------------- | ----------------------------------- |",
+  ].join("\n");
+
+  it("exits 1 naming the PRD that has ## Decisions and no ## Vocabulary, and 0 once added", () => {
+    writeFile("docs/requirements/prd-thing.md", `# PRD: Thing\n\n${DECISIONS}`);
+
+    const broken = runCheck(tmpDir);
+    expect(broken.exitCode).toBe(1);
+    expect(broken.stderr).toContain("[vocabulary-missing]");
+    expect(broken.stderr).toContain("docs/requirements/prd-thing.md");
+
+    writeFile(
+      "docs/requirements/prd-thing.md",
+      `# PRD: Thing\n\n${DECISIONS}\n${SECTION_HEADER}\n| thing | proposed | Widget management | A thing. | none |\n`,
+    );
+    const fixed = runCheck(tmpDir);
+    expect(fixed.exitCode, fixed.stderr).toBe(0);
+    expect(fixed.stderr).toBe("");
+  });
+
+  it("exits 1 on an incomplete row and names the row's term", () => {
+    writeFile(
+      "docs/requirements/prd-thing.md",
+      `# PRD: Thing\n\n${DECISIONS}\n${SECTION_HEADER}\n| thing | pending | | | |\n`,
+    );
+    const result = runCheck(tmpDir);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("[vocabulary-incomplete]");
+    expect(result.stderr).toContain("thing");
+  });
+
+  it("exits 0 on a pre-Phase-2 PRD that has neither section (UT-R1)", () => {
+    writeFile("docs/requirements/prd-old.md", "# PRD: Old\n\n## Goals\n\n- Ship it.\n");
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(result.stdout).not.toContain("vocabulary");
+  });
+
+  it("exits 0 with a workstream specification missing the section — lint's scope is docs/requirements (UT-R3)", () => {
+    writeFile("workstream/specification-thing.md", `# Spec\n\n${DECISIONS}`);
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+  });
+
+  it("resolves `existing` rows against the repository's own glossary", () => {
+    writeFile("docs/tech.md", TECH_WITH_MAP_FOR_VOCAB);
+    writeFile("docs/domain/ubiquitous-language.md", GLOSSARY_FOR_VOCAB);
+    writeFile(
+      "docs/requirements/prd-thing.md",
+      `# PRD: Thing\n\n${DECISIONS}\n${SECTION_HEADER}\n| Widget | existing | | | |\n`,
+    );
+    expect(runCheck(tmpDir).exitCode).toBe(0);
+
+    writeFile(
+      "docs/requirements/prd-thing.md",
+      `# PRD: Thing\n\n${DECISIONS}\n${SECTION_HEADER}\n| Sprocket | existing | | | |\n`,
+    );
+    const missing = runCheck(tmpDir);
+    expect(missing.exitCode).toBe(1);
+    expect(missing.stderr).toContain("[vocabulary-incomplete]");
+    expect(missing.stderr).toContain("Sprocket");
+  });
+});
+
+const TECH_WITH_MAP_FOR_VOCAB = [
+  "# Technical Guidelines",
+  "",
+  "## Package Map",
+  "",
+  "| Package | Path | Purpose | Owner | Canonical scripts | Bounded context |",
+  "| ------- | ---- | ------- | ----- | ----------------- | ---------------- |",
+  "| `@acme/thing` | `.` | harness | platform | `lint` | Widget management |",
+  "",
+].join("\n");
+
+const GLOSSARY_FOR_VOCAB = [
+  "---",
+  "version: 1.0",
+  "name: Ubiquitous Language",
+  "description: Canonical domain vocabulary, organized by bounded context.",
+  "status: active",
+  "owner: product-engineer",
+  "---",
+  "",
+  "# Ubiquitous Language",
+  "",
+  "## Changelog",
+  "",
+  "| Version | Date | Summary | Author |",
+  "| ------- | ---- | ------- | ------ |",
+  "| 1.0 | 2026-09-22 | +Widget | product-engineer |",
+  "",
+  "## Bounded Context: Widget management",
+  "",
+  "### Widget",
+  "",
+  "- Definition: A thing that widgets are managed as.",
+  "- Forbidden synonyms: none",
+  "- Invariants: none",
+  "- Origin: docs/requirements/prd-widgets.md",
+  "- Status: active",
+  "",
+].join("\n");

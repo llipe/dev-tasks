@@ -2,7 +2,8 @@
 
 Fixture transcripts for the `activity-grill` skill (issue #213, story S-001)
 and its callers (issue #214, story S-002; issue #215, story S-003; issue
-#216, story S-004).
+#216, story S-004), and for `activity-refine`'s glossary append (issue #231,
+Phase 3 story S-003).
 Grilling sessions are conversational, not scripted — there is no automated
 transcript runner (specification §14, D-49/D-48 precedent against adding
 machinery `SIMPLICITY.md` A4 would flag). These fixtures are **read and
@@ -21,6 +22,7 @@ produce the transcript's outcome, not a different one.
 | `prd-creation-gate.md`           | `activity-refine` PRD Creation mode blocks drafting until the exit gate is satisfied, then cites decisions inline and populates `## Decisions` | S-002-AC-1, S-002-AC-3, FR-12, FR-14, AC-01, AC-05 |
 | `spec-generation-gate.md`        | `activity-generate-spec` blocks drafting until the HOW-phase exit gate is satisfied, confirms the pre-step `researcher` call is sequenced first, then cites decisions inline and populates `## Decisions (HOW phase)` continuing the WHAT phase's ID space | S-003-AC-1, S-003-AC-2, S-003-AC-3, FR-13, FR-14, AC-02 |
 | `plan-decision-citations.md`     | `plan` generates a task list from `specification-shared-understanding-phase-2.md` §8, citing D-53-D-56 inline where traceable and populating `## Decisions Consumed`; untraceable sub-tasks cite none | S-004-AC-1, S-004-AC-2, FR-16 |
+| `vocabulary-approval.md`         | `activity-refine` runs the pre-review Vocabulary check, then appends the approved `proposed` rows to the glossary on user approval — exact diff, `+term` changelog row, `version` bump, `status` flip — and refuses a proposal whose bounded context resolves to nothing | S-003-AC-2, S-003-AC-4, FR-20, AC-07, FR-19, FR-63, D-61, D-65 |
 
 A skill revision that would make one of these transcripts' outcome
 impossible (e.g., removing the exit-gate re-ask, or letting the cap
