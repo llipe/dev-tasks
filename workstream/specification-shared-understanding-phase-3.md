@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                                                          | Author                    |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.2     | 2026-09-22 | §8.7 and the consumed-decisions table corrected to what shipped (S-003 / issue #231 Audit Mode finding D-2): S-003 added this PRD's `## Vocabulary` section as `proposed`, not S-006 as `existing`; D-76 supersedes D-71 and D-77 records the document-ownership rule. | verifier / @llipe / product-engineer |
 | 1.1     | 2026-09-21 | Design Mode corrections (D-70 to D-75): PRD v1.14 wording for AC-07/FR-23; `vocabulary-*` findings are failures and this PRD gains `## Vocabulary` (S-006); seed forbidden synonyms trimmed (`package`/`module` dropped); identifier normalization, `+term` grammar, rule-name union, case rules, fenced-block skipping pinned; `checkGlossary()` silent on absence; `PackageMapRow` in `workspace.ts`; D-68 wording corrected; `activity-generate-spec` runs the Vocabulary check on specs. | verifier / @llipe / product-engineer |
 | 1.0     | 2026-09-21 | Initial version. Glossary file delivered install-if-absent, `## Vocabulary` in PRDs/specs, `core/checks/glossary.ts` shared by `lint` and the `verifier`, `doctor` absence warning, this repository's own glossary populated. First specification drafted behind a live `activity-grill(phase="HOW")` exit gate (D-57 to D-69). | @llipe / product-engineer |
 
@@ -281,7 +282,7 @@ When the user approves a PRD, `activity-refine` (not `activity-grill`, whose wri
 
 Forbidden synonyms are recorded only where this PRD's own history supplies one: `foundation document` forbids `product-context`/`technical-guidelines` — the retired names. `bounded context` carries none (D-72: `package`/`module` were the spec author's addition, not PRD history, and would flag S-002's own `PackageMapRow` export). No invented vocabulary.
 
-Because this PRD carries `## Decisions`, §8.3's skip rule does not skip it; S-006 adds a `## Vocabulary` section to `docs/requirements/prd-shared-understanding-refinement.md` listing the eight terms as `existing`, so `lint` passes on this repository (D-71).
+Because this PRD carries `## Decisions`, §8.3's skip rule does not skip it. S-003 added the `## Vocabulary` section to `docs/requirements/prd-shared-understanding-refinement.md` in the same PR as the `run.ts` walk — the walk failed this PRD the moment it landed — with the eight rows `proposed`, since `existing` is unavailable while the glossary is empty. S-006 flips those rows to `existing` when it populates the glossary, matched on the exact term string, so `lint` passes on this repository (D-76, superseding D-71).
 
 ## 9. Integration Details
 
@@ -367,7 +368,9 @@ Recorded in `workstream/decisions-shared-understanding.md`. Numbering continues 
 | D-68 | Five-key frontmatter; owner `product-engineer`; `status: unfilled` is never permission.                                                             |
 | D-69 | Extends D-45: this repository's glossary ships populated with the terms this PRD introduced; the package-map placeholder becomes the canonical context. |
 | D-70 | PRD v1.14: AC-07 and FR-23 reworded to their testable forms (Design Mode A-1/A-2), with explicit human confirmation.                                 |
-| D-71 | `vocabulary-*` findings are failures; this PRD gains `## Vocabulary` in S-006 so `lint` passes on this repository.                                    |
+| D-71 | `vocabulary-*` findings are failures; this PRD gains `## Vocabulary` in S-006 so `lint` passes on this repository. **Superseded by D-76.**            |
+| D-76 | S-003 added this PRD's `## Vocabulary` as `proposed` (the `run.ts` walk failed this PRD on landing); S-006 flips the rows to `existing`.             |
+| D-77 | A `developer` may make a minimal, disclosed edit to a `product-engineer`-owned document when the alternative is a red integration branch.            |
 | D-72 | Seed glossary: `package`/`module` dropped from `bounded context`'s forbidden synonyms.                                                                 |
 | D-73 | Identifier rules: plural normalization order, `as` right-hand name, optional `+` prefix, multi-word synonym joining.                                   |
 | D-74 | Grammar rules: `+term` grammar, `GlossaryRule` union, Vocabulary edge grammar, exact-case contexts, case-insensitive terms, fenced blocks skipped.     |
