@@ -86,6 +86,7 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 3.12 Verify Acceptance Criterion: AC-6 three-tree parity
   - [x] 3.13 Run Tests: edge cases — unresolvable bounded context (append refuses, reports), same term proposed twice (second is `existing`), `Forbidden synonyms: none`
   - [x] 3.14 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 3.15 Merge-gate remediation (qa-engineer + verifier audit, PR #238): the `None —` sentinel is accepted only as the section's single non-blank, non-fenced line (it was matched against every line and returned clean before any row was parsed — the AC-07 gate was bypassable by a sentence); GFM's `| - |` and `|:-:|` delimiter rows are recognised as delimiters; a fenced example inside a real section is no longer read as rows; a directory named `*.md` under `docs/requirements/` no longer throws `EISDIR` out of `lint`; the section terminates at any ATX heading of depth 1 or 2. `activity-generate-spec` no longer tells specification authors to write the PRD wording of the sentinel
 
 - [ ] 4.0 Implement Story S-004: Surface vocabulary conflicts during grilling (#232)
 
