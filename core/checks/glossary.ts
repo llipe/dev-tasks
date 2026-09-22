@@ -34,7 +34,7 @@
  * business, not `lint`'s (D-67, D-75).
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { parseFrontmatter } from "./docs-structure.js";
@@ -384,11 +384,20 @@ const PLACEHOLDER = new Set(["", "—", "–", "-", "n/a", "na", "tbd", "?"]);
 /**
  * The lines of a level-2 section, or null when the section is absent.
  *
- * Fenced blocks are skipped on the way in and on the way out (D-74).
- * This specification's own §5 shows the Vocabulary table inside a
- * fence; a parser that counts that as a section declares every document
- * describing the format compliant, and every document actually using it
- * unchecked past the first fenced example.
+ * Fenced blocks are skipped in both directions (D-74): a `##
+ * Vocabulary` inside a fence does not open a section, and a fenced
+ * example inside a real section is not part of the section's content.
+ * Both halves are load-bearing and for the same reason. This
+ * specification's own §5 shows the Vocabulary table inside a fence; a
+ * parser that reads the opening fence declares every document
+ * describing the format compliant, and a parser that reads the fence
+ * body reports rows against a real document for an example it was shown
+ * — including a fenced `None —` line, which would pass the whole
+ * section on nothing.
+ *
+ * The section ends at the next ATX heading of depth 1 or 2. A `#` that
+ * did not close it made every table in the remainder of the file a
+ * Vocabulary table (§8.3 describes no such reach).
  */
 function sectionLines(markdown: string, heading: RegExp): string[] | null {
   const lines = normalize(markdown).split("\n");
@@ -400,15 +409,11 @@ function sectionLines(markdown: string, heading: RegExp): string[] | null {
     const trimmed = line.trim();
     if (/^(```|~~~)/.test(trimmed)) {
       fenced = !fenced;
-      if (collecting) collected.push(line);
       continue;
     }
-    if (fenced) {
-      if (collecting) collected.push(line);
-      continue;
-    }
+    if (fenced) continue;
 
-    if (/^##(?!#)\s/.test(trimmed)) {
+    if (/^#{1,2}(?!#)\s/.test(trimmed)) {
       if (collecting) return collected;
       if (heading.test(trimmed)) {
         collecting = true;
@@ -420,6 +425,11 @@ function sectionLines(markdown: string, heading: RegExp): string[] | null {
   }
 
   return collecting ? collected : null;
+}
+
+/** True for a Markdown table delimiter row: `| --- |`, `| - |`, `|:-:|`. */
+function isDelimiterRow(line: string): boolean {
+  return /^\|[\s:|-]+\|$/.test(line.trim());
 }
 
 /** Trim, fold non-breaking spaces, and drop the Markdown code ticks. */
@@ -476,21 +486,27 @@ export function checkVocabularySection(
     for (const term of parseGlossary(glossaryMarkdown).terms) known.add(term.name.toLowerCase());
   }
 
-  for (const line of section) {
-    if (NO_CONCEPTS.test(line.trim())) return { failures, staleness: [] };
+  // The sentinel stands for the whole section, and only then: spec §5
+  // says a document with no domain concept "carries the section with
+  // one line". Accepting it wherever it appears turned any prose
+  // opening with `None —` into a clean result before a single row was
+  // read, which is an author bypassing AC-07 by writing a sentence.
+  const content = section.filter((line) => line.trim().length > 0);
+  if (content.length === 1 && NO_CONCEPTS.test(content[0].trim())) {
+    return { failures, staleness: [] };
   }
 
   const rows: string[][] = [];
   for (const line of section) {
     const trimmed = line.trim();
     if (!trimmed.startsWith("|")) continue;
+    if (isDelimiterRow(trimmed)) continue;
     const cells = trimmed
       .replace(/\|\s*$/, "")
       .split("|")
       .slice(1)
       .map(cell);
     if (cells.length === 0) continue;
-    if (cells.every((c) => /^:?-{2,}:?$/.test(c))) continue;
     if (cells[0].toLowerCase() === "term") continue;
     rows.push(cells);
   }
@@ -576,7 +592,12 @@ export function checkVocabularyFiles(repoRoot: string): GlossaryResult {
   for (const entry of readdirSync(dir)
     .filter((f) => f.endsWith(".md"))
     .sort()) {
-    const markdown = readFileSync(join(dir, entry), "utf-8");
+    // A *directory* named `*.md` is legal and rare, and reading one
+    // throws EISDIR out of `lint` with a message that points nowhere
+    // near this file.
+    const path = join(dir, entry);
+    if (!statSync(path).isFile()) continue;
+    const markdown = readFileSync(path, "utf-8");
     const hasVocabulary = sectionLines(markdown, /^##(?!#)\s+Vocabulary\s*$/) !== null;
     const hasDecisions = sectionLines(markdown, /^##(?!#)\s+Decisions\b.*$/) !== null;
     if (!hasVocabulary && !hasDecisions) continue;

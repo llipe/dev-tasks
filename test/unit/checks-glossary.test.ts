@@ -660,6 +660,134 @@ describe("checkVocabularySection — the sentinel (UT-V2)", () => {
       "vocabulary-incomplete",
     ]);
   });
+
+  it("accepts the sentinel written with an en dash or a hyphen", () => {
+    for (const dash of ["—", "–", "-"]) {
+      const section = `## Vocabulary\n\nNone ${dash} this PRD introduces no domain concepts.`;
+      expect(checkVocabularySection(prd(section), GLOSSARY_WITH_TERMS, PRD).failures).toEqual([]);
+    }
+  });
+
+  it("does not accept a `None —` prose line that sits above a real table (F-1, AC-07)", () => {
+    // Spec §5: the sentinel stands for the whole section — "carries the
+    // section with one line". A document that opens with prose starting
+    // `None —` and then tables incomplete rows underneath is not that
+    // document, and a gate that returns clean on the first `None —` it
+    // sees is a gate any author bypasses by accident.
+    const section = vocabulary("| Widget | pending | | | |", "| Gadget | proposed | | | |").replace(
+      "## Vocabulary\n",
+      "## Vocabulary\n\nNone — new terms are listed below; the rest are already in the glossary.\n",
+    );
+    const result = checkVocabularySection(prd(section), GLOSSARY_WITH_TERMS, PRD);
+    expect(rules(result.failures)).toEqual(["vocabulary-incomplete", "vocabulary-incomplete"]);
+    expect(result.failures[0].message).toContain("Widget");
+    expect(result.failures[1].message).toContain("Gadget");
+  });
+
+  it("does not accept a sentinel that only appears inside a fenced example (F-1, F-3)", () => {
+    const section = [
+      "## Vocabulary",
+      "",
+      "A document with no domain concept writes:",
+      "",
+      "```markdown",
+      "None — this PRD introduces no domain concepts.",
+      "```",
+      "",
+      "| Term | Status in glossary | Bounded context | Definition (proposals only) | Forbidden synonyms (proposals only) |",
+      "| ---- | ------------------ | --------------- | --------------------------- | ----------------------------------- |",
+      "| Widget | pending | | | |",
+    ].join("\n");
+    const result = checkVocabularySection(prd(section), GLOSSARY_WITH_TERMS, PRD);
+    expect(rules(result.failures)).toEqual(["vocabulary-incomplete"]);
+    expect(result.failures[0].message).toContain("Widget");
+  });
+});
+
+/**
+ * Defects found by the S-003 merge gates (issue #231): five conditions
+ * under which the check answered wrongly about a document — once by
+ * passing a section it must fail (F-1), twice by reporting a problem
+ * that is not there (F-2, F-3), once by throwing out of `lint` (F-4),
+ * and once by reading content that is not in the section (F-5).
+ *
+ * The two false positives matter more than their severity suggests.
+ * Under `lint` they are partly masked by `format:check`, which
+ * normalises delimiter rows before this check ever sees them; the
+ * pre-presentation calls in `activity-refine` and
+ * `activity-generate-spec` run on an unformatted working draft, where
+ * nothing masks them, and the author is told their correct document is
+ * broken.
+ */
+describe("checkVocabularySection — merge-gate remediation (F-2, F-3, F-5)", () => {
+  /** A Vocabulary section with the given delimiter row between header and rows. */
+  function withDelimiter(delimiter: string, ...rows: string[]): string {
+    return [
+      "## Vocabulary",
+      "",
+      "| Term | Status in glossary | Bounded context | Definition (proposals only) | Forbidden synonyms (proposals only) |",
+      delimiter,
+      ...rows,
+    ].join("\n");
+  }
+
+  it("accepts a single-dash GFM delimiter row `| - | - |` (F-2)", () => {
+    const section = withDelimiter("| - | - | - | - | - |", "| decision log | existing | | | |");
+    expect(checkVocabularySection(prd(section), GLOSSARY_WITH_TERMS, PRD).failures).toEqual([]);
+  });
+
+  it("accepts a centred single-dash delimiter row `|:-:|` (F-2)", () => {
+    const section = withDelimiter("|:-:|:-:|:-:|:-:|:-:|", "| decision log | existing | | | |");
+    expect(checkVocabularySection(prd(section), GLOSSARY_WITH_TERMS, PRD).failures).toEqual([]);
+  });
+
+  it("still accepts the long and aligned delimiter forms (F-2 regression)", () => {
+    for (const delimiter of ["| ---- | ---- | ---- | ---- | ---- |", "|:---|---:|:---:|---|---|"]) {
+      const section = withDelimiter(delimiter, "| decision log | existing | | | |");
+      expect(checkVocabularySection(prd(section), GLOSSARY_WITH_TERMS, PRD).failures).toEqual([]);
+    }
+  });
+
+  it("does not read a fenced example inside a real section as rows (F-3)", () => {
+    const section = [
+      vocabulary("| decision log | existing | | | |"),
+      "",
+      "An incomplete row looks like this:",
+      "",
+      "```markdown",
+      "| Widget | pending | | | |",
+      "```",
+    ].join("\n");
+    expect(checkVocabularySection(prd(section), GLOSSARY_WITH_TERMS, PRD).failures).toEqual([]);
+  });
+
+  it("still ignores a `## Vocabulary` heading that only appears inside a fence (F-3 regression)", () => {
+    const fenced = prd(
+      ["```markdown", "## Vocabulary", "", "| Term | Status in glossary |", "```"].join("\n"),
+    );
+    expect(rules(checkVocabularySection(fenced, GLOSSARY_WITH_TERMS, PRD).failures)).toEqual([
+      "vocabulary-missing",
+    ]);
+  });
+
+  it("terminates the section at a level-1 heading, not only a level-2 one (F-5)", () => {
+    // §8.3 describes the section as ending at the next heading. A `#`
+    // that does not close it makes every table in the rest of the file
+    // a Vocabulary table.
+    const document = [
+      "# PRD: Example",
+      "",
+      vocabulary("| decision log | existing | | | |"),
+      "",
+      "# Appendix",
+      "",
+      "| Item | Note |",
+      "| ---- | ---- |",
+      "| bogus | pending |",
+      "",
+    ].join("\n");
+    expect(checkVocabularySection(document, GLOSSARY_WITH_TERMS, PRD).failures).toEqual([]);
+  });
 });
 
 describe("checkVocabularySection — existing rows (UT-V3, UT-V4)", () => {
@@ -881,6 +1009,15 @@ describe("checkVocabularyFiles — the docs/requirements walk (UT-R1, UT-R2, UT-
   it("ignores non-Markdown files in docs/requirements", () => {
     write("docs/requirements/notes.txt", prd(null));
     expect(checkVocabularyFiles(root)).toEqual({ failures: [], staleness: [] });
+  });
+
+  it("skips a directory whose name ends in .md instead of throwing EISDIR (F-4)", () => {
+    // `readdirSync` returns directories too, and `readFileSync` on one
+    // throws EISDIR straight out of the `lint` gate — a crash, not a
+    // finding, and nothing in the message would point here.
+    mkdirSync(join(root, "docs/requirements/archive.md"), { recursive: true });
+    write("docs/requirements/prd-new.md", prd(null));
+    expect(rules(checkVocabularyFiles(root).failures)).toEqual(["vocabulary-missing"]);
   });
 
   it("walks files in a stable order so output does not shuffle between runs", () => {
