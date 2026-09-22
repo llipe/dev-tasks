@@ -1236,6 +1236,24 @@ describe("checkExportedIdentifiers — multi-word synonyms (UT-X5, EC-20, D-73)"
     ).toHaveLength(1);
   });
 
+  it("joins all words of a three-word identifier against a three-word synonym", () => {
+    // `matchCandidates` adds the full join separately from the adjacent
+    // pairs, and for a two-word identifier the two are the same string
+    // — so every existing case here passes with the full join deleted.
+    // Three words is the shortest input that tells them apart.
+    const findings = scan(
+      ["+export const productContextLoader = 1;"],
+      forbidding("product-context-loader"),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toContain("productcontextloader");
+    // And the pair joins must not reach it: no adjacent pair of
+    // `productContextLoader` spells the three-word synonym.
+    expect(
+      scan(["+export const productContext = 1;"], forbidding("product-context-loader")),
+    ).toEqual([]);
+  });
+
   it("does not match a non-adjacent word pair", () => {
     // `product…loader…context` is not `product context`. Matching any
     // two words in any order would flag half the codebase.
@@ -1295,6 +1313,23 @@ describe("checkExportedIdentifiers — diff line prefixes (UT-X10, D-73, A-11)",
 
   it("ignores an unchanged context line — a leading space, no `+`", () => {
     expect(scan([" export const moduleLoader = 1;"], GLOSSARY)).toEqual([]);
+  });
+
+  it("ignores a removed or context `export { … }` list, not just a removed declaration", () => {
+    // UT-X10 pinned this for `export const` only. `EXPORT_LIST` is a
+    // second regex with its own copy of the optional `+`, so the rule
+    // held here by construction and not by test: mutating the list
+    // regex to accept `-` and a leading space left the whole suite
+    // green. A PR that *deletes* an export would then be told to
+    // rename the vocabulary it just removed — the exact false positive
+    // D-63 expects the advisory class to avoid.
+    expect(scan(["-export { moduleLoader };"], GLOSSARY)).toEqual([]);
+    expect(scan([" export { moduleLoader };"], GLOSSARY)).toEqual([]);
+    expect(scan(["-export type { moduleLoader };"], GLOSSARY)).toEqual([]);
+    expect(scan(["-export { helper as moduleLoader };"], GLOSSARY)).toEqual([]);
+    // The control: the same lines as additions do report, so the
+    // assertions above cannot pass for the wrong reason.
+    expect(scan(["+export { moduleLoader };"], GLOSSARY)).toHaveLength(1);
   });
 
   it("ignores diff headers that mention an export", () => {
