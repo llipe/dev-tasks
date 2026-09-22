@@ -477,6 +477,46 @@ describe("PackageMapRow and its parser (AC-6, D-75)", () => {
     });
   });
 
+  it("returns rows with a null bounded context when the table has no such column", () => {
+    // The shape an older consumer's docs/tech.md has: a package map
+    // predating the Bounded context column. Every row still parses, and
+    // every context is null — so `checkGlossaryContent` resolves a
+    // heading against package names alone rather than failing the file
+    // for a column its author never had (D-75).
+    const root = mkdtempSync(join(tmpdir(), "glossary-map-nocontext-"));
+    try {
+      mkdirSync(join(root, "docs"), { recursive: true });
+      writeFileSync(
+        join(root, "docs/tech.md"),
+        [
+          "# Technical Guidelines",
+          "",
+          "## Package Map",
+          "",
+          "| Package | Path | Purpose | Owner |",
+          "| ------- | ---- | ------- | ----- |",
+          "| `@acme/web` | `apps/web` | frontend | web |",
+          "| `@acme/api` | `apps/api` | backend | platform |",
+          "",
+        ].join("\n"),
+        "utf-8",
+      );
+
+      expect(readPackageMap(root)).toEqual([
+        { name: "@acme/web", path: "apps/web", boundedContext: null },
+        { name: "@acme/api", path: "apps/api", boundedContext: null },
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("resolves a bounded context against a package name when the map has no context column", () => {
+    const glossary = doc("## Bounded Context: @acme/api\n\n" + term("widget"));
+    const map: PackageMapRow[] = [{ name: "@acme/api", path: "apps/api", boundedContext: null }];
+    expect(checkGlossaryContent(glossary, map).failures).toEqual([]);
+  });
+
   it("returns null for a repository whose docs/tech.md has no Package Map section", () => {
     const root = mkdtempSync(join(tmpdir(), "glossary-map-"));
     try {

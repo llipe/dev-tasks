@@ -30,6 +30,7 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 - `test/unit/skill-parity-grilling.test.ts` - Extend for `activity-refine`, `activity-generate-spec`, `activity-grill`, `verifier` markers
 - `test/unit/skill-parity-init.test.ts` - Extend for the `activity-init` pointer
 - `test/fixtures/grilling/vocabulary-approval.md`, `vocabulary-conflict.md`, `README.md` - Scenario fixtures
+- `docs/requirements/prd-shared-understanding-refinement.md` - `## Vocabulary` section added in 3.0, not 6.3a: wiring the `run.ts` walk makes `lint` report `vocabulary-missing` against this PRD immediately (test plan A-8), so the section had to land in the same PR as the walk. Its eight rows are `proposed` until the glossary exists; **task 6.3a is now a flip of those rows to `existing`**, which `lint` enforces once S-006 populates the file (D-74's `proposed`-but-present rule)
 
 ## Tasks
 
@@ -67,24 +68,24 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 2.9 Run Tests: inject a broken fixture under `docs/domain/`, confirm `pnpm run lint` exits 1, remove it, confirm exit 0; edge cases — case-different context name, `none` values, valid `superseded by`, no `+term` rows yet, CRLF
   - [x] 2.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
-- [ ] 3.0 Implement Story S-003: Propose vocabulary in PRDs and specs, enforce AC-07, append on approval (#231)
+- [x] 3.0 Implement Story S-003: Propose vocabulary in PRDs and specs, enforce AC-07, append on approval (#231)
 
   > Note: Depends on 2.0. No prose scanning — structural Vocabulary-section check only (D-65). Append happens at approval, by `activity-refine`, never `activity-grill` (D-61).
 
-  - [ ] 3.1 Write `checkVocabularySection()` unit tests first: missing section → `vocabulary-missing`; incomplete row → `vocabulary-incomplete` naming the row; `existing` term absent from glossary; complete `proposed` row; `conflict → D-NN`; the `None — this PRD introduces no domain concepts.` sentinel; pre-Phase-2 skip (no `## Vocabulary` and no `## Decisions`) (D-65); confirm they fail
-  - [ ] 3.2 Implement `checkVocabularySection()` in `core/checks/glossary.ts` — findings in `failures` (D-71); header-only table and `proposed`-but-present → incomplete, `->`/`→` accepted (D-74); add the `docs/requirements/*.md` walk to `run.ts` with the pre-Phase-2 skip
-  - [ ] 3.3 Edit `activity-refine` (three trees): `## Vocabulary` after `## Decisions` in the PRD Output Structure with the spec §5 table; call the check before presenting for review and report the finding by name; add the approval-append step — append `proposed` rows under their bounded context (create heading only if it resolves per FR-63), `Origin` = PRD path, `Status: active`, `+term` changelog row, `version` bump, `status: unfilled` → `active` on first append; `conflict → D-NN` marks the superseded term and keeps it (D-61, spec §8.4)
-  - [ ] 3.4 Edit `activity-generate-spec` (three trees): `## Vocabulary` after `## Decisions (HOW phase)` (D-61); run the same pre-review Vocabulary check on specs (D-75)
-  - [ ] 3.5 Add `test/fixtures/grilling/vocabulary-approval.md` (proposed rows → approval → exact glossary diff) and its README row
-  - [ ] 3.6 Extend `test/unit/skill-parity-grilling.test.ts`: Vocabulary markers in both skills, approval-append markers in `activity-refine`, negative assertion that `activity-grill`'s Write Authority is unchanged (D-61)
-  - [ ] 3.7 Verify Acceptance Criterion: AC-1 Vocabulary section in both Output Structures
-  - [ ] 3.8 Verify Acceptance Criterion: AC-2 `vocabulary-missing` / `vocabulary-incomplete` semantics
-  - [ ] 3.9 Verify Acceptance Criterion: AC-3 pre-review check call; `lint` walk skips pre-Phase-2 PRDs; current `docs/requirements/` passes
-  - [ ] 3.10 Verify Acceptance Criterion: AC-4 approval append behavior (fixture walk)
-  - [ ] 3.11 Verify Acceptance Criterion: AC-5 `activity-grill` Write Authority unchanged
-  - [ ] 3.12 Verify Acceptance Criterion: AC-6 three-tree parity
-  - [ ] 3.13 Run Tests: edge cases — unresolvable bounded context (append refuses, reports), same term proposed twice (second is `existing`), `Forbidden synonyms: none`
-  - [ ] 3.14 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 3.1 Write `checkVocabularySection()` unit tests first: missing section → `vocabulary-missing`; incomplete row → `vocabulary-incomplete` naming the row; `existing` term absent from glossary; complete `proposed` row; `conflict → D-NN`; the `None — this PRD introduces no domain concepts.` sentinel; pre-Phase-2 skip (no `## Vocabulary` and no `## Decisions`) (D-65); confirm they fail
+  - [x] 3.2 Implement `checkVocabularySection()` in `core/checks/glossary.ts` — findings in `failures` (D-71); header-only table and `proposed`-but-present → incomplete, `->`/`→` accepted (D-74); add the `docs/requirements/*.md` walk to `run.ts` with the pre-Phase-2 skip
+  - [x] 3.3 Edit `activity-refine` (three trees): `## Vocabulary` after `## Decisions` in the PRD Output Structure with the spec §5 table; call the check before presenting for review and report the finding by name; add the approval-append step — append `proposed` rows under their bounded context (create heading only if it resolves per FR-63), `Origin` = PRD path, `Status: active`, `+term` changelog row, `version` bump, `status: unfilled` → `active` on first append; `conflict → D-NN` marks the superseded term and keeps it (D-61, spec §8.4)
+  - [x] 3.4 Edit `activity-generate-spec` (three trees): `## Vocabulary` after `## Decisions (HOW phase)` (D-61); run the same pre-review Vocabulary check on specs (D-75)
+  - [x] 3.5 Add `test/fixtures/grilling/vocabulary-approval.md` (proposed rows → approval → exact glossary diff) and its README row
+  - [x] 3.6 Extend `test/unit/skill-parity-grilling.test.ts`: Vocabulary markers in both skills, approval-append markers in `activity-refine`, negative assertion that `activity-grill`'s Write Authority is unchanged (D-61)
+  - [x] 3.7 Verify Acceptance Criterion: AC-1 Vocabulary section in both Output Structures
+  - [x] 3.8 Verify Acceptance Criterion: AC-2 `vocabulary-missing` / `vocabulary-incomplete` semantics
+  - [x] 3.9 Verify Acceptance Criterion: AC-3 pre-review check call; `lint` walk skips pre-Phase-2 PRDs; current `docs/requirements/` passes
+  - [x] 3.10 Verify Acceptance Criterion: AC-4 approval append behavior (fixture walk)
+  - [x] 3.11 Verify Acceptance Criterion: AC-5 `activity-grill` Write Authority unchanged
+  - [x] 3.12 Verify Acceptance Criterion: AC-6 three-tree parity
+  - [x] 3.13 Run Tests: edge cases — unresolvable bounded context (append refuses, reports), same term proposed twice (second is `existing`), `Forbidden synonyms: none`
+  - [x] 3.14 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
 - [ ] 4.0 Implement Story S-004: Surface vocabulary conflicts during grilling (#232)
 
