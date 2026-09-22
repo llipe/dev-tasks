@@ -27,6 +27,9 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 - `test/unit/root-doc-template-parity.test.ts` - Extend if it enumerates templates
 - `test/unit/checks-glossary.test.ts` - Unit tests for all four check functions + real-file fixture
 - `test/fixtures/glossary/*.md` - Structure-rule fixtures
+- `test/unit/verifier-glossary-conformance-parity.test.ts` - S-005's three-tree conformance markers, scoped to the Audit Mode Actions row and the report bullet (the implementer's choice offered by task 5.4)
+- `test/integration/checks-run.test.ts` - S-005 AC-3: the scan is not a `lint` gate, proved through the process boundary
+- `test/unit/checks-decision-log-format.test.ts` - Real-log fixture now asserts `staleness` as well as `failures` (the D-60 escaped-pipe defect)
 - `test/unit/skill-parity-grilling.test.ts` - Extend for `activity-refine`, `activity-generate-spec`, `activity-grill`, `verifier` markers
 - `test/unit/skill-parity-init.test.ts` - Extend for the `activity-init` pointer
 - `test/fixtures/grilling/vocabulary-approval.md`, `vocabulary-conflict.md`, `README.md` - Scenario fixtures
@@ -101,21 +104,21 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 4.7 Verify Acceptance Criterion: AC-4 fixture walks cleanly against the skill text; edge cases — same term same definition (no question), a synonym forbidden by two terms (one question naming both)
   - [x] 4.8 Run Tests: `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run format:check`
 
-- [ ] 5.0 Implement Story S-005: Report forbidden synonyms in new exported identifiers (#233)
+- [x] 5.0 Implement Story S-005: Report forbidden synonyms in new exported identifiers (#233)
 
   > Note: Depends on 2.0. Regex over added `export` lines, not the TypeScript compiler API (D-60). Forbidden-synonym hits only (D-64). Always advisory in this release (D-63).
 
-  - [ ] 5.1 Write `checkExportedIdentifiers()` unit tests first: each `export` form (`const|let|var|function|async function|class|type|interface|enum`, `export { a, b as c }`), each casing split (PascalCase, camelCase, snake_case, SCREAMING_CASE), plural normalization (`s`/`es`), a forbidden-synonym hit on a word and on a whole identifier, an unmatched identifier → nothing (D-64), result always in `staleness` never `failures` (D-63); confirm they fail
-  - [ ] 5.2 Implement `checkExportedIdentifiers(addedLines, glossaryMarkdown)` in `core/checks/glossary.ts`; export it — right-hand `as` name, optional leading `+`, plural rule (`es` after `s`/`x`/`z`/`ch`/`sh`, else one trailing `s` not after `s`), multi-word synonym joining, rule `glossary-forbidden-synonym` (D-60, D-73, D-74)
-  - [ ] 5.3 Edit `verifier.md` (three trees): in Audit Mode, beside the existing `checkDocsStructure()` call, run the function over the PR's added lines (`git diff <base>...HEAD`) and narrate hits as an advisory finding class that never blocks readiness (D-63)
-  - [ ] 5.4 Extend the parity test (or add a `verifier` parity file — implementer's choice) with the conformance-call markers across the three `verifier` files
-  - [ ] 5.5 Verify Acceptance Criterion: AC-1 extraction forms, splitting, normalization, hit semantics
-  - [ ] 5.6 Verify Acceptance Criterion: AC-2 unmatched identifiers produce nothing
-  - [ ] 5.7 Verify Acceptance Criterion: AC-3 findings only in `staleness`; `lint` exit code unaffected
-  - [ ] 5.8 Verify Acceptance Criterion: AC-4 `verifier` call present in all three trees
-  - [ ] 5.9 Verify Acceptance Criterion: AC-5 run the function over this phase's own diff with the populated glossary (after 6.0) — nothing reported, or hits fixed in the same PR
-  - [ ] 5.10 Run Tests: edge cases — `export default class`, `export * from`, `as` alias, identifier equal to a canonical term (no finding), glossary with zero forbidden synonyms
-  - [ ] 5.11 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 5.1 Write `checkExportedIdentifiers()` unit tests first: each `export` form (`const|let|var|function|async function|class|type|interface|enum`, `export { a, b as c }`), each casing split (PascalCase, camelCase, snake_case, SCREAMING_CASE), plural normalization (`s`/`es`), a forbidden-synonym hit on a word and on a whole identifier, an unmatched identifier → nothing (D-64), result always in `staleness` never `failures` (D-63); confirm they fail
+  - [x] 5.2 Implement `checkExportedIdentifiers(addedLines, glossaryMarkdown)` in `core/checks/glossary.ts`; export it — right-hand `as` name, optional leading `+`, plural rule (`es` after `s`/`x`/`z`/`ch`/`sh`, else one trailing `s` not after `s`), multi-word synonym joining, rule `glossary-forbidden-synonym` (D-60, D-73, D-74)
+  - [x] 5.3 Edit `verifier.md` (three trees): in Audit Mode, beside the existing `checkDocsStructure()` call, run the function over the PR's added lines (`git diff <base>...HEAD`) and narrate hits as an advisory finding class that never blocks readiness (D-63)
+  - [x] 5.4 Extend the parity test (or add a `verifier` parity file — implementer's choice) with the conformance-call markers across the three `verifier` files
+  - [x] 5.5 Verify Acceptance Criterion: AC-1 extraction forms, splitting, normalization, hit semantics
+  - [x] 5.6 Verify Acceptance Criterion: AC-2 unmatched identifiers produce nothing
+  - [x] 5.7 Verify Acceptance Criterion: AC-3 findings only in `staleness`; `lint` exit code unaffected
+  - [x] 5.8 Verify Acceptance Criterion: AC-4 `verifier` call present in all three trees
+  - [ ] 5.9 Verify Acceptance Criterion: AC-5 run the function over this phase's own diff with the populated glossary (after 6.0) — nothing reported, or hits fixed in the same PR — **deferred to 6.6 by design:** the run needs S-006's populated glossary, which does not exist on this branch.
+  - [x] 5.10 Run Tests: edge cases — `export default class`, `export * from`, `as` alias, identifier equal to a canonical term (no finding), glossary with zero forbidden synonyms
+  - [x] 5.11 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
 - [ ] 6.0 Implement Story S-006: Populate this repository's glossary and retire the package-map placeholder (#234)
 
