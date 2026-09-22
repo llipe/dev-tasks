@@ -51,21 +51,21 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 1.12 Verify Acceptance Criterion: AC-6 `pnpm run lint` passes with `docs/domain/` and no sub-index
   - [x] 1.13 Run Tests: `pnpm run test -- install-parity`, `pnpm run test -- doctor`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
-- [ ] 2.0 Implement Story S-002: Validate glossary structure under `lint` (#230)
+- [x] 2.0 Implement Story S-002: Validate glossary structure under `lint` (#230)
 
   > Note: Depends on 1.0. Separate hand-parsed module, `tsx`-invoked, one implementation for `lint` and the `verifier` (D-59, D-48, D-49). Fail-vs-report split per D-66.
 
-  - [ ] 2.1 Write `test/unit/checks-glossary.test.ts` first with one fixture per D-66 failure rule (missing field, invalid `Status`, dangling `superseded by`, duplicate term, unresolved bounded context, removed term), both report cases (no package map → exactly one finding; archived-origin `feature#D-NN`), zero-terms pass, and five-key frontmatter failure; confirm it fails (module absent)
-  - [ ] 2.2 Add `PackageMapRow` and its table parser to `core/distribution/workspace.ts`, shared with `doctor` (D-75)
-  - [ ] 2.2a Implement `core/checks/glossary.ts`: `parseFrontmatter()` reuse asserting the five glossary keys by presence (D-75), `## Bounded Context:` → `### <Term>` → five-bullet walk skipping fenced code blocks (D-74), exact-case context resolution against `PackageMapRow[]`, case-insensitive term uniqueness (D-74), append-only via `+term` rows (grammar D-74), a `GlossaryRule` typed union (D-74); `checkGlossaryContent()` pure, `checkGlossary(repoRoot)` doing filesystem work and returning no findings on an absent file (D-75) (D-59, D-66)
-  - [ ] 2.3 Export from `core/checks/index.ts`; call from `core/checks/run.ts` — failures → stderr + exit 1, staleness → stdout (D-48)
-  - [ ] 2.4 Verify Acceptance Criterion: AC-1 each structural rule fails `lint`
-  - [ ] 2.5 Verify Acceptance Criterion: AC-2 absent package map and archived origin report without failing
-  - [ ] 2.6 Verify Acceptance Criterion: AC-3 zero terms passes; malformed frontmatter fails
-  - [ ] 2.7 Verify Acceptance Criterion: AC-4 runs under `pnpm run lint` via `tsx`, exported for the `verifier`
-  - [ ] 2.8 Verify Acceptance Criterion: AC-5 no `yaml`/markdown-parser import (grep assertion, `decision-log-format` pattern) (D-49)
-  - [ ] 2.9 Run Tests: inject a broken fixture under `docs/domain/`, confirm `pnpm run lint` exits 1, remove it, confirm exit 0; edge cases — case-different context name, `none` values, valid `superseded by`, no `+term` rows yet, CRLF
-  - [ ] 2.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 2.1 Write `test/unit/checks-glossary.test.ts` first with one fixture per D-66 failure rule (missing field, invalid `Status`, dangling `superseded by`, duplicate term, unresolved bounded context, removed term), both report cases (no package map → exactly one finding; archived-origin `feature#D-NN`), zero-terms pass, and five-key frontmatter failure; confirm it fails (module absent)
+  - [x] 2.2 Add `PackageMapRow` and its table parser to `core/distribution/workspace.ts`, shared with `doctor` (D-75)
+  - [x] 2.2a Implement `core/checks/glossary.ts`: `parseFrontmatter()` reuse asserting the five glossary keys by presence (D-75), `## Bounded Context:` → `### <Term>` → five-bullet walk skipping fenced code blocks (D-74), exact-case context resolution against `PackageMapRow[]`, case-insensitive term uniqueness (D-74), append-only via `+term` rows (grammar D-74), a `GlossaryRule` typed union (D-74); `checkGlossaryContent()` pure, `checkGlossary(repoRoot)` doing filesystem work and returning no findings on an absent file (D-75) (D-59, D-66)
+  - [x] 2.3 Export from `core/checks/index.ts`; call from `core/checks/run.ts` — failures → stderr + exit 1, staleness → stdout (D-48)
+  - [x] 2.4 Verify Acceptance Criterion: AC-1 each structural rule fails `lint`
+  - [x] 2.5 Verify Acceptance Criterion: AC-2 absent package map and archived origin report without failing
+  - [x] 2.6 Verify Acceptance Criterion: AC-3 zero terms passes; malformed frontmatter fails
+  - [x] 2.7 Verify Acceptance Criterion: AC-4 runs under `pnpm run lint` via `tsx`, exported for the `verifier`
+  - [x] 2.8 Verify Acceptance Criterion: AC-5 no `yaml`/markdown-parser import (grep assertion, `decision-log-format` pattern) (D-49)
+  - [x] 2.9 Run Tests: inject a broken fixture under `docs/domain/`, confirm `pnpm run lint` exits 1, remove it, confirm exit 0; edge cases — case-different context name, `none` values, valid `superseded by`, no `+term` rows yet, CRLF
+  - [x] 2.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
 - [ ] 3.0 Implement Story S-003: Propose vocabulary in PRDs and specs, enforce AC-07, append on approval (#231)
 
