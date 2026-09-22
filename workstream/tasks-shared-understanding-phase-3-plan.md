@@ -33,23 +33,23 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 
 ## Tasks
 
-- [ ] 1.0 Implement Story S-001: Deliver the glossary install-if-absent and warn on absence (#229)
+- [x] 1.0 Implement Story S-001: Deliver the glossary install-if-absent and warn on absence (#229)
 
   > Note: Delivery reuses Phase 1's platform-agnostic tag — no new mechanism (D-57). `doctor` warns on absence only; empty-but-present is silent (D-67). No `docs/domain/README.md` (D-58).
 
-  - [ ] 1.1 Write failing tests first: extend `test/integration/install-parity.test.ts` (per-profile fresh install creates the file identical to the template; `install`/`update` over an edited copy leave it byte-identical — AC-06) and add `doctor` tests (absent → warn proposing `dev-tasks update`; present-empty and present-populated → no finding) (D-67); confirm they fail
-  - [ ] 1.2 Add `templates/domain/ubiquitous-language.md`: five-key frontmatter (`version: 1.0`, `name`, `description`, `status: unfilled`, `owner: product-engineer`), empty `## Changelog` table, no bounded contexts (D-68)
-  - [ ] 1.3 Add the `INSTALL_IF_ABSENT_FILES` entry (source template, target `docs/domain/ubiquitous-language.md`, platform `ROOT_PROFILE_TAG`) (D-57)
-  - [ ] 1.4 Add `bundle-manifest.json` entries: template under `managed_paths`, target under `consumer_owned_paths` (D-57)
-  - [ ] 1.5 Add `checkGlossaryPresence()` to `core/distribution/doctor.ts` copying `checkPackageMap()`'s `warn: true` shape; register it in `runDoctor()` (D-67)
-  - [ ] 1.6 Add the `domain/` row to `docs/README.md`; do not create `docs/domain/README.md` or change `INDEXES` (D-58)
-  - [ ] 1.7 Verify Acceptance Criterion: AC-1 template shape (template-parity test)
-  - [ ] 1.8 Verify Acceptance Criterion: AC-2 registry entry present with `ROOT_PROFILE_TAG`
-  - [ ] 1.9 Verify Acceptance Criterion: AC-3 manifest paths present
-  - [ ] 1.10 Verify Acceptance Criterion: AC-4 per-profile delivery and byte-identical re-run, including profile `all` delivering exactly once and a fresh repo with no `docs/` directory
-  - [ ] 1.11 Verify Acceptance Criterion: AC-5 `doctor` warns on absence only, never fails
-  - [ ] 1.12 Verify Acceptance Criterion: AC-6 `pnpm run lint` passes with `docs/domain/` and no sub-index
-  - [ ] 1.13 Run Tests: `pnpm run test -- install-parity`, `pnpm run test -- doctor`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 1.1 Write failing tests first: extend `test/integration/install-parity.test.ts` (per-profile fresh install creates the file identical to the template; `install`/`update` over an edited copy leave it byte-identical — AC-06) and add `doctor` tests (absent → warn proposing `dev-tasks update`; present-empty and present-populated → no finding) (D-67); confirm they fail
+  - [x] 1.2 Add `templates/domain/ubiquitous-language.md`: five-key frontmatter (`version: 1.0`, `name`, `description`, `status: unfilled`, `owner: product-engineer`), empty `## Changelog` table, no bounded contexts (D-68)
+  - [x] 1.3 Add the `INSTALL_IF_ABSENT_FILES` entry (source template, target `docs/domain/ubiquitous-language.md`, platform `ROOT_PROFILE_TAG`) (D-57)
+  - [x] 1.4 Add `bundle-manifest.json` entries: template under `managed_paths`, target under `consumer_owned_paths` (D-57)
+  - [x] 1.5 Add `checkGlossaryPresence()` to `core/distribution/doctor.ts` copying `checkPackageMap()`'s `warn: true` shape; register it in `runDoctor()` (D-67)
+  - [x] 1.6 Add the `domain/` row to `docs/README.md`; do not create `docs/domain/README.md` or change `INDEXES` (D-58)
+  - [x] 1.7 Verify Acceptance Criterion: AC-1 template shape (template-parity test)
+  - [x] 1.8 Verify Acceptance Criterion: AC-2 registry entry present with `ROOT_PROFILE_TAG`
+  - [x] 1.9 Verify Acceptance Criterion: AC-3 manifest paths present
+  - [x] 1.10 Verify Acceptance Criterion: AC-4 per-profile delivery and byte-identical re-run, including profile `all` delivering exactly once and a fresh repo with no `docs/` directory
+  - [x] 1.11 Verify Acceptance Criterion: AC-5 `doctor` warns on absence only, never fails
+  - [x] 1.12 Verify Acceptance Criterion: AC-6 `pnpm run lint` passes with `docs/domain/` and no sub-index
+  - [x] 1.13 Run Tests: `pnpm run test -- install-parity`, `pnpm run test -- doctor`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
 - [ ] 2.0 Implement Story S-002: Validate glossary structure under `lint` (#230)
 

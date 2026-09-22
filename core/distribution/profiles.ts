@@ -128,6 +128,11 @@ export const INSTALL_IF_ABSENT_FILES: readonly InstallIfAbsentFile[] = [
     target: "docs/runbooks/runbook-template.md",
     platform: ROOT_PROFILE_TAG,
   },
+  {
+    source: "templates/domain/ubiquitous-language.md",
+    target: "docs/domain/ubiquitous-language.md",
+    platform: ROOT_PROFILE_TAG,
+  },
 ] as const;
 
 /** Valid profile values for CLI validation. */
