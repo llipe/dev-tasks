@@ -1104,9 +1104,9 @@ describe("checkExportedIdentifiers — declaration forms (UT-X1, AC-1)", () => {
   });
 
   it("does not match `export` used as part of a longer word", () => {
-    expect(scan(["+exportConst moduleLoader = 1;", "+exports.moduleLoader = 1;"], GLOSSARY)).toEqual(
-      [],
-    );
+    expect(
+      scan(["+exportConst moduleLoader = 1;", "+exports.moduleLoader = 1;"], GLOSSARY),
+    ).toEqual([]);
   });
 });
 
@@ -1385,11 +1385,46 @@ describe("checkExportedIdentifiers — finding shape and multiplicity (UT-X14, U
  * running the suite.
  */
 const RT_WORDS = [
-  "module","package","context","loader","registry","runbook","glossary","vocabulary",
-  "decision","term","synonym","verifier","planner","developer","harness","profile",
-  "manifest","workspace","document","template","index","gate","finding","staleness",
-  "audit","story","epic","backlog","diff","branch","commit","checklist","guard","hook",
-  "skill","command","agent","parity","fixture","seed",
+  "module",
+  "package",
+  "context",
+  "loader",
+  "registry",
+  "runbook",
+  "glossary",
+  "vocabulary",
+  "decision",
+  "term",
+  "synonym",
+  "verifier",
+  "planner",
+  "developer",
+  "harness",
+  "profile",
+  "manifest",
+  "workspace",
+  "document",
+  "template",
+  "index",
+  "gate",
+  "finding",
+  "staleness",
+  "audit",
+  "story",
+  "epic",
+  "backlog",
+  "diff",
+  "branch",
+  "commit",
+  "checklist",
+  "guard",
+  "hook",
+  "skill",
+  "command",
+  "agent",
+  "parity",
+  "fixture",
+  "seed",
 ];
 
 /** RT-1: identifier → the word list it was joined from (SEED = 20260921). */

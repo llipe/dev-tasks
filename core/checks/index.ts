@@ -19,6 +19,9 @@ export {
   checkGlossaryContent,
   checkVocabularySection,
   checkVocabularyFiles,
+  checkExportedIdentifiers,
+  splitIdentifierWords,
+  normalizeVocabularyWord,
   GLOSSARY_FILE,
   REQUIREMENTS_DIR,
 } from "./glossary.js";

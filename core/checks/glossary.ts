@@ -610,3 +610,210 @@ export function checkVocabularyFiles(repoRoot: string): GlossaryResult {
 
   return { failures, staleness: [] };
 }
+
+/* -------------------------------------------------------------------------
+ * New exported identifiers against the forbidden synonyms (S-005;
+ * §8.6, FR-23, AC-15, D-60, D-63, D-64, D-73)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * `export <kind> <Identifier>`, with the diff's `+` optional (D-73).
+ *
+ * A line that begins with a space (an unchanged context line in a diff)
+ * or with `-` (a removed line) does not match, and that asymmetry is
+ * the point: the scan is about what a PR *adds*. Reporting a deletion
+ * would ask an author to fix vocabulary they just removed.
+ *
+ * `export default class Foo` is not matched. A regex cannot reach a
+ * default export's name without becoming a parser, and D-60 chose the
+ * regex over the compiler API because this module ships inside
+ * `dist/core/`, where `typescript` — a devDependency — is absent. The
+ * miss is documented in the specification's risk table and pinned by a
+ * test, so the next reader learns it is a choice.
+ */
+const EXPORT_DECLARATION =
+  /^(?:\+\s*)?export\s+(?:async\s+)?(?:const|let|var|function|class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/;
+
+/** `export { a, b as c }` lists, including `export type { … }` re-exports. */
+const EXPORT_LIST = /^(?:\+\s*)?export\s+(?:type\s+)?\{([^}]*)\}/;
+
+/** `b as c` — `c` is what a consumer types, so `c` is the identifier (D-73). */
+const ALIAS = /\bas\s+([A-Za-z_$][\w$]*)$/;
+
+/** Cells that decline to name a synonym rather than naming one. */
+const NO_SYNONYMS = new Set(["", "none", "—", "–", "-", "n/a", "na"]);
+
+/**
+ * One word, lower-cased and de-pluralized — the same function on both
+ * sides of every comparison (D-73).
+ *
+ * The plural rule strips `es` only after `s`, `x`, `z`, `ch`, or `sh`
+ * (so `classes` → `class` and `boxes` → `box`), and otherwise a single
+ * trailing `s` not preceded by another `s` (so `types` → `type` and
+ * `staleness` is left alone). Applied naively in the other order it
+ * turns `types` into `typ`.
+ *
+ * It is wrong about English in places — `status` becomes `statu`, and
+ * `buses` → `bus` → `bu` means it is not idempotent on every input.
+ * Neither costs anything here: both sides are normalized exactly once
+ * by this function, so they agree. A normalizer that is wrong the same
+ * way twice still matches; two sides that disagree do not.
+ *
+ * Exported for the RT-1/RT-2 property fixtures, which test the two
+ * halves of the rule directly rather than inferring them from findings.
+ */
+export function normalizeVocabularyWord(word: string): string {
+  const lower = word.toLowerCase();
+  if (/(?:s|x|z|ch|sh)es$/.test(lower)) return lower.slice(0, -2);
+  if (/[^s]s$/.test(lower)) return lower.slice(0, -1);
+  return lower;
+}
+
+/**
+ * Split an identifier into its words: PascalCase, camelCase,
+ * snake_case, SCREAMING_CASE, and the acronym boundary.
+ *
+ * `HTTPModule` splits at the acronym (`http`, `module`), `V2Loader`
+ * keeps the digit with its word (`v2`, `loader`), and `module2` stays
+ * whole — the specification normalizes case and plural, and nothing
+ * else, so a digit stripper would invent a rule no one wrote. A leading
+ * `_` or `$` is dropped before splitting.
+ */
+export function splitIdentifierWords(identifier: string): string[] {
+  const cleaned = identifier.replace(/^[_$]+/, "");
+  const words = cleaned.match(/[A-Z]+(?![a-z])[0-9]*|[A-Z][a-z0-9]*|[a-z][a-z0-9]*|[0-9]+/g);
+  return (words ?? []).map((word) => word.toLowerCase());
+}
+
+/** Every exported identifier an added line declares, in source order. */
+function exportedIdentifiers(line: string): string[] {
+  const list = line.match(EXPORT_LIST);
+  if (list !== null) {
+    const names: string[] = [];
+    for (const raw of list[1].split(",")) {
+      const entry = raw.trim().replace(/^type\s+/, "");
+      if (entry.length === 0) continue;
+      const alias = entry.match(ALIAS);
+      const name = alias === null ? entry : alias[1];
+      if (/^[A-Za-z_$][\w$]*$/.test(name)) names.push(name);
+    }
+    return names;
+  }
+
+  const declaration = line.match(EXPORT_DECLARATION);
+  return declaration === null ? [] : [declaration[1]];
+}
+
+/**
+ * The strings an identifier is compared against, in reporting order.
+ *
+ * Each word first, then every adjacent word pair joined, then the whole
+ * identifier joined (D-73). The joins are what let a multi-word synonym
+ * match at all: `product-context` normalizes to `productcontext`, which
+ * is what `productContext` joins to. Non-adjacent pairs are not
+ * candidates — `productLoaderContext` is not `product context`, and
+ * matching any two words in any order would flag half of any codebase.
+ */
+function matchCandidates(words: string[]): string[] {
+  const candidates: string[] = [];
+  const add = (value: string): void => {
+    const normalized = normalizeVocabularyWord(value);
+    if (normalized.length > 0 && !candidates.includes(normalized)) candidates.push(normalized);
+  };
+
+  for (const word of words) add(word);
+  for (let i = 0; i + 1 < words.length; i += 1) add(words[i] + words[i + 1]);
+  if (words.length > 1) add(words.join(""));
+
+  return candidates;
+}
+
+interface ForbiddenSynonym {
+  /** The synonym as the glossary spells it, for the message. */
+  display: string;
+  /** Every term that forbids it, in document order. */
+  terms: string[];
+}
+
+/** Separators carry no meaning across the comparison: `-`, `_`, space. */
+function normalizeSynonym(synonym: string): string {
+  return normalizeVocabularyWord(synonym.replace(/[-_\s]+/g, ""));
+}
+
+/** Forbidden synonyms of every term, keyed by their normalized form. */
+function forbiddenSynonyms(glossaryMarkdown: string): Map<string, ForbiddenSynonym> {
+  const map = new Map<string, ForbiddenSynonym>();
+
+  for (const entry of parseGlossary(glossaryMarkdown).terms) {
+    const field = entry.fields.get("Forbidden synonyms");
+    if (field === undefined) continue;
+
+    for (const raw of field.split(",")) {
+      const synonym = cell(raw);
+      if (NO_SYNONYMS.has(synonym.toLowerCase())) continue;
+
+      const key = normalizeSynonym(synonym);
+      if (key.length === 0) continue;
+
+      const existing = map.get(key);
+      if (existing === undefined) map.set(key, { display: synonym, terms: [entry.name] });
+      else if (!existing.terms.includes(entry.name)) existing.terms.push(entry.name);
+    }
+  }
+
+  return map;
+}
+
+/**
+ * Scan a PR's added lines for exports that use a forbidden synonym.
+ *
+ * The `verifier` already holds the diff in Audit Mode; this turns it
+ * into a finding on stated grounds — "this export says `product-context`,
+ * and the glossary forbids that for `foundation document`" — instead of
+ * a reviewer's judgment about someone else's naming.
+ *
+ * Forbidden synonyms only (D-64). An identifier that matches no synonym
+ * produces nothing, and so does one that matches a *canonical* term:
+ * `DecisionLog` is the right name when `decision log` is the term, and
+ * a check that flagged it would flag nearly every export in a codebase
+ * that took its own glossary seriously.
+ *
+ * Every finding lands in `staleness` and never in `failures` (D-63).
+ * `lint` does not call this function at all, so its exit code cannot
+ * move; the `verifier` narrates hits as advisory and they never block
+ * PR readiness in this release. Extraction is a regex (D-60), so some
+ * early noise is certain, and a noisy gate that blocks is a gate its
+ * owners switch off.
+ */
+export function checkExportedIdentifiers(
+  addedLines: string[],
+  glossaryMarkdown: string,
+): GlossaryResult {
+  const synonyms = forbiddenSynonyms(glossaryMarkdown);
+  if (synonyms.size === 0) return { failures: [], staleness: [] };
+
+  const staleness: GlossaryFinding[] = [];
+
+  for (const line of addedLines) {
+    for (const identifier of exportedIdentifiers(line)) {
+      const words = splitIdentifierWords(identifier);
+      const reported = new Set<string>();
+
+      for (const candidate of matchCandidates(words)) {
+        const hit = synonyms.get(candidate);
+        if (hit === undefined || reported.has(candidate)) continue;
+        reported.add(candidate);
+
+        const terms = hit.terms.map((name) => `'${name}'`).join(" and ");
+        staleness.push(
+          finding(
+            "glossary-forbidden-synonym",
+            `${GLOSSARY_FILE}: new export '${identifier}' matches '${candidate}', a forbidden synonym ('${hit.display}') of term ${terms}. Advisory only (D-63): it does not block this PR.`,
+          ),
+        );
+      }
+    }
+  }
+
+  return { failures: [], staleness };
+}

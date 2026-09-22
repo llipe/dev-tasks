@@ -16,6 +16,8 @@ import { mkdtempSync, rmSync, cpSync, mkdirSync, writeFileSync, readFileSync } f
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 
+import { checkExportedIdentifiers } from "../../core/checks/glossary.js";
+
 const ROOT = resolve(import.meta.dirname, "../..");
 const RUN = resolve(ROOT, "core/checks/run.ts");
 const FIXTURES = resolve(ROOT, "test/fixtures/docs-structure");
@@ -403,3 +405,102 @@ const GLOSSARY_FOR_VOCAB = [
   "- Status: active",
   "",
 ].join("\n");
+
+/**
+ * The conformance scan is the `verifier`'s, not `lint`'s (S-005 AC-3,
+ * D-63).
+ *
+ * "Always advisory" is easy to assert vacuously — a unit test that the
+ * function returns no `failures` says nothing about the gate, because a
+ * caller could still exit non-zero on `staleness`. What this proves is
+ * the gate itself: a tree whose glossary forbids a synonym, and whose
+ * source exports that very synonym, still exits 0 and prints not one
+ * word about it. The second case is the control: the same input, passed
+ * to the function directly, does report — so the silence above is
+ * `lint` not calling it, rather than the fixture missing.
+ */
+describe("core/checks/run.ts — the forbidden-synonym scan is not a lint gate (S-005 AC-3)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), "dt-checks-synonym-"));
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  const GLOSSARY = [
+    "---",
+    "version: 1.0",
+    "name: Ubiquitous Language",
+    "description: Canonical domain vocabulary, organized by bounded context.",
+    "status: active",
+    "owner: product-engineer",
+    "---",
+    "",
+    "# Ubiquitous Language",
+    "",
+    "## Changelog",
+    "",
+    "| Version | Date | Summary | Author |",
+    "| ------- | ---- | ------- | ------ |",
+    "| 1.0 | 2026-09-22 | +widget | product-engineer |",
+    "",
+    "## Bounded Context: Widget management",
+    "",
+    "### widget",
+    "",
+    "- Definition: A thing the system manages.",
+    "- Forbidden synonyms: gadget",
+    "- Invariants: none",
+    "- Origin: docs/requirements/prd-widgets.md",
+    "- Status: active",
+    "",
+  ].join("\n");
+
+  const ADDED_LINES = ["+export const gadgetLoader = 1;", "+export class GadgetRegistry {}"];
+
+  it("exits 0 and prints nothing, with a glossary and code that would hit", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(
+      join(tmpDir, "docs/tech.md"),
+      [
+        "# Technical Guidelines",
+        "",
+        "## Package Map",
+        "",
+        "| Package | Path | Purpose | Owner | Canonical scripts | Bounded context |",
+        "| ------- | ---- | ------- | ----- | ----------------- | ---------------- |",
+        "| `@acme/thing` | `.` | harness | platform | `lint` | Widget management |",
+        "",
+      ].join("\n"),
+      "utf-8",
+    );
+    mkdirSync(join(tmpDir, "docs/domain"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/domain/ubiquitous-language.md"), GLOSSARY, "utf-8");
+    mkdirSync(join(tmpDir, "core"), { recursive: true });
+    writeFileSync(
+      join(tmpDir, "core/gadget.ts"),
+      ADDED_LINES.map((l) => l.slice(1)).join("\n"),
+      "utf-8",
+    );
+
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(result.stdout).not.toContain("glossary-forbidden-synonym");
+    expect(result.stderr).toBe("");
+  });
+
+  it("but the same input does report when the verifier calls the function (control)", () => {
+    const scanned = checkExportedIdentifiers(ADDED_LINES, GLOSSARY);
+    expect(scanned.failures).toEqual([]);
+    expect(scanned.staleness).toHaveLength(2);
+    expect(scanned.staleness[0].rule).toBe("glossary-forbidden-synonym");
+  });
+
+  it("run.ts does not import it, so no future caller can widen the gate by accident", () => {
+    const run = readFileSync(resolve(ROOT, "core/checks/run.ts"), "utf-8");
+    expect(run).not.toContain("checkExportedIdentifiers");
+  });
+});
