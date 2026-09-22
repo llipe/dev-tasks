@@ -595,7 +595,11 @@ const REQUIRED_GRILL_CONFLICT_MARKERS: Record<string, string> = {
   "S-004-AC-1 check (a): same term, different definition": "different definition",
   "S-004-AC-1 check (b): forbidden synonym": "forbidden synonym",
   "S-004-AC-1 surfaced as a question": "surfaced as a question",
-  "S-004-AC-1 question carries a recommendation": "recommendation",
+  // "recommendation" is deliberately NOT a whole-file marker: FR-1's
+  // one-question-one-recommendation rule already uses the word four
+  // times elsewhere in this skill, so a whole-file grep for it passes
+  // even when the FR-21 rule drops the requirement entirely. It is
+  // asserted against the rule's own section instead, below.
   "S-004-AC-1 never resolved silently": "never resolved silently",
   "S-004-AC-1 edge case: same definition is reused, not asked": "same definition",
   "S-004-AC-1 edge case: one question naming both owning terms": "naming both",
@@ -653,6 +657,32 @@ describe("activity-grill skill — FR-21 vocabulary-conflict rule (S-004, PT-1)"
         rule,
         `${relPath}: the FR-21 conflict rule must precede Issue Mode — it is a WHAT-phase rule (spec §8.5)`,
       ).toBeLessThan(issueMode);
+    }
+  });
+
+  /**
+   * Spec §8.5 requires the conflict be "surfaced as a question with a
+   * recommendation" — the recommendation is part of the rule, not an
+   * inherited default. A whole-file grep cannot assert it: the word
+   * appears throughout FR-1's section, so the rule can lose the
+   * requirement outright and a file-scoped marker still passes. This
+   * reads the rule's own section and nothing else.
+   */
+  it("requires the conflict question to carry a recommendation, in the rule itself (S-004-AC-1, spec §8.5)", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      const start = content.indexOf("### 3a. Vocabulary conflicts are questions");
+      expect(start, `${relPath} is missing the FR-21 conflict rule heading`).toBeGreaterThan(-1);
+      const end = content.indexOf("\n### ", start + 1);
+      expect(
+        end,
+        `${relPath}: the FR-21 rule is not followed by another step heading`,
+      ).toBeGreaterThan(start);
+      const rule = content.slice(start, end).toLowerCase();
+      expect(
+        rule.includes("recommendation"),
+        `${relPath}: the FR-21 conflict rule does not require a recommendation — spec §8.5 says a conflict is "surfaced as a question with a recommendation"`,
+      ).toBe(true);
     }
   });
 });
