@@ -136,6 +136,7 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 6.8 Verify Acceptance Criterion: AC-4 `activity-init` pointer in all three trees; no new interview step
   - [x] 6.9 Verify Acceptance Criterion: AC-5 every term traces to a PRD FR or a decision ID (manual review of `Origin` values)
   - [x] 6.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-init`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run audit`
+  - [x] 6.11 **Merge-gate remediation (F-1), added during review:** `DECISION_ORIGIN` in `core/checks/glossary.ts` was anchored to the whole `Origin` value, so the seven comma-separated Origins seeded in 6.2 (`FR-1, shared-understanding#D-01`) yielded no `#D-NN` citation at all and `glossary-origin-unresolved` never fired against this repository's glossary — a fabricated `shared-understanding#D-99` would have shipped with `lint` green. Each comma-separated element is now matched individually; D-66's semantics (staleness, never failure, deduplicated per feature) are unchanged. The regex shipped in S-002; S-006 is the first story with real multi-part Origins to expose it. The real-file guard is paired with a control that repoints one `#D-NN` at a nonexistent feature, so a zero distinguishes "all resolve" from "nothing was checked"
 
 ## Decisions Consumed
 
