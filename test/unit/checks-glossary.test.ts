@@ -468,6 +468,128 @@ describe("checkGlossary — filesystem wrapper (UT-G10, UT-G11, CT-6, EC-33)", (
     expect(result.failures).toEqual([]);
     expect(result.staleness).toEqual([]);
   });
+
+  /*
+   * Comma-separated Origins (S-006 F-1).
+   *
+   * A real Origin cites more than one source: `FR-1,
+   * shared-understanding#D-01`. The rule above was anchored to the
+   * whole field, so every one of those lists matched nothing and the
+   * check never fired — against this repository's own glossary
+   * included, where seven of eight Origins are lists. Each element is
+   * now tested on its own. The reporting semantics of D-66 are
+   * unchanged: staleness, never a failure, deduplicated per feature.
+   */
+  it("reports a missing decision log cited inside a comma-separated Origin (F-1)", () => {
+    const root = scratch({
+      "docs/tech.md": TECH,
+      [GLOSSARY_PATH]: doc(
+        CONTEXT +
+          term("runbook", {
+            Origin:
+              "docs/requirements/prd-shared-understanding-refinement.md FR-1, archived-feature#D-01",
+          }),
+      ),
+    });
+    try {
+      const result = checkGlossary(root);
+      expect(result.failures).toEqual([]);
+      expect(rules(result.staleness)).toEqual(["glossary-origin-unresolved"]);
+      expect(result.staleness[0].message).toContain("archived-feature#D-01");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("says nothing when a comma-separated Origin's decision log resolves (F-1)", () => {
+    const root = scratch({
+      "docs/tech.md": TECH,
+      "workstream/decisions-live-feature.md": "| ID |\n| -- |\n| D-07 |\n",
+      [GLOSSARY_PATH]: doc(
+        CONTEXT + term("runbook", { Origin: "ADR-006, ADR-008, live-feature#D-07" }),
+      ),
+    });
+    try {
+      expect(checkGlossary(root)).toEqual({ failures: [], staleness: [] });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("says nothing about Origins made only of non-decision elements (F-1)", () => {
+    for (const origin of [
+      "docs/requirements/prd-shared-understanding-refinement.md FR-4",
+      "ADR-006, ADR-008",
+      "FR-4, FR-18",
+    ]) {
+      const root = scratch({
+        "docs/tech.md": TECH,
+        [GLOSSARY_PATH]: doc(CONTEXT + term("runbook", { Origin: origin })),
+      });
+      try {
+        expect(checkGlossary(root), origin).toEqual({ failures: [], staleness: [] });
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it("reports one finding per feature when several terms cite the same missing log (D-66)", () => {
+    const root = scratch({
+      "docs/tech.md": TECH,
+      [GLOSSARY_PATH]: doc(
+        CONTEXT +
+          term("runbook", { Origin: "FR-1, archived-feature#D-01" }) +
+          "\n" +
+          term("package map", { Origin: "ADR-006, archived-feature#D-12" }) +
+          "\n" +
+          term("bounded context", { Origin: "archived-feature#D-20" }),
+      ),
+    });
+    try {
+      const result = checkGlossary(root);
+      expect(result.failures).toEqual([]);
+      expect(rules(result.staleness)).toEqual(["glossary-origin-unresolved"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("actually inspects this repository's own Origin citations (F-1, with its control)", () => {
+    // A zero that cannot tell "every citation resolves" from "no
+    // citation was ever looked at" is what let the anchored rule ship
+    // dead. The copy below is the real glossary; the control repoints
+    // one of its real `#D-NN` citations at a feature log that does not
+    // exist and asserts the check notices.
+    const realGlossary = readFileSync(join(REPO_ROOT, GLOSSARY_PATH), "utf-8");
+    const realTech = readFileSync(join(REPO_ROOT, "docs/tech.md"), "utf-8");
+    const realLog = readFileSync(
+      join(REPO_ROOT, "workstream/decisions-shared-understanding.md"),
+      "utf-8",
+    );
+    expect(realGlossary).toContain("shared-understanding#D-01");
+
+    const baseline = scratch({
+      "docs/tech.md": realTech,
+      "workstream/decisions-shared-understanding.md": realLog,
+      [GLOSSARY_PATH]: realGlossary,
+    });
+    const control = scratch({
+      "docs/tech.md": realTech,
+      "workstream/decisions-shared-understanding.md": realLog,
+      [GLOSSARY_PATH]: realGlossary.replace("shared-understanding#D-01", "no-such-feature#D-01"),
+    });
+    try {
+      expect(checkGlossary(baseline).staleness).toEqual([]);
+
+      const mutated = checkGlossary(control);
+      expect(rules(mutated.staleness)).toEqual(["glossary-origin-unresolved"]);
+      expect(mutated.staleness[0].message).toContain("no-such-feature#D-01");
+    } finally {
+      rmSync(baseline, { recursive: true, force: true });
+      rmSync(control, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("PackageMapRow and its parser (AC-6, D-75)", () => {
