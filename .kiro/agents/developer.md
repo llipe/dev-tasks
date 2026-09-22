@@ -189,6 +189,14 @@ When diagnosing a bug, regression, or unclear failure during implementation, you
 
 ## memo-cli Integration (When Available)
 
+### Bank Declaration
+
+This agent's bank id is `developer-memory`, stable for the agent's life (PRD §15). Export it before any memo command in the session:
+
+```bash
+export MEMO_BANK=developer-memory
+```
+
 ### Availability Check
 
 At the start of every execution session, check if memo-cli is configured:
@@ -202,7 +210,15 @@ which memo && memo setup validate
 
 ### Session Start — Restore Context
 
-When memo is available, run before writing any code:
+When memo is available and `memo --version` is `1.3.0` or later, restore context with a single call:
+
+```bash
+memo recall "<story or issue description>" --bank $MEMO_BANK --json
+```
+
+`recall` returns one bundle — SELF, POLICIES, SHARED, MINE, LAST SESSION, CONFLICTS — in a single `<4s` call (SELF/MINE/LAST SESSION are omitted when `$MEMO_BANK` is unset or resolves to `kb`). If `memo recall` exits `2` (embeddings failure), surface the warning on stderr and continue the session without recalled context rather than blocking.
+
+**Fallback — `memo --version` is below `1.3.0`:** run the four-command sequence instead:
 
 ```bash
 memo list --limit 20 --json
@@ -212,7 +228,7 @@ memo search "<story or issue description>" --limit 10 --json
 memo search "<key contract or dependency>" --scope related --limit 5 --json
 ```
 
-Review results and produce a short synthesis before implementation:
+Review results (either path) and produce a short synthesis before implementation:
 
 - Constraints to preserve
 - Rejected alternatives to avoid
@@ -231,10 +247,13 @@ Choose the most specific entry type:
 
 ### Intent Entry — Before Starting a Story
 
-Write an intent entry **before beginning implementation** of any story or issue:
+Write an intent entry **before beginning implementation** of any story or issue, as an episodic entry scoped to this session in this agent's bank:
 
 ```bash
 memo write \
+  --kind episodic \
+  --session ISSUE-<n> \
+  --bank $MEMO_BANK \
   --rationale "Context: Starting ISSUE-<##> because <trigger/need>. Decision: implement via <approach>, preserving <constraints/non-goals>, with expected files <key files>. Impact: affects <user/module/contract impact> and introduces risks <if any>." \
   --tags "<domain>,issue-<number>,intent,<impact-tag>[,<boundary-tag>]" \
    --entry-type decision \
@@ -246,10 +265,13 @@ memo write \
 
 ### Outcome Entry — After Completing a Story
 
-Write an outcome entry as part of the **Completion Gate**, after all tests pass and before converting the PR to Ready for Review:
+Write an outcome entry as part of the **Completion Gate**, after all tests pass and before converting the PR to Ready for Review, as an episodic entry scoped to this session in this agent's bank:
 
 ```bash
 memo write \
+  --kind episodic \
+  --session ISSUE-<n> \
+  --bank $MEMO_BANK \
   --rationale "Context: Completed ISSUE-<##> after implementing <scope>. Delivery: shipped <behavior>, deviations <none|details>, AC <x/y> verified. Impact: quality gates test=<pass|fail>; lint=<pass|fail>; format:check=<pass|fail>; typecheck=<pass|fail>; audit=<pass|fail>; docs=<clean|drift-fixed>; migration=<none|details>." \
   --tags "<domain>,issue-<number>,outcome,gates-pass[,<impact-tag>][,<boundary-tag>]" \
    --entry-type decision \
@@ -260,6 +282,14 @@ memo write \
    --on-duplicate consolidate \
    --json
 ```
+
+Session sequence numbers (`--seq`) auto-increment per `--session`; do not pass `--seq` explicitly unless replaying a specific position.
+
+ADR and durable-decision entries are **not** written by `developer` — they stay `--kind semantic` in `kb`, authored by `technical-writer` with `--provenance <csv>` (citing the episodic ids that informed the decision) or `--manual`, per PRD K3.
+
+### Session Close
+
+No memo action in Phase 2. `memo used` and `memo decay` arrive with memo-cli 1.4.0.
 
 ---
 
@@ -276,7 +306,7 @@ Before marking a Story/Issue done:
 7. `technical-writer` agent **MUST** have run and produced both a delta report and a drift/stale-doc validation result.
 8. `/docs` **MUST** be updated to current state.
 9. `/workstream` **SHOULD** be cleaned (active artifacts retained, obsolete artifacts archived/removed).
-10. If memo-cli is available, outcome entry **MUST** be written to memo before PR conversion.
+10. If memo-cli is available, an episodic outcome entry **MUST** be written to `$MEMO_BANK` (`memo write --kind episodic --session ISSUE-<n> --bank $MEMO_BANK …`) before PR conversion.
 11. PR **MUST** be ready, approved, and merged.
 12. You **MUST NOT** close the GitHub Issue until all conditions above are met.
 13. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.

@@ -323,6 +323,16 @@ Ensure:
 
 ## memo-cli Integration (When Available)
 
+### Bank Declaration
+
+This agent's bank id is `technical-writer-memory`, stable for the agent's life (PRD §15). Export it before any memo command in the session:
+
+```bash
+export MEMO_BANK=technical-writer-memory
+```
+
+ADR and decision entries this agent writes stay `--kind semantic` in `kb` (never in `$MEMO_BANK`) — see **Write Template** below.
+
 ### Availability Check
 
 At the start of every run, check if memo-cli is configured:
@@ -366,16 +376,21 @@ After completing **Step 3 (Update Canonical Files)**, write to memo. Do **not** 
 
 ```bash
 memo write \
+	--kind semantic \
+	--bank kb \
 	--rationale "<context sentence. decision sentence. why sentence.>" \
 	--tags "<domain-tag>,<entry-nature-tag>,<story-ref-if-known>" \
 	--entry-type <decision|structure|integration_point> \
 	--source agent \
+	--provenance "<csv of episodic entry ids this decision consolidates, if any>" \
 	--commit "$(git rev-parse HEAD)" \
 	--story "<issue-or-story-id-if-known>" \
 	--files "<path/to/doc.md>,<path/to/adr.md>" \
 	--on-duplicate consolidate \
 	--json
 ```
+
+ADR and durable-decision entries are always `--kind semantic` in `kb`, never in `$MEMO_BANK` — this agent is the one long-lived agent that writes to the shared `kb`, not a private bank. Per PRD K3, a `semantic` entry with `--source agent` **MUST** carry `--provenance <csv>` (the episodic entry ids — typically `developer`'s intent/outcome entries — that informed the decision) unless `--manual` is passed instead (human-authored, no episodic origin).
 
 **Rationale quality rule:** Answer three questions in one coherent paragraph: (1) what changed and why it was needed, (2) what was decided or documented, (3) what it affects downstream. Never use bullet points inside `--rationale`.
 
@@ -391,6 +406,10 @@ Before picking tags, check existing vocabulary:
 ```bash
 memo tags list --sort frequency --json
 ```
+
+### Session Close
+
+No memo action in Phase 2. `memo used` and `memo decay` arrive with memo-cli 1.4.0.
 
 ---
 
