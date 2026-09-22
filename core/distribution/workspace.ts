@@ -233,10 +233,19 @@ export function detectWorkspace(repoRoot: string): Workspace {
   return { shape: "monorepo", signals: signals.sort(), packages };
 }
 
-/** A row of the package map: its first two columns are what we compare. */
-interface MapRow {
+/**
+ * A row of the `docs/tech.md` package map.
+ *
+ * Drift detection compares the first two columns. The glossary check
+ * (`core/checks/glossary.ts`) resolves `## Bounded Context:` headings
+ * against the third, so both callers read the map through this one
+ * parser rather than each hand-parsing the same table (D-75).
+ */
+export interface PackageMapRow {
   name: string;
   path: string;
+  /** The Bounded context cell, or null when the table has no such column. */
+  boundedContext: string | null;
 }
 
 /**
@@ -245,7 +254,7 @@ interface MapRow {
  * run `activity-init` yet is not in drift, and warning about a map that
  * was never written would fire on every fresh install.
  */
-function readPackageMap(repoRoot: string): MapRow[] | null {
+export function readPackageMap(repoRoot: string): PackageMapRow[] | null {
   const path = join(repoRoot, "docs/tech.md");
   if (!existsSync(path)) return null;
 
@@ -257,7 +266,8 @@ function readPackageMap(repoRoot: string): MapRow[] | null {
   const end = rest.slice(1).search(/^##\s/m);
   const section = end === -1 ? rest : rest.slice(0, end + 1);
 
-  const rows: MapRow[] = [];
+  const rows: PackageMapRow[] = [];
+  let contextCol = -1;
   for (const line of section.split("\n")) {
     if (!line.trim().startsWith("|")) continue;
     const cells = line
@@ -265,8 +275,18 @@ function readPackageMap(repoRoot: string): MapRow[] | null {
       .slice(1, -1)
       .map((c) => c.trim());
     if (cells.length < 2) continue;
-    if (/^-+$/.test(cells[0]) || cells[0].toLowerCase() === "package") continue;
-    rows.push({ name: cells[0].replace(/`/g, ""), path: cells[1].replace(/`/g, "") });
+    if (/^-+$/.test(cells[0])) continue;
+    if (cells[0].toLowerCase() === "package") {
+      contextCol = cells.findIndex((c) => c.toLowerCase() === "bounded context");
+      continue;
+    }
+    const context = contextCol === -1 ? undefined : cells[contextCol];
+    rows.push({
+      name: cells[0].replace(/`/g, ""),
+      path: cells[1].replace(/`/g, ""),
+      boundedContext:
+        context === undefined || context.length === 0 ? null : context.replace(/`/g, ""),
+    });
   }
   return rows;
 }

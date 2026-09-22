@@ -8,16 +8,23 @@
  * and fails on every fresh clone and on the first release after merge.
  *
  * Failures exit non-zero. Staleness is printed and does not (D-21).
+ *
+ * Three checks run: documentation structure, decision-log format, and
+ * the ubiquitous-language glossary (D-59). The glossary check is silent
+ * on a repository that does not have the file yet — absence is
+ * `doctor`'s warning, not a `lint` failure (D-67, D-75).
  */
 
 import { checkDocsStructure } from "./docs-structure.js";
 import { checkDecisionLogFormat } from "./decision-log-format.js";
+import { checkGlossary } from "./glossary.js";
 
 const docsStructure = checkDocsStructure(process.cwd());
 const decisionLog = checkDecisionLogFormat(process.cwd());
+const glossary = checkGlossary(process.cwd());
 
-const staleness = [...docsStructure.staleness, ...decisionLog.staleness];
-const failures = [...docsStructure.failures, ...decisionLog.failures];
+const staleness = [...docsStructure.staleness, ...decisionLog.staleness, ...glossary.staleness];
+const failures = [...docsStructure.failures, ...decisionLog.failures, ...glossary.failures];
 
 for (const finding of staleness) {
   process.stdout.write(`${finding.rule}: stale: ${finding.message}\n`);

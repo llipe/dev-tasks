@@ -1,6 +1,7 @@
 /**
  * Integration tests for the docs-structure check as `lint` runs it
- * (S-004 AC-7, AC-10).
+ * (S-004 AC-7, AC-10), and for the glossary check at the same entry
+ * point (S-002 AC-1/AC-2/AC-4, IT-8, D-48, D-66, D-75).
  *
  * These drive `tsx core/checks/run.ts` as a process, with its working
  * directory set to a seeded tree — which is exactly how the `lint`
@@ -124,5 +125,143 @@ describe("core/checks/run.ts as the lint step", () => {
     };
     expect(pkg.scripts.lint).toBe("eslint . --max-warnings 0 && tsx core/checks/run.ts");
     expect(pkg.scripts.lint).not.toContain("dist/");
+  });
+});
+
+/**
+ * The glossary check through the same process boundary (S-002, IT-8).
+ *
+ * `checks-glossary.test.ts` proves the rules. What only a process run
+ * proves is the wiring D-66 depends on: a structural failure reaches
+ * stderr and exits 1, the same tree exits 0 once the term is repaired,
+ * an absent package map prints one `stale:` line on stdout and still
+ * exits 0, and a repository with no glossary at all says nothing
+ * (D-75 — absence is `doctor`'s warning). A unit test asserting that
+ * `run.ts` contains the string `checkGlossary` cannot tell any of these
+ * apart from a check whose findings are never concatenated.
+ */
+describe("core/checks/run.ts — glossary check (S-002 AC-1/AC-2/AC-4, IT-8)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), "dt-checks-glossary-"));
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  const TECH_WITH_MAP = [
+    "# Technical Guidelines",
+    "",
+    "## Package Map",
+    "",
+    "| Package | Path | Purpose | Owner | Canonical scripts | Bounded context |",
+    "| ------- | ---- | ------- | ----- | ----------------- | ---------------- |",
+    "| `@acme/thing` | `.` | harness | platform | `lint` | Widget management |",
+    "",
+  ].join("\n");
+
+  const FRONTMATTER = [
+    "---",
+    "version: 1.0",
+    "name: Ubiquitous Language",
+    "description: Canonical domain vocabulary, organized by bounded context.",
+    "status: active",
+    "owner: product-engineer",
+    "---",
+    "",
+  ].join("\n");
+
+  /** A glossary whose one term is complete unless a bullet is dropped. */
+  function glossary(options: { omit?: string } = {}): string {
+    const bullets = [
+      "- Definition: A thing that widgets are managed as.",
+      "- Forbidden synonyms: none",
+      "- Invariants: none",
+      "- Origin: docs/requirements/prd-widgets.md",
+      "- Status: active",
+    ].filter((b) => options.omit === undefined || !b.startsWith(`- ${options.omit}:`));
+
+    return [
+      FRONTMATTER,
+      "# Ubiquitous Language",
+      "",
+      "Prose the template puts between the title and the changelog, so a",
+      "parser that assumes the changelog comes first is caught here.",
+      "",
+      "## Changelog",
+      "",
+      "| Version | Date | Summary | Author |",
+      "| ------- | ---- | ------- | ------ |",
+      "| 1.0 | 2026-09-22 | +widget | product-engineer |",
+      "",
+      "## Bounded Context: Widget management",
+      "",
+      "### widget",
+      "",
+      ...bullets,
+      "",
+    ].join("\n");
+  }
+
+  function writeGlossary(content: string): void {
+    mkdirSync(join(tmpDir, "docs/domain"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/domain/ubiquitous-language.md"), content, "utf-8");
+  }
+
+  it("exits 1 on a term missing a required field, and 0 once it is restored", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/tech.md"), TECH_WITH_MAP, "utf-8");
+    writeGlossary(glossary({ omit: "Invariants" }));
+
+    const broken = runCheck(tmpDir);
+    expect(broken.exitCode).toBe(1);
+    expect(broken.stderr).toContain("[glossary-field-missing]");
+    expect(broken.stderr).toContain("docs/domain/ubiquitous-language.md");
+    expect(broken.stderr).toContain("Invariants");
+
+    writeGlossary(glossary());
+    const fixed = runCheck(tmpDir);
+    expect(fixed.exitCode, fixed.stderr).toBe(0);
+    expect(fixed.stderr).toBe("");
+  });
+
+  it("exits 1 on a bounded context that resolves to nothing in the package map", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/tech.md"), TECH_WITH_MAP, "utf-8");
+    writeGlossary(
+      glossary().replace("## Bounded Context: Widget management", "## Bounded Context: Billing"),
+    );
+
+    const result = runCheck(tmpDir);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("[glossary-context-unresolved]");
+    expect(result.stderr).toContain("Billing");
+  });
+
+  it("prints one stale line on stdout and exits 0 when docs/tech.md has no package map", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/tech.md"), "# Technical Guidelines\n", "utf-8");
+    writeGlossary(glossary());
+
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+    const stale = result.stdout
+      .split("\n")
+      .filter((l) => l.includes("glossary-package-map-absent"));
+    expect(stale).toHaveLength(1);
+    expect(stale[0]).toContain("stale:");
+    expect(stale[0]).toContain("activity-init");
+  });
+
+  it("says nothing at all about a repository that has no glossary yet (D-75)", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/tech.md"), TECH_WITH_MAP, "utf-8");
+
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(result.stdout).not.toContain("glossary");
+    expect(result.stderr).toBe("");
   });
 });
