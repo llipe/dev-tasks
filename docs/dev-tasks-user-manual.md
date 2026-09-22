@@ -53,6 +53,10 @@ Some managed files must survive customization more strictly than a `consumer_own
 | File                    | Purpose                                                                                                                                          | Delivered under                     |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
 | `.claude/settings.json` | Wires the shipped Claude hook scripts (`.claude/hooks/*.sh`) into Claude Code's `PreToolUse` lifecycle; carries your `permissions.allow` entries | `--profile claude` / `both` / `all` |
+| `CLAUDE.md` | Project memory for Claude Code; root-level context loaded on first use. Consumer-owned once filled in. | `--profile claude` / `both` / `all` |
+| `AGENTS.md` | Canonical registry of agents, skills, and instructions; loaded by all platforms as a shared reference. Consumer-owned once customized. | `--profile claude` / `both` / `all` |
+| `docs/runbooks/README.md` | Index of operational procedures; lists all runbooks and their metadata (trigger, owner, verification, rollback steps). | Every profile (platform-agnostic) |
+| `docs/runbooks/runbook-template.md` | Template for authoring new runbooks with the required five-heading structure (preconditions, steps, verification, rollback, escalation). | Every profile (platform-agnostic) |
 | `docs/domain/ubiquitous-language.md` | Canonical domain vocabulary by bounded context, shipped unfilled; yours to fill and never overwritten | Every profile (platform-agnostic) |
 
 Unlike root files and managed-directory files, install-if-absent files are **not** recorded in `.dev-tasks/manifest.json` — see [ADR-006](adr/ADR-006-claude-settings-ownership.md) for the rationale. `dev-tasks doctor` separately checks that every installed `.claude/hooks/*.sh` script is wired into `.claude/settings.json` and warns by script name if not.
@@ -303,14 +307,16 @@ dev-tasks doctor --json  # Machine-readable output
 
 #### Checks performed
 
-| Check               | Requirement                                                                                                                                                                          |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Node.js version     | >= 24                                                                                                                                                                                |
-| Git version         | >= 2.37                                                                                                                                                                              |
-| Cache directory     | `~/.dev-tasks/cache/` is writable                                                                                                                                                    |
-| Version skew        | Installed version matches pinned version (if pinned)                                                                                                                                 |
-| Claude hooks wiring | Every `.claude/hooks/*.sh` script is referenced by a `PreToolUse` entry in `.claude/settings.json` (warns by script name otherwise; silent when there are no hooks or all are wired) |
-| Glossary presence | `docs/domain/ubiquitous-language.md` exists (warns and proposes `dev-tasks update` when absent; never fails, and never reports on its contents) |
+| Check                       | Requirement                                                                                                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Node.js version             | >= 24                                                                                                                                                                                |
+| Git version                 | >= 2.37                                                                                                                                                                              |
+| Cache directory             | `~/.dev-tasks/cache/` is writable                                                                                                                                                    |
+| Version skew                | Installed version matches pinned version (if pinned)                                                                                                                                 |
+| Claude hooks wiring         | Every `.claude/hooks/*.sh` script is referenced by a `PreToolUse` entry in `.claude/settings.json` (warns by script name otherwise; silent when there are no hooks or all are wired) |
+| Foundation document names   | `docs/product.md` and `docs/tech.md` exist; warns if older names (`docs/product-context.md`, `docs/technical-guidelines.md`) are present instead and suggests running `dev-tasks migrate docs` |
+| Package map                 | `docs/tech.md` package map matches the workspace (warns of drift when a package exists on disk with no row, or a row with no package found; never fails)                            |
+| Glossary presence           | `docs/domain/ubiquitous-language.md` exists (warns and proposes `dev-tasks update` when absent; never fails, and never reports on its contents)                                    |
 
 ---
 
