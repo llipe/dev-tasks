@@ -466,6 +466,9 @@ const REQUIRED_SPEC_VOCABULARY_MARKERS: Record<string, string> = {
   "CT-11 column: Forbidden synonyms (proposals only)": "forbidden synonyms (proposals only)",
   "S-003-AC-7 pre-review check on specs (D-75)": "checkvocabularysection",
   "S-003-AC-7 finding reported by name": "vocabulary-incomplete",
+  "F-6 sentinel names the document it is written in":
+    "none — this specification introduces no domain concepts.",
+  "F-1 sentinel is the section's only content": "only when nothing else stands beside it",
 };
 
 describe("activity-generate-spec skill — Vocabulary section (S-003, PT-3)", () => {
@@ -480,6 +483,19 @@ describe("activity-generate-spec skill — Vocabulary section (S-003, PT-3)", ()
       }
     });
   }
+
+  it("does not tell specification authors to label their document a PRD (F-6)", () => {
+    // The skill shipped instructing spec authors to write `None — this
+    // PRD introduces no domain concepts.` in a specification. The check
+    // accepts both wordings; the instruction should not ask an author
+    // to mislabel the document they are writing.
+    for (const relPath of SPEC_SKILL_PATHS) {
+      expect(
+        read(relPath).toLowerCase().includes("none — this prd introduces no domain concepts."),
+        `${relPath} tells specification authors to write the PRD wording of the sentinel`,
+      ).toBe(false);
+    }
+  });
 
   it("places Vocabulary after Decisions (HOW phase) in the Output Structure", () => {
     for (const relPath of SPEC_SKILL_PATHS) {

@@ -99,7 +99,7 @@ The specification carries a `## Vocabulary` section immediately after `## Decisi
 | …    | existing \| proposed \| conflict → D-NN | … | … | … |
 ```
 
-A row is complete when `existing` names a term `docs/domain/ubiquitous-language.md` already defines (case-insensitively), when `proposed` carries a bounded context, a definition, and forbidden synonyms (`none` is an answer), or when `conflict → D-NN` cites the decision that settled a clash — `->` and `→` are both accepted. A specification that introduces no domain concept of its own carries the section with one line: `None — this PRD introduces no domain concepts.`
+A row is complete when `existing` names a term `docs/domain/ubiquitous-language.md` already defines (case-insensitively), when `proposed` carries a bounded context, a definition, and forbidden synonyms (`none` is an answer), or when `conflict → D-NN` cites the decision that settled a clash — `->` and `→` are both accepted. A specification that introduces no domain concept of its own carries the section with exactly one line, and that line **MUST** be the section's only content — the sentinel is accepted only when nothing else stands beside it (a `None — …` sentence above a table does not make the table complete): `None — this specification introduces no domain concepts.`
 
 A specification introduces implementation vocabulary as readily as a PRD introduces product vocabulary, and the term that enters the codebase through a module name is the one nobody ever agreed on. Terms are identified during HOW-phase grilling, never by scanning the drafted prose (D-65).
 
