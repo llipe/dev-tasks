@@ -96,9 +96,35 @@ describe("activity-init skill parity", () => {
     expect(kiroContent).toContain("Present a findings summary");
   });
 
+  /**
+   * The one bullet AC-4 is about: the package-map rule that tells the
+   * interviewer where a bounded-context name comes from.
+   *
+   * Scoped on purpose. A whole-file `toContain` for the glossary path
+   * passes just as well when the pointer has been deleted from this
+   * bullet and the path survives anywhere else in the document — a
+   * front-matter line, an unrelated section, a stray comment — which
+   * makes the assertion prove the file mentions a filename, not that
+   * the bounded-context question names the glossary as canonical.
+   */
+  function boundedContextRule(content: string): string {
+    const line = content
+      .split("\n")
+      .find((candidate) => candidate.startsWith("- **Bounded context**"));
+    expect(line, "no '- **Bounded context**' rule bullet in activity-init").toBeDefined();
+    return line ?? "";
+  }
+
   it("names the glossary as the canonical source of context names (PT-5, AC-4, D-62)", () => {
     for (const content of [kiroContent, githubContent, claudeContent]) {
-      expect(content).toContain("docs/domain/ubiquitous-language.md");
+      const rule = boundedContextRule(content);
+      expect(rule).toContain("docs/domain/ubiquitous-language.md");
+      expect(rule).toContain("## Bounded Context:");
+      // D-69's whole point: the two strings are matched exactly by
+      // `lint`, so the instruction has to say so. "Use the glossary"
+      // would satisfy the path assertion and still leave an
+      // interviewer free to paraphrase the context name.
+      expect(rule).toMatch(/character for character|exactly/);
     }
   });
 
