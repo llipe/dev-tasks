@@ -73,6 +73,16 @@ If any required input is missing, you **MUST** ask concise clarifying questions.
 
 ## memo-cli Integration (When Available)
 
+### Bank Declaration
+
+This agent's bank id is `product-engineer-memory`, stable for the agent's life (PRD §15). Export it before any memo command in the session:
+
+```bash
+export MEMO_BANK=product-engineer-memory
+```
+
+`product-engineer` does not write episodic or semantic entries itself (see below), so this declaration exists for AC parity with the other long-lived agent definitions and for any future read-side use of `--bank $MEMO_BANK`.
+
 ### Availability Check
 
 At the start of every session, verify memo-cli is configured:
@@ -117,6 +127,10 @@ memo search "<specific topic, technology, or module>" --json
 ```
 
 **product-engineer does NOT write to memo.** All writes are delegated to `technical-writer` (ADRs and doc changes) and `developer` (intent/outcome entries).
+
+### Session Close
+
+No memo action in Phase 2. `memo used` and `memo decay` arrive with memo-cli 1.4.0.
 
 ---
 

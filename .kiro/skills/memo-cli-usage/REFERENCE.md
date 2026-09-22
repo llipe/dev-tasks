@@ -249,6 +249,36 @@ Every entry belongs to a **repo**, **org**, and **domain** (all kebab-case). Que
 
 ---
 
+## Banks, Kinds, and Session Memory (memo-cli 1.3.0+)
+
+memo-cli 1.3.0 adds a second axis of scoping — **banks** — and a third field on every entry — **kind** — on top of the repo/org/domain scoping above. Every command example in this section was verified against the local 1.3.0 build's `--help` output (`pnpm build && node dist/index.js <cmd> --help`).
+
+### `bank` — Namespace
+
+A bank is a namespace for entries, resolved in this priority order (B3): `--bank <id>` flag > `$MEMO_BANK` env var > `config.bank.default` > `kb`. `kb` is the shared, org-wide knowledge base every repo reads from by default; any other bank id (kebab-case or UUID) is a **private** bank — conventionally named `<agent-name>-memory` (e.g. `developer-memory`, `technical-writer-memory`, `product-engineer-memory`, `planner-memory`) for a long-lived agent's own session memory.
+
+Export the bank once per session so every subsequent command inherits it:
+
+```bash
+export MEMO_BANK=developer-memory
+```
+
+`kb` and private banks are isolated from each other: a `search`/`list`/`recall` scoped to a private bank never returns `kb` entries and vice versa, unless you explicitly pass `--bank kb`.
+
+### `kind` — Entry Nature
+
+| Kind       | Meaning                                                                 | Where it lives                                    | Expires?                                    |
+| ---------- | ------------------------------------------------------------------------ | -------------------------------------------------- | -------------------------------------------- |
+| `self`     | The agent's own persona/context entries (never ranked, never trimmed)    | private banks only — `kb` rejects `--kind self`     | no (subject to a soft cap warning, not a hard block) |
+| `episodic` | Session-scoped narration — intent/outcome entries tied to one `--session` | private banks (default kind there)                  | yes — `policy.expires_in_days` or `--expires-in` |
+| `semantic` | Durable, searchable decisions — what `search`/`list` return by default   | `kb` (default kind there); may also exist in a private bank | no                                           |
+
+`--kind` is case-insensitive (`--kind Self`, `--kind SELF`, `--kind self` all normalize to `self`). Default kind is `episodic` in a private bank, `semantic` in `kb`.
+
+**Rule of thumb for agent definitions in this repository:** intent/outcome entries are `--kind episodic --session ISSUE-<n> --bank $MEMO_BANK`; ADR/decision entries stay `--kind semantic --bank kb`.
+
+---
+
 ## Command Reference
 
 ### `memo write` — Record a Decision
@@ -262,6 +292,22 @@ memo write \
   --json
 ```
 
+Episodic example — intent entry in a private bank:
+
+```bash
+memo write \
+  --kind episodic \
+  --session ISSUE-42 \
+  --bank $MEMO_BANK \
+  --rationale "Context: Starting ISSUE-42. Decision: implement via a middleware. Impact: affects the auth pipeline." \
+  --tags "auth,issue-42,intent,middleware" \
+  --entry-type decision \
+  --source agent \
+  --story "ISSUE-42" \
+  --on-duplicate consolidate \
+  --json
+```
+
 **Required flags:**
 
 - `--rationale` — The decision text (1–5 000 chars).
@@ -269,17 +315,29 @@ memo write \
 
 **Optional flags:**
 
-- `--entry-type` — `decision` (default) | `integration_point` | `structure`
-- `--source` — `agent` | `manual` (falls back to config default)
+- `--entry-type` — `decision` (default) | `integration_point` | `structure` | `policy` | `observation` (default `observation` when `--kind episodic`)
+- `--source` — `agent` | `manual` | `scan` (falls back to config default)
 - `--commit` — Git commit SHA for traceability
 - `--story` — Story or task ID
 - `--files` — Comma-separated file paths touched by the decision
 - `--relates-to` — Related repo names
 - `--on-duplicate` — `consolidate` | `update` | `replace` | `create-new`
+- `--bank <id>` — Bank id (default: `$MEMO_BANK`, `config.bank.default`, or `kb`)
+- `--kind <kind>` — `self` | `episodic` | `semantic` (default: `episodic` in private banks, `semantic` in `kb`)
+- `--session <id>` — Session id; **required** when `--kind episodic`
+- `--seq <n>` — Explicit episodic sequence number (default: auto-incremented per session)
+- `--context <ctx>` — Context tag; repeatable
+- `--provenance <csv>` — Comma-separated UUIDs of source episodic entries; **required** for a `semantic` entry with `--source agent` unless `--manual` is passed (PRD K3)
+- `--manual` — Force `source = manual`
+- `--supersedes <id>` — Id of an existing entry this write supersedes (must share the same `bank` and `kind` as the target)
+- `--pin` — Pin the entry (never auto-archived by decay)
+- `--expires-in <duration>` — Episodic expiry override, e.g. `2d`, `12h`, `30m` (overrides the bank's default retention policy)
 - `--json` — Machine-readable output (**always use in agent mode**)
 
 **Duplicate handling:**
-When memo detects a duplicate (same `repo + commit + story + entry_type + source`), interactive mode prompts for resolution. In `--json` mode you **MUST** supply `--on-duplicate` or the command will fail.
+When memo detects a duplicate (same `repo + commit + story + entry_type + source`, or the equivalent v2 key including `bank`/`kind`/`session`/`seq`), interactive mode prompts for resolution. In `--json` mode you **MUST** supply `--on-duplicate` or the command will fail.
+
+**Note:** `--confidence` is not a valid flag — confidence is inferred from `--source`.
 
 ---
 
@@ -295,10 +353,20 @@ Natural-language vector search over decision entries.
 
 - `--scope` — `repo` (default) | `related`
 - `--tags` — Comma-separated filter (AND logic)
-- `--entry-type` — Filter by type
-- `--source` — Filter by source
+- `--entry-type` — Comma-separated types to include
+- `--source` — Comma-separated sources to include
 - `--limit` — Max results (default 10)
+- `--lexical <on|off>` — Enable/disable lexical identifier matching (default `on`)
+- `--explain` — Show a per-result factor breakdown
+- `--bank <id>` — Bank id (default: `$MEMO_BANK`, `config.bank.default`, or `kb`)
+- `--kind <kind>` — `self` | `episodic` | `semantic` | `all` (default `all`, case-insensitive)
+- `--session <id>` — Restrict to an episodic session id
+- `--include-archived` — Include archived entries
+- `--include-superseded` — Include superseded entries
+- `--as-of <iso>` — Point-in-time read (ISO 8601 date or datetime); implies `--include-superseded`
 - `--json` — Machine-readable output
+
+`--bank`, `--kind`, and `--session` isolate results the same way across `search`, `list`, `tags list`, and `read` — a query scoped to a private bank never returns `kb` results and vice versa, unless `--bank kb` is passed explicitly.
 
 ---
 
@@ -315,7 +383,130 @@ Most-recent-first listing with optional date range.
 - `--scope`, `--tags`, `--entry-type`, `--source` — Same as search
 - `--from` / `--to` — ISO 8601 date boundaries
 - `--limit` — Max results (default 20)
+- `--bank`, `--kind`, `--session`, `--include-archived`, `--include-superseded`, `--as-of` — Same read-side flags as `search`
 - `--json` — Machine-readable output
+
+---
+
+### `memo timeline` — Replay Episodic Memory
+
+```bash
+memo timeline --bank $MEMO_BANK --session ISSUE-42 --json
+```
+
+Replays episodic memory **in sequence order** — never ranked. Two shapes:
+
+- With `--session <id>`: entries for that session, ordered by `seq` ascending (ties broken by `timestamp_utc` ascending).
+- Without `--session`: recent episodic entries across the bank, newest-first, grouped by `session_id`; JSON shape is `{ sessions: [{ session_id, entries }] }`.
+
+**Optional flags:**
+
+- `--bank <id>` — Bank id (default: `$MEMO_BANK`, `config.bank.default`, or `kb`)
+- `--session <id>` — Restrict to one episodic session
+- `--last <n>` — Maximum number of entries (default 50, max 500 — values above 500 are clamped with a stderr warning)
+- `--since <iso>` — Inclusive ISO 8601 lower bound for `timestamp_utc`
+- `--json` — Machine-readable output
+
+An empty bank returns exit `0` with `count: 0`. `timeline` never calls embeddings and never ranks — this is a raw sequence replay, unlike `search`.
+
+---
+
+### `memo bank` — Manage Memory Banks
+
+```bash
+memo bank list --json
+memo bank show --id developer-memory --json
+memo bank init --id developer-memory --set-default --json
+```
+
+Subcommands:
+
+- **`bank init`** — Create a bank by writing its first `self` entry.
+  - `--id <id>` — Bank id (kebab-case or UUID; `kb` is rejected)
+  - `--rationale <text>` — Rationale for the self entry (default: `"Bank <id> initialised."`)
+  - `--tags <csv>` — 2–5 comma-separated tags (default: `bank,self`)
+  - `--set-default` — Set this bank as `config.bank.default` (writes `memo.config.json` unconditionally, every time the flag is passed)
+  - `--json` — Machine-readable output
+  - Idempotent: if the bank already has entries, `init` prints the existing summary and writes nothing.
+- **`bank list`** — List every bank with counts per kind (`self`/`episodic`/`semantic`). `--json` for machine-readable output.
+- **`bank show`** — Show one bank's `self` entries plus counts per kind **and per state** (`active`, `archived`, `superseded`), and `last_session_id`.
+  - `--id <id>` — Bank id (required)
+  - `--json` — Machine-readable output
+
+`bank list`/`bank show` never accept `--orgs`/`--repos`/`--domains` — banks are an orthogonal axis to those facets, and private-bank entries may have no `repo`/`org` at all.
+
+---
+
+### `memo migrate --to-v2` — Migrate Legacy Payloads
+
+```bash
+memo migrate --to-v2 --dry-run --json
+memo migrate --to-v2 --json
+```
+
+Migrates legacy v1 stored payloads to schema v2, idempotently (a point that already has `schema_version: '2'` is skipped on every run — the second real run always scans `0`). Nothing is archived, nothing is deleted, no vector is touched — this only rewrites payload fields (`bank = kb`, `schema_version = '2'`, `kind` per the matching rule, retention/counter defaults).
+
+**Flags:**
+
+- `--to-v2` — Target schema version; currently the only supported target (**required**)
+- `--dry-run` — Plan only; writes nothing; exits `0`; prints counts
+- `--rules <file>` — JSON file replacing the default rule set (see below)
+- `--json` — Machine-readable output; without it, progress prints to stderr
+
+**Migration guidance — always dry-run first:**
+
+1. Run `memo migrate --to-v2 --dry-run --json` and review the `byRule` counts and `skipped` total before doing anything else.
+2. Only run the real migration (`memo migrate --to-v2 --json`, no `--dry-run`) against your own local/dev Qdrant instance — **never** against a shared or production collection without a separate, explicit human-confirmed step. This is a `developer`-workstation operation, not something to run unattended in CI or against `infra-engineer`-owned infrastructure.
+3. Re-run `--dry-run` afterward to confirm `scanned: 0` — that's the idempotency check.
+
+**Custom `--rules` file** (optional, replaces the default FR-2.8 rule set):
+
+```json
+[
+  {
+    "name": "1",
+    "when": { "tags_any": ["intent", "outcome"] },
+    "set": { "kind": "episodic", "session_from": "story", "expires_in_days": 90 }
+  },
+  { "name": "2", "when": {}, "set": { "kind": "semantic" } }
+]
+```
+
+`when` supports `tags_any`, `tags_all`, `entry_type_in`, `source_in`, `repo_in`; `set.kind` is required (any of `self`/`episodic`/`semantic`); `session_from` (`story | legacy`) and `expires_in_days` apply only to `episodic` rules. Rules are evaluated in order, first match wins. A rules file that leaves any point unmatched fails validation up front (`VALIDATION_FAILED`, "rule set is not exhaustive: add a final rule with empty `when`") — always end your custom rule set with a catch-all `{ "when": {} }` entry.
+
+---
+
+### `memo recall` — One-Call Context Restore
+
+```bash
+memo recall "<task description>" --bank $MEMO_BANK --json
+```
+
+The 1.3.0 replacement for the four-command session-start sequence (`list` + `tags list` + `search` + `search --scope related`). Gathers, in one call (≤ 4 s target):
+
+| Section        | Content                                                              | Omitted when       |
+| -------------- | ----------------------------------------------------------------------- | -------------------- |
+| `SELF`         | This agent's own persona/context entries, newest first, never trimmed    | `--bank` resolves to `kb` |
+| `POLICIES`     | Ranked semantic policy entries from `kb`                                 | never (empty until later phases add policy entries) |
+| `SHARED`       | Ranked semantic entries from `kb`, scoped by `--scope`                    | never                |
+| `MINE`         | Ranked semantic entries from this agent's own bank                        | `--bank` resolves to `kb` |
+| `LAST SESSION` | The most recent episodic session's entries, in `seq` order                | `--bank` resolves to `kb` |
+| `CONFLICTS`    | Pending-contradiction entries (empty until a later phase)                 | never                |
+
+**Flags:**
+
+- `--bank <id>` — Bank id (default: `$MEMO_BANK`, `config.bank.default`, or `kb`)
+- `--scope <scope>` — `repo` | `related`, applies to `SHARED` only (default: config or `repo`)
+- `--max-tokens <n>` — Token budget (default: `config.recall.max_tokens`, `2000`)
+- `--json` — Machine-readable output
+
+When the budget is tight, sections are trimmed in this order: `conflicts` → `last_session` (oldest entries first) → `mine` → `shared` → `policies`. `SELF` is **never** trimmed, even if it alone exceeds the budget — in that case `truncated` lists every other section and the response honestly reports `budget.used_tokens > max_tokens` rather than silently cutting `SELF`. `recall` performs zero writes.
+
+**On failure:** `memo recall` exits `2` on an embeddings failure (`EMBEDDING_API_ERROR`) or a mid-gather Qdrant failure (`QDRANT_OPERATION_FAILED`) — there is no partial-bundle fallback. Treat this the same as any other exit-`2` failure: surface the warning, and continue the session without recalled context rather than blocking on it.
+
+**When `$MEMO_BANK` is unset** (resolves to `kb`): `SELF`, `MINE`, and `LAST SESSION` are omitted from the response entirely (omitted keys, not empty arrays) — you still get `POLICIES`, `SHARED`, `CONFLICTS`.
+
+**Fallback when `memo recall` is unavailable** (`memo --version` below `1.3.0`, or the command errors as unrecognized): fall back to the four-command sequence documented under **Session Start — Restore Context** in `SKILL.md`.
 
 ---
 
@@ -373,7 +564,17 @@ Exactly one of `--id`, `--all-by-repo`, or `--all-by-org` is required.
 
 ### Starting a Session — Restore Context
 
-At the **beginning of every session**, run this sequence before writing a single line of code:
+**memo-cli 1.3.0+ (preferred):** confirm config, then restore the full context bundle in one call:
+
+```bash
+# 1. Confirm config is valid
+memo setup validate
+
+# 2. Restore SELF, POLICIES, SHARED, MINE, LAST SESSION, CONFLICTS in one bundle
+memo recall "<current task or feature description>" --bank $MEMO_BANK --json
+```
+
+**Fallback (`memo --version` below `1.3.0`):** run this sequence instead, before writing a single line of code:
 
 ```bash
 # 1. Confirm config is valid
@@ -392,7 +593,11 @@ memo tags list --sort frequency --json
 memo search "<current task or feature description>" --limit 10 --json
 ```
 
-Read the results before proceeding. Prior entries may contain constraints, preferred patterns, or rejected alternatives that directly affect how you should approach the current task.
+Read the results before proceeding, whichever path was used. Prior entries may contain constraints, preferred patterns, or rejected alternatives that directly affect how you should approach the current task. If `memo recall` exits `2` (embeddings failure), surface the warning and continue the session without recalled context.
+
+### Ending a Session — No Memo Action in Phase 2
+
+Phase 2 has no session-close memo step. `memo used` (marking which recalled entries were actually useful) and `memo decay` (retention scoring) arrive with memo-cli 1.4.0 — do not invent a workaround for either in the meantime.
 
 ---
 
@@ -759,16 +964,24 @@ When a command fails:
 ## Quick Reference Card
 
 ```
-memo setup init --repo <r> --org <o> --domain <d>   # Initialize config
-memo setup validate                                   # Verify config
-memo setup show [--json]                              # Display config
+memo setup init --repo <r> --org <o> --domain <d>              # Initialize config
+memo setup validate                                              # Verify config
+memo setup show [--json]                                         # Display config
 
-memo write --rationale "..." --tags "a,b,c" [--json]  # Record decision
-memo search "query" [--scope related] [--json]         # Semantic search
-memo list [--from DATE] [--to DATE] [--json]           # Browse entries
-memo tags list [--sort frequency] [--json]             # Discover tags
-memo inspect [--json]                                  # Global facets
-memo delete --id <uuid> [--json]                       # Delete entry
+memo recall "<task>" --bank $MEMO_BANK [--json]                  # Restore full context (1.3.0+)
+memo write --rationale "..." --tags "a,b,c" [--json]             # Record a semantic decision (kb)
+memo write --kind episodic --session ID --bank $MEMO_BANK [--json]  # Record an intent/outcome entry
+memo search "query" [--scope related] [--bank ID] [--kind K] [--json]  # Semantic search
+memo list [--from DATE] [--to DATE] [--bank ID] [--kind K] [--json]     # Browse entries
+memo timeline [--session ID] --bank $MEMO_BANK [--last N] [--json]      # Replay episodic memory in order
+memo tags list [--sort frequency] [--json]                       # Discover tags
+memo inspect [--json]                                             # Global facets
+memo bank list [--json]                                           # List all banks
+memo bank show --id <id> [--json]                                 # Show one bank's self entries + counts
+memo bank init --id <id> [--set-default] [--json]                 # Create a bank
+memo migrate --to-v2 --dry-run [--json]                           # Preview legacy payload migration
+memo migrate --to-v2 [--json]                                     # Apply legacy payload migration (local/dev only)
+memo delete --id <uuid> [--json]                                  # Delete entry
 ```
 
 ---
