@@ -89,7 +89,10 @@ function rules(findings: { rule: string }[]): string[] {
 
 describe("checkGlossaryContent — clean input (UT-G1, UT-G15)", () => {
   it("passes the shipped template: zero terms is valid (D-66)", () => {
-    const content = readFileSync(join(REPO_ROOT, "templates/domain/ubiquitous-language.md"), "utf-8");
+    const content = readFileSync(
+      join(REPO_ROOT, "templates/domain/ubiquitous-language.md"),
+      "utf-8",
+    );
     const result = checkGlossaryContent(content, MAP);
     expect(result.failures).toEqual([]);
     expect(result.staleness).toEqual([]);
@@ -148,7 +151,11 @@ describe("checkGlossaryContent — Status (UT-G3, UT-G4, UT-G5)", () => {
   });
 
   it("accepts `superseded by <Term>` whose target exists anywhere in the file", () => {
-    const body = CONTEXT + term("runbook", { Status: "superseded by procedure (feature#D-01)" }) + "\n" + term("procedure");
+    const body =
+      CONTEXT +
+      term("runbook", { Status: "superseded by procedure (feature#D-01)" }) +
+      "\n" +
+      term("procedure");
     const result = checkGlossaryContent(doc(body), MAP);
     expect(result.failures).toEqual([]);
   });
@@ -164,7 +171,10 @@ describe("checkGlossaryContent — term uniqueness (UT-G6, A-16)", () => {
 
   it("fails the same term in two contexts — one meaning per repository (D-16)", () => {
     const body =
-      CONTEXT + term("runbook") + "\n## Bounded Context: @llipe.com/dev-tasks\n\n" + term("runbook");
+      CONTEXT +
+      term("runbook") +
+      "\n## Bounded Context: @llipe.com/dev-tasks\n\n" +
+      term("runbook");
     expect(rules(checkGlossaryContent(doc(body), MAP).failures)).toEqual([
       "glossary-term-duplicate",
     ]);
@@ -242,8 +252,7 @@ describe("checkGlossaryContent — frontmatter (UT-G12, AC-3)", () => {
 });
 
 describe("checkGlossaryContent — append-only (UT-G13, UT-G14)", () => {
-  const changelog =
-    CHANGELOG_HEADER + "| 1.1 | 2026-09-22 | +alpha, +beta | product-engineer |\n";
+  const changelog = CHANGELOG_HEADER + "| 1.1 | 2026-09-22 | +alpha, +beta | product-engineer |\n";
 
   it("passes when every changelog `+term` is still in the body", () => {
     const body = CONTEXT + term("alpha") + "\n" + term("beta");
@@ -301,10 +310,9 @@ describe("checkGlossaryContent — parsing robustness (UT-G16, UT-G18, RT-5)", (
 });
 
 describe("checkGlossaryContent — mutation set over a populated glossary (RT-4)", () => {
-  const clean = doc(
-    CONTEXT + term("alpha") + "\n" + term("beta"),
-    { changelog: CHANGELOG_HEADER + "| 1.1 | 2026-09-22 | +alpha, +beta | product-engineer |\n" },
-  );
+  const clean = doc(CONTEXT + term("alpha") + "\n" + term("beta"), {
+    changelog: CHANGELOG_HEADER + "| 1.1 | 2026-09-22 | +alpha, +beta | product-engineer |\n",
+  });
 
   it("reports exactly the one rule each single mutation breaks", () => {
     expect(checkGlossaryContent(clean, MAP).failures).toEqual([]);
@@ -327,7 +335,11 @@ describe("checkGlossaryContent — mutation set over a populated glossary (RT-4)
       },
       {
         name: "rename the context",
-        mutate: (s) => s.replace("## Bounded Context: AI-assisted development workflow", "## Bounded Context: Elsewhere"),
+        mutate: (s) =>
+          s.replace(
+            "## Bounded Context: AI-assisted development workflow",
+            "## Bounded Context: Elsewhere",
+          ),
         rule: "glossary-context-unresolved",
       },
       {
