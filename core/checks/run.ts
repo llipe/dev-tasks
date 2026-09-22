@@ -9,22 +9,37 @@
  *
  * Failures exit non-zero. Staleness is printed and does not (D-21).
  *
- * Three checks run: documentation structure, decision-log format, and
- * the ubiquitous-language glossary (D-59). The glossary check is silent
- * on a repository that does not have the file yet — absence is
- * `doctor`'s warning, not a `lint` failure (D-67, D-75).
+ * Four checks run: documentation structure, decision-log format, the
+ * ubiquitous-language glossary (D-59), and the `## Vocabulary` section
+ * of every PRD in `docs/requirements/` (S-003, §8.3). The glossary
+ * check is silent on a repository that does not have the file yet —
+ * absence is `doctor`'s warning, not a `lint` failure (D-67, D-75) —
+ * and the Vocabulary walk skips PRDs that carry neither `## Vocabulary`
+ * nor `## Decisions`, which is what a PRD written before the grilling
+ * phases looks like from here (D-65).
  */
 
 import { checkDocsStructure } from "./docs-structure.js";
 import { checkDecisionLogFormat } from "./decision-log-format.js";
-import { checkGlossary } from "./glossary.js";
+import { checkGlossary, checkVocabularyFiles } from "./glossary.js";
 
 const docsStructure = checkDocsStructure(process.cwd());
 const decisionLog = checkDecisionLogFormat(process.cwd());
 const glossary = checkGlossary(process.cwd());
+const vocabulary = checkVocabularyFiles(process.cwd());
 
-const staleness = [...docsStructure.staleness, ...decisionLog.staleness, ...glossary.staleness];
-const failures = [...docsStructure.failures, ...decisionLog.failures, ...glossary.failures];
+const staleness = [
+  ...docsStructure.staleness,
+  ...decisionLog.staleness,
+  ...glossary.staleness,
+  ...vocabulary.staleness,
+];
+const failures = [
+  ...docsStructure.failures,
+  ...decisionLog.failures,
+  ...glossary.failures,
+  ...vocabulary.failures,
+];
 
 for (const finding of staleness) {
   process.stdout.write(`${finding.rule}: stale: ${finding.message}\n`);
