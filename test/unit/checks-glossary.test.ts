@@ -468,6 +468,129 @@ describe("checkGlossary — filesystem wrapper (UT-G10, UT-G11, CT-6, EC-33)", (
     expect(result.failures).toEqual([]);
     expect(result.staleness).toEqual([]);
   });
+
+  /*
+   * Comma-separated Origins (S-006 F-1).
+   *
+   * An Origin names its sources the way a person would: `FR-1,
+   * shared-understanding#D-01`, or a bare PRD path. The rule above was
+   * anchored to the whole field, so none of this repository's eight
+   * Origins matched — not one — and the check had never fired since
+   * S-002, leaving all four `#D-NN` citations invisible. Comma lists
+   * are just the most common shape (four of the eight). Each element is
+   * now tested on its own. The reporting semantics of D-66 are
+   * unchanged: staleness, never a failure, deduplicated per feature.
+   */
+  it("reports a missing decision log cited inside a comma-separated Origin (F-1)", () => {
+    const root = scratch({
+      "docs/tech.md": TECH,
+      [GLOSSARY_PATH]: doc(
+        CONTEXT +
+          term("runbook", {
+            Origin:
+              "docs/requirements/prd-shared-understanding-refinement.md FR-1, archived-feature#D-01",
+          }),
+      ),
+    });
+    try {
+      const result = checkGlossary(root);
+      expect(result.failures).toEqual([]);
+      expect(rules(result.staleness)).toEqual(["glossary-origin-unresolved"]);
+      expect(result.staleness[0].message).toContain("archived-feature#D-01");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("says nothing when a comma-separated Origin's decision log resolves (F-1)", () => {
+    const root = scratch({
+      "docs/tech.md": TECH,
+      "workstream/decisions-live-feature.md": "| ID |\n| -- |\n| D-07 |\n",
+      [GLOSSARY_PATH]: doc(
+        CONTEXT + term("runbook", { Origin: "ADR-006, ADR-008, live-feature#D-07" }),
+      ),
+    });
+    try {
+      expect(checkGlossary(root)).toEqual({ failures: [], staleness: [] });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("says nothing about Origins made only of non-decision elements (F-1)", () => {
+    for (const origin of [
+      "docs/requirements/prd-shared-understanding-refinement.md FR-4",
+      "ADR-006, ADR-008",
+      "FR-4, FR-18",
+    ]) {
+      const root = scratch({
+        "docs/tech.md": TECH,
+        [GLOSSARY_PATH]: doc(CONTEXT + term("runbook", { Origin: origin })),
+      });
+      try {
+        expect(checkGlossary(root), origin).toEqual({ failures: [], staleness: [] });
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it("reports one finding per feature when several terms cite the same missing log (D-66)", () => {
+    const root = scratch({
+      "docs/tech.md": TECH,
+      [GLOSSARY_PATH]: doc(
+        CONTEXT +
+          term("runbook", { Origin: "FR-1, archived-feature#D-01" }) +
+          "\n" +
+          term("package map", { Origin: "ADR-006, archived-feature#D-12" }) +
+          "\n" +
+          term("bounded context", { Origin: "archived-feature#D-20" }),
+      ),
+    });
+    try {
+      const result = checkGlossary(root);
+      expect(result.failures).toEqual([]);
+      expect(rules(result.staleness)).toEqual(["glossary-origin-unresolved"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("actually inspects this repository's own Origin citations (F-1, with its control)", () => {
+    // A zero that cannot tell "every citation resolves" from "no
+    // citation was ever looked at" is what let the anchored rule ship
+    // dead. The copy below is the real glossary; the control repoints
+    // one of its real `#D-NN` citations at a feature log that does not
+    // exist and asserts the check notices.
+    const realGlossary = readFileSync(join(REPO_ROOT, GLOSSARY_PATH), "utf-8");
+    const realTech = readFileSync(join(REPO_ROOT, "docs/tech.md"), "utf-8");
+    const realLog = readFileSync(
+      join(REPO_ROOT, "workstream/decisions-shared-understanding.md"),
+      "utf-8",
+    );
+    expect(realGlossary).toContain("shared-understanding#D-01");
+
+    const baseline = scratch({
+      "docs/tech.md": realTech,
+      "workstream/decisions-shared-understanding.md": realLog,
+      [GLOSSARY_PATH]: realGlossary,
+    });
+    const control = scratch({
+      "docs/tech.md": realTech,
+      "workstream/decisions-shared-understanding.md": realLog,
+      [GLOSSARY_PATH]: realGlossary.replace("shared-understanding#D-01", "no-such-feature#D-01"),
+    });
+    try {
+      expect(checkGlossary(baseline).staleness).toEqual([]);
+
+      const mutated = checkGlossary(control);
+      expect(rules(mutated.staleness)).toEqual(["glossary-origin-unresolved"]);
+      expect(mutated.staleness[0].message).toContain("no-such-feature#D-01");
+    } finally {
+      rmSync(baseline, { recursive: true, force: true });
+      rmSync(control, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("PackageMapRow and its parser (AC-6, D-75)", () => {
@@ -1603,5 +1726,242 @@ describe("RT-3 — no false positives, no false negatives (SEED 20260922)", () =
     // them contain: if this reported anything, the run above would be
     // proving nothing.
     expect(scan(lines, forbidding("widget, sprocket"))).toEqual([]);
+  });
+});
+
+/* -------------------------------------------------------------------------
+ * This repository's own populated glossary (S-006; specification §8.7,
+ * D-69, D-72, D-76; UT-G17, PT-6, E2E-11)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * The eight terms of specification §8.7, in the order that table gives
+ * them.
+ *
+ * Written out here rather than read from the file: a test that derives
+ * its expectation from the artifact under test asserts only that the
+ * artifact equals itself. D-69 bounds the seed to the terms this PRD's
+ * own history supplies, so the list is a contract, and a ninth term
+ * arriving through a future PRD's `## Vocabulary` is supposed to fail
+ * this until someone updates the list deliberately.
+ */
+const SEED_TERMS = [
+  "decision log",
+  "grilling",
+  "exit gate",
+  "bounded context",
+  "package map",
+  "runbook",
+  "install-if-absent",
+  "foundation document",
+];
+
+/** The one context, which must equal `docs/tech.md`'s cell exactly (FR-63). */
+const SEED_CONTEXT = "AI-assisted development workflow";
+
+/** The `### <Term>` headings of a glossary, in document order. */
+function headings(markdown: string): string[] {
+  return [...markdown.matchAll(/^###\s+(.+?)\s*$/gm)].map((m) => m[1]);
+}
+
+/** One term's bullet block, from its heading to the next heading. */
+function termBlock(markdown: string, name: string): string {
+  const start = markdown.indexOf(`### ${name}\n`);
+  expect(start, `no '### ${name}' heading in ${GLOSSARY_PATH}`).toBeGreaterThan(-1);
+  const body = markdown.slice(start + `### ${name}\n`.length);
+  const end = body.search(/^#{2,3}\s/m);
+  return end === -1 ? body : body.slice(0, end);
+}
+
+describe("this repository's own glossary (UT-G17, E2E-11, S-006 AC-1/AC-5, D-69)", () => {
+  const glossary = readFileSync(join(REPO_ROOT, GLOSSARY_PATH), "utf-8");
+
+  it("passes the real check with zero failures and zero staleness", () => {
+    // Both halves. A fixture elsewhere in this phase asserted
+    // `failures` alone and let a `staleness` finding print on every
+    // `lint` run across three merges with the suite fully green.
+    const result = checkGlossary(REPO_ROOT);
+    expect(result.failures, JSON.stringify(result.failures, null, 2)).toEqual([]);
+    expect(result.staleness, JSON.stringify(result.staleness, null, 2)).toEqual([]);
+  });
+
+  it("carries exactly the eight terms of specification §8.7 and no others (AC-1)", () => {
+    expect(headings(glossary)).toEqual(SEED_TERMS);
+  });
+
+  it("names its one bounded context exactly as the docs/tech.md package map does (FR-63)", () => {
+    const contexts = [...glossary.matchAll(/^##\s+Bounded Context:\s*(.+?)\s*$/gm)].map(
+      (m) => m[1],
+    );
+    expect(contexts).toEqual([SEED_CONTEXT]);
+
+    const map = readPackageMap(REPO_ROOT);
+    expect(map).not.toBeNull();
+    // Byte-for-byte, not case-insensitively: D-74 made context
+    // resolution an exact match, so a case difference here is a `lint`
+    // failure and this test is what catches it first.
+    expect((map ?? []).map((row) => row.boundedContext)).toContain(SEED_CONTEXT);
+  });
+
+  it("has frontmatter `status: active`, an owner, and a bumped version (AC-1)", () => {
+    const frontmatter = glossary.slice(0, glossary.indexOf("\n---", 4));
+    expect(frontmatter).toContain("status: active");
+    expect(frontmatter).toContain("owner: product-engineer");
+    expect(frontmatter).not.toContain("status: unfilled");
+    expect(frontmatter).toMatch(/^version: 1\.1$/m);
+  });
+
+  it("records the eight terms in one `+term` changelog row (AC-1, FR-19)", () => {
+    const changelog = glossary.slice(glossary.indexOf("## Changelog"));
+    const rows = changelog
+      .split("\n")
+      .filter((line) => line.trim().startsWith("|") && line.includes("+"));
+    expect(rows).toHaveLength(1);
+    for (const term of SEED_TERMS) expect(rows[0]).toContain(`+${term}`);
+  });
+
+  it("traces every Origin to a PRD requirement, an ADR, or a decision ID (AC-5)", () => {
+    const origins = [...glossary.matchAll(/^-\s*Origin:\s*(.+?)\s*$/gm)].map((m) => m[1]);
+    expect(origins).toHaveLength(SEED_TERMS.length);
+    for (const origin of origins) {
+      expect(origin, origin).toMatch(
+        /prd-shared-understanding-refinement\.md FR-\d+|shared-understanding#D-\d+|ADR-\d+/,
+      );
+    }
+  });
+
+  it("marks every term `active` (AC-1)", () => {
+    const statuses = [...glossary.matchAll(/^-\s*Status:\s*(.+?)\s*$/gm)].map((m) => m[1]);
+    expect(statuses).toEqual(SEED_TERMS.map(() => "active"));
+  });
+
+  it("gives `bounded context` no forbidden synonyms, and `package`/`module` none anywhere (D-72)", () => {
+    // Scoped to the one block, not the whole file: `package` and
+    // `module` are ordinary words in the other seven definitions, and a
+    // whole-file search for them proves nothing about this rule. D-72
+    // dropped them because word matching would flag S-002's own
+    // `PackageMapRow` export, and reinstating them reopens that.
+    const block = termBlock(glossary, "bounded context");
+    expect(block).toMatch(/^-\s*Forbidden synonyms:\s*none\s*$/m);
+
+    const forbidden = [...glossary.matchAll(/^-\s*Forbidden synonyms:\s*(.+?)\s*$/gm)].map(
+      (m) => m[1],
+    );
+    expect(forbidden).toHaveLength(SEED_TERMS.length);
+    for (const value of forbidden) {
+      expect(value, value).not.toMatch(/\bpackages?\b/i);
+      expect(value, value).not.toMatch(/\bmodules?\b/i);
+    }
+  });
+
+  it("gives `foundation document` the two retired names as forbidden synonyms (D-72)", () => {
+    const block = termBlock(glossary, "foundation document");
+    expect(block).toMatch(/^-\s*Forbidden synonyms:.*product-context.*$/m);
+    expect(block).toMatch(/^-\s*Forbidden synonyms:.*technical-guidelines.*$/m);
+  });
+
+  it("reports nothing over this phase's own exported identifiers (AC-2, S-005 AC-5)", () => {
+    // The self-scan of E2E-11, run against the same lines the verifier
+    // would see. `PackageMapRow` is the identifier A-17 predicted would
+    // hit; D-72 is why it does not.
+    const added = [
+      "+export interface PackageMapRow {",
+      "+export function readPackageMap(repoRoot: string): PackageMapRow[] | null {",
+      "+export function checkGlossaryContent(",
+      "+export function checkVocabularySection(",
+      "+export function checkExportedIdentifiers(",
+      "+export type GlossaryRule =",
+      "+export const GLOSSARY_FILE = 'docs/domain/ubiquitous-language.md';",
+      "+export const REQUIREMENTS_DIR = 'docs/requirements';",
+      "+export function normalizeVocabularyWord(word: string): string {",
+      "+export function splitIdentifierWords(identifier: string): string[] {",
+    ];
+    const result = checkExportedIdentifiers(added, glossary);
+    expect(result.failures).toEqual([]);
+    expect(result.staleness, JSON.stringify(result.staleness, null, 2)).toEqual([]);
+  });
+
+  it("would still report a genuine forbidden synonym (the negative's control)", () => {
+    // Without this, the case above passes just as well against a
+    // glossary that forbids nothing at all, which is exactly the
+    // positive-only shape that let a sentinel bypass ship earlier in
+    // this phase.
+    const result = checkExportedIdentifiers(["+export const productContext = 1;"], glossary);
+    expect(result.staleness).toHaveLength(1);
+    expect(result.staleness[0].rule).toBe("glossary-forbidden-synonym");
+    expect(result.staleness[0].message).toContain("foundation document");
+  });
+});
+
+describe("docs/tech.md's package-map note after D-45 is closed (PT-6, S-006 AC-3)", () => {
+  const tech = readFileSync(join(REPO_ROOT, "docs/tech.md"), "utf-8");
+  const note = tech.slice(tech.indexOf("## Package Map"), tech.indexOf("## Root Script Fan-Out"));
+
+  it("no longer carries the freeform placeholder sentence (D-45 closed by D-69)", () => {
+    // Scoped to the package-map section: `freeform` and `D-45` may
+    // legitimately appear elsewhere in this document, and a whole-file
+    // assertion would pass or fail for the wrong reason.
+    expect(note).not.toContain("freeform working label");
+    expect(note).not.toContain("Phase 3's glossary supersedes");
+  });
+
+  it("points at the glossary as the canonical source of context names (AC-3)", () => {
+    expect(note).toContain("docs/domain/ubiquitous-language.md");
+  });
+
+  it("leaves the Bounded context cell unchanged (AC-3)", () => {
+    expect(note).toContain(`| ${SEED_CONTEXT} |`);
+  });
+});
+
+describe("the PRD's `## Vocabulary` is coupled to the glossary (6.3b, D-76)", () => {
+  const PRD = "docs/requirements/prd-shared-understanding-refinement.md";
+  const prd = readFileSync(join(REPO_ROOT, PRD), "utf-8");
+  const glossary = readFileSync(join(REPO_ROOT, GLOSSARY_PATH), "utf-8");
+
+  /** The Vocabulary table's rows as `[term, status]`, header excluded. */
+  function vocabularyRows(): [string, string][] {
+    const start = prd.indexOf("\n## Vocabulary\n");
+    expect(start, `${PRD} has no '## Vocabulary' section`).toBeGreaterThan(-1);
+    const rest = prd.slice(start + 1);
+    const end = rest.slice(1).search(/^##(?!#)\s/m);
+    const section = end === -1 ? rest : rest.slice(0, end + 1);
+
+    const rows: [string, string][] = [];
+    for (const line of section.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("|")) continue;
+      if (/^\|[\s:|-]+\|$/.test(trimmed)) continue;
+      const cells = trimmed
+        .replace(/\|\s*$/, "")
+        .split("|")
+        .slice(1)
+        .map((c) => c.replace(/`/g, "").trim());
+      if (cells[0].toLowerCase() === "term") continue;
+      rows.push([cells[0], (cells[1] ?? "").toLowerCase()]);
+    }
+    return rows;
+  }
+
+  it("lists the eight seed terms", () => {
+    expect(vocabularyRows().map(([term]) => term)).toEqual(SEED_TERMS);
+  });
+
+  it("matches every row's term to a `### <Term>` heading byte-for-byte", () => {
+    // The flip in 6.3a is matched on the exact term string, and
+    // `checkVocabularySection` stays green when a `proposed` row names
+    // a term the glossary does not define (D-74). A spelling that
+    // drifts between the two documents therefore fails nothing — which
+    // is what this case exists to stop (issue #231 audit finding D-8).
+    const glossaryTerms = headings(glossary);
+    for (const [term] of vocabularyRows()) {
+      expect(glossaryTerms, `'${term}' is not a heading in ${GLOSSARY_PATH}`).toContain(term);
+    }
+  });
+
+  it("reads `existing` on every row now that the glossary defines them (AC-6)", () => {
+    for (const [term, status] of vocabularyRows()) {
+      expect(status, `row '${term}'`).toBe("existing");
+    }
   });
 });

@@ -96,6 +96,56 @@ describe("activity-init skill parity", () => {
     expect(kiroContent).toContain("Present a findings summary");
   });
 
+  /**
+   * The one bullet AC-4 is about: the package-map rule that tells the
+   * interviewer where a bounded-context name comes from.
+   *
+   * Scoped on purpose. A whole-file `toContain` for the glossary path
+   * passes just as well when the pointer has been deleted from this
+   * bullet and the path survives anywhere else in the document — a
+   * front-matter line, an unrelated section, a stray comment — which
+   * makes the assertion prove the file mentions a filename, not that
+   * the bounded-context question names the glossary as canonical.
+   */
+  function boundedContextRule(content: string): string {
+    const line = content
+      .split("\n")
+      .find((candidate) => candidate.startsWith("- **Bounded context**"));
+    expect(line, "no '- **Bounded context**' rule bullet in activity-init").toBeDefined();
+    return line ?? "";
+  }
+
+  it("names the glossary as the canonical source of context names (PT-5, AC-4, D-62)", () => {
+    for (const content of [kiroContent, githubContent, claudeContent]) {
+      const rule = boundedContextRule(content);
+      expect(rule).toContain("docs/domain/ubiquitous-language.md");
+      expect(rule).toContain("## Bounded Context:");
+      // D-69's whole point: the two strings are matched exactly by
+      // `lint`, so the instruction has to say so. "Use the glossary"
+      // would satisfy the path assertion and still leave an
+      // interviewer free to paraphrase the context name.
+      expect(rule).toMatch(/character for character|exactly/);
+    }
+  });
+
+  it("no longer defers the canonical name to a future phase (PT-5, D-45 closed by D-69)", () => {
+    for (const content of [kiroContent, githubContent, claudeContent]) {
+      expect(content).not.toContain("Phase 3's glossary supersedes");
+      expect(content).not.toContain("working label, not a contract");
+    }
+  });
+
+  it("adds no interview step to do it (PT-5, AC-4)", () => {
+    // D-62 bought the pointer with one sentence, explicitly instead of
+    // a confirmation step. These two counts are the pin: a new
+    // numbered step or a new section moves one of them, and the reason
+    // the sentence was chosen over a step disappears quietly otherwise.
+    for (const content of [kiroContent, githubContent, claudeContent]) {
+      expect(content.match(/^[0-9]+\. /gm) ?? []).toHaveLength(54);
+      expect(content.match(/^## /gm) ?? []).toHaveLength(16);
+    }
+  });
+
   it("has no multi-repo mode, dt invocation, or component.json reference (dt retirement, ADR-007)", () => {
     for (const content of [kiroContent, githubContent, claudeContent]) {
       expect(content).not.toMatch(/multi-repo/);
