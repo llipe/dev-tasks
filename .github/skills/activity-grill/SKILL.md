@@ -43,11 +43,29 @@ A branch (e.g., `grilling/placement`, `simplicity/content` — the existing `Bra
 Before asking the user anything, check in this order:
 
 1. **Codebase directly** — `Read`/`Grep`/`Glob` for single-file questions (e.g., "does this config already exist?").
-2. **`docs/product.md` / `docs/tech.md` / the glossary** (once Phase 3 ships it) for standing decisions already recorded there.
+2. **`docs/product.md` / `docs/tech.md` / the glossary** for standing decisions already recorded there. All three are read here and written by none of them — the glossary in particular is consulted, never edited, in every mode (D-61).
 3. **Prior `decisions-*.md` files** for a matching answer — mandatory in Issue Mode (FR-10), optional-but-recommended in Feature Mode.
 4. **A bounded `researcher` call** — only when the question needs multi-slice evidence a single file read cannot supply, AND only if a fresh, non-stale pre-step `/workstream/research-*.md` artifact (if any) does not already cover it (D-56). At most one `researcher` call total per phase, shared with the caller's own conditional pre-step budget (ADR-004) — `activity-grill` is a second possible caller of `researcher`, not a second guaranteed invocation.
 
 Only if none of the four resolve the question does the skill ask the user. A question whose codebase answer is ambiguous (multiple conflicting sources) is still asked to the user — the skill never guesses.
+
+### 3a. Vocabulary conflicts are questions, never resolutions (FR-21)
+
+This rule belongs to the WHAT phase (`phase="WHAT"`), where the feature's domain language is still being settled.
+
+Once the open branch reaches what the feature *is*, ask the user plainly **which domain concepts this feature introduces or changes** — one question, with a recommendation, like every other. For each term the user names, consult the glossary (step 3's second source) and check two things:
+
+1. **The same term with a different definition** — the glossary already defines the term, and the definition the user just gave is not the recorded one.
+2. **The term appearing in another term's forbidden synonyms** — the term is not an entry of its own, but an existing entry names it as a synonym it forbids.
+
+Either hit is **surfaced as a question** with exactly one recommendation, and the user's answer becomes a `D-NN` row like any other resolution (step 4). A conflict is **never resolved silently**: the skill does not adopt the glossary's definition, does not adopt the user's, and does not quietly rename or merge the term. The term's `Status in glossary` is then `conflict → D-NN` in the drafted PRD — written later, by the caller, not here.
+
+Two cases resolve without a new question, or with one question rather than several:
+
+- **Same term, same definition.** The glossary already says what the user just said; nothing is asked and the existing term is reused. That is resolve-before-ask working (step 3), not a conflict.
+- **One term forbidden by two entries.** A term named as a forbidden synonym by two different glossary entries raises **one** question naming both owning terms — one conflict with two owners, not two conflicts. Batching remains forbidden (FR-1).
+
+The skill reads the glossary and writes nothing to it, in every mode and every phase — see Write Authority.
 
 ### 4. Append-per-resolution (FR-4)
 
@@ -86,7 +104,7 @@ On reaching the cap, the skill presents the open list and asks the user to **con
 
 When `mode="issue"`:
 
-- **Glossary is read-only.** No new term proposals (moot until Phase 3 ships the glossary; the skill still avoids proposing terms in the meantime).
+- **Glossary is read-only.** No new term proposals. The glossary is consulted for resolve-before-ask and for the conflict checks in step 3a; a term the issue needs and the glossary lacks is a question for the user, never an edit made here.
 - **Scope is limited** to what the issue changes relative to current behavior — do not open branches outside that delta.
 - **Prior-decision reuse is mandatory, not optional.** Before asking, search prior decisions from *any* feature's `decisions-*.md` for a reusable answer. The scan is keyword-gated: only logs whose `Branch` or `Question` text shares a term with the issue description are read, keeping the lookup bounded as the number of logs grows. A reused answer is cited in qualified form (`<other-feature>#D-NN`) and is not re-asked.
 - The cap is 8, per the default above (or the configured `docs/tech.md` § Grilling issue-mode value).
@@ -123,5 +141,5 @@ No attribution is added anywhere in this skill for the `grill-me` interview patt
 
 - Not a drafting skill — produces no PRD, spec, or task-list content itself.
 - Not a top-level entry point — only `activity-refine` and `activity-generate-spec` invoke it.
-- Not a replacement for the glossary (Phase 3) — Issue Mode treats it read-only until it exists.
+- Not a glossary editor — the glossary is read in every mode and written in none. Proposing a term into it is `activity-refine`'s write, made on the user's approval of a PRD, never mid-interview (D-61).
 - Not a second, independent `researcher` budget — shares the phase's existing conditional pre-step budget (D-56, ADR-004).
