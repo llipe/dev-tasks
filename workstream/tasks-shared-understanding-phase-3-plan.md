@@ -88,18 +88,18 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
   - [x] 3.14 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
   - [x] 3.15 Merge-gate remediation (qa-engineer + verifier audit, PR #238): the `None —` sentinel is accepted only as the section's single non-blank, non-fenced line (it was matched against every line and returned clean before any row was parsed — the AC-07 gate was bypassable by a sentence); GFM's `| - |` and `|:-:|` delimiter rows are recognised as delimiters; a fenced example inside a real section is no longer read as rows; a directory named `*.md` under `docs/requirements/` no longer throws `EISDIR` out of `lint`; the section terminates at any ATX heading of depth 1 or 2. `activity-generate-spec` no longer tells specification authors to write the PRD wording of the sentinel
 
-- [ ] 4.0 Implement Story S-004: Surface vocabulary conflicts during grilling (#232)
+- [x] 4.0 Implement Story S-004: Surface vocabulary conflicts during grilling (#232)
 
   > Note: Depends on 1.0. Prose-only; runs in parallel with 3.0. Conflicts are questions, never auto-resolutions (FR-21).
 
-  - [ ] 4.1 Extend `test/unit/skill-parity-grilling.test.ts` first: FR-21 markers (WHAT-phase "which domain concepts" question; same-term-different-definition and forbidden-synonym checks surfaced as questions) and a negative assertion on every "(once Phase 3 ships it)" / "moot until Phase 3" phrase, across all three trees; confirm it fails
-  - [ ] 4.2 Edit `activity-grill` (three trees): add the WHAT-phase conflict rule per spec §8.5; remove the placeholders; leave Issue Mode's read-only rule and the Write Authority section unchanged (D-61)
-  - [ ] 4.3 Add `test/fixtures/grilling/vocabulary-conflict.md` (forbidden-synonym collision → FR-21 question → recorded `D-NN`) and its README row
-  - [ ] 4.4 Verify Acceptance Criterion: AC-1 conflict rule present, both checks, presented as a question with a recommendation
-  - [ ] 4.5 Verify Acceptance Criterion: AC-2 placeholders removed; Issue Mode rule intact
-  - [ ] 4.6 Verify Acceptance Criterion: AC-3 Write Authority unchanged
-  - [ ] 4.7 Verify Acceptance Criterion: AC-4 fixture walks cleanly against the skill text; edge cases — same term same definition (no question), a synonym forbidden by two terms (one question naming both)
-  - [ ] 4.8 Run Tests: `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run format:check`
+  - [x] 4.1 Extend `test/unit/skill-parity-grilling.test.ts` first: FR-21 markers (WHAT-phase "which domain concepts" question; same-term-different-definition and forbidden-synonym checks surfaced as questions) and a negative assertion on every "(once Phase 3 ships it)" / "moot until Phase 3" phrase, across all three trees; confirm it fails
+  - [x] 4.2 Edit `activity-grill` (three trees): add the WHAT-phase conflict rule per spec §8.5; remove the placeholders; leave Issue Mode's read-only rule and the Write Authority section unchanged (D-61)
+  - [x] 4.3 Add `test/fixtures/grilling/vocabulary-conflict.md` (forbidden-synonym collision → FR-21 question → recorded `D-NN`) and its README row
+  - [x] 4.4 Verify Acceptance Criterion: AC-1 conflict rule present, both checks, presented as a question with a recommendation
+  - [x] 4.5 Verify Acceptance Criterion: AC-2 placeholders removed; Issue Mode rule intact
+  - [x] 4.6 Verify Acceptance Criterion: AC-3 Write Authority unchanged
+  - [x] 4.7 Verify Acceptance Criterion: AC-4 fixture walks cleanly against the skill text; edge cases — same term same definition (no question), a synonym forbidden by two terms (one question naming both)
+  - [x] 4.8 Run Tests: `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run format:check`
 
 - [ ] 5.0 Implement Story S-005: Report forbidden synonyms in new exported identifiers (#233)
 

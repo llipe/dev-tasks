@@ -574,3 +574,264 @@ describe("test/fixtures/grilling — S-003 scenario fixture (FX-2, FX-3)", () =>
     expect(readme).toContain("vocabulary-approval.md");
   });
 });
+
+/**
+ * Phase 3 story S-004 (issue #232): `activity-grill`'s WHAT-phase FR-21
+ * vocabulary-conflict rule (specification §8.5), the removal of the
+ * Phase-3 placeholder hedges, and the unchanged Write Authority.
+ *
+ * Every assertion below runs per tree. That is deliberate rather than
+ * incidental: a marker set checked against one tree passes while the
+ * other two diverge, and three-tree parity is the only thing keeping
+ * the Copilot and Kiro copies honest. The content-equality test above
+ * would also catch divergence, but it reports "the files differ", not
+ * which rule went missing — these say which.
+ */
+
+/** PT-1 positives: the FR-21 conflict rule (S-004-AC-1, AC-08). */
+const REQUIRED_GRILL_CONFLICT_MARKERS: Record<string, string> = {
+  "S-004-AC-1 rule cites FR-21": "fr-21",
+  "S-004-AC-1 WHAT-phase concept question": "which domain concepts",
+  "S-004-AC-1 check (a): same term, different definition": "different definition",
+  "S-004-AC-1 check (b): forbidden synonym": "forbidden synonym",
+  "S-004-AC-1 surfaced as a question": "surfaced as a question",
+  // "recommendation" is deliberately NOT a whole-file marker: FR-1's
+  // one-question-one-recommendation rule already uses the word four
+  // times elsewhere in this skill, so a whole-file grep for it passes
+  // even when the FR-21 rule drops the requirement entirely. It is
+  // asserted against the rule's own section instead, below.
+  "S-004-AC-1 never resolved silently": "never resolved silently",
+  "S-004-AC-1 edge case: same definition is reused, not asked": "same definition",
+  "S-004-AC-1 edge case: one question naming both owning terms": "naming both",
+  "S-004-AC-2 read-only rule stands as written (Issue Mode)": "glossary is read-only",
+};
+
+/**
+ * PT-1 negatives. Each of these shipped in Phase 2 as an explicit "this
+ * is not real yet" hedge. Phase 3 makes the glossary real, so a hedge
+ * left behind is not cosmetic — it tells the skill the rule above it is
+ * inert. Asserting their absence is the only thing that distinguishes
+ * "the rule was added" from "the rule was added and the contradiction
+ * was removed".
+ */
+const FORBIDDEN_GRILL_PLACEHOLDERS: readonly string[] = [
+  "once Phase 3 ships it",
+  "moot until Phase 3",
+  "until it exists",
+  "Phase 3 ships the glossary",
+];
+
+/**
+ * S-004-AC-3 snapshot. The Write Authority section must be byte-identical
+ * to the text merged in Phase 2 — not merely "still mentions the decision
+ * log". D-61 puts the glossary append in `activity-refine`; a widened
+ * Write Authority here is the drift this catches, including a widening
+ * that keeps the decision-log bullet intact.
+ */
+const WRITE_AUTHORITY_SNAPSHOT = `## Write Authority
+
+- \`workstream/decisions-<feature>.md\` — append one row per resolved question, immediately (FR-4). Never batch writes to the end of a session.
+- Nothing else. No PRD, spec, task list, code, or \`/DESIGN.md\` file may be created or modified by this skill.`;
+
+describe("activity-grill skill — FR-21 vocabulary-conflict rule (S-004, PT-1)", () => {
+  for (const [label, marker] of Object.entries(REQUIRED_GRILL_CONFLICT_MARKERS)) {
+    it(`declares ${label} in all three trees`, () => {
+      for (const relPath of SKILL_PATHS) {
+        const content = read(relPath);
+        expect(
+          content.toLowerCase().includes(marker.toLowerCase()),
+          `${relPath} does not contain marker for ${label} ("${marker}")`,
+        ).toBe(true);
+      }
+    });
+  }
+
+  it("places the conflict rule in the WHAT phase, not Issue Mode (S-004-AC-1/AC-2)", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      const rule = content.indexOf("Vocabulary conflicts are questions");
+      const issueMode = content.indexOf("### 10. Issue Mode constraints");
+      expect(rule, `${relPath} is missing the FR-21 conflict rule heading`).toBeGreaterThan(-1);
+      expect(issueMode, `${relPath} is missing the Issue Mode section`).toBeGreaterThan(-1);
+      expect(
+        rule,
+        `${relPath}: the FR-21 conflict rule must precede Issue Mode — it is a WHAT-phase rule (spec §8.5)`,
+      ).toBeLessThan(issueMode);
+    }
+  });
+
+  /**
+   * Spec §8.5 requires the conflict be "surfaced as a question with a
+   * recommendation" — the recommendation is part of the rule, not an
+   * inherited default. A whole-file grep cannot assert it: the word
+   * appears throughout FR-1's section, so the rule can lose the
+   * requirement outright and a file-scoped marker still passes. This
+   * reads the rule's own section and nothing else.
+   */
+  it("requires the conflict question to carry a recommendation, in the rule itself (S-004-AC-1, spec §8.5)", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      const start = content.indexOf("### 3a. Vocabulary conflicts are questions");
+      expect(start, `${relPath} is missing the FR-21 conflict rule heading`).toBeGreaterThan(-1);
+      const end = content.indexOf("\n### ", start + 1);
+      expect(
+        end,
+        `${relPath}: the FR-21 rule is not followed by another step heading`,
+      ).toBeGreaterThan(start);
+      const rule = content.slice(start, end).toLowerCase();
+      expect(
+        rule.includes("recommendation"),
+        `${relPath}: the FR-21 conflict rule does not require a recommendation — spec §8.5 says a conflict is "surfaced as a question with a recommendation"`,
+      ).toBe(true);
+    }
+  });
+
+  /**
+   * D-3 (verifier audit of #232): Issue Mode's read-only rule sends the
+   * reader to "the conflict checks in step 3a", but step 3a scoped
+   * itself to `phase="WHAT"` and `activity-refine` invokes Issue Mode
+   * with `mode` and `cap` only — no `phase` at all. Read together, the
+   * two statements contradict: the rule Issue Mode is pointed at
+   * excludes Issue Mode. The resolution is that step 3a names both
+   * vocabulary-settling callers explicitly.
+   *
+   * Section-scoped on purpose. `mode="issue"` appears in the Issue Mode
+   * section too, so a whole-file `includes` passes even with step 3a's
+   * clause reverted to WHAT-only — exactly the hole 7c1b190 closed for
+   * the recommendation marker.
+   */
+  it("scopes the FR-21 rule to both vocabulary-settling callers — WHAT phase and Issue Mode (D-3)", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      const start = content.indexOf("### 3a. Vocabulary conflicts are questions");
+      expect(start, `${relPath} is missing the FR-21 conflict rule heading`).toBeGreaterThan(-1);
+      const end = content.indexOf("\n### ", start + 1);
+      expect(
+        end,
+        `${relPath}: the FR-21 rule is not followed by another step heading`,
+      ).toBeGreaterThan(start);
+      const rule = content.slice(start, end).toLowerCase();
+      expect(
+        rule.includes('phase="what"'),
+        `${relPath}: the FR-21 rule no longer names the WHAT phase (spec §8.5)`,
+      ).toBe(true);
+      expect(
+        rule.includes('mode="issue"'),
+        `${relPath}: the FR-21 rule does not name Issue Mode, but step 10 sends Issue Mode here for "the conflict checks in step 3a" — the two contradict (verifier D-3)`,
+      ).toBe(true);
+    }
+  });
+
+  /**
+   * The other half of D-3: `## Invocation` documents `phase` as if every
+   * caller passes one. Issue Mode does not. Scoped to the Invocation
+   * section so that the statement cannot be satisfied by prose elsewhere.
+   */
+  it("records in ## Invocation that Issue Mode passes no phase (D-3)", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      const start = content.indexOf("## Invocation");
+      expect(start, `${relPath} is missing the Invocation section`).toBeGreaterThan(-1);
+      const end = content.indexOf("\n## ", start + 1);
+      expect(end, `${relPath}: the Invocation section has no following section`).toBeGreaterThan(
+        start,
+      );
+      const invocation = content.slice(start, end).toLowerCase();
+      expect(
+        invocation.includes("without a `phase`"),
+        `${relPath}: ## Invocation does not state that Issue Mode is invoked without a \`phase\` argument — \`activity-refine\` passes \`mode\` and \`cap\` only (verifier D-3)`,
+      ).toBe(true);
+    }
+  });
+});
+
+describe("activity-grill skill — Phase-3 placeholders removed (S-004-AC-2)", () => {
+  for (const placeholder of FORBIDDEN_GRILL_PLACEHOLDERS) {
+    it(`no longer hedges with "${placeholder}" in any tree`, () => {
+      for (const relPath of SKILL_PATHS) {
+        expect(
+          read(relPath).toLowerCase().includes(placeholder.toLowerCase()),
+          `${relPath} still carries the Phase-3 placeholder "${placeholder}" — the glossary exists now (spec §8.5)`,
+        ).toBe(false);
+      }
+    });
+  }
+
+  it("keeps Issue Mode's read-only rule, stated without a hedge (S-004-AC-2)", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      const start = content.indexOf("### 10. Issue Mode constraints");
+      expect(start, `${relPath} is missing the Issue Mode section`).toBeGreaterThan(-1);
+      const section = content.slice(start, content.indexOf("\n### ", start + 1));
+      expect(
+        section.includes("**Glossary is read-only.**"),
+        `${relPath}: Issue Mode lost its read-only rule`,
+      ).toBe(true);
+      expect(
+        /moot|once phase|until it exists/i.test(section),
+        `${relPath}: Issue Mode's read-only rule is still hedged`,
+      ).toBe(false);
+    }
+  });
+});
+
+describe("activity-grill skill — Write Authority unchanged by S-004 (S-004-AC-3, D-61)", () => {
+  it("matches the Phase 2 text exactly in all three trees", () => {
+    for (const relPath of SKILL_PATHS) {
+      const content = read(relPath);
+      const start = content.indexOf("## Write Authority");
+      expect(start, `${relPath} has no Write Authority section`).toBeGreaterThan(-1);
+      const section = content.slice(start, content.indexOf("\n## ", start + 1)).trim();
+      expect(
+        section,
+        `${relPath}: Write Authority changed — the glossary append belongs to activity-refine (D-61)`,
+      ).toBe(WRITE_AUTHORITY_SNAPSHOT);
+    }
+  });
+});
+
+describe("test/fixtures/grilling — S-004 scenario fixture (FX-1, FX-3)", () => {
+  const FIXTURE = "test/fixtures/grilling/vocabulary-conflict.md";
+
+  it("exists and walks the forbidden-synonym collision end to end (S-004-AC-4)", () => {
+    expect(existsSync(resolve(ROOT, FIXTURE)), `missing required fixture: ${FIXTURE}`).toBe(true);
+    const content = read(FIXTURE).toLowerCase();
+    for (const marker of [
+      "forbidden synonym",
+      "recommendation",
+      // The resolved row cites the decision in FR-5's qualified form —
+      // `conflict → <feature>#D-NN`, which `CONFLICT` in
+      // `core/checks/glossary.ts` accepts alongside the bare `D-NN`.
+      "conflict → doc-index#d-09",
+      "foundation document",
+      "product-context",
+    ]) {
+      expect(content.includes(marker), `${FIXTURE} does not walk "${marker}"`).toBe(true);
+    }
+  });
+
+  it("shows the conflict resolved by the user, never by the skill (FR-21)", () => {
+    const content = read(FIXTURE).toLowerCase();
+    expect(
+      content.includes("no write to the glossary"),
+      `${FIXTURE} does not show that the grilling session leaves the glossary untouched (D-61)`,
+    ).toBe(true);
+  });
+
+  it("covers both edge cases from the S-004 matrix", () => {
+    const content = read(FIXTURE).toLowerCase();
+    expect(
+      content.includes("same definition"),
+      `${FIXTURE} does not walk the same-term-same-definition case (no question fires)`,
+    ).toBe(true);
+    expect(
+      content.includes("naming both"),
+      `${FIXTURE} does not walk the synonym-forbidden-by-two-terms case (one question naming both)`,
+    ).toBe(true);
+  });
+
+  it("is listed in the fixtures README (FX-3)", () => {
+    const readme = read("test/fixtures/grilling/README.md");
+    expect(readme).toContain("vocabulary-conflict.md");
+  });
+});
