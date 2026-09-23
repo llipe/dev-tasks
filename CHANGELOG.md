@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] - 2026-09-23
+
+### Added
+
+- feat: ubiquitous language — glossary delivery, structural validation, and vocabulary lifecycle (Phase 3) (#251)
+- feat(memo): adopt memo-cli 1.3.0 banks, recall, and episodic writes (#240)
+- feat: deliver grilling, decision log, and refine/spec/plan integration (Phase 2) (#228)
+
+### Fixed
+
+- fix: prettier pass
+
+### Changed
+
+- docs(workstream): Phase 3 specification, stories, and implementation plan (#235)
+- docs(workstream): shared-understanding Phase 2 specification, stories, and implementation plan (#220)
+- chore(workstream): archive completed phase 0, 1, and supporting work artifacts (#212)
+
 ## [0.15.0] - 2026-09-20
 
 ### Added

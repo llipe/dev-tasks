@@ -1,6 +1,6 @@
 {
   "name": "@llipe.com/dev-tasks",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "AI agent toolkit for structured, PRD-driven development workflows",
   "type": "module",
   "imports": {
