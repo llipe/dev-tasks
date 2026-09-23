@@ -13,13 +13,11 @@
 #   2  blocked (bad args, no recorded good version, unknown env)
 #
 # Environment overrides:
-#   INFRA_ENV_FILE     path to the environments file
 #   INFRA_CHANGES_DIR  path to the change-record dir (default infra/changes)
 #   INFRA_STUB_LOG     test hook: argv log path
 
 set -euo pipefail
 
-ENV_FILE="${INFRA_ENV_FILE:-infra/environments.yaml}"
 CHANGES_DIR="${INFRA_CHANGES_DIR:-infra/changes}"
 DRY_RUN=false
 TO_VERSION=""

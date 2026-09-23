@@ -19,7 +19,16 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -308,20 +317,62 @@ describe("deploy.sh — blocked conditions and edge cases (AC-3, 8.9)", () => {
   });
 
   it("exits 2 when yq is missing from PATH", () => {
-    // Point PATH at a dir without yq (system PATH minus the stub bin dir).
-    const res = spawnSync("bash", [scriptPath("deploy.sh"), "dev", "--dry-run"], {
-      encoding: "utf-8",
-      env: {
-        ...process.env,
-        PATH: "/usr/bin:/bin",
-        INFRA_ENV_FILE: FIXTURE_ENV,
-        INFRA_HUMAN_APPROVED: "1",
-        INFRA_ASSUME_REF_OK: "1",
-        CI: "",
-      },
-    });
-    expect(res.status).toBe(2);
-    expect(/yq/i.test((res.stdout ?? "") + (res.stderr ?? ""))).toBe(true);
+    // Create a hermetic PATH containing only the binaries deploy.sh needs,
+    // excluding yq. This ensures the test does not depend on the host
+    // environment (whether or not yq is installed system-wide).
+    const tempBin = mkdtempSync(resolve(tmpdir(), "infra-noqy-"));
+    const stubBinaries = ["aws", "flyctl", "gh", "supabase"];
+    // System binaries deploy.sh calls; create symlinks to them.
+    const sysBindaries = ["bash", "cat", "dirname", "git", "grep", "head", "printf"];
+
+    try {
+      // Copy stub platform CLIs.
+      for (const binary of stubBinaries) {
+        const src = resolve(STUB_BIN, binary);
+        const dst = resolve(tempBin, binary);
+        copyFileSync(src, dst);
+        chmodSync(dst, 0o755);
+      }
+
+      // Symlink system binaries.
+      for (const binary of sysBindaries) {
+        // Find the binary using the system PATH, or use /usr/bin or /bin fallback.
+        let binPath: string | null = null;
+        for (const dir of ["/usr/local/bin", "/usr/bin", "/bin"]) {
+          const candidate = resolve(dir, binary);
+          try {
+            if (existsSync(candidate)) {
+              binPath = candidate;
+              break;
+            }
+          } catch {
+            // Ignore errors, try next.
+          }
+        }
+        if (binPath) {
+          const dst = resolve(tempBin, binary);
+          // Use symlink to avoid copying large binaries.
+          symlinkSync(binPath, dst);
+        }
+      }
+
+      const res = spawnSync("bash", [scriptPath("deploy.sh"), "dev", "--dry-run"], {
+        encoding: "utf-8",
+        env: {
+          ...process.env,
+          PATH: tempBin,
+          INFRA_ENV_FILE: FIXTURE_ENV,
+          INFRA_HUMAN_APPROVED: "1",
+          INFRA_ASSUME_REF_OK: "1",
+          CI: "",
+        },
+      });
+
+      expect(res.status).toBe(2);
+      expect(/yq/i.test((res.stdout ?? "") + (res.stderr ?? ""))).toBe(true);
+    } finally {
+      rmSync(tempBin, { recursive: true });
+    }
   });
 });
 
