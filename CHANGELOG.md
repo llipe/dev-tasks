@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.16.1] - 2026-09-23
+
+### Fixed
+
+- fix: infra script contract test wiring and shellcheck warning (#252)
+
 ## [0.16.0] - 2026-09-23
 
 ### Added
