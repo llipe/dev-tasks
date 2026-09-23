@@ -109,5 +109,13 @@ describe("checkDecisionLogContent", () => {
     );
     const result = checkDecisionLogContent(content, "workstream/decisions-shared-understanding.md");
     expect(result.failures, JSON.stringify(result.failures, null, 2)).toEqual([]);
+    // Staleness too, and not as an afterthought: this assertion used to
+    // stop at `failures`, and a `dangling-supersedes` on D-60 printed on
+    // every `lint` run for three merges with the suite fully green. The
+    // cause was a Markdown escape — `\|` inside the Decision cell — which
+    // splits the row into eighteen cells and slides a regex fragment into
+    // the Supersedes column. A row that needs an escaped pipe should say
+    // the same thing in words instead.
+    expect(result.staleness, JSON.stringify(result.staleness, null, 2)).toEqual([]);
   });
 });

@@ -5,6 +5,7 @@
  */
 
 import { mkdir, writeFile, rm, readdir, readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
 import { readManifest } from "./manifest.js";
@@ -301,6 +302,35 @@ export function checkPackageMap(repoRoot: string): DoctorCheck {
 }
 
 /**
+ * Warn when the ubiquitous-language glossary is absent (FR-17, D-67).
+ *
+ * Absence means the repository was installed before the glossary shipped —
+ * `dev-tasks update` delivers it. Presence is the end of this check's
+ * interest: an empty glossary is the correct state of every fresh install,
+ * and a malformed one is `lint`'s business (`core/checks/glossary.ts`).
+ * Reporting content here would give a consumer two tools answering the same
+ * question, which disagree the first time one of them changes.
+ */
+export function checkGlossaryPresence(repoRoot: string): DoctorCheck {
+  const rel = "docs/domain/ubiquitous-language.md";
+
+  if (existsSync(join(repoRoot, rel))) {
+    return {
+      name: "glossary",
+      pass: true,
+      message: `${rel} is present.`,
+    };
+  }
+
+  return {
+    name: "glossary",
+    pass: true,
+    warn: true,
+    message: `${rel} is missing. Run \`dev-tasks update\` to scaffold it.`,
+  };
+}
+
+/**
  * Get the default cache directory.
  * Uses $XDG_CACHE_HOME/dev-tasks or ~/.cache/dev-tasks.
  */
@@ -329,6 +359,7 @@ export async function runDoctor(options: DoctorOptions): Promise<DoctorCheck[]> 
     await checkClaudeHooksWiring(repoRoot),
     await checkFoundationDocNames(repoRoot),
     checkPackageMap(repoRoot),
+    checkGlossaryPresence(repoRoot),
   ];
 
   return checks;

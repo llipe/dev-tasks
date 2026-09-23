@@ -690,3 +690,167 @@ describe("install — enforcement-surface parity across profiles (#176)", () => 
     expect(violations).toEqual(["docs/totally-unowned.md"]);
   });
 });
+
+/**
+ * Glossary delivery (S-001, FR-17, AC-06, D-57).
+ *
+ * `docs/domain/ubiquitous-language.md` is consumer-owned vocabulary: it must
+ * arrive on every profile so the glossary has a home from the first install,
+ * and it must never be overwritten afterwards, because the content is the
+ * consumer's, not ours. Both halves are asserted here — delivery on a fresh
+ * tree, and byte-identity on a tree that already has one.
+ */
+describe("install/update — glossary delivery (S-001)", () => {
+  const GLOSSARY_REL = "docs/domain/ubiquitous-language.md";
+  const TEMPLATE_REL = "templates/domain/ubiquitous-language.md";
+
+  const scratchDirs: string[] = [];
+
+  beforeAll(() => {
+    if (!existsSync(DIST_BIN)) {
+      execSync("pnpm run build", { cwd: ROOT, encoding: "utf-8" });
+    }
+  });
+
+  afterEach(() => {
+    for (const dir of scratchDirs.splice(0)) {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  function makeDir(prefix: string): string {
+    const dir = mkdtempSync(join(tmpdir(), prefix));
+    scratchDirs.push(dir);
+    return dir;
+  }
+
+  function cli(args: string[], cwd: string): { stdout: string; stderr: string; exitCode: number } {
+    try {
+      const stdout = execFileSync("node", [DIST_BIN, ...args], {
+        cwd,
+        encoding: "utf-8",
+        env: { ...process.env, NODE_ENV: "test" },
+        timeout: 10_000,
+      });
+      return { stdout, stderr: "", exitCode: 0 };
+    } catch (err: unknown) {
+      const e = err as { stdout?: string; stderr?: string; status?: number };
+      return { stdout: e.stdout ?? "", stderr: e.stderr ?? "", exitCode: e.status ?? 1 };
+    }
+  }
+
+  function templateContent(): string {
+    return readFileSync(resolve(ROOT, TEMPLATE_REL), "utf-8");
+  }
+
+  // ---- CT-3 / AC-1: the template's own shape ----
+
+  it("CT-3: the template carries the five-key frontmatter, an empty changelog, and no contexts", () => {
+    const content = templateContent();
+
+    expect(content.startsWith("---\n"), "template has no frontmatter block").toBe(true);
+    const frontmatter = content.slice(4, content.indexOf("\n---\n", 4));
+
+    expect(frontmatter).toMatch(/^version: 1\.0$/m);
+    expect(frontmatter).toMatch(/^name: .+$/m);
+    expect(frontmatter).toMatch(/^description: .+$/m);
+    expect(frontmatter).toMatch(/^status: unfilled$/m);
+    expect(frontmatter).toMatch(/^owner: product-engineer$/m);
+
+    expect(content).toContain("## Changelog");
+    // An empty changelog: a header row and a separator, no data rows.
+    const changelogRows = content
+      .split("\n")
+      .filter((line) => line.trim().startsWith("|") && !/^\|[\s:|-]+\|?$/.test(line.trim()));
+    expect(changelogRows).toHaveLength(1);
+
+    // A fresh glossary has no vocabulary — zero terms is the valid state of
+    // every install (D-66, D-68), not a placeholder to fill in.
+    expect(content).not.toContain("## Bounded Context:");
+    expect(content).not.toMatch(/^### /m);
+  });
+
+  // ---- CT-1 / AC-2: the registry entry ----
+
+  it("CT-1: INSTALL_IF_ABSENT_FILES carries the glossary tagged ROOT_PROFILE_TAG", () => {
+    const entries = INSTALL_IF_ABSENT_FILES.filter((f) => f.target === GLOSSARY_REL);
+    expect(entries, "no INSTALL_IF_ABSENT_FILES entry targets the glossary").toHaveLength(1);
+    expect(entries[0].source).toBe(TEMPLATE_REL);
+    expect(entries[0].platform).toBe(ROOT_PROFILE_TAG);
+  });
+
+  // ---- CT-2 / AC-3: the bundle manifest ----
+
+  it("CT-2: bundle-manifest.json manages the template and marks the target consumer-owned", () => {
+    const manifest = JSON.parse(readFileSync(resolve(ROOT, "bundle-manifest.json"), "utf-8")) as {
+      managed_paths: Array<{ path: string }>;
+      consumer_owned_paths: string[];
+    };
+
+    expect(manifest.managed_paths.map((p) => p.path)).toContain("templates/domain");
+    expect(manifest.consumer_owned_paths).toContain(GLOSSARY_REL);
+  });
+
+  // ---- IT-1 / AC-4: per-profile delivery ----
+
+  it("IT-1: a fresh install on every profile delivers the glossary byte-identical to the template", () => {
+    for (const profile of ["copilot", "claude", "kiro", "both", "all"]) {
+      const dir = makeDir(`dev-tasks-glossary-${profile}-`);
+      const result = cli(["install", "--profile", profile], dir);
+      expect(result.exitCode, `install --profile ${profile} failed: ${result.stderr}`).toBe(0);
+
+      const delivered = join(dir, GLOSSARY_REL);
+      expect(existsSync(delivered), `--profile ${profile} did not deliver the glossary`).toBe(true);
+      expect(
+        readFileSync(delivered, "utf-8"),
+        `--profile ${profile} delivered a modified copy`,
+      ).toBe(templateContent());
+    }
+  });
+
+  it("IT-2: profile `all` delivers the glossary exactly once and tracks it as consumer-owned", () => {
+    // The failure guarded against is not two files — the filesystem cannot
+    // hold two — but a duplicate or dropped manifest entry, which is what
+    // tagging a platform-agnostic file with one platform produces.
+    const dir = makeDir("dev-tasks-glossary-all-");
+    expect(cli(["install", "--profile", "all"], dir).exitCode).toBe(0);
+
+    const manifest = JSON.parse(readFileSync(join(dir, ".dev-tasks/manifest.json"), "utf-8")) as {
+      files: Array<{ path: string }>;
+    };
+    expect(manifest.files.filter((f) => f.path.startsWith("docs/domain/"))).toEqual([]);
+  });
+
+  it("IT-3: a repository with no docs/ directory gets docs/domain/ created recursively", () => {
+    const dir = makeDir("dev-tasks-glossary-bare-");
+    expect(existsSync(join(dir, "docs"))).toBe(false);
+
+    const result = cli(["install", "--profile", "claude"], dir);
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(existsSync(join(dir, GLOSSARY_REL))).toBe(true);
+  });
+
+  it("IT-4: an edited glossary survives a second `install` and an `update` byte-identical", () => {
+    const dir = makeDir("dev-tasks-glossary-edited-");
+    expect(cli(["install", "--profile", "claude"], dir).exitCode).toBe(0);
+
+    const edited = `${templateContent()}\n## Bounded Context: billing\n\n### invoice\n\n- Definition: Ours.\n`;
+    writeFileSync(join(dir, GLOSSARY_REL), edited, "utf-8");
+
+    expect(cli(["install", "--profile", "claude"], dir).exitCode).toBe(0);
+    expect(readFileSync(join(dir, GLOSSARY_REL), "utf-8")).toBe(edited);
+
+    expect(cli(["update"], dir).exitCode).toBe(0);
+    expect(readFileSync(join(dir, GLOSSARY_REL), "utf-8")).toBe(edited);
+  });
+
+  it("IT-5: a deleted glossary is re-delivered by `update`", () => {
+    const dir = makeDir("dev-tasks-glossary-deleted-");
+    expect(cli(["install", "--profile", "claude"], dir).exitCode).toBe(0);
+    rmSync(join(dir, GLOSSARY_REL));
+
+    expect(cli(["update"], dir).exitCode).toBe(0);
+    expect(existsSync(join(dir, GLOSSARY_REL))).toBe(true);
+    expect(readFileSync(join(dir, GLOSSARY_REL), "utf-8")).toBe(templateContent());
+  });
+});

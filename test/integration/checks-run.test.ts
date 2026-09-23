@@ -1,6 +1,7 @@
 /**
  * Integration tests for the docs-structure check as `lint` runs it
- * (S-004 AC-7, AC-10).
+ * (S-004 AC-7, AC-10), and for the glossary check at the same entry
+ * point (S-002 AC-1/AC-2/AC-4, IT-8, D-48, D-66, D-75).
  *
  * These drive `tsx core/checks/run.ts` as a process, with its working
  * directory set to a seeded tree — which is exactly how the `lint`
@@ -14,6 +15,8 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, cpSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
+
+import { checkExportedIdentifiers } from "../../core/checks/glossary.js";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const RUN = resolve(ROOT, "core/checks/run.ts");
@@ -124,5 +127,380 @@ describe("core/checks/run.ts as the lint step", () => {
     };
     expect(pkg.scripts.lint).toBe("eslint . --max-warnings 0 && tsx core/checks/run.ts");
     expect(pkg.scripts.lint).not.toContain("dist/");
+  });
+});
+
+/**
+ * The glossary check through the same process boundary (S-002, IT-8).
+ *
+ * `checks-glossary.test.ts` proves the rules. What only a process run
+ * proves is the wiring D-66 depends on: a structural failure reaches
+ * stderr and exits 1, the same tree exits 0 once the term is repaired,
+ * an absent package map prints one `stale:` line on stdout and still
+ * exits 0, and a repository with no glossary at all says nothing
+ * (D-75 — absence is `doctor`'s warning). A unit test asserting that
+ * `run.ts` contains the string `checkGlossary` cannot tell any of these
+ * apart from a check whose findings are never concatenated.
+ */
+describe("core/checks/run.ts — glossary check (S-002 AC-1/AC-2/AC-4, IT-8)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), "dt-checks-glossary-"));
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  const TECH_WITH_MAP = [
+    "# Technical Guidelines",
+    "",
+    "## Package Map",
+    "",
+    "| Package | Path | Purpose | Owner | Canonical scripts | Bounded context |",
+    "| ------- | ---- | ------- | ----- | ----------------- | ---------------- |",
+    "| `@acme/thing` | `.` | harness | platform | `lint` | Widget management |",
+    "",
+  ].join("\n");
+
+  const FRONTMATTER = [
+    "---",
+    "version: 1.0",
+    "name: Ubiquitous Language",
+    "description: Canonical domain vocabulary, organized by bounded context.",
+    "status: active",
+    "owner: product-engineer",
+    "---",
+    "",
+  ].join("\n");
+
+  /** A glossary whose one term is complete unless a bullet is dropped. */
+  function glossary(options: { omit?: string } = {}): string {
+    const bullets = [
+      "- Definition: A thing that widgets are managed as.",
+      "- Forbidden synonyms: none",
+      "- Invariants: none",
+      "- Origin: docs/requirements/prd-widgets.md",
+      "- Status: active",
+    ].filter((b) => options.omit === undefined || !b.startsWith(`- ${options.omit}:`));
+
+    return [
+      FRONTMATTER,
+      "# Ubiquitous Language",
+      "",
+      "Prose the template puts between the title and the changelog, so a",
+      "parser that assumes the changelog comes first is caught here.",
+      "",
+      "## Changelog",
+      "",
+      "| Version | Date | Summary | Author |",
+      "| ------- | ---- | ------- | ------ |",
+      "| 1.0 | 2026-09-22 | +widget | product-engineer |",
+      "",
+      "## Bounded Context: Widget management",
+      "",
+      "### widget",
+      "",
+      ...bullets,
+      "",
+    ].join("\n");
+  }
+
+  function writeGlossary(content: string): void {
+    mkdirSync(join(tmpDir, "docs/domain"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/domain/ubiquitous-language.md"), content, "utf-8");
+  }
+
+  it("exits 1 on a term missing a required field, and 0 once it is restored", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/tech.md"), TECH_WITH_MAP, "utf-8");
+    writeGlossary(glossary({ omit: "Invariants" }));
+
+    const broken = runCheck(tmpDir);
+    expect(broken.exitCode).toBe(1);
+    expect(broken.stderr).toContain("[glossary-field-missing]");
+    expect(broken.stderr).toContain("docs/domain/ubiquitous-language.md");
+    expect(broken.stderr).toContain("Invariants");
+
+    writeGlossary(glossary());
+    const fixed = runCheck(tmpDir);
+    expect(fixed.exitCode, fixed.stderr).toBe(0);
+    expect(fixed.stderr).toBe("");
+  });
+
+  it("exits 1 on a bounded context that resolves to nothing in the package map", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/tech.md"), TECH_WITH_MAP, "utf-8");
+    writeGlossary(
+      glossary().replace("## Bounded Context: Widget management", "## Bounded Context: Billing"),
+    );
+
+    const result = runCheck(tmpDir);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("[glossary-context-unresolved]");
+    expect(result.stderr).toContain("Billing");
+  });
+
+  it("prints one stale line on stdout and exits 0 when docs/tech.md has no package map", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/tech.md"), "# Technical Guidelines\n", "utf-8");
+    writeGlossary(glossary());
+
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+    const stale = result.stdout
+      .split("\n")
+      .filter((l) => l.includes("glossary-package-map-absent"));
+    expect(stale).toHaveLength(1);
+    expect(stale[0]).toContain("stale:");
+    expect(stale[0]).toContain("activity-init");
+  });
+
+  it("says nothing at all about a repository that has no glossary yet (D-75)", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/tech.md"), TECH_WITH_MAP, "utf-8");
+
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(result.stdout).not.toContain("glossary");
+    expect(result.stderr).toBe("");
+  });
+});
+
+/**
+ * The `docs/requirements/` Vocabulary walk through the same process
+ * boundary (S-003 AC-3, UT-R1/UT-R2, IT-7).
+ *
+ * The unit tests prove the skip rule and the row grammar. What only a
+ * process run proves is that the walk is actually wired into `run.ts`
+ * and its findings are concatenated into the exit code: a test that
+ * greps `run.ts` for `checkVocabularyFiles` passes just as happily
+ * against a call whose result is discarded — which is exactly the gap
+ * S-002's merge gate found in its own wiring assertion.
+ */
+describe("core/checks/run.ts — docs/requirements Vocabulary walk (S-003 AC-3)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), "dt-checks-vocab-"));
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function writeFile(relPath: string, content: string): void {
+    const full = join(tmpDir, relPath);
+    mkdirSync(join(full, ".."), { recursive: true });
+    writeFileSync(full, content, "utf-8");
+  }
+
+  const DECISIONS = ["## Decisions", "", "| ID | Decision |", "| -- | -------- |", ""].join("\n");
+
+  const SECTION_HEADER = [
+    "## Vocabulary",
+    "",
+    "| Term | Status in glossary | Bounded context | Definition (proposals only) | Forbidden synonyms (proposals only) |",
+    "| ---- | ------------------ | --------------- | --------------------------- | ----------------------------------- |",
+  ].join("\n");
+
+  it("exits 1 naming the PRD that has ## Decisions and no ## Vocabulary, and 0 once added", () => {
+    writeFile("docs/requirements/prd-thing.md", `# PRD: Thing\n\n${DECISIONS}`);
+
+    const broken = runCheck(tmpDir);
+    expect(broken.exitCode).toBe(1);
+    expect(broken.stderr).toContain("[vocabulary-missing]");
+    expect(broken.stderr).toContain("docs/requirements/prd-thing.md");
+
+    writeFile(
+      "docs/requirements/prd-thing.md",
+      `# PRD: Thing\n\n${DECISIONS}\n${SECTION_HEADER}\n| thing | proposed | Widget management | A thing. | none |\n`,
+    );
+    const fixed = runCheck(tmpDir);
+    expect(fixed.exitCode, fixed.stderr).toBe(0);
+    expect(fixed.stderr).toBe("");
+  });
+
+  it("exits 1 on an incomplete row and names the row's term", () => {
+    writeFile(
+      "docs/requirements/prd-thing.md",
+      `# PRD: Thing\n\n${DECISIONS}\n${SECTION_HEADER}\n| thing | pending | | | |\n`,
+    );
+    const result = runCheck(tmpDir);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("[vocabulary-incomplete]");
+    expect(result.stderr).toContain("thing");
+  });
+
+  it("exits 0 on a pre-Phase-2 PRD that has neither section (UT-R1)", () => {
+    writeFile("docs/requirements/prd-old.md", "# PRD: Old\n\n## Goals\n\n- Ship it.\n");
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(result.stdout).not.toContain("vocabulary");
+  });
+
+  it("exits 0 with a workstream specification missing the section — lint's scope is docs/requirements (UT-R3)", () => {
+    writeFile("workstream/specification-thing.md", `# Spec\n\n${DECISIONS}`);
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+  });
+
+  it("resolves `existing` rows against the repository's own glossary", () => {
+    writeFile("docs/tech.md", TECH_WITH_MAP_FOR_VOCAB);
+    writeFile("docs/domain/ubiquitous-language.md", GLOSSARY_FOR_VOCAB);
+    writeFile(
+      "docs/requirements/prd-thing.md",
+      `# PRD: Thing\n\n${DECISIONS}\n${SECTION_HEADER}\n| Widget | existing | | | |\n`,
+    );
+    expect(runCheck(tmpDir).exitCode).toBe(0);
+
+    writeFile(
+      "docs/requirements/prd-thing.md",
+      `# PRD: Thing\n\n${DECISIONS}\n${SECTION_HEADER}\n| Sprocket | existing | | | |\n`,
+    );
+    const missing = runCheck(tmpDir);
+    expect(missing.exitCode).toBe(1);
+    expect(missing.stderr).toContain("[vocabulary-incomplete]");
+    expect(missing.stderr).toContain("Sprocket");
+  });
+});
+
+const TECH_WITH_MAP_FOR_VOCAB = [
+  "# Technical Guidelines",
+  "",
+  "## Package Map",
+  "",
+  "| Package | Path | Purpose | Owner | Canonical scripts | Bounded context |",
+  "| ------- | ---- | ------- | ----- | ----------------- | ---------------- |",
+  "| `@acme/thing` | `.` | harness | platform | `lint` | Widget management |",
+  "",
+].join("\n");
+
+const GLOSSARY_FOR_VOCAB = [
+  "---",
+  "version: 1.0",
+  "name: Ubiquitous Language",
+  "description: Canonical domain vocabulary, organized by bounded context.",
+  "status: active",
+  "owner: product-engineer",
+  "---",
+  "",
+  "# Ubiquitous Language",
+  "",
+  "## Changelog",
+  "",
+  "| Version | Date | Summary | Author |",
+  "| ------- | ---- | ------- | ------ |",
+  "| 1.0 | 2026-09-22 | +Widget | product-engineer |",
+  "",
+  "## Bounded Context: Widget management",
+  "",
+  "### Widget",
+  "",
+  "- Definition: A thing that widgets are managed as.",
+  "- Forbidden synonyms: none",
+  "- Invariants: none",
+  "- Origin: docs/requirements/prd-widgets.md",
+  "- Status: active",
+  "",
+].join("\n");
+
+/**
+ * The conformance scan is the `verifier`'s, not `lint`'s (S-005 AC-3,
+ * D-63).
+ *
+ * "Always advisory" is easy to assert vacuously — a unit test that the
+ * function returns no `failures` says nothing about the gate, because a
+ * caller could still exit non-zero on `staleness`. What this proves is
+ * the gate itself: a tree whose glossary forbids a synonym, and whose
+ * source exports that very synonym, still exits 0 and prints not one
+ * word about it. The second case is the control: the same input, passed
+ * to the function directly, does report — so the silence above is
+ * `lint` not calling it, rather than the fixture missing.
+ */
+describe("core/checks/run.ts — the forbidden-synonym scan is not a lint gate (S-005 AC-3)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), "dt-checks-synonym-"));
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  const GLOSSARY = [
+    "---",
+    "version: 1.0",
+    "name: Ubiquitous Language",
+    "description: Canonical domain vocabulary, organized by bounded context.",
+    "status: active",
+    "owner: product-engineer",
+    "---",
+    "",
+    "# Ubiquitous Language",
+    "",
+    "## Changelog",
+    "",
+    "| Version | Date | Summary | Author |",
+    "| ------- | ---- | ------- | ------ |",
+    "| 1.0 | 2026-09-22 | +widget | product-engineer |",
+    "",
+    "## Bounded Context: Widget management",
+    "",
+    "### widget",
+    "",
+    "- Definition: A thing the system manages.",
+    "- Forbidden synonyms: gadget",
+    "- Invariants: none",
+    "- Origin: docs/requirements/prd-widgets.md",
+    "- Status: active",
+    "",
+  ].join("\n");
+
+  const ADDED_LINES = ["+export const gadgetLoader = 1;", "+export class GadgetRegistry {}"];
+
+  it("exits 0 and prints nothing, with a glossary and code that would hit", () => {
+    mkdirSync(join(tmpDir, "docs"), { recursive: true });
+    writeFileSync(
+      join(tmpDir, "docs/tech.md"),
+      [
+        "# Technical Guidelines",
+        "",
+        "## Package Map",
+        "",
+        "| Package | Path | Purpose | Owner | Canonical scripts | Bounded context |",
+        "| ------- | ---- | ------- | ----- | ----------------- | ---------------- |",
+        "| `@acme/thing` | `.` | harness | platform | `lint` | Widget management |",
+        "",
+      ].join("\n"),
+      "utf-8",
+    );
+    mkdirSync(join(tmpDir, "docs/domain"), { recursive: true });
+    writeFileSync(join(tmpDir, "docs/domain/ubiquitous-language.md"), GLOSSARY, "utf-8");
+    mkdirSync(join(tmpDir, "core"), { recursive: true });
+    writeFileSync(
+      join(tmpDir, "core/gadget.ts"),
+      ADDED_LINES.map((l) => l.slice(1)).join("\n"),
+      "utf-8",
+    );
+
+    const result = runCheck(tmpDir);
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(result.stdout).not.toContain("glossary-forbidden-synonym");
+    expect(result.stderr).toBe("");
+  });
+
+  it("but the same input does report when the verifier calls the function (control)", () => {
+    const scanned = checkExportedIdentifiers(ADDED_LINES, GLOSSARY);
+    expect(scanned.failures).toEqual([]);
+    expect(scanned.staleness).toHaveLength(2);
+    expect(scanned.staleness[0].rule).toBe("glossary-forbidden-synonym");
+  });
+
+  it("run.ts does not import it, so no future caller can widen the gate by accident", () => {
+    const run = readFileSync(resolve(ROOT, "core/checks/run.ts"), "utf-8");
+    expect(run).not.toContain("checkExportedIdentifiers");
   });
 });

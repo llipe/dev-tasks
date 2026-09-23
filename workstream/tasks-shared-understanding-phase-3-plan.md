@@ -21,115 +21,122 @@ Repository shape: single-package — package brackets omitted per `docs/tech.md`
 - `.claude/agents/verifier.md`, `.github/agents/verifier.agent.md`, `.kiro/agents/verifier.md` - Conformance call, advisory finding class
 - `.claude/skills/activity-init/SKILL.md` (+ mirrors) - Glossary-is-canonical pointer sentence
 - `docs/domain/ubiquitous-language.md` - This repository's populated glossary
-- `docs/tech.md` - Package-map note replaced by a glossary pointer
+- `docs/tech.md` - Package-map note replaced by a glossary pointer; Bounded context cell unchanged; changelog row 1.5
 - `test/integration/install-parity.test.ts` - Extend for per-profile delivery and byte-identical re-run
 - `test/unit/doctor-glossary.test.ts` (or existing doctor test) - Absence warn / present silent
 - `test/unit/root-doc-template-parity.test.ts` - Extend if it enumerates templates
-- `test/unit/checks-glossary.test.ts` - Unit tests for all four check functions + real-file fixture
+- `test/unit/checks-glossary.test.ts` - Unit tests for all four check functions + the real-file fixture (UT-G17/E2E-11, asserting `failures` **and** `staleness`), PT-6 over `docs/tech.md`, and the 6.3b PRD-Vocabulary-to-glossary coupling
 - `test/fixtures/glossary/*.md` - Structure-rule fixtures
+- `test/unit/verifier-glossary-conformance-parity.test.ts` - S-005's three-tree conformance markers, scoped to the Audit Mode Actions row and the report bullet (the implementer's choice offered by task 5.4)
+- `test/integration/checks-run.test.ts` - S-005 AC-3: the scan is not a `lint` gate, proved through the process boundary
+- `test/unit/checks-decision-log-format.test.ts` - Real-log fixture now asserts `staleness` as well as `failures` (the D-60 escaped-pipe defect)
 - `test/unit/skill-parity-grilling.test.ts` - Extend for `activity-refine`, `activity-generate-spec`, `activity-grill`, `verifier` markers
-- `test/unit/skill-parity-init.test.ts` - Extend for the `activity-init` pointer
+- `test/unit/skill-parity-init.test.ts` - Extend for the `activity-init` pointer, the retired deferral sentence, and the numbered-step/section counts that pin "one sentence, not a step" (PT-5)
 - `test/fixtures/grilling/vocabulary-approval.md`, `vocabulary-conflict.md`, `README.md` - Scenario fixtures
+- `docs/requirements/prd-shared-understanding-refinement.md` - `## Vocabulary` section added in 3.0, not 6.3a: wiring the `run.ts` walk makes `lint` report `vocabulary-missing` against this PRD immediately (test plan A-8), so the section had to land in the same PR as the walk. Its eight rows are `proposed` until the glossary exists; **task 6.3a is now a flip of those rows to `existing`**, which `lint` enforces once S-006 populates the file (D-74's `proposed`-but-present rule)
 
 ## Tasks
 
-- [ ] 1.0 Implement Story S-001: Deliver the glossary install-if-absent and warn on absence (#229)
+- [x] 1.0 Implement Story S-001: Deliver the glossary install-if-absent and warn on absence (#229)
 
   > Note: Delivery reuses Phase 1's platform-agnostic tag — no new mechanism (D-57). `doctor` warns on absence only; empty-but-present is silent (D-67). No `docs/domain/README.md` (D-58).
 
-  - [ ] 1.1 Write failing tests first: extend `test/integration/install-parity.test.ts` (per-profile fresh install creates the file identical to the template; `install`/`update` over an edited copy leave it byte-identical — AC-06) and add `doctor` tests (absent → warn proposing `dev-tasks update`; present-empty and present-populated → no finding) (D-67); confirm they fail
-  - [ ] 1.2 Add `templates/domain/ubiquitous-language.md`: five-key frontmatter (`version: 1.0`, `name`, `description`, `status: unfilled`, `owner: product-engineer`), empty `## Changelog` table, no bounded contexts (D-68)
-  - [ ] 1.3 Add the `INSTALL_IF_ABSENT_FILES` entry (source template, target `docs/domain/ubiquitous-language.md`, platform `ROOT_PROFILE_TAG`) (D-57)
-  - [ ] 1.4 Add `bundle-manifest.json` entries: template under `managed_paths`, target under `consumer_owned_paths` (D-57)
-  - [ ] 1.5 Add `checkGlossaryPresence()` to `core/distribution/doctor.ts` copying `checkPackageMap()`'s `warn: true` shape; register it in `runDoctor()` (D-67)
-  - [ ] 1.6 Add the `domain/` row to `docs/README.md`; do not create `docs/domain/README.md` or change `INDEXES` (D-58)
-  - [ ] 1.7 Verify Acceptance Criterion: AC-1 template shape (template-parity test)
-  - [ ] 1.8 Verify Acceptance Criterion: AC-2 registry entry present with `ROOT_PROFILE_TAG`
-  - [ ] 1.9 Verify Acceptance Criterion: AC-3 manifest paths present
-  - [ ] 1.10 Verify Acceptance Criterion: AC-4 per-profile delivery and byte-identical re-run, including profile `all` delivering exactly once and a fresh repo with no `docs/` directory
-  - [ ] 1.11 Verify Acceptance Criterion: AC-5 `doctor` warns on absence only, never fails
-  - [ ] 1.12 Verify Acceptance Criterion: AC-6 `pnpm run lint` passes with `docs/domain/` and no sub-index
-  - [ ] 1.13 Run Tests: `pnpm run test -- install-parity`, `pnpm run test -- doctor`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 1.1 Write failing tests first: extend `test/integration/install-parity.test.ts` (per-profile fresh install creates the file identical to the template; `install`/`update` over an edited copy leave it byte-identical — AC-06) and add `doctor` tests (absent → warn proposing `dev-tasks update`; present-empty and present-populated → no finding) (D-67); confirm they fail
+  - [x] 1.2 Add `templates/domain/ubiquitous-language.md`: five-key frontmatter (`version: 1.0`, `name`, `description`, `status: unfilled`, `owner: product-engineer`), empty `## Changelog` table, no bounded contexts (D-68)
+  - [x] 1.3 Add the `INSTALL_IF_ABSENT_FILES` entry (source template, target `docs/domain/ubiquitous-language.md`, platform `ROOT_PROFILE_TAG`) (D-57)
+  - [x] 1.4 Add `bundle-manifest.json` entries: template under `managed_paths`, target under `consumer_owned_paths` (D-57)
+  - [x] 1.5 Add `checkGlossaryPresence()` to `core/distribution/doctor.ts` copying `checkPackageMap()`'s `warn: true` shape; register it in `runDoctor()` (D-67)
+  - [x] 1.6 Add the `domain/` row to `docs/README.md`; do not create `docs/domain/README.md` or change `INDEXES` (D-58)
+  - [x] 1.7 Verify Acceptance Criterion: AC-1 template shape (template-parity test)
+  - [x] 1.8 Verify Acceptance Criterion: AC-2 registry entry present with `ROOT_PROFILE_TAG`
+  - [x] 1.9 Verify Acceptance Criterion: AC-3 manifest paths present
+  - [x] 1.10 Verify Acceptance Criterion: AC-4 per-profile delivery and byte-identical re-run, including profile `all` delivering exactly once and a fresh repo with no `docs/` directory
+  - [x] 1.11 Verify Acceptance Criterion: AC-5 `doctor` warns on absence only, never fails
+  - [x] 1.12 Verify Acceptance Criterion: AC-6 `pnpm run lint` passes with `docs/domain/` and no sub-index
+  - [x] 1.13 Run Tests: `pnpm run test -- install-parity`, `pnpm run test -- doctor`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
-- [ ] 2.0 Implement Story S-002: Validate glossary structure under `lint` (#230)
+- [x] 2.0 Implement Story S-002: Validate glossary structure under `lint` (#230)
 
   > Note: Depends on 1.0. Separate hand-parsed module, `tsx`-invoked, one implementation for `lint` and the `verifier` (D-59, D-48, D-49). Fail-vs-report split per D-66.
 
-  - [ ] 2.1 Write `test/unit/checks-glossary.test.ts` first with one fixture per D-66 failure rule (missing field, invalid `Status`, dangling `superseded by`, duplicate term, unresolved bounded context, removed term), both report cases (no package map → exactly one finding; archived-origin `feature#D-NN`), zero-terms pass, and five-key frontmatter failure; confirm it fails (module absent)
-  - [ ] 2.2 Add `PackageMapRow` and its table parser to `core/distribution/workspace.ts`, shared with `doctor` (D-75)
-  - [ ] 2.2a Implement `core/checks/glossary.ts`: `parseFrontmatter()` reuse asserting the five glossary keys by presence (D-75), `## Bounded Context:` → `### <Term>` → five-bullet walk skipping fenced code blocks (D-74), exact-case context resolution against `PackageMapRow[]`, case-insensitive term uniqueness (D-74), append-only via `+term` rows (grammar D-74), a `GlossaryRule` typed union (D-74); `checkGlossaryContent()` pure, `checkGlossary(repoRoot)` doing filesystem work and returning no findings on an absent file (D-75) (D-59, D-66)
-  - [ ] 2.3 Export from `core/checks/index.ts`; call from `core/checks/run.ts` — failures → stderr + exit 1, staleness → stdout (D-48)
-  - [ ] 2.4 Verify Acceptance Criterion: AC-1 each structural rule fails `lint`
-  - [ ] 2.5 Verify Acceptance Criterion: AC-2 absent package map and archived origin report without failing
-  - [ ] 2.6 Verify Acceptance Criterion: AC-3 zero terms passes; malformed frontmatter fails
-  - [ ] 2.7 Verify Acceptance Criterion: AC-4 runs under `pnpm run lint` via `tsx`, exported for the `verifier`
-  - [ ] 2.8 Verify Acceptance Criterion: AC-5 no `yaml`/markdown-parser import (grep assertion, `decision-log-format` pattern) (D-49)
-  - [ ] 2.9 Run Tests: inject a broken fixture under `docs/domain/`, confirm `pnpm run lint` exits 1, remove it, confirm exit 0; edge cases — case-different context name, `none` values, valid `superseded by`, no `+term` rows yet, CRLF
-  - [ ] 2.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 2.1 Write `test/unit/checks-glossary.test.ts` first with one fixture per D-66 failure rule (missing field, invalid `Status`, dangling `superseded by`, duplicate term, unresolved bounded context, removed term), both report cases (no package map → exactly one finding; archived-origin `feature#D-NN`), zero-terms pass, and five-key frontmatter failure; confirm it fails (module absent)
+  - [x] 2.2 Add `PackageMapRow` and its table parser to `core/distribution/workspace.ts`, shared with `doctor` (D-75)
+  - [x] 2.2a Implement `core/checks/glossary.ts`: `parseFrontmatter()` reuse asserting the five glossary keys by presence (D-75), `## Bounded Context:` → `### <Term>` → five-bullet walk skipping fenced code blocks (D-74), exact-case context resolution against `PackageMapRow[]`, case-insensitive term uniqueness (D-74), append-only via `+term` rows (grammar D-74), a `GlossaryRule` typed union (D-74); `checkGlossaryContent()` pure, `checkGlossary(repoRoot)` doing filesystem work and returning no findings on an absent file (D-75) (D-59, D-66)
+  - [x] 2.3 Export from `core/checks/index.ts`; call from `core/checks/run.ts` — failures → stderr + exit 1, staleness → stdout (D-48)
+  - [x] 2.4 Verify Acceptance Criterion: AC-1 each structural rule fails `lint`
+  - [x] 2.5 Verify Acceptance Criterion: AC-2 absent package map and archived origin report without failing
+  - [x] 2.6 Verify Acceptance Criterion: AC-3 zero terms passes; malformed frontmatter fails
+  - [x] 2.7 Verify Acceptance Criterion: AC-4 runs under `pnpm run lint` via `tsx`, exported for the `verifier`
+  - [x] 2.8 Verify Acceptance Criterion: AC-5 no `yaml`/markdown-parser import (grep assertion, `decision-log-format` pattern) (D-49)
+  - [x] 2.9 Run Tests: inject a broken fixture under `docs/domain/`, confirm `pnpm run lint` exits 1, remove it, confirm exit 0; edge cases — case-different context name, `none` values, valid `superseded by`, no `+term` rows yet, CRLF
+  - [x] 2.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
-- [ ] 3.0 Implement Story S-003: Propose vocabulary in PRDs and specs, enforce AC-07, append on approval (#231)
+- [x] 3.0 Implement Story S-003: Propose vocabulary in PRDs and specs, enforce AC-07, append on approval (#231)
 
   > Note: Depends on 2.0. No prose scanning — structural Vocabulary-section check only (D-65). Append happens at approval, by `activity-refine`, never `activity-grill` (D-61).
 
-  - [ ] 3.1 Write `checkVocabularySection()` unit tests first: missing section → `vocabulary-missing`; incomplete row → `vocabulary-incomplete` naming the row; `existing` term absent from glossary; complete `proposed` row; `conflict → D-NN`; the `None — this PRD introduces no domain concepts.` sentinel; pre-Phase-2 skip (no `## Vocabulary` and no `## Decisions`) (D-65); confirm they fail
-  - [ ] 3.2 Implement `checkVocabularySection()` in `core/checks/glossary.ts` — findings in `failures` (D-71); header-only table and `proposed`-but-present → incomplete, `->`/`→` accepted (D-74); add the `docs/requirements/*.md` walk to `run.ts` with the pre-Phase-2 skip
-  - [ ] 3.3 Edit `activity-refine` (three trees): `## Vocabulary` after `## Decisions` in the PRD Output Structure with the spec §5 table; call the check before presenting for review and report the finding by name; add the approval-append step — append `proposed` rows under their bounded context (create heading only if it resolves per FR-63), `Origin` = PRD path, `Status: active`, `+term` changelog row, `version` bump, `status: unfilled` → `active` on first append; `conflict → D-NN` marks the superseded term and keeps it (D-61, spec §8.4)
-  - [ ] 3.4 Edit `activity-generate-spec` (three trees): `## Vocabulary` after `## Decisions (HOW phase)` (D-61); run the same pre-review Vocabulary check on specs (D-75)
-  - [ ] 3.5 Add `test/fixtures/grilling/vocabulary-approval.md` (proposed rows → approval → exact glossary diff) and its README row
-  - [ ] 3.6 Extend `test/unit/skill-parity-grilling.test.ts`: Vocabulary markers in both skills, approval-append markers in `activity-refine`, negative assertion that `activity-grill`'s Write Authority is unchanged (D-61)
-  - [ ] 3.7 Verify Acceptance Criterion: AC-1 Vocabulary section in both Output Structures
-  - [ ] 3.8 Verify Acceptance Criterion: AC-2 `vocabulary-missing` / `vocabulary-incomplete` semantics
-  - [ ] 3.9 Verify Acceptance Criterion: AC-3 pre-review check call; `lint` walk skips pre-Phase-2 PRDs; current `docs/requirements/` passes
-  - [ ] 3.10 Verify Acceptance Criterion: AC-4 approval append behavior (fixture walk)
-  - [ ] 3.11 Verify Acceptance Criterion: AC-5 `activity-grill` Write Authority unchanged
-  - [ ] 3.12 Verify Acceptance Criterion: AC-6 three-tree parity
-  - [ ] 3.13 Run Tests: edge cases — unresolvable bounded context (append refuses, reports), same term proposed twice (second is `existing`), `Forbidden synonyms: none`
-  - [ ] 3.14 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 3.1 Write `checkVocabularySection()` unit tests first: missing section → `vocabulary-missing`; incomplete row → `vocabulary-incomplete` naming the row; `existing` term absent from glossary; complete `proposed` row; `conflict → D-NN`; the `None — this PRD introduces no domain concepts.` sentinel; pre-Phase-2 skip (no `## Vocabulary` and no `## Decisions`) (D-65); confirm they fail
+  - [x] 3.2 Implement `checkVocabularySection()` in `core/checks/glossary.ts` — findings in `failures` (D-71); header-only table and `proposed`-but-present → incomplete, `->`/`→` accepted (D-74); add the `docs/requirements/*.md` walk to `run.ts` with the pre-Phase-2 skip
+  - [x] 3.3 Edit `activity-refine` (three trees): `## Vocabulary` after `## Decisions` in the PRD Output Structure with the spec §5 table; call the check before presenting for review and report the finding by name; add the approval-append step — append `proposed` rows under their bounded context (create heading only if it resolves per FR-63), `Origin` = PRD path, `Status: active`, `+term` changelog row, `version` bump, `status: unfilled` → `active` on first append; `conflict → D-NN` marks the superseded term and keeps it (D-61, spec §8.4)
+  - [x] 3.4 Edit `activity-generate-spec` (three trees): `## Vocabulary` after `## Decisions (HOW phase)` (D-61); run the same pre-review Vocabulary check on specs (D-75)
+  - [x] 3.5 Add `test/fixtures/grilling/vocabulary-approval.md` (proposed rows → approval → exact glossary diff) and its README row
+  - [x] 3.6 Extend `test/unit/skill-parity-grilling.test.ts`: Vocabulary markers in both skills, approval-append markers in `activity-refine`, negative assertion that `activity-grill`'s Write Authority is unchanged (D-61)
+  - [x] 3.7 Verify Acceptance Criterion: AC-1 Vocabulary section in both Output Structures
+  - [x] 3.8 Verify Acceptance Criterion: AC-2 `vocabulary-missing` / `vocabulary-incomplete` semantics
+  - [x] 3.9 Verify Acceptance Criterion: AC-3 pre-review check call; `lint` walk skips pre-Phase-2 PRDs; current `docs/requirements/` passes
+  - [x] 3.10 Verify Acceptance Criterion: AC-4 approval append behavior (fixture walk)
+  - [x] 3.11 Verify Acceptance Criterion: AC-5 `activity-grill` Write Authority unchanged
+  - [x] 3.12 Verify Acceptance Criterion: AC-6 three-tree parity
+  - [x] 3.13 Run Tests: edge cases — unresolvable bounded context (append refuses, reports), same term proposed twice (second is `existing`), `Forbidden synonyms: none`
+  - [x] 3.14 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 3.15 Merge-gate remediation (qa-engineer + verifier audit, PR #238): the `None —` sentinel is accepted only as the section's single non-blank, non-fenced line (it was matched against every line and returned clean before any row was parsed — the AC-07 gate was bypassable by a sentence); GFM's `| - |` and `|:-:|` delimiter rows are recognised as delimiters; a fenced example inside a real section is no longer read as rows; a directory named `*.md` under `docs/requirements/` no longer throws `EISDIR` out of `lint`; the section terminates at any ATX heading of depth 1 or 2. `activity-generate-spec` no longer tells specification authors to write the PRD wording of the sentinel
 
-- [ ] 4.0 Implement Story S-004: Surface vocabulary conflicts during grilling (#232)
+- [x] 4.0 Implement Story S-004: Surface vocabulary conflicts during grilling (#232)
 
   > Note: Depends on 1.0. Prose-only; runs in parallel with 3.0. Conflicts are questions, never auto-resolutions (FR-21).
 
-  - [ ] 4.1 Extend `test/unit/skill-parity-grilling.test.ts` first: FR-21 markers (WHAT-phase "which domain concepts" question; same-term-different-definition and forbidden-synonym checks surfaced as questions) and a negative assertion on every "(once Phase 3 ships it)" / "moot until Phase 3" phrase, across all three trees; confirm it fails
-  - [ ] 4.2 Edit `activity-grill` (three trees): add the WHAT-phase conflict rule per spec §8.5; remove the placeholders; leave Issue Mode's read-only rule and the Write Authority section unchanged (D-61)
-  - [ ] 4.3 Add `test/fixtures/grilling/vocabulary-conflict.md` (forbidden-synonym collision → FR-21 question → recorded `D-NN`) and its README row
-  - [ ] 4.4 Verify Acceptance Criterion: AC-1 conflict rule present, both checks, presented as a question with a recommendation
-  - [ ] 4.5 Verify Acceptance Criterion: AC-2 placeholders removed; Issue Mode rule intact
-  - [ ] 4.6 Verify Acceptance Criterion: AC-3 Write Authority unchanged
-  - [ ] 4.7 Verify Acceptance Criterion: AC-4 fixture walks cleanly against the skill text; edge cases — same term same definition (no question), a synonym forbidden by two terms (one question naming both)
-  - [ ] 4.8 Run Tests: `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run format:check`
+  - [x] 4.1 Extend `test/unit/skill-parity-grilling.test.ts` first: FR-21 markers (WHAT-phase "which domain concepts" question; same-term-different-definition and forbidden-synonym checks surfaced as questions) and a negative assertion on every "(once Phase 3 ships it)" / "moot until Phase 3" phrase, across all three trees; confirm it fails
+  - [x] 4.2 Edit `activity-grill` (three trees): add the WHAT-phase conflict rule per spec §8.5; remove the placeholders; leave Issue Mode's read-only rule and the Write Authority section unchanged (D-61)
+  - [x] 4.3 Add `test/fixtures/grilling/vocabulary-conflict.md` (forbidden-synonym collision → FR-21 question → recorded `D-NN`) and its README row
+  - [x] 4.4 Verify Acceptance Criterion: AC-1 conflict rule present, both checks, presented as a question with a recommendation
+  - [x] 4.5 Verify Acceptance Criterion: AC-2 placeholders removed; Issue Mode rule intact
+  - [x] 4.6 Verify Acceptance Criterion: AC-3 Write Authority unchanged
+  - [x] 4.7 Verify Acceptance Criterion: AC-4 fixture walks cleanly against the skill text; edge cases — same term same definition (no question), a synonym forbidden by two terms (one question naming both)
+  - [x] 4.8 Run Tests: `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run format:check`
 
-- [ ] 5.0 Implement Story S-005: Report forbidden synonyms in new exported identifiers (#233)
+- [x] 5.0 Implement Story S-005: Report forbidden synonyms in new exported identifiers (#233)
 
   > Note: Depends on 2.0. Regex over added `export` lines, not the TypeScript compiler API (D-60). Forbidden-synonym hits only (D-64). Always advisory in this release (D-63).
 
-  - [ ] 5.1 Write `checkExportedIdentifiers()` unit tests first: each `export` form (`const|let|var|function|async function|class|type|interface|enum`, `export { a, b as c }`), each casing split (PascalCase, camelCase, snake_case, SCREAMING_CASE), plural normalization (`s`/`es`), a forbidden-synonym hit on a word and on a whole identifier, an unmatched identifier → nothing (D-64), result always in `staleness` never `failures` (D-63); confirm they fail
-  - [ ] 5.2 Implement `checkExportedIdentifiers(addedLines, glossaryMarkdown)` in `core/checks/glossary.ts`; export it — right-hand `as` name, optional leading `+`, plural rule (`es` after `s`/`x`/`z`/`ch`/`sh`, else one trailing `s` not after `s`), multi-word synonym joining, rule `glossary-forbidden-synonym` (D-60, D-73, D-74)
-  - [ ] 5.3 Edit `verifier.md` (three trees): in Audit Mode, beside the existing `checkDocsStructure()` call, run the function over the PR's added lines (`git diff <base>...HEAD`) and narrate hits as an advisory finding class that never blocks readiness (D-63)
-  - [ ] 5.4 Extend the parity test (or add a `verifier` parity file — implementer's choice) with the conformance-call markers across the three `verifier` files
-  - [ ] 5.5 Verify Acceptance Criterion: AC-1 extraction forms, splitting, normalization, hit semantics
-  - [ ] 5.6 Verify Acceptance Criterion: AC-2 unmatched identifiers produce nothing
-  - [ ] 5.7 Verify Acceptance Criterion: AC-3 findings only in `staleness`; `lint` exit code unaffected
-  - [ ] 5.8 Verify Acceptance Criterion: AC-4 `verifier` call present in all three trees
-  - [ ] 5.9 Verify Acceptance Criterion: AC-5 run the function over this phase's own diff with the populated glossary (after 6.0) — nothing reported, or hits fixed in the same PR
-  - [ ] 5.10 Run Tests: edge cases — `export default class`, `export * from`, `as` alias, identifier equal to a canonical term (no finding), glossary with zero forbidden synonyms
-  - [ ] 5.11 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
+  - [x] 5.1 Write `checkExportedIdentifiers()` unit tests first: each `export` form (`const|let|var|function|async function|class|type|interface|enum`, `export { a, b as c }`), each casing split (PascalCase, camelCase, snake_case, SCREAMING_CASE), plural normalization (`s`/`es`), a forbidden-synonym hit on a word and on a whole identifier, an unmatched identifier → nothing (D-64), result always in `staleness` never `failures` (D-63); confirm they fail
+  - [x] 5.2 Implement `checkExportedIdentifiers(addedLines, glossaryMarkdown)` in `core/checks/glossary.ts`; export it — right-hand `as` name, optional leading `+`, plural rule (`es` after `s`/`x`/`z`/`ch`/`sh`, else one trailing `s` not after `s`), multi-word synonym joining, rule `glossary-forbidden-synonym` (D-60, D-73, D-74)
+  - [x] 5.3 Edit `verifier.md` (three trees): in Audit Mode, beside the existing `checkDocsStructure()` call, run the function over the PR's added lines (`git diff <base>...HEAD`) and narrate hits as an advisory finding class that never blocks readiness (D-63)
+  - [x] 5.4 Extend the parity test (or add a `verifier` parity file — implementer's choice) with the conformance-call markers across the three `verifier` files
+  - [x] 5.5 Verify Acceptance Criterion: AC-1 extraction forms, splitting, normalization, hit semantics
+  - [x] 5.6 Verify Acceptance Criterion: AC-2 unmatched identifiers produce nothing
+  - [x] 5.7 Verify Acceptance Criterion: AC-3 findings only in `staleness`; `lint` exit code unaffected
+  - [x] 5.8 Verify Acceptance Criterion: AC-4 `verifier` call present in all three trees
+  - [x] 5.9 Verify Acceptance Criterion: AC-5 run the function over this phase's own diff with the populated glossary (after 6.0) — nothing reported, or hits fixed in the same PR — **deferred to 6.6 by design:** the run needs S-006's populated glossary, which does not exist on this branch.
+  - [x] 5.10 Run Tests: edge cases — `export default class`, `export * from`, `as` alias, identifier equal to a canonical term (no finding), glossary with zero forbidden synonyms
+  - [x] 5.11 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-grilling`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`
 
-- [ ] 6.0 Implement Story S-006: Populate this repository's glossary and retire the package-map placeholder (#234)
+- [x] 6.0 Implement Story S-006: Populate this repository's glossary and retire the package-map placeholder (#234)
 
   > Note: Depends on 2.0 and 3.0. Runs last so the finished check validates the file. Eight terms only — no invented vocabulary (D-69). One pointer sentence in `activity-init`, no new step (D-62).
 
-  - [ ] 6.1 Add the real-file assertion to `test/unit/checks-glossary.test.ts` first (reads `docs/domain/ubiquitous-language.md`, asserts zero failures and that the `## Bounded Context:` heading matches `docs/tech.md`'s column value exactly); confirm it fails against the empty template
-  - [ ] 6.2 Populate `docs/domain/ubiquitous-language.md` per spec §8.7: `## Bounded Context: AI-assisted development workflow`; the eight terms (`decision log`, `grilling`, `exit gate`, `bounded context`, `package map`, `runbook`, `install-if-absent`, `foundation document`) with all five fields, `Origin` per the spec table, `Status: active`; forbidden synonyms only where this PRD's history supplies them (`bounded context` carries none, D-72); frontmatter `status: active`, `version` bumped, one `+term` changelog row (D-69)
-  - [ ] 6.3 Edit `docs/tech.md`: replace the "freeform working label (`shared-understanding#D-45`) … Phase 3's glossary supersedes it" sentence with a pointer to the glossary; leave the column value unchanged (D-69 closes D-45)
-  - [ ] 6.3a Add `## Vocabulary` to `docs/requirements/prd-shared-understanding-refinement.md` listing the eight terms as `existing` (D-71)
-  - [ ] 6.4 Edit `activity-init` (three trees): one sentence on the bounded-context question naming the glossary as canonical (D-62); extend `test/unit/skill-parity-init.test.ts`
-  - [ ] 6.5 Verify Acceptance Criterion: AC-1 exactly eight terms, all fields, origins resolve, changelog row present
-  - [ ] 6.6 Verify Acceptance Criterion: AC-2 `pnpm run lint` passes; `checkExportedIdentifiers()` over this phase's diff reports nothing (5.9)
-  - [ ] 6.7 Verify Acceptance Criterion: AC-3 `docs/tech.md` note replaced, column value unchanged
-  - [ ] 6.8 Verify Acceptance Criterion: AC-4 `activity-init` pointer in all three trees; no new interview step
-  - [ ] 6.9 Verify Acceptance Criterion: AC-5 every term traces to a PRD FR or a decision ID (manual review of `Origin` values)
-  - [ ] 6.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-init`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run audit`
+  - [x] 6.1 Add the real-file assertion to `test/unit/checks-glossary.test.ts` first (reads `docs/domain/ubiquitous-language.md`, asserts zero failures and that the `## Bounded Context:` heading matches `docs/tech.md`'s column value exactly); confirm it fails against the empty template
+  - [x] 6.2 Populate `docs/domain/ubiquitous-language.md` per spec §8.7: `## Bounded Context: AI-assisted development workflow`; the eight terms (`decision log`, `grilling`, `exit gate`, `bounded context`, `package map`, `runbook`, `install-if-absent`, `foundation document`) with all five fields, `Origin` per the spec table, `Status: active`; forbidden synonyms only where this PRD's history supplies them (`bounded context` carries none, D-72); frontmatter `status: active`, `version` bumped, one `+term` changelog row (D-69)
+  - [x] 6.3 Edit `docs/tech.md`: replace the "freeform working label (`shared-understanding#D-45`) … Phase 3's glossary supersedes it" sentence with a pointer to the glossary; leave the column value unchanged (D-69 closes D-45)
+  - [x] 6.3a Flip the eight rows of `docs/requirements/prd-shared-understanding-refinement.md`'s `## Vocabulary` from `proposed` to `existing` (D-71). The section itself landed in 3.0, not here: wiring the `run.ts` walk made `lint` report `vocabulary-missing` against this PRD immediately (A-8), so the section had to ship in that PR, with its rows `proposed` because the glossary was still empty. **The flip is matched on the exact term string.** A term whose spelling in 6.2's glossary differs from the PRD row leaves that row `proposed` and `lint` green — a `proposed` row only fails when the glossary *does* define the term (D-74) — so check the eight strings against the glossary headings one by one rather than assuming the flip is mechanical
+  - [x] 6.3b Add a test asserting every term in `docs/requirements/prd-shared-understanding-refinement.md`'s `## Vocabulary` table matches a `### <Term>` heading in `docs/domain/ubiquitous-language.md` exactly, so the 6.3a flip fails loudly instead of silently — a `proposed` row whose term the glossary does not define leaves `lint` green (D-76, audit finding D-8 on issue #231)
+  - [x] 6.4 Edit `activity-init` (three trees): one sentence on the bounded-context question naming the glossary as canonical (D-62); extend `test/unit/skill-parity-init.test.ts`
+  - [x] 6.5 Verify Acceptance Criterion: AC-1 exactly eight terms, all fields, origins resolve, changelog row present
+  - [x] 6.6 Verify Acceptance Criterion: AC-2 `pnpm run lint` passes; `checkExportedIdentifiers()` over this phase's diff reports nothing (5.9)
+  - [x] 6.7 Verify Acceptance Criterion: AC-3 `docs/tech.md` note replaced, column value unchanged
+  - [x] 6.8 Verify Acceptance Criterion: AC-4 `activity-init` pointer in all three trees; no new interview step
+  - [x] 6.9 Verify Acceptance Criterion: AC-5 every term traces to a PRD FR or a decision ID (manual review of `Origin` values)
+  - [x] 6.10 Run Tests: `pnpm run test -- checks-glossary`, `pnpm run test -- skill-parity-init`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run format:check`, `pnpm run audit`
+  - [x] 6.11 **Merge-gate remediation (F-1), added during review:** `DECISION_ORIGIN` in `core/checks/glossary.ts` was anchored to the whole `Origin` value, so **none of the eight Origins seeded in 6.2 matched** — not merely the comma-separated ones — yielding no `#D-NN` citation at all. All four decision citations in the file were invisible, `glossary-origin-unresolved` had never fired against this repository's glossary since the regex shipped in S-002, and a fabricated `shared-understanding#D-99` would have shipped with `lint` green. Comma lists (`FR-1, shared-understanding#D-01`) are the most common Origin shape here — four of the eight — not the boundary of the bug. Each comma-separated element is now matched individually; D-66's semantics (staleness, never failure, deduplicated per feature) are unchanged. The regex shipped in S-002; S-006, which populates the glossary with real Origins for the first time, is what exposed it. The real-file guard is paired with a control that repoints one `#D-NN` at a nonexistent feature, so a zero distinguishes "all resolve" from "nothing was checked"
 
 ## Decisions Consumed
 

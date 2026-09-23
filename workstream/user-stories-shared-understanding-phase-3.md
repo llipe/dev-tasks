@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                                                                              | Author           |
 | ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.2     | 2026-09-22 | S-006-AC-6 corrected to match what shipped (issue #231 audit finding D-3): S-003 added the PRD's `## Vocabulary` section as `proposed` — the `run.ts` walk failed this PRD the moment it landed (A-8) — so S-006 flips the rows to `existing` rather than adding the section. | developer / @llipe |
 | 1.1     | 2026-09-21 | Design Mode corrections (D-70 to D-75): S-002 exports `PackageMapRow` from `workspace.ts`, `checkGlossary()` silent on absence, fenced blocks skipped, rule-name union; S-003 `vocabulary-*` are failures and `activity-generate-spec` runs the check on specs; S-005 normalization rules pinned; S-006 seed synonyms trimmed and this PRD gains `## Vocabulary`. | verifier / @llipe / product-engineer |
 | 1.0     | 2026-09-21 | Initial version. Six stories: glossary delivery + `doctor`, `core/checks/glossary.ts` structure check, `## Vocabulary` + AC-07 + approval append, `activity-grill` FR-21 conflicts, `verifier` conformance, this repository's populated glossary. | product-engineer |
 
@@ -418,7 +419,7 @@ D-69 (extends D-45), D-62. Eight terms under one context, `AI-assisted developme
 - [ ] AC-3: `docs/tech.md`'s package map sentence "The bounded-context value is a freeform working label (`shared-understanding#D-45`). Phase 3's glossary supersedes it with a canonical term." is replaced by a pointer to the glossary; the column value is unchanged (it is now the canonical context name) (D-45 closed by D-69).
 - [ ] AC-4: `activity-init`'s bounded-context question gains one sentence naming the glossary as canonical, in all three trees (D-62); no new interview step.
 - [ ] AC-5: No invented vocabulary — every term traces to a PRD FR or a decision ID.
-- [ ] AC-6: `docs/requirements/prd-shared-understanding-refinement.md` gains a `## Vocabulary` section listing the eight terms as `existing`, so `pnpm run lint`'s Vocabulary walk passes on this repository (D-71).
+- [ ] AC-6: The eight rows of `docs/requirements/prd-shared-understanding-refinement.md`'s `## Vocabulary` section read `existing` rather than `proposed`, each term string matching its glossary heading exactly, so `pnpm run lint`'s Vocabulary walk passes on this repository (D-71). The section itself was added by S-003, which had to carry it: the moment that story wired the `run.ts` walk, `lint` reported `vocabulary-missing` against this PRD (A-8). This story flips the rows it left `proposed`.
 
 #### Business Rules
 

@@ -28,6 +28,7 @@ import {
   writeFileSync,
   readdirSync,
   statSync,
+  existsSync,
 } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -231,6 +232,45 @@ describe("checkDocsStructure", () => {
           .join("\n")}`,
       ).toEqual([]);
     });
+  });
+});
+
+/**
+ * PT-7 (S-001 AC-6, D-58): `docs/README.md` lists `domain/`, and the glossary
+ * directory gets no sub-index.
+ *
+ * Rule 2 of `checkIndex` is non-recursive on purpose, so `lint` never asks
+ * `docs/README.md` to mention a subdirectory — which means deleting the
+ * `domain/` row breaks a reader's path to the glossary without breaking any
+ * gate. That is exactly the drift this asserts against. The second half is
+ * the inverse pressure: an index for one file fails `SIMPLICITY.md` A4, so
+ * `docs/domain/README.md` must not exist and `INDEXES` must stay at two
+ * entries.
+ */
+describe("glossary directory in the docs index (PT-7, S-001 AC-6)", () => {
+  it("docs/README.md links docs/domain/ubiquitous-language.md, and the link resolves", () => {
+    const index = readFileSync(join(REPO_ROOT, "docs/README.md"), "utf-8");
+    const targets = [...index.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1].split("#")[0].trim());
+    const domainLinks = targets.filter((t) => t.startsWith("domain/"));
+
+    expect(domainLinks, "docs/README.md has no row linking into domain/").not.toEqual([]);
+    for (const target of domainLinks) {
+      expect(
+        existsSync(join(REPO_ROOT, "docs", target)),
+        `docs/README.md links missing ${target}`,
+      ).toBe(true);
+    }
+    expect(domainLinks).toContain("domain/ubiquitous-language.md");
+  });
+
+  it("carries no docs/domain/README.md and registers no third index", () => {
+    expect(existsSync(join(REPO_ROOT, "docs/domain/README.md"))).toBe(false);
+
+    const source = readFileSync(join(REPO_ROOT, "core/checks/docs-structure.ts"), "utf-8");
+    const declared = source.match(/const INDEXES = \[([^\]]*)\]/);
+    expect(declared, "INDEXES is no longer a literal array; update PT-7").not.toBeNull();
+    const entries = [...(declared?.[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    expect(entries).toEqual(["docs/README.md", "docs/runbooks/README.md"]);
   });
 });
 
