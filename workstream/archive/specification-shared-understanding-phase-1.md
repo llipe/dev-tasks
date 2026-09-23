@@ -2,13 +2,13 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                    | Author           |
-| ------- | ---------- | ----------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-19 | Initial version. Docs foundation rename, runbooks, monorepo/single-package detection and package map. | product-engineer |
-| 1.1     | 2026-09-19 | Open Questions A-D resolved (D-42 to D-45): fallback-window removal tracked as issue #201, not version-comparison code; `doctor`/`update` output satisfies FR-45's session-start detection for the first release; `activity-init`'s "Mode A — Mono-Repo" renamed to avoid colliding with the new "monorepo" repository-shape term; package map's Bounded Context column is freeform at `activity-init` time. | @llipe / product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Author                      |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| 1.0     | 2026-09-19 | Initial version. Docs foundation rename, runbooks, monorepo/single-package detection and package map.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | product-engineer            |
+| 1.1     | 2026-09-19 | Open Questions A-D resolved (D-42 to D-45): fallback-window removal tracked as issue #201, not version-comparison code; `doctor`/`update` output satisfies FR-45's session-start detection for the first release; `activity-init`'s "Mode A — Mono-Repo" renamed to avoid colliding with the new "monorepo" repository-shape term; package map's Bounded Context column is freeform at `activity-init` time.                                                                                                                                                                                                                                                 | @llipe / product-engineer   |
 | 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-48 to D-50): `lint` invokes `tsx core/checks/run.ts`, never `dist/` — `validate` has no `build` step and `publish-npm.yml` runs `validate` before `build`, so a compiled path breaks every fresh clone and the first release; frontmatter is hand-parsed, not `yaml`-parsed, because the check ships to consumers where devDependencies are absent; 51 files carry the old names, not 46, and ADRs, PRDs, and `workstream/` among them are never rewritten; `.gitignore` would silently ignore both new filenames; the docs-structure rules gain four constraints that otherwise produce false failures on a clean tree. | verifier / product-engineer |
-| 1.3     | 2026-09-19 | Synced to `main` at `c14905e`. PR #209 removed `.gitignore`'s `/docs/*.md` allowlist, so the file no longer names either old document: the count returns to 50 (root 5), §8.1a becomes a resolved-ahead record rather than pending work, and S-001 AC-8 is delivered ahead of its story. | product-engineer |
-| 1.4     | 2026-09-19 | D-51 (defer FR-49a's 18 infra change kinds) and D-52 (correct FR-45's detect-and-propose description; PRD v1.13) accepted. No decision remains pending for Phase 1. | @llipe / product-engineer |
+| 1.3     | 2026-09-19 | Synced to `main` at `c14905e`. PR #209 removed `.gitignore`'s `/docs/*.md` allowlist, so the file no longer names either old document: the count returns to 50 (root 5), §8.1a becomes a resolved-ahead record rather than pending work, and S-001 AC-8 is delivered ahead of its story.                                                                                                                                                                                                                                                                                                                                                                     | product-engineer            |
+| 1.4     | 2026-09-19 | D-51 (defer FR-49a's 18 infra change kinds) and D-52 (correct FR-45's detect-and-propose description; PRD v1.13) accepted. No decision remains pending for Phase 1.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | @llipe / product-engineer   |
 
 ## 1. Executive Summary
 
@@ -16,21 +16,21 @@ Phase 1 renames the two foundation documents to `docs/product.md` and `docs/tech
 
 ## 2. Reference Documents
 
-| Document                                                    | Relevance                                                                 |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `docs/requirements/prd-shared-understanding-refinement.md`  | FR-44 to FR-51 (docs foundation and runbooks), FR-59 to FR-64 (repository shape), AC-22 to AC-26, AC-29 to AC-32, Non-Goals |
-| `docs/technical-guidelines.md`                                | Canonical script names, quality gates, `SIMPLICITY.md` A4/A10/B1           |
+| Document                                                      | Relevance                                                                                                                                                   |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/requirements/prd-shared-understanding-refinement.md`    | FR-44 to FR-51 (docs foundation and runbooks), FR-59 to FR-64 (repository shape), AC-22 to AC-26, AC-29 to AC-32, Non-Goals                                 |
+| `docs/technical-guidelines.md`                                | Canonical script names, quality gates, `SIMPLICITY.md` A4/A10/B1                                                                                            |
 | `SIMPLICITY.md`                                               | A4 (deep modules, no premature generality), A10 (delete over deprecate, burden of proof on adding), B1 (behavior-preserving refactor), B3 (smallest change) |
-| `docs/adr/ADR-006-claude-settings-ownership.md`               | Precedent for a delivered-once, consumer-owned file category               |
-| `core/distribution/profiles.ts`                               | `ROOT_FILES`, `ROOT_PROFILE_TAG`, `INSTALL_IF_ABSENT_FILES` — the registries this phase extends |
-| `core/distribution/migrate.ts`                                | The existing legacy-install migration this phase extends with `migrate docs` |
-| `.claude/skills/activity-init/SKILL.md` (+ `.github`/`.kiro`) | The skill this phase teaches shape detection and renames                   |
-| `workstream/decisions-shared-understanding.md`                | D-16, D-21 (WHAT phase); D-42 onward reserved for this phase's HOW decisions |
+| `docs/adr/ADR-006-claude-settings-ownership.md`               | Precedent for a delivered-once, consumer-owned file category                                                                                                |
+| `core/distribution/profiles.ts`                               | `ROOT_FILES`, `ROOT_PROFILE_TAG`, `INSTALL_IF_ABSENT_FILES` — the registries this phase extends                                                             |
+| `core/distribution/migrate.ts`                                | The existing legacy-install migration this phase extends with `migrate docs`                                                                                |
+| `.claude/skills/activity-init/SKILL.md` (+ `.github`/`.kiro`) | The skill this phase teaches shape detection and renames                                                                                                    |
+| `workstream/decisions-shared-understanding.md`                | D-16, D-21 (WHAT phase); D-42 onward reserved for this phase's HOW decisions                                                                                |
 
 ## 3. Affected Repositories
 
-| Repository  | Role                       | Scope of Changes                                                                                   |
-| ----------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
+| Repository  | Role                         | Scope of Changes                                                                                                                                                                                              |
+| ----------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `dev-tasks` | Workflow harness (this repo) | Renames its own two foundation docs; adds `core/checks`, `docs/runbooks/`, package-map detection, and the `migrate docs` command; updates all three prompt trees and every test that names the old filenames. |
 
 No other repository is touched. Consumer repositories receive the new capability through the next `dev-tasks update`; this phase does not modify any consumer repository directly (Non-Goals: "the rename applies to new installs and to `dev-tasks` itself; consumers rename on their own schedule with `doctor` guidance").
@@ -75,14 +75,14 @@ No database. Three new structured-text schemas.
 
 ### Package map (`docs/tech.md`, one table)
 
-| Column             | Source                                                                 |
-| ------------------- | ------------------------------------------------------------------------ |
-| Package             | Workspace package name (from the package's own `package.json` `name`, or the directory name when absent) |
-| Path                | Relative path from repo root                                           |
-| Purpose             | One line, human-confirmed at `activity-init` time                       |
-| Owner               | Human-confirmed at `activity-init` time                                 |
-| Canonical scripts   | Intersection of the root's canonical script names (`lint`, `test`, `typecheck`, …) actually present in the package's own `package.json` |
-| Bounded context     | Freeform at `activity-init` time; becomes canonical once Phase 3's glossary exists — not blocked on it |
+| Column            | Source                                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Package           | Workspace package name (from the package's own `package.json` `name`, or the directory name when absent)                                |
+| Path              | Relative path from repo root                                                                                                            |
+| Purpose           | One line, human-confirmed at `activity-init` time                                                                                       |
+| Owner             | Human-confirmed at `activity-init` time                                                                                                 |
+| Canonical scripts | Intersection of the root's canonical script names (`lint`, `test`, `typecheck`, …) actually present in the package's own `package.json` |
+| Bounded context   | Freeform at `activity-init` time; becomes canonical once Phase 3's glossary exists — not blocked on it                                  |
 
 A single-package repository (this one, today) records one row for the root itself, so `docs/tech.md` has the same table shape regardless of shape, and `doctor`'s drift check has one code path.
 
@@ -92,12 +92,12 @@ Exact shape from the PRD Data Requirements section: `name`, `trigger`, `owner`, 
 
 ### Runbook index (`docs/runbooks/README.md`)
 
-| Column        | Source                              |
-| -------------- | -------------------------------------- |
-| Runbook        | Filename, linked                     |
-| Trigger        | Copied from frontmatter               |
-| Owner          | Copied from frontmatter               |
-| Last verified  | Copied from frontmatter               |
+| Column        | Source                  |
+| ------------- | ----------------------- |
+| Runbook       | Filename, linked        |
+| Trigger       | Copied from frontmatter |
+| Owner         | Copied from frontmatter |
+| Last verified | Copied from frontmatter |
 
 ```mermaid
 erDiagram
@@ -112,11 +112,11 @@ erDiagram
 
 No HTTP API. The `dev-tasks` CLI surface gains one subcommand and `doctor` gains two new warning classes.
 
-| Command                    | Behavior                                                                                                                            |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `dev-tasks migrate`         | Unchanged — legacy shell-install detection (`core/distribution/migrate.ts`).                                                        |
-| `dev-tasks migrate docs`    | New. Dry-run by default: prints the two pending renames and the consumer-owned files (`CLAUDE.md`, `AGENTS.md`, custom prompts) that still reference the old names, and exits `0` doing nothing. `dev-tasks migrate docs --force` performs the rename (content byte-identical `git`-free file move via `node:fs`), backing up the two originals first via the existing `createBackupDir`/`backupFile` (`core/distribution/backup.ts`) — the same reuse `update --force` already established, not a new backup mechanism. |
-| `dev-tasks doctor`          | Gains two checks: (a) old foundation-doc names present → propose `migrate docs`, mirroring the existing legacy-install proposal shape; (b) package map present but disagrees with the detected workspace (a package on disk with no map row, or vice versa) → warn, do not fail (`doctor` warns; `lint`/`validate` is where structural failures block, per FR-50). |
+| Command                  | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dev-tasks migrate`      | Unchanged — legacy shell-install detection (`core/distribution/migrate.ts`).                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `dev-tasks migrate docs` | New. Dry-run by default: prints the two pending renames and the consumer-owned files (`CLAUDE.md`, `AGENTS.md`, custom prompts) that still reference the old names, and exits `0` doing nothing. `dev-tasks migrate docs --force` performs the rename (content byte-identical `git`-free file move via `node:fs`), backing up the two originals first via the existing `createBackupDir`/`backupFile` (`core/distribution/backup.ts`) — the same reuse `update --force` already established, not a new backup mechanism. |
+| `dev-tasks doctor`       | Gains two checks: (a) old foundation-doc names present → propose `migrate docs`, mirroring the existing legacy-install proposal shape; (b) package map present but disagrees with the detected workspace (a package on disk with no map row, or vice versa) → warn, do not fail (`doctor` warns; `lint`/`validate` is where structural failures block, per FR-50).                                                                                                                                                       |
 
 `--force` is reused with its existing meaning ("perform the mutating action, back up first") rather than adding a second flag with overlapping semantics.
 
@@ -146,11 +146,11 @@ The count has moved three times and the history is worth keeping straight: draft
 
 Three groups inside that 50 are **not** rewritten:
 
-| Group | Files | Why |
-| ----- | ----- | --- |
-| ADRs | `docs/adr/ADR-002`, `ADR-003`, `ADR-007`, `docs/adr/README.md` | D-35: an ADR is never rewritten. ADR-007 records which files Phase 0 changed; editing it falsifies the record. |
-| PRDs | `docs/requirements/prd-shared-understanding-refinement.md`, `prd-infra-engineer.md`, `prd-evidence-driven-development-loop.md` | A PRD is a historical statement of intent. FR-44 itself reads "`docs/product-context.md` becomes `docs/product.md`" — rewriting it erases the requirement's own subject. |
-| `workstream/` | 24 tracked files | Out of PRD AC-22's enumerated scope, and archived per-feature records. The parity test **must** exclude `workstream/` or it fails with 24 hits. |
+| Group         | Files                                                                                                                          | Why                                                                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ADRs          | `docs/adr/ADR-002`, `ADR-003`, `ADR-007`, `docs/adr/README.md`                                                                 | D-35: an ADR is never rewritten. ADR-007 records which files Phase 0 changed; editing it falsifies the record.                                                           |
+| PRDs          | `docs/requirements/prd-shared-understanding-refinement.md`, `prd-infra-engineer.md`, `prd-evidence-driven-development-loop.md` | A PRD is a historical statement of intent. FR-44 itself reads "`docs/product-context.md` becomes `docs/product.md`" — rewriting it erases the requirement's own subject. |
+| `workstream/` | 24 tracked files                                                                                                               | Out of PRD AC-22's enumerated scope, and archived per-feature records. The parity test **must** exclude `workstream/` or it fails with 24 hits.                          |
 
 PRD AC-22's scope list names `adapters/`, which Phase 0 deleted (D-34). S-001 AC-2 drops it; that is deliberate, not drift.
 
@@ -202,7 +202,7 @@ Four constraints the rules above do not state, each of which produces false fail
 
 This is a Node function (`core/checks/docs-structure.ts`, `checkDocsStructure(repoRoot): { failures: Finding[]; stale: Finding[] }`) invoked two ways: `lint` runs it, so `validate` reaches it, and the `verifier` reads the same result for its audit summary (`lint` is the enforcement path; the verifier only reports). One implementation, two callers; no duplicated logic.
 
-**Invocation (D-48).** `lint` runs `tsx core/checks/run.ts`, not `node dist/core/checks/run.js`. The compiled path cannot work: `dist/` is gitignored with zero tracked files, `validate` is `typecheck → lint → format:check → test` with no `build` step, and `publish-npm.yml` runs `validate` at line 61 *before* `build` at line 64. A `dist/`-dependent `lint` therefore fails on every fresh clone and breaks the first release after merge — it only passes for whoever implements it, because their `dist/` is already warm. `tsx` is an existing devDependency and runs the TypeScript source directly. Making `lint` depend on `build` was rejected: it turns every lint into a compile, and it reorders a gate chain that is not this phase's to reorder.
+**Invocation (D-48).** `lint` runs `tsx core/checks/run.ts`, not `node dist/core/checks/run.js`. The compiled path cannot work: `dist/` is gitignored with zero tracked files, `validate` is `typecheck → lint → format:check → test` with no `build` step, and `publish-npm.yml` runs `validate` at line 61 _before_ `build` at line 64. A `dist/`-dependent `lint` therefore fails on every fresh clone and breaks the first release after merge — it only passes for whoever implements it, because their `dist/` is already warm. `tsx` is an existing devDependency and runs the TypeScript source directly. Making `lint` depend on `build` was rejected: it turns every lint into a compile, and it reorders a gate chain that is not this phase's to reorder.
 
 Consumers reach the same check through the published package (`dist/core/` is in `package.json` `files`), so the check itself must not need a devDependency at runtime — see the frontmatter-parsing note in §16.
 
@@ -210,7 +210,7 @@ Consumers reach the same check through the published package (`dist/core/` is in
 
 Two triggers, both advisory/verifier-level except the structural conditions in 8.3 which are hard `lint` failures:
 
-- **Coverage**: every file under `templates/scripts/`, `templates/workflows/`, and `.github/workflows/` must appear in some runbook's `related` field (AC-25) — checked by the same docs-structure check (condition 4 above, run in reverse: every script/workflow path must be *referenced by* some runbook, not just that referenced paths must exist).
+- **Coverage**: every file under `templates/scripts/`, `templates/workflows/`, and `.github/workflows/` must appear in some runbook's `related` field (AC-25) — checked by the same docs-structure check (condition 4 above, run in reverse: every script/workflow path must be _referenced by_ some runbook, not just that referenced paths must exist).
 - **Procedure**: a PR whose task list contains ≥3 setup/config/migration/credential/data steps and adds or updates no runbook gets a `verifier` finding (AC-31) — this is verifier-side pattern matching over the task list and the diff, not a `core/checks` structural rule, since "plausibly repeated" is a judgment call the deterministic checker cannot make.
 
 ## 9. Integration Details
@@ -235,54 +235,54 @@ Not applicable. No new credential, network, or data-handling surface. The rename
 
 ## 14. Testing Strategy
 
-| Layer        | Approach                                                                                                                                    |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Static        | `typecheck` covers the new `core/checks` and `core/distribution/migrate-docs.ts` modules.                                                    |
-| Unit          | `core/checks/docs-structure.test.ts`: each of the four failure conditions plus the staleness-without-failure case, seeded fixtures under `test/fixtures/`. `migrate-docs.test.ts`: propose (no mutation) and `--force` apply (rename + backup) against a temp dir. |
-| Integration   | `activity-init` shape detection against two fixture repos: one single-package, one monorepo (`pnpm-workspace.yaml` with 2 packages) — asserts the package-map table shape in each. |
-| Parity        | Existing parity-test pattern extended into a new absence assertion over the rewritable references. Its scan roots and allowlist are **not** a copy of `test/unit/dt-retirement-absence.test.ts`: that guard does not scan `docs/` at all, and this one must, while excluding `docs/adr/**`, `docs/requirements/**`, and `workstream/` per D-50, plus the fallback-rule locations. |
-| Docs-structure | Seed a broken index, a missing-frontmatter runbook, and a dangling `related` entry; assert `lint` fails on each and passes once fixed — mirrors the absence-guard self-test pattern from Phase 0. |
-| Regression    | Re-run the D-40 five-name failure baseline; this phase is not expected to change it, since it touches no code the five failing tests exercise. |
+| Layer          | Approach                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Static         | `typecheck` covers the new `core/checks` and `core/distribution/migrate-docs.ts` modules.                                                                                                                                                                                                                                                                                         |
+| Unit           | `core/checks/docs-structure.test.ts`: each of the four failure conditions plus the staleness-without-failure case, seeded fixtures under `test/fixtures/`. `migrate-docs.test.ts`: propose (no mutation) and `--force` apply (rename + backup) against a temp dir.                                                                                                                |
+| Integration    | `activity-init` shape detection against two fixture repos: one single-package, one monorepo (`pnpm-workspace.yaml` with 2 packages) — asserts the package-map table shape in each.                                                                                                                                                                                                |
+| Parity         | Existing parity-test pattern extended into a new absence assertion over the rewritable references. Its scan roots and allowlist are **not** a copy of `test/unit/dt-retirement-absence.test.ts`: that guard does not scan `docs/` at all, and this one must, while excluding `docs/adr/**`, `docs/requirements/**`, and `workstream/` per D-50, plus the fallback-rule locations. |
+| Docs-structure | Seed a broken index, a missing-frontmatter runbook, and a dangling `related` entry; assert `lint` fails on each and passes once fixed — mirrors the absence-guard self-test pattern from Phase 0.                                                                                                                                                                                 |
+| Regression     | Re-run the D-40 five-name failure baseline; this phase is not expected to change it, since it touches no code the five failing tests exercise.                                                                                                                                                                                                                                    |
 
 ## 15. Deployment & Rollout
 
-| Aspect                 | Decision                                                                                                       |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Feature flag            | None. `SIMPLICITY.md` A10 — no flag for a single-consumer capability.                                          |
-| Fallback window         | One release cycle (FR-45); removal tracked as a follow-up issue (#201, D-42), not version-comparison code.     |
-| Backward compatibility  | Old names keep working for agents for the fallback window; `update` never renames a consumer's files unprompted. |
-| Version/commit type     | Additive capability, no breaking change to the `dev-tasks` binary's CLI contract (new subcommand, new warnings) — `feat:` commits, no `!`. Actual version bump is `./scripts/release.sh`, run by the maintainer on `main` after merge (D-41 — this phase does not repeat the Phase 0 process error). |
-| Rollback                | Revert the merge commit. The rename is the only stateful-feeling change, and it is a pure `git mv` with content unchanged, so revert is complete. |
+| Aspect                 | Decision                                                                                                                                                                                                                                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Feature flag           | None. `SIMPLICITY.md` A10 — no flag for a single-consumer capability.                                                                                                                                                                                                                                |
+| Fallback window        | One release cycle (FR-45); removal tracked as a follow-up issue (#201, D-42), not version-comparison code.                                                                                                                                                                                           |
+| Backward compatibility | Old names keep working for agents for the fallback window; `update` never renames a consumer's files unprompted.                                                                                                                                                                                     |
+| Version/commit type    | Additive capability, no breaking change to the `dev-tasks` binary's CLI contract (new subcommand, new warnings) — `feat:` commits, no `!`. Actual version bump is `./scripts/release.sh`, run by the maintainer on `main` after merge (D-41 — this phase does not repeat the Phase 0 process error). |
+| Rollback               | Revert the merge commit. The rename is the only stateful-feeling change, and it is a pure `git mv` with content unchanged, so revert is complete.                                                                                                                                                    |
 
 ## 16. Dependencies & Risks
 
-| Risk                                                                                     | Likelihood | Mitigation                                                                                                    |
-| ------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
-| A reference to the old names is missed among the 50 files, and an agent reads a stale name  | Medium     | The fallback rule (§8.1b) means a miss degrades to "still works via fallback," not silent failure; the parity test (§14) closes the gap before merge. |
-| The parity test is written by copying Phase 0's absence guard and inherits its scan roots  | High       | Stated explicitly in §14: that guard omits `docs/`, which is where the immutable records live. Copying it silently passes while leaving `docs/` unchecked. |
-| `activity-init`'s existing "Mono-Repo" mode name collides in meaning with the new "monorepo" repository-shape term | Medium     | Resolved (D-44): the existing mode is renamed to "Mode A — Documented" (or equivalent) to free the term.       |
-| `INSTALL_IF_ABSENT_FILES` has no platform-agnostic tag today, and `docs/runbooks/README.md` needs one | Low        | Extend the registry with a `ROOT_PROFILE_TAG`-style dedicated tag (reusing the pattern `ROOT_FILES` already established), not a new third category — same fix the PRD's own Technical Considerations section anticipates for Phase 3's glossary file, built here first since Phase 1 needs it first. |
-| The docs-structure check produces false positives on legitimate historical `related` references (e.g., a runbook documenting a since-removed script for troubleshooting history) | Low | Runbooks describe current procedures, not history; a removed script's runbook is retired with it, consistent with `SIMPLICITY.md` A10. |
-| Monorepo detection is only exercised against one fixture shape (`pnpm-workspace.yaml`) before a real consumer monorepo validates it | Medium | Documented as a known limitation; `nx.json`/`turbo.json`/`lerna.json`/`[tool.uv.workspace]` detection is signal-file presence only (existence check), not full parsing, which keeps the untested-parser surface small. |
+| Risk                                                                                                                                                                             | Likelihood | Mitigation                                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A reference to the old names is missed among the 50 files, and an agent reads a stale name                                                                                       | Medium     | The fallback rule (§8.1b) means a miss degrades to "still works via fallback," not silent failure; the parity test (§14) closes the gap before merge.                                                                                                                                                |
+| The parity test is written by copying Phase 0's absence guard and inherits its scan roots                                                                                        | High       | Stated explicitly in §14: that guard omits `docs/`, which is where the immutable records live. Copying it silently passes while leaving `docs/` unchecked.                                                                                                                                           |
+| `activity-init`'s existing "Mono-Repo" mode name collides in meaning with the new "monorepo" repository-shape term                                                               | Medium     | Resolved (D-44): the existing mode is renamed to "Mode A — Documented" (or equivalent) to free the term.                                                                                                                                                                                             |
+| `INSTALL_IF_ABSENT_FILES` has no platform-agnostic tag today, and `docs/runbooks/README.md` needs one                                                                            | Low        | Extend the registry with a `ROOT_PROFILE_TAG`-style dedicated tag (reusing the pattern `ROOT_FILES` already established), not a new third category — same fix the PRD's own Technical Considerations section anticipates for Phase 3's glossary file, built here first since Phase 1 needs it first. |
+| The docs-structure check produces false positives on legitimate historical `related` references (e.g., a runbook documenting a since-removed script for troubleshooting history) | Low        | Runbooks describe current procedures, not history; a removed script's runbook is retired with it, consistent with `SIMPLICITY.md` A10.                                                                                                                                                               |
+| Monorepo detection is only exercised against one fixture shape (`pnpm-workspace.yaml`) before a real consumer monorepo validates it                                              | Medium     | Documented as a known limitation; `nx.json`/`turbo.json`/`lerna.json`/`[tool.uv.workspace]` detection is signal-file presence only (existence check), not full parsing, which keeps the untested-parser surface small.                                                                               |
 
 ## 17. Open Questions
 
 None. All four were resolved on 2026-09-19 and recorded as decisions.
 
-| Question                                                  | Resolution                                                                                       |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| How is the one-release-cycle fallback window enforced?     | Tracked follow-up issue, not version-comparison code. Filed as [#201](https://github.com/llipe/dev-tasks/issues/201). Recorded as `D-42`. |
-| Does FR-45's "agent at session start" detection need a new hook? | No, for the first release: `doctor`/`update` output satisfies it, advisory (FR-72 pattern). Recorded as `D-43`. |
-| Does `activity-init`'s "Mode A — Mono-Repo" collide with the new "monorepo" term? | Yes — renamed to avoid the collision (§8.2 update below). Recorded as `D-44`.                    |
-| Is the package map's "Bounded context" column populated before Phase 3's glossary exists? | Yes, freeform, superseded by the glossary later. Recorded as `D-45`.                              |
+| Question                                                                                  | Resolution                                                                                                                                |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| How is the one-release-cycle fallback window enforced?                                    | Tracked follow-up issue, not version-comparison code. Filed as [#201](https://github.com/llipe/dev-tasks/issues/201). Recorded as `D-42`. |
+| Does FR-45's "agent at session start" detection need a new hook?                          | No, for the first release: `doctor`/`update` output satisfies it, advisory (FR-72 pattern). Recorded as `D-43`.                           |
+| Does `activity-init`'s "Mode A — Mono-Repo" collide with the new "monorepo" term?         | Yes — renamed to avoid the collision (§8.2 update below). Recorded as `D-44`.                                                             |
+| Is the package map's "Bounded context" column populated before Phase 3's glossary exists? | Yes, freeform, superseded by the glossary later. Recorded as `D-45`.                                                                      |
 
 ## Decisions (HOW phase)
 
 Confirmed on 2026-09-19 and recorded in `workstream/decisions-shared-understanding.md`. Numbering continues the feature's single decision-log ID space.
 
-| ID   | Decision                                                                                                                        |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------- |
-| D-42 | Fallback-window removal is a tracked follow-up issue (#201), not version-comparison code.                                       |
-| D-43 | `doctor`/`update` output satisfies FR-45's session-start detection for the first release; no new per-platform hook this phase.  |
+| ID   | Decision                                                                                                                                                              |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D-42 | Fallback-window removal is a tracked follow-up issue (#201), not version-comparison code.                                                                             |
+| D-43 | `doctor`/`update` output satisfies FR-45's session-start detection for the first release; no new per-platform hook this phase.                                        |
 | D-44 | `activity-init`'s existing "Mode A — Mono-Repo" is renamed to "Mode A — Documented" (or equivalent) to free the "monorepo" term for FR-59's repository-shape concept. |
-| D-45 | Package map's "Bounded context" column is freeform at `activity-init` time; Phase 3's glossary supersedes it by decision ID.     |
+| D-45 | Package map's "Bounded context" column is freeform at `activity-init` time; Phase 3's glossary supersedes it by decision ID.                                          |

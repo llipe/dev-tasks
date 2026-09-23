@@ -2,9 +2,9 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                        | Author           |
-| ------- | ---------- | ---------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-11 | Initial version, derived from PRD v1.3         | product-engineer |
+| Version | Date       | Summary                                | Author           |
+| ------- | ---------- | -------------------------------------- | ---------------- |
+| 1.0     | 2026-09-11 | Initial version, derived from PRD v1.3 | product-engineer |
 
 ## Executive Summary
 
@@ -19,9 +19,9 @@
 
 ## Affected Repositories
 
-| Repository        | Role                                  | Scope of Changes                                                                                                                                                                                              |
-| ----------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `llipe/dev-tasks` | Workflow harness (sole repository)    | New agent (4 files), 4 skills (12 files), `templates/infra/`, `templates/scripts/`, `templates/workflows/`, `git-guard` rule 4, workflow tag filters, ADR-005, registries, `bundle-manifest.json`, `package.json` files, tests |
+| Repository        | Role                               | Scope of Changes                                                                                                                                                                                                               |
+| ----------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `llipe/dev-tasks` | Workflow harness (sole repository) | New agent (4 files), 4 skills (12 files), `templates/infra/`, `templates/scripts/`, `templates/workflows/`, `git-guard` rule 4, workflow tag filters, ADR-005, registries, `bundle-manifest.json`, `package.json` files, tests |
 
 Consumer repositories receive the managed files through `dt install` and `dt update`. `infra/` and the deploy/release workflows are consumer-owned: installed once as templates, never overwritten by update.
 
@@ -62,24 +62,24 @@ graph TB
 
 ### Component responsibilities
 
-| Component            | Owns                                                                                                                                                                                                                                                     | Must not                                                                        |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Agent body           | Working loop, step gate, revert and backup rules, two-tier model, identity assertion, tool check procedure, tool-routing table, record and inventory formats, tagging, secrets rules, log-triage rules, Cloudflare DNS and certificate steps               | Carry platform command sets beyond the routing table                            |
-| `aws-ops`            | AWS command sets per change kind, tier per resource type, cost estimation, backup commands, revert sources, version floor, AWS log table                                                                                                                  | Restate loop or safety rules                                                    |
-| `fly-ops`            | Same for fly.io (apps, machines, volumes, secrets, certs, deploy, releases as revert source, volume snapshots as backup)                                                                                                                                  | Same                                                                            |
-| `supabase-ops`       | Same for Supabase Cloud, plus the `db diff` plan flow, drift rule, key-material and RLS findings, MCP read-only rule                                                                                                                                      | Same                                                                            |
-| `deploy-ops`         | Script contract, environment mapping table, tag policy summary, deploy-target framing, workflow scaffolding procedure, tools `yq` and `gh`                                                                                                                | Contain deploy logic that belongs in scripts                                    |
-| `git-guard.sh`       | Deterministic block of agent tag creation, deletion, and push                                                                                                                                                                                            | Block human tag operations outside an agent session (hook only runs for agents) |
-| Script templates     | Deterministic deploy, verify, rollback, status, and release behavior                                                                                                                                                                                     | Contain environment names or secrets                                            |
-| Workflow templates   | Trigger wiring, environment protection, tool setup, script invocation                                                                                                                                                                                    | Contain inline deploy logic                                                     |
+| Component          | Owns                                                                                                                                                                                                                                         | Must not                                                                        |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Agent body         | Working loop, step gate, revert and backup rules, two-tier model, identity assertion, tool check procedure, tool-routing table, record and inventory formats, tagging, secrets rules, log-triage rules, Cloudflare DNS and certificate steps | Carry platform command sets beyond the routing table                            |
+| `aws-ops`          | AWS command sets per change kind, tier per resource type, cost estimation, backup commands, revert sources, version floor, AWS log table                                                                                                     | Restate loop or safety rules                                                    |
+| `fly-ops`          | Same for fly.io (apps, machines, volumes, secrets, certs, deploy, releases as revert source, volume snapshots as backup)                                                                                                                     | Same                                                                            |
+| `supabase-ops`     | Same for Supabase Cloud, plus the `db diff` plan flow, drift rule, key-material and RLS findings, MCP read-only rule                                                                                                                         | Same                                                                            |
+| `deploy-ops`       | Script contract, environment mapping table, tag policy summary, deploy-target framing, workflow scaffolding procedure, tools `yq` and `gh`                                                                                                   | Contain deploy logic that belongs in scripts                                    |
+| `git-guard.sh`     | Deterministic block of agent tag creation, deletion, and push                                                                                                                                                                                | Block human tag operations outside an agent session (hook only runs for agents) |
+| Script templates   | Deterministic deploy, verify, rollback, status, and release behavior                                                                                                                                                                         | Contain environment names or secrets                                            |
+| Workflow templates | Trigger wiring, environment protection, tool setup, script invocation                                                                                                                                                                        | Contain inline deploy logic                                                     |
 
 ### Platform packaging
 
-| Platform | Agent file                                  | Entry point                                | Notes                                                                                                           |
-| -------- | ------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| Copilot  | `.github/agents/infra-engineer.agent.md`    | `.github/prompts/infra-engineer.prompt.md` | Frontmatter `name`, `description`, `tools: ["codebase", "search", "editFiles", "runCommands", "problems"]`         |
-| Claude   | `.claude/commands/infra-engineer.md`        | same file                                  | Main-thread command with `description` and `argument-hint` frontmatter, modeled on `.claude/commands/planner.md` |
-| Kiro     | `.kiro/agents/infra-engineer.md`            | same file                                  | Frontmatter `description`, `tools: [read, write, shell]`, `resources`; no `permissions` block                    |
+| Platform | Agent file                               | Entry point                                | Notes                                                                                                            |
+| -------- | ---------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Copilot  | `.github/agents/infra-engineer.agent.md` | `.github/prompts/infra-engineer.prompt.md` | Frontmatter `name`, `description`, `tools: ["codebase", "search", "editFiles", "runCommands", "problems"]`       |
+| Claude   | `.claude/commands/infra-engineer.md`     | same file                                  | Main-thread command with `description` and `argument-hint` frontmatter, modeled on `.claude/commands/planner.md` |
+| Kiro     | `.kiro/agents/infra-engineer.md`         | same file                                  | Frontmatter `description`, `tools: [read, write, shell]`, `resources`; no `permissions` block                    |
 
 Skills ship as `<tree>/skills/<name>/SKILL.md` in `.github/`, `.claude/`, `.kiro/` with identical body content after frontmatter.
 
@@ -147,13 +147,13 @@ default_cost_threshold_usd: 20
 environments:
   dev:
     production: false
-    tier0_tool: none          # cdk | terraform | cloudformation | none
+    tier0_tool: none # cdk | terraform | cloudformation | none
     fly: { org: my-org, app: my-app-dev }
     supabase: { project_ref: abcdefghijklmnop }
   prod:
     production: true
     tier0_tool: none
-    cost_threshold_usd: 20    # optional per-env override
+    cost_threshold_usd: 20 # optional per-env override
     aws: { account_id: "123456789012", region: us-east-1, profile: prod }
     fly: { org: my-org, app: my-app }
     supabase: { project_ref: qrstuvwxyzabcdef }
@@ -191,14 +191,14 @@ No network API. The stable interfaces are the script contract, the environment f
 
 ### Script contract
 
-| Script                | Args                         | Exit codes                                                                   | Reads                              | Writes                                            |
-| --------------------- | ---------------------------- | ---------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------- |
-| `deploy.sh`           | `<env> [--dry-run] [--help]` | 0 ok · 1 failure · 2 blocked (tool, identity, policy) · 3 verify failed      | `infra/environments.yaml`, git ref | `infra/changes/<date>-deploy-<env>/`              |
-| `deploy-verify.sh`    | `<env> [--help]`             | 0 healthy · 3 unhealthy (prints exact rollback command)                      | environment health endpoints       | nothing                                           |
-| `rollback.sh`         | `<env> [--to <version>]`     | 0 ok · 1 failure · 2 blocked                                                 | `infra/changes/` history           | `infra/changes/<date>-rollback-<env>/`            |
-| `deploy-status.sh`    | `[<env>]`                    | 0                                                                            | platform CLIs, read-only           | nothing                                           |
-| `release.sh`          | `<major\|minor\|patch>`      | as today                                                                     | git history                        | `CHANGELOG.md`, version file, annotated tag       |
-| `release.sh --dry-run`| same                         | 0                                                                            | git history                        | nothing                                           |
+| Script                 | Args                         | Exit codes                                                              | Reads                              | Writes                                      |
+| ---------------------- | ---------------------------- | ----------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------- |
+| `deploy.sh`            | `<env> [--dry-run] [--help]` | 0 ok · 1 failure · 2 blocked (tool, identity, policy) · 3 verify failed | `infra/environments.yaml`, git ref | `infra/changes/<date>-deploy-<env>/`        |
+| `deploy-verify.sh`     | `<env> [--help]`             | 0 healthy · 3 unhealthy (prints exact rollback command)                 | environment health endpoints       | nothing                                     |
+| `rollback.sh`          | `<env> [--to <version>]`     | 0 ok · 1 failure · 2 blocked                                            | `infra/changes/` history           | `infra/changes/<date>-rollback-<env>/`      |
+| `deploy-status.sh`     | `[<env>]`                    | 0                                                                       | platform CLIs, read-only           | nothing                                     |
+| `release.sh`           | `<major\|minor\|patch>`      | as today                                                                | git history                        | `CHANGELOG.md`, version file, annotated tag |
+| `release.sh --dry-run` | same                         | 0                                                                       | git history                        | nothing                                     |
 
 Common rules: `#!/usr/bin/env bash`, `set -euo pipefail`, `--help` on every script, environment names resolved from `infra/environments.yaml` through `yq` (v4), refusal with exit 2 when the file is missing or still a template, no environment name hardcoded, no secret read into a variable that is later echoed. JS/TS repos get `package.json` wrappers `deploy:<env>`, `deploy:verify:<env>`, `rollback:<env>`, `deploy:status`, `release`, `release:dry-run` generated from the declared environments.
 
@@ -240,13 +240,13 @@ In the dev mapping the same script runs on push to `main` with the artifact tag 
 
 ## Authentication & Authorization Design
 
-| Actor                    | May                                                                                         | May not                                                                         | Enforced by                                             |
-| ------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Agent, discover phase    | Run read-only CLI calls, write `infra/inventory/`                                           | Any write command                                                               | Agent contract; tool check requires read credentials only |
-| Agent, apply phase       | Run the approved step's forward commands after step approval                                | Run ahead, batch steps, write without `ChangeId`, create or push tags, merge     | Agent contract; `git-guard` rules 1 and 4               |
-| Agent, record phase      | Commit under `infra/` and workflow files on a feature branch, open a draft PR via `github-ops` | Push or merge to `main`                                                          | `git-guard` rule 1                                      |
-| Human                    | Approve plan and steps, run `release`, push tags, approve the production environment        |                                                                                 | GitHub environment required reviewers                   |
-| GitHub Actions           | Run scripts with OIDC-assumed AWS role, `FLY_API_TOKEN`, `SUPABASE_ACCESS_TOKEN` secrets     | Hold long-lived AWS keys                                                        | Workflow template                                       |
+| Actor                 | May                                                                                            | May not                                                                      | Enforced by                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Agent, discover phase | Run read-only CLI calls, write `infra/inventory/`                                              | Any write command                                                            | Agent contract; tool check requires read credentials only |
+| Agent, apply phase    | Run the approved step's forward commands after step approval                                   | Run ahead, batch steps, write without `ChangeId`, create or push tags, merge | Agent contract; `git-guard` rules 1 and 4                 |
+| Agent, record phase   | Commit under `infra/` and workflow files on a feature branch, open a draft PR via `github-ops` | Push or merge to `main`                                                      | `git-guard` rule 1                                        |
+| Human                 | Approve plan and steps, run `release`, push tags, approve the production environment           |                                                                              | GitHub environment required reviewers                     |
+| GitHub Actions        | Run scripts with OIDC-assumed AWS role, `FLY_API_TOKEN`, `SUPABASE_ACCESS_TOKEN` secrets       | Hold long-lived AWS keys                                                     | Workflow template                                         |
 
 Credentials are consumer-provided. The tool check reads identity with `aws sts get-caller-identity`, `flyctl auth whoami`, `supabase projects list`, `gh auth status`, and the Cloudflare token verify endpoint. It compares AWS account id, fly org, and Supabase project ref against the target environment and refuses on mismatch with exit-style status `blocked`.
 
@@ -297,14 +297,14 @@ Queries are constructed by the owning skill's log table with a mandatory `--sinc
 
 ## Integration Details
 
-| Integration     | Method                                                    | Failure handling                                                                              | Credentials                                          |
-| --------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| AWS             | `aws` CLI v2, JSON output                                 | Non-zero exit marks the step `failed`; no automatic retry on write; read probes retry once     | Named profile from `environments.yaml`; OIDC in CI    |
-| fly.io          | `flyctl`, JSON output where supported                     | Same; `fly releases` supplies the previous image for revert                                   | `FLY_API_TOKEN`                                      |
-| Supabase Cloud  | `supabase` CLI v2; MCP read-only for discovery when present | `db push` failure marks step `failed`; drift never auto-resolved                              | `SUPABASE_ACCESS_TOKEN`; linked project ref asserted |
-| Cloudflare      | REST API via `curl`, DNS records endpoint only            | Prior record captured before update; revert restores it                                        | API token with DNS edit scope                        |
-| GitHub          | `gh` via `github-ops` for issues, PRs, secrets; workflows | Hook blocks tag operations; PR opening failure reported, records stay on the branch            | `gh auth`                                            |
-| `yq`            | Reads `environments.yaml` in scripts                      | Missing `yq` exits 2 with install remediation                                                 | none                                                 |
+| Integration    | Method                                                      | Failure handling                                                                           | Credentials                                          |
+| -------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| AWS            | `aws` CLI v2, JSON output                                   | Non-zero exit marks the step `failed`; no automatic retry on write; read probes retry once | Named profile from `environments.yaml`; OIDC in CI   |
+| fly.io         | `flyctl`, JSON output where supported                       | Same; `fly releases` supplies the previous image for revert                                | `FLY_API_TOKEN`                                      |
+| Supabase Cloud | `supabase` CLI v2; MCP read-only for discovery when present | `db push` failure marks step `failed`; drift never auto-resolved                           | `SUPABASE_ACCESS_TOKEN`; linked project ref asserted |
+| Cloudflare     | REST API via `curl`, DNS records endpoint only              | Prior record captured before update; revert restores it                                    | API token with DNS edit scope                        |
+| GitHub         | `gh` via `github-ops` for issues, PRs, secrets; workflows   | Hook blocks tag operations; PR opening failure reported, records stay on the branch        | `gh auth`                                            |
+| `yq`           | Reads `environments.yaml` in scripts                        | Missing `yq` exits 2 with install remediation                                              | none                                                 |
 
 Bounded retry per the guidelines: at most three attempts or fifteen minutes per step before escalating to the human with evidence.
 
@@ -334,15 +334,15 @@ Every agent outcome is one of `applied`, `verified`, `failed`, `blocked`, `route
 
 `/TESTING.md` is unfilled, so every test below is specified here with its fixtures.
 
-| Test file                                        | Layer    | Asserts                                                                                                                                                                                                                                                                             |
-| ------------------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `test/unit/infra-engineer-parity.test.ts`        | Unit     | Four agent files exist; Kiro frontmatter has `description` and `tools` and no `permissions`; contract statements present in all three variants (step approval, `ChangeId`, revert required, production backup, no autonomous mode, identity assertion, tool check with floors, routing rows, no tags by agents, redaction, bounded queries); registries list the agent |
-| `test/unit/skill-parity-infra.test.ts`           | Unit     | `aws-ops`, `fly-ops`, `supabase-ops`, `deploy-ops` present in three trees with identical bodies; each platform skill declares `floor`, backup command, revert source, log table; `supabase-ops` declares `db diff` plan, drift rule, no-MCP-write; `deploy-ops` declares the script contract and environment mapping table |
-| `test/unit/infra-redaction.test.ts`              | Security | Every fixture line (synthetic AWS key pair, `sb_secret_*`, `service_role` JWT, fly token, `ghp_` token, bearer header, `postgres://user:pass@`, email) is rewritten to `[REDACTED:*]`; benign lines untouched; no template file under `templates/` and no skill file contains a fixture-shaped value |
-| `test/unit/git-guard-tags.test.ts`               | Unit     | Hook exits 2 for `git tag v1.2.3`, `git tag -a`, `git tag -d`, `git push --tags`, `git push origin refs/tags/v1`, `git push origin v1.2.3`, `gh release create`; exits 0 for `git tag -l`, `git tag --list`, `git describe --tags`, `git push -u origin issue/1-x`                        |
-| `test/unit/infra-script-contract.test.ts`        | Contract | Each template script passes `bash -n`, prints usage on `--help`, exits 2 on missing or template `environments.yaml`, and in `--dry-run` with stub `aws`, `flyctl`, `supabase`, `yq` on `PATH` prints the planned command sequence without executing; `deploy.sh prod` refuses a non-tag ref; shellcheck runs when available, otherwise reported `SKIPPED(shellcheck not installed)` |
-| `test/unit/infra-workflow-templates.test.ts`     | Unit     | Workflow templates parse as YAML; prod template triggers on `v[0-9]+.[0-9]+.[0-9]+` and declares `environment: production`; dev template triggers on push to `main`; no template contains inline `aws`/`flyctl`/`supabase` deploy calls, only script invocations; this repo's two release workflows use the exact-semver filter |
-| `test/unit/distribution-*.test.ts` (extended)    | Unit     | `templates/infra`, `templates/scripts`, `templates/workflows` are managed; `infra/` and `.github/workflows/deploy-*.yml` are consumer-owned; update never overwrites a filled `environments.yaml`                                                                                |
+| Test file                                     | Layer    | Asserts                                                                                                                                                                                                                                                                                                                                                                             |
+| --------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test/unit/infra-engineer-parity.test.ts`     | Unit     | Four agent files exist; Kiro frontmatter has `description` and `tools` and no `permissions`; contract statements present in all three variants (step approval, `ChangeId`, revert required, production backup, no autonomous mode, identity assertion, tool check with floors, routing rows, no tags by agents, redaction, bounded queries); registries list the agent              |
+| `test/unit/skill-parity-infra.test.ts`        | Unit     | `aws-ops`, `fly-ops`, `supabase-ops`, `deploy-ops` present in three trees with identical bodies; each platform skill declares `floor`, backup command, revert source, log table; `supabase-ops` declares `db diff` plan, drift rule, no-MCP-write; `deploy-ops` declares the script contract and environment mapping table                                                          |
+| `test/unit/infra-redaction.test.ts`           | Security | Every fixture line (synthetic AWS key pair, `sb_secret_*`, `service_role` JWT, fly token, `ghp_` token, bearer header, `postgres://user:pass@`, email) is rewritten to `[REDACTED:*]`; benign lines untouched; no template file under `templates/` and no skill file contains a fixture-shaped value                                                                                |
+| `test/unit/git-guard-tags.test.ts`            | Unit     | Hook exits 2 for `git tag v1.2.3`, `git tag -a`, `git tag -d`, `git push --tags`, `git push origin refs/tags/v1`, `git push origin v1.2.3`, `gh release create`; exits 0 for `git tag -l`, `git tag --list`, `git describe --tags`, `git push -u origin issue/1-x`                                                                                                                  |
+| `test/unit/infra-script-contract.test.ts`     | Contract | Each template script passes `bash -n`, prints usage on `--help`, exits 2 on missing or template `environments.yaml`, and in `--dry-run` with stub `aws`, `flyctl`, `supabase`, `yq` on `PATH` prints the planned command sequence without executing; `deploy.sh prod` refuses a non-tag ref; shellcheck runs when available, otherwise reported `SKIPPED(shellcheck not installed)` |
+| `test/unit/infra-workflow-templates.test.ts`  | Unit     | Workflow templates parse as YAML; prod template triggers on `v[0-9]+.[0-9]+.[0-9]+` and declares `environment: production`; dev template triggers on push to `main`; no template contains inline `aws`/`flyctl`/`supabase` deploy calls, only script invocations; this repo's two release workflows use the exact-semver filter                                                     |
+| `test/unit/distribution-*.test.ts` (extended) | Unit     | `templates/infra`, `templates/scripts`, `templates/workflows` are managed; `infra/` and `.github/workflows/deploy-*.yml` are consumer-owned; update never overwrites a filled `environments.yaml`                                                                                                                                                                                   |
 
 All tests run under `pnpm run test:unit` and are reachable from `pnpm run test` and `pnpm run validate`. Manual verification for Phase 1: run the agent against a throwaway fly app in a non-production environment through one full plan (create app, set secret, deploy, add DNS record), then revert it with the generated `rollback.sh`.
 
@@ -359,15 +359,15 @@ Rollback of the feature is a revert of the PRs; nothing runs at install time.
 
 ## Dependencies & Risks
 
-| Risk                                                                 | Mitigation                                                                                                                       |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Synthesized AWS plan is wrong                                        | Mandatory discovery, exact commands recorded, verify command per step, revert per step                                            |
-| A revert that does not actually restore state                        | Production backup rule; restore command recorded before apply; manual Phase 1 verification exercises `rollback.sh`                |
-| Redaction miss leaks a credential into git history                   | Pattern set is a file with a fixture-driven test; raw log output is never written                                                 |
-| `yq` absent in consumer environments                                 | Declared tool with floor; scripts exit 2 with install remediation; templates document it                                          |
-| Directory-prefix semantics in the installer are not what we assume   | Tested before the manifest change; the story is blocked until the test passes                                                    |
-| Agent prose grows past what a parity test can hold                   | Contract statements are enumerated in the parity test; each skill owns its own surface                                            |
-| Supabase log endpoint or retention changes                           | Open question; `researcher` pass before implementing the Supabase log table                                                       |
+| Risk                                                               | Mitigation                                                                                                         |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Synthesized AWS plan is wrong                                      | Mandatory discovery, exact commands recorded, verify command per step, revert per step                             |
+| A revert that does not actually restore state                      | Production backup rule; restore command recorded before apply; manual Phase 1 verification exercises `rollback.sh` |
+| Redaction miss leaks a credential into git history                 | Pattern set is a file with a fixture-driven test; raw log output is never written                                  |
+| `yq` absent in consumer environments                               | Declared tool with floor; scripts exit 2 with install remediation; templates document it                           |
+| Directory-prefix semantics in the installer are not what we assume | Tested before the manifest change; the story is blocked until the test passes                                      |
+| Agent prose grows past what a parity test can hold                 | Contract statements are enumerated in the parity test; each skill owns its own surface                             |
+| Supabase log endpoint or retention changes                         | Open question; `researcher` pass before implementing the Supabase log table                                        |
 
 Technology dependencies: no new npm dependency. Consumer-provided: AWS CLI 2, `flyctl`, Supabase CLI 2, `gh` 2, `yq` 4, Cloudflare API token, `shellcheck` optional.
 

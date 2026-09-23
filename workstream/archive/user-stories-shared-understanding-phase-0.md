@@ -2,12 +2,12 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                              | Author           |
-| ------- | ---------- | ---------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-18 | Initial version. Five stories covering PRD FR-53 to FR-58.                                                                                                                                                          | product-engineer |
-| 1.1     | 2026-09-19 | Verifier Design Mode corrections: pass signal is the five named failures as a set, not a count of four (D-40); `publish-npm.yml` asserts two deleted paths; the `#adapters` alias spans four files; `format` globs break the gate; the exit-code prune touches the retained binary; six retained tests must change, enumerated. | verifier / product-engineer |
-| 1.2     | 2026-09-19 | Verifier Audit Mode drift reconciliation (fidelity-report-shared-understanding-phase-0.md): S-004 AC-7 corrected from five to the actual nine touched test files (`architecture-change-dryrun.test.ts`, `cross-repo-partitioning-dryrun.test.ts`, `skill-init-edge-cases.test.ts`, and `skill-init-walkthrough.test.ts` were undercounted); S-003 note added recording the `express`, `@types/express`, and `eslint-plugin-import-x` devDependency removals, disclosed in commit `6edee92` but never enumerated in this document. | product-engineer (drift-reconciliation) |
-| 1.3     | 2026-09-19 | D-41 supersedes D-28: the version bump and release commit are removed from S-005's scope. `scripts/release.sh` is a manual, `main`-only, post-merge maintainer step that computes the next semver from the last tag and overwrites `package.json` from the tag at publish time regardless (`publish-npm.yml`); a feature PR hand-setting a version pre-empts and can conflict with that computation. S-005 AC-8/AC-9 corrected accordingly; `package.json` reverted to `0.13.0`, `CHANGELOG.md` entry moved under `## [Unreleased]`. | @llipe / product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Author                                  |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| 1.0     | 2026-09-18 | Initial version. Five stories covering PRD FR-53 to FR-58.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | product-engineer                        |
+| 1.1     | 2026-09-19 | Verifier Design Mode corrections: pass signal is the five named failures as a set, not a count of four (D-40); `publish-npm.yml` asserts two deleted paths; the `#adapters` alias spans four files; `format` globs break the gate; the exit-code prune touches the retained binary; six retained tests must change, enumerated.                                                                                                                                                                                                      | verifier / product-engineer             |
+| 1.2     | 2026-09-19 | Verifier Audit Mode drift reconciliation (fidelity-report-shared-understanding-phase-0.md): S-004 AC-7 corrected from five to the actual nine touched test files (`architecture-change-dryrun.test.ts`, `cross-repo-partitioning-dryrun.test.ts`, `skill-init-edge-cases.test.ts`, and `skill-init-walkthrough.test.ts` were undercounted); S-003 note added recording the `express`, `@types/express`, and `eslint-plugin-import-x` devDependency removals, disclosed in commit `6edee92` but never enumerated in this document.    | product-engineer (drift-reconciliation) |
+| 1.3     | 2026-09-19 | D-41 supersedes D-28: the version bump and release commit are removed from S-005's scope. `scripts/release.sh` is a manual, `main`-only, post-merge maintainer step that computes the next semver from the last tag and overwrites `package.json` from the tag at publish time regardless (`publish-npm.yml`); a feature PR hand-setting a version pre-empts and can conflict with that computation. S-005 AC-8/AC-9 corrected accordingly; `package.json` reverted to `0.13.0`, `CHANGELOG.md` entry moved under `## [Unreleased]`. | @llipe / product-engineer               |
 
 ## Source Documents
 
@@ -142,15 +142,16 @@ So that the retirement cannot quietly regress.
 
 - Six retained tests are expected to change, and no others. Any seventh is a stop signal, not a fix.
 
-| Test | Change |
-| --- | --- |
-| `binaries.test.ts` | remove `dt` cases, assert `dist/bin/dt.js` absent |
-| `architecture-change-parity.test.ts` | delete with the `AGENTS.md` block it asserts |
-| `cross-repo-partitioning-parity.test.ts` | delete with the block it asserts |
-| `skill-parity-init.test.ts` | drop eight `dt` and multi-repo assertions |
-| `researcher-parity.test.ts` | drop the `component.json` assertion |
-| `skill-parity-testing-layers.test.ts` | drop `dt verify impact` and `dt verify drift` |
-| `exit-codes.test.ts` | update the fifteen-code table (S-001) |
+| Test                                     | Change                                            |
+| ---------------------------------------- | ------------------------------------------------- |
+| `binaries.test.ts`                       | remove `dt` cases, assert `dist/bin/dt.js` absent |
+| `architecture-change-parity.test.ts`     | delete with the `AGENTS.md` block it asserts      |
+| `cross-repo-partitioning-parity.test.ts` | delete with the block it asserts                  |
+| `skill-parity-init.test.ts`              | drop eight `dt` and multi-repo assertions         |
+| `researcher-parity.test.ts`              | drop the `component.json` assertion               |
+| `skill-parity-testing-layers.test.ts`    | drop `dt verify impact` and `dt verify drift`     |
+| `exit-codes.test.ts`                     | update the fifteen-code table (S-001)             |
+
 - A test is never skipped or quarantined to reach green (`SIMPLICITY.md` and the repository testing rules).
 
 #### Technical Notes
@@ -414,16 +415,16 @@ Three documents exist only for `dt`, three more carry substantial `dt` content, 
 
 ### Requirement Mapping
 
-| PRD requirement                                     | Story ID(s)          | Status     |
-| --------------------------------------------------- | -------------------- | ---------- |
-| FR-53 — delete binary, modules, schemas, deps       | S-001, S-002, S-003  | ✅ Covered |
-| FR-54 — remove prompt branches and `AGENTS.md` rules | S-004                | ✅ Covered |
-| FR-55 — delete and rewrite documentation            | S-005                | ✅ Covered |
-| FR-56 — ADR-007 and CHANGELOG                       | S-005                | ✅ Covered |
-| FR-57 — checks live in `core/checks`, not `core/verify` | S-001 (deletes `core/verify`; `core/checks` is Phase 5 per D-33) | ✅ Covered |
-| FR-58 — Phase 0 lands before Phase 1                | All (this is the phase-ordering constraint, enforced by the milestone) | ✅ Covered |
-| AC-27 — validate passes with no `dt` reference      | S-002 (test), S-004 (makes it pass) | ✅ Covered |
-| AC-28 — ADR-007 and CHANGELOG name removed commands | S-005                | ✅ Covered |
+| PRD requirement                                         | Story ID(s)                                                            | Status     |
+| ------------------------------------------------------- | ---------------------------------------------------------------------- | ---------- |
+| FR-53 — delete binary, modules, schemas, deps           | S-001, S-002, S-003                                                    | ✅ Covered |
+| FR-54 — remove prompt branches and `AGENTS.md` rules    | S-004                                                                  | ✅ Covered |
+| FR-55 — delete and rewrite documentation                | S-005                                                                  | ✅ Covered |
+| FR-56 — ADR-007 and CHANGELOG                           | S-005                                                                  | ✅ Covered |
+| FR-57 — checks live in `core/checks`, not `core/verify` | S-001 (deletes `core/verify`; `core/checks` is Phase 5 per D-33)       | ✅ Covered |
+| FR-58 — Phase 0 lands before Phase 1                    | All (this is the phase-ordering constraint, enforced by the milestone) | ✅ Covered |
+| AC-27 — validate passes with no `dt` reference          | S-002 (test), S-004 (makes it pass)                                    | ✅ Covered |
+| AC-28 — ADR-007 and CHANGELOG name removed commands     | S-005                                                                  | ✅ Covered |
 
 ### Gaps
 
@@ -438,12 +439,12 @@ None.
 
 ## Execution Plan
 
-| Order | Story | Gate that proves it                                        |
+| Order | Story | Gate that proves it                                          |
 | ----- | ----- | ------------------------------------------------------------ |
-| 1     | S-001 | `typecheck` and `build` green                               |
-| 2     | S-002 | test suite at the 4-failure baseline; absence test red      |
+| 1     | S-001 | `typecheck` and `build` green                                |
+| 2     | S-002 | test suite at the 4-failure baseline; absence test red       |
 | 3     | S-003 | `install`, `build`, `audit` green; release assertions replay |
-| 4     | S-004 | absence test green; parity suites pass                      |
-| 5     | S-005 | `validate` green; no broken links; ADR-007 present          |
+| 4     | S-004 | absence test green; parity suites pass                       |
+| 5     | S-005 | `validate` green; no broken links; ADR-007 present           |
 
 Recommended orchestrator: `planner`, on branch `integration/prd-shared-understanding-phase-0`, producing one consolidated pull request.

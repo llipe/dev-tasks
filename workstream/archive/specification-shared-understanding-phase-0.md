@@ -2,11 +2,11 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                  | Author           |
-| ------- | ---------- | ------------------------------------------------------------------------ | ---------------- |
-| 1.0     | 2026-09-18 | Initial version. Covers PRD FR-53 to FR-58 (Phase 0, retire `dt`).                                                                                                    | product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Author                      |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1.0     | 2026-09-18 | Initial version. Covers PRD FR-53 to FR-58 (Phase 0, retire `dt`).                                                                                                                                                                                                                                                                                                                                                                                                                       | product-engineer            |
 | 1.2     | 2026-09-19 | Verifier Design Mode corrections. The pass signal is **5** remaining failures, not 4 — a recount error (D-40 supersedes D-36). Four further gaps closed: `publish-npm.yml` also asserts `dist/adapters`; the `#adapters` alias lives in four files, not one; `format`/`format:check` glob deleted directories and exit 2; `bin/dev-tasks.ts` returns a `dt`-only exit code through a deprecated alias. `templates/bitbucket-pipelines.yml` and five parity tests added to the inventory. | verifier / product-engineer |
-| 1.1     | 2026-09-18 | All three open questions resolved. Restore tag confirmed as `v0.13.0` (`0a6f35e`) via the GitHub API. `prd-multi-repo-context.md` is deleted. One pull request, seven commits. HOW decisions confirmed and renumbered `D-28` to `D-38` into the feature's single decision-log ID space. | @llipe / product-engineer |
+| 1.1     | 2026-09-18 | All three open questions resolved. Restore tag confirmed as `v0.13.0` (`0a6f35e`) via the GitHub API. `prd-multi-repo-context.md` is deleted. One pull request, seven commits. HOW decisions confirmed and renumbered `D-28` to `D-38` into the feature's single decision-log ID space.                                                                                                                                                                                                  | @llipe / product-engineer   |
 
 ## 1. Executive Summary
 
@@ -18,19 +18,19 @@ Eleven of the twelve source files that exceed the 400-line threshold in `SIMPLIC
 
 ## 2. Reference Documents
 
-| Document                                                     | Relevance                                                         |
-| ------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `docs/requirements/prd-shared-understanding-refinement.md`    | FR-53 to FR-58 (Phase 0), D-14 (the retirement decision)          |
-| `docs/technical-guidelines.md`                                | Deterministic-first, layered workflow architecture, quality gates |
-| `SIMPLICITY.md`                                               | A4 (deep modules), A10 (delete over deprecate), B1, B3            |
-| `docs/adr/ADR-001`, `ADR-002`                                 | `component.json` manifest, exit-code contract — both superseded   |
-| `docs/requirements/prd-multi-repo-context.md`                 | The PRD this phase retires                                        |
-| `workstream/decisions-shared-understanding.md`                | D-14, and the HOW-phase rows this specification adds              |
+| Document                                                   | Relevance                                                         |
+| ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| `docs/requirements/prd-shared-understanding-refinement.md` | FR-53 to FR-58 (Phase 0), D-14 (the retirement decision)          |
+| `docs/technical-guidelines.md`                             | Deterministic-first, layered workflow architecture, quality gates |
+| `SIMPLICITY.md`                                            | A4 (deep modules), A10 (delete over deprecate), B1, B3            |
+| `docs/adr/ADR-001`, `ADR-002`                              | `component.json` manifest, exit-code contract — both superseded   |
+| `docs/requirements/prd-multi-repo-context.md`              | The PRD this phase retires                                        |
+| `workstream/decisions-shared-understanding.md`             | D-14, and the HOW-phase rows this specification adds              |
 
 ## 3. Affected Repositories
 
-| Repository        | Role   | Scope of Changes                                                                                                                                       |
-| ----------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Repository        | Role   | Scope of Changes                                                                                                                                        |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `llipe/dev-tasks` | Source | Delete the `dt` binary, its modules, adapters, schemas, tests, fixtures, dependencies, prompt branches, and documentation. Publish as a breaking minor. |
 | Consumer repos    | Target | Lose the `dt` binary on their next `update`. No consumer is known to use it. Nothing in the installed bundle references it.                             |
 
@@ -80,13 +80,13 @@ flowchart LR
 
 ### Verified separation
 
-| Question                                                     | Answer                                                                    |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Does `core/distribution` import any deleted module?           | No. Zero imports.                                                         |
-| Does `bin/dev-tasks.ts` import any deleted module?            | Only `#adapters/cli/parse-args.js`, which is retained and relocated.      |
-| Is `core/reconcile.ts` shared?                                | Yes — `core/extract/component.ts` (deleted) and `update.ts` (retained). It stays. |
-| Is `core/distribution/hash.ts` shared?                        | Yes, same pattern. It stays, already in the retained tree.                |
-| Do any "mixed" tests cover retained behavior?                 | No. The two tests touching both import `hashContent` only as a helper.    |
+| Question                                            | Answer                                                                            |
+| --------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Does `core/distribution` import any deleted module? | No. Zero imports.                                                                 |
+| Does `bin/dev-tasks.ts` import any deleted module?  | Only `#adapters/cli/parse-args.js`, which is retained and relocated.              |
+| Is `core/reconcile.ts` shared?                      | Yes — `core/extract/component.ts` (deleted) and `update.ts` (retained). It stays. |
+| Is `core/distribution/hash.ts` shared?              | Yes, same pattern. It stays, already in the retained tree.                        |
+| Do any "mixed" tests cover retained behavior?       | No. The two tests touching both import `hashContent` only as a helper.            |
 
 ## 5. Data Model & Database Design
 
@@ -96,15 +96,15 @@ No data entities are created or modified. The phase deletes three JSON Schemas (
 
 No HTTP API exists. The public interface is the CLI surface, and this phase removes one of two binaries.
 
-| Command surface        | Before                                                                                                                  | After   |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------- |
-| `dt init`              | Extraction, multi-repo scoping, context bundle assembly                                                                 | Removed |
-| `dt extract …`         | `detect`, `all`, `component`, `openapi`, `asyncapi`, `schema`                                                           | Removed |
-| `dt catalog …`         | `build`, `validate`, `query`, `scaffold`                                                                                | Removed |
-| `dt scope`, `dt scope gate` | LLM-assisted scoping and the G1 abort gate                                                                         | Removed |
-| `dt verify …`          | `contract-diff`, `impact`, `drift`                                                                                      | Removed |
-| `dt ctx …`             | `fetch`, `assemble`                                                                                                     | Removed |
-| `dev-tasks …`          | `install`, `update`, `status`, `pin`, `unpin`, `doctor`, `migrate`                                                      | Unchanged |
+| Command surface             | Before                                                             | After     |
+| --------------------------- | ------------------------------------------------------------------ | --------- |
+| `dt init`                   | Extraction, multi-repo scoping, context bundle assembly            | Removed   |
+| `dt extract …`              | `detect`, `all`, `component`, `openapi`, `asyncapi`, `schema`      | Removed   |
+| `dt catalog …`              | `build`, `validate`, `query`, `scaffold`                           | Removed   |
+| `dt scope`, `dt scope gate` | LLM-assisted scoping and the G1 abort gate                         | Removed   |
+| `dt verify …`               | `contract-diff`, `impact`, `drift`                                 | Removed   |
+| `dt ctx …`                  | `fetch`, `assemble`                                                | Removed   |
+| `dev-tasks …`               | `install`, `update`, `status`, `pin`, `unpin`, `doctor`, `migrate` | Unchanged |
 
 Exit codes reserved exclusively for `dt` semantics are removed from `core/exit-codes.ts`; codes the `dev-tasks` binary returns are untouched, preserving the contract ADR-002 established for the retained surface.
 
@@ -132,31 +132,31 @@ Each numbered step is one commit, and `pnpm run typecheck` must pass at every st
 
 ### Inventory: what is deleted
 
-| Area                 | Items                                                                                                                              |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Binary               | `bin/dt.ts`, the `dt` entry in `package.json` `bin`                                                                                |
-| Adapters             | `adapters/` entirely; `parse-args.ts` relocates to `bin/`                                                                          |
-| Core modules         | `core/catalog`, `core/context`, `core/extract`, `core/scope`, `core/verify`, `core/providers`                                       |
-| Schemas              | `schemas/` (3 files)                                                                                                               |
-| Templates            | `templates/meta-repo/`                                                                                                             |
-| Tests                | 74 of 125 test files; `test/fixtures/{catalog,context,extract,schemas,verify}`                                                     |
-| Dependencies         | `ajv`; `pg` optional peer; the `fast-uri` pnpm override, which exists only for `ajv`                                                |
-| Dependency move      | `yaml` from `dependencies` to `devDependencies` — after removal only `test/unit/infra-workflow-templates.test.ts` imports it       |
-| Prompt trees         | 27 files across `.claude/` (9), `.github/` (10), `.kiro/` (8); the `activity-contract-validation` skill in full                    |
-| Registry             | `AGENTS.md` Task Types / `architecture-change` (RF-62, RF-64) and Cross-Repo Partitioning (RF-63), plus the `CLAUDE.md` echo       |
-| Documentation        | `docs/dt-user-manual.md`, `docs/data-model.md`, `docs/artifact-formats.md`, `docs/requirements/prd-multi-repo-context.md`          |
+| Area            | Items                                                                                                                        |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Binary          | `bin/dt.ts`, the `dt` entry in `package.json` `bin`                                                                          |
+| Adapters        | `adapters/` entirely; `parse-args.ts` relocates to `bin/`                                                                    |
+| Core modules    | `core/catalog`, `core/context`, `core/extract`, `core/scope`, `core/verify`, `core/providers`                                |
+| Schemas         | `schemas/` (3 files)                                                                                                         |
+| Templates       | `templates/meta-repo/`                                                                                                       |
+| Tests           | 74 of 125 test files; `test/fixtures/{catalog,context,extract,schemas,verify}`                                               |
+| Dependencies    | `ajv`; `pg` optional peer; the `fast-uri` pnpm override, which exists only for `ajv`                                         |
+| Dependency move | `yaml` from `dependencies` to `devDependencies` — after removal only `test/unit/infra-workflow-templates.test.ts` imports it |
+| Prompt trees    | 27 files across `.claude/` (9), `.github/` (10), `.kiro/` (8); the `activity-contract-validation` skill in full              |
+| Registry        | `AGENTS.md` Task Types / `architecture-change` (RF-62, RF-64) and Cross-Repo Partitioning (RF-63), plus the `CLAUDE.md` echo |
+| Documentation   | `docs/dt-user-manual.md`, `docs/data-model.md`, `docs/artifact-formats.md`, `docs/requirements/prd-multi-repo-context.md`    |
 
 ### Inventory: what is retained, and why
 
-| Item                              | Reason                                                                             |
-| --------------------------------- | ------------------------------------------------------------------------------------ |
-| `execa`                           | `core/distribution/fetch-package.ts` uses it, reached from `update.ts`              |
-| `core/reconcile.ts`               | `core/distribution/update.ts` uses it                                               |
-| `core/distribution/hash.ts`       | Already in the retained tree                                                        |
-| `adapters/cli/parse-args.ts`      | `bin/dev-tasks.ts` uses it; relocates to `bin/parse-args.ts`                        |
-| `activity-contract-test-design`   | A `verifier` design skill with no `dt` reference; only `activity-contract-validation` is `dt`-bound |
-| ADR-001, ADR-002                  | History. Marked Superseded by ADR-007, never rewritten, per the ADR README rule     |
-| `bundle-manifest.json`            | No change needed. No `managed_path` or `consumer_owned_path` names `dt` or `schemas/` |
+| Item                            | Reason                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `execa`                         | `core/distribution/fetch-package.ts` uses it, reached from `update.ts`                              |
+| `core/reconcile.ts`             | `core/distribution/update.ts` uses it                                                               |
+| `core/distribution/hash.ts`     | Already in the retained tree                                                                        |
+| `adapters/cli/parse-args.ts`    | `bin/dev-tasks.ts` uses it; relocates to `bin/parse-args.ts`                                        |
+| `activity-contract-test-design` | A `verifier` design skill with no `dt` reference; only `activity-contract-validation` is `dt`-bound |
+| ADR-001, ADR-002                | History. Marked Superseded by ADR-007, never rewritten, per the ADR README rule                     |
+| `bundle-manifest.json`          | No change needed. No `managed_path` or `consumer_owned_path` names `dt` or `schemas/`               |
 
 ### Edits rather than deletions
 
@@ -173,16 +173,16 @@ Four files must be edited, and getting any of them wrong breaks a gate rather th
 
 The claim "no retained test is modified" does not survive contact with the repository. Five parity tests assert the presence of content this phase removes:
 
-| Test | Why it must change |
-| --- | --- |
-| `architecture-change-parity.test.ts` | asserts the `AGENTS.md` blocks S-004 deletes — delete with them |
-| `cross-repo-partitioning-parity.test.ts` | same | 
-| `skill-parity-init.test.ts` | eight `dt` and multi-repo assertions survive the edit |
-| `researcher-parity.test.ts` | asserts a `component.json` pattern |
-| `skill-parity-testing-layers.test.ts` | asserts `dt verify impact` and `dt verify drift` |
-| `test/unit/exit-codes.test.ts` | asserts the full fifteen-code table |
+| Test                                     | Why it must change                                              |
+| ---------------------------------------- | --------------------------------------------------------------- |
+| `architecture-change-parity.test.ts`     | asserts the `AGENTS.md` blocks S-004 deletes — delete with them |
+| `cross-repo-partitioning-parity.test.ts` | same                                                            |
+| `skill-parity-init.test.ts`              | eight `dt` and multi-repo assertions survive the edit           |
+| `researcher-parity.test.ts`              | asserts a `component.json` pattern                              |
+| `skill-parity-testing-layers.test.ts`    | asserts `dt verify impact` and `dt verify drift`                |
+| `test/unit/exit-codes.test.ts`           | asserts the full fifteen-code table                             |
 
-These six edits are expected and enumerated. Any *other* retained test needing a change remains a stop signal.
+These six edits are expected and enumerated. Any _other_ retained test needing a change remains a stop signal.
 
 ## 9. Integration Details
 
@@ -214,14 +214,14 @@ No change to the retained binary's error handling. `core/exit-codes.ts` loses `d
 
 The risk in a deletion is not that removed code breaks. It is that something retained quietly depended on it, or that a gate silently stops checking.
 
-| Layer                | Approach                                                                                                                             |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Static               | `typecheck` at every commit boundary is the primary signal. A dangling import is a compile error, not a runtime surprise.             |
-| Unit                 | The 51 retained test files must pass unchanged. Any retained test needing an edit is a finding: it means the seam was not where the analysis said. |
-| Integration          | `binaries.test.ts` gains a negative assertion that `dt` is absent.                                                                    |
-| Absence (new)        | A parity-style test asserting no source file, prompt file, or `AGENTS.md` block references `dt`, `component.json`, or the meta-repo. This is PRD AC-27 and it is the test that keeps the retirement from leaking back. |
-| Dependency           | `pnpm audit --prod` after the prune; `pnpm install` resolves with no missing peer warnings.                                           |
-| Release              | `pnpm run build` followed by the publish workflow's file assertions, run locally before the release commit.                           |
+| Layer         | Approach                                                                                                                                                                                                               |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Static        | `typecheck` at every commit boundary is the primary signal. A dangling import is a compile error, not a runtime surprise.                                                                                              |
+| Unit          | The 51 retained test files must pass unchanged. Any retained test needing an edit is a finding: it means the seam was not where the analysis said.                                                                     |
+| Integration   | `binaries.test.ts` gains a negative assertion that `dt` is absent.                                                                                                                                                     |
+| Absence (new) | A parity-style test asserting no source file, prompt file, or `AGENTS.md` block references `dt`, `component.json`, or the meta-repo. This is PRD AC-27 and it is the test that keeps the retirement from leaking back. |
+| Dependency    | `pnpm audit --prod` after the prune; `pnpm install` resolves with no missing peer warnings.                                                                                                                            |
+| Release       | `pnpm run build` followed by the publish workflow's file assertions, run locally before the release commit.                                                                                                            |
 
 ### Pre-existing failures, and why they matter here
 
@@ -237,25 +237,25 @@ The assertion is set equality over full test names, not a count. A count survive
 
 No feature flag. A deletion cannot be rolled out gradually, and a flagged binary would contradict `SIMPLICITY.md` A10.
 
-| Aspect                | Decision                                                                                                                         |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Version               | `0.14.0`. Removing a published binary is breaking, but the package is pre-1.0, where a minor bump is the convention.              |
-| Commit type           | `chore!:` with a `BREAKING CHANGE:` footer naming the removed binary and every removed command.                                   |
-| CHANGELOG             | A `Removed` section listing every command, matching the Keep a Changelog format already in use.                                   |
-| Backward compatibility | None offered, deliberately. `dt` was documented "Unstable — testing only" in the README, and no consumer is known to use it.     |
-| Restore path          | Release tag `v0.13.0`, commit `0a6f35e`, named in ADR-007. Git history is the restore mechanism; no branch is kept alive.         |
-| Rollback              | Revert the merge commit. The phase touches no persistent state, so revert is complete and immediate.                             |
+| Aspect                 | Decision                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Version                | `0.14.0`. Removing a published binary is breaking, but the package is pre-1.0, where a minor bump is the convention.         |
+| Commit type            | `chore!:` with a `BREAKING CHANGE:` footer naming the removed binary and every removed command.                              |
+| CHANGELOG              | A `Removed` section listing every command, matching the Keep a Changelog format already in use.                              |
+| Backward compatibility | None offered, deliberately. `dt` was documented "Unstable — testing only" in the README, and no consumer is known to use it. |
+| Restore path           | Release tag `v0.13.0`, commit `0a6f35e`, named in ADR-007. Git history is the restore mechanism; no branch is kept alive.    |
+| Rollback               | Revert the merge commit. The phase touches no persistent state, so revert is complete and immediate.                         |
 
 ## 16. Dependencies & Risks
 
-| Risk                                                                              | Likelihood | Mitigation                                                                                                     |
-| --------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
-| The publish workflow's `dist/bin/dt.js` assertion is missed and breaks release     | Medium     | Named explicitly as edit 3 of 4; the release dry run in section 14 catches it before the version commit          |
-| A retained test silently depended on a deleted fixture                             | Low        | The two mixed tests were checked and import only `hashContent`; a retained test needing edits is a stop signal    |
-| `dt` references creep back through a prompt file                                   | Medium     | The absence test (AC-27) fails CI, making regression impossible to merge quietly                                 |
-| An undiscovered consumer uses `dt`                                                 | Low        | README marked it unstable; the restore tag and a CHANGELOG entry naming every command give a documented recovery |
-| `yaml` moved to `devDependencies` breaks a runtime path                            | Low        | Verified: no retained source file imports `yaml`; only one infra test does                                       |
-| The diff is too large to review meaningfully                                       | High       | Seven ordered commits, each independently reviewable; the inventory tables in section 8 are the review aid       |
+| Risk                                                                           | Likelihood | Mitigation                                                                                                       |
+| ------------------------------------------------------------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| The publish workflow's `dist/bin/dt.js` assertion is missed and breaks release | Medium     | Named explicitly as edit 3 of 4; the release dry run in section 14 catches it before the version commit          |
+| A retained test silently depended on a deleted fixture                         | Low        | The two mixed tests were checked and import only `hashContent`; a retained test needing edits is a stop signal   |
+| `dt` references creep back through a prompt file                               | Medium     | The absence test (AC-27) fails CI, making regression impossible to merge quietly                                 |
+| An undiscovered consumer uses `dt`                                             | Low        | README marked it unstable; the restore tag and a CHANGELOG entry naming every command give a documented recovery |
+| `yaml` moved to `devDependencies` breaks a runtime path                        | Low        | Verified: no retained source file imports `yaml`; only one infra test does                                       |
+| The diff is too large to review meaningfully                                   | High       | Seven ordered commits, each independently reviewable; the inventory tables in section 8 are the review aid       |
 
 The last risk is real and not fully solved. A 20,000-line deletion cannot be reviewed line by line. The commit ordering and the inventory tables are what make it reviewable: a reviewer checks that the retained list is complete and that the gates pass, rather than reading every deleted line.
 
@@ -263,18 +263,18 @@ The last risk is real and not fully solved. A 20,000-line deletion cannot be rev
 
 None. All three were resolved on 2026-09-18 and recorded as decisions.
 
-| Question                                          | Resolution                                                                                                    |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Which release tag is the restore path?            | `v0.13.0`, at commit `0a6f35e`, confirmed through the GitHub API. Recorded as `D-37` and named in ADR-007.     |
-| Delete or keep `prd-multi-repo-context.md`?       | Delete. ADR-007 records the decision and git history keeps the content. Recorded as `D-38`.                   |
-| One pull request or two?                          | One, with seven ordered commits. Recorded as `D-29`.                                                          |
+| Question                                    | Resolution                                                                                                 |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Which release tag is the restore path?      | `v0.13.0`, at commit `0a6f35e`, confirmed through the GitHub API. Recorded as `D-37` and named in ADR-007. |
+| Delete or keep `prd-multi-repo-context.md`? | Delete. ADR-007 records the decision and git history keeps the content. Recorded as `D-38`.                |
+| One pull request or two?                    | One, with seven ordered commits. Recorded as `D-29`.                                                       |
 
 ## Decisions (HOW phase)
 
 Confirmed on 2026-09-18 and recorded in `workstream/decisions-shared-understanding.md`. Numbering continues the feature's single decision-log ID space (`D-01` to `D-27` are the WHAT phase), so there is one ID space per feature rather than two conventions.
 
-| ID   | Decision                                                                                                                        |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------- |
+| ID   | Decision                                                                                                                         |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------- |
 | D-28 | Version `0.14.0`, commit type `chore!:` with a `BREAKING CHANGE:` footer naming the removed binary and commands.                 |
 | D-29 | One pull request, seven ordered commits, `typecheck` green at every boundary.                                                    |
 | D-30 | Drop `ajv`, the `pg` peer, and the `fast-uri` override; move `yaml` to `devDependencies`; keep `execa`, `reconcile`, and `hash`. |
@@ -283,7 +283,7 @@ Confirmed on 2026-09-18 and recorded in `workstream/decisions-shared-understandi
 | D-33 | `core/checks` is not created in Phase 0. This phase only deletes.                                                                |
 | D-34 | `parse-args.ts` moves to `bin/`; `adapters/` and the `#adapters/*` alias are removed.                                            |
 | D-35 | ADR-001 and ADR-002 are marked Superseded by ADR-007 and otherwise left intact, per the ADR README's never-rewrite rule.         |
-| D-36 | Superseded by D-40. Success was recorded as exactly 4 remaining test failures.                                                  |
+| D-36 | Superseded by D-40. Success was recorded as exactly 4 remaining test failures.                                                   |
 | D-40 | Success is set equality with the five named pre-existing failures, not a count. Supersedes D-36, which said four and miscounted. |
 | D-37 | The restore path is release tag `v0.13.0` at commit `0a6f35e`, named in ADR-007.                                                 |
 | D-38 | `docs/requirements/prd-multi-repo-context.md` is deleted rather than kept as history.                                            |

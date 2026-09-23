@@ -137,8 +137,8 @@ For each criterion, you **SHOULD** use a concise "Given / When / Then" style whe
 ## Decisions
 
 | ID   | Decision (short form) |
-| ---- | ---------------------- |
-| D-NN | …                       |
+| ---- | --------------------- |
+| D-NN | …                     |
 
 ## Open Questions
 
@@ -210,9 +210,9 @@ Every PRD carries a `## Vocabulary` section immediately after `## Decisions`. It
 ```markdown
 ## Vocabulary
 
-| Term | Status in glossary | Bounded context | Definition (proposals only) | Forbidden synonyms (proposals only) |
-| ---- | ------------------ | --------------- | --------------------------- | ----------------------------------- |
-| …    | existing \| proposed \| conflict → D-NN | … | … | … |
+| Term | Status in glossary                      | Bounded context | Definition (proposals only) | Forbidden synonyms (proposals only) |
+| ---- | --------------------------------------- | --------------- | --------------------------- | ----------------------------------- |
+| …    | existing \| proposed \| conflict → D-NN | …               | …                           | …                                   |
 ```
 
 A row is complete when one of these holds:

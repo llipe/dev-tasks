@@ -58,7 +58,7 @@ Only if none of the four resolve the question does the skill ask the user. A que
 
 This rule belongs to the two invocations where the feature's domain language is still being settled: the WHAT phase (`phase="WHAT"`) and Issue Mode (`mode="issue"`, which `activity-refine` invokes without a `phase` argument — see step 10). It does not run in the HOW phase.
 
-Once the open branch reaches what the feature *is*, ask the user plainly **which domain concepts this feature introduces or changes** — one question, with a recommendation, like every other. For each term the user names, consult the glossary (step 3's second source) and check two things:
+Once the open branch reaches what the feature _is_, ask the user plainly **which domain concepts this feature introduces or changes** — one question, with a recommendation, like every other. For each term the user names, consult the glossary (step 3's second source) and check two things:
 
 1. **The same term with a different definition** — the glossary already defines the term, and the definition the user just gave is not the recorded one.
 2. **The term appearing in another term's forbidden synonyms** — the term is not an entry of its own, but an existing entry names it as a synonym it forbids.
@@ -95,7 +95,7 @@ The exit gate is satisfied only when **both** hold:
 - The open-questions list is empty, **and**
 - The user has made an explicit statement of shared understanding (e.g., "I understand, proceed" / "I confirm").
 
-A "sounds good," an emoji, or silence after a decision-tree summary does **not** satisfy the gate. When the open list is empty, the skill asks directly: *"The open list is empty. Do you confirm shared understanding so I can draft?"* If the user's reply is not an explicit confirmation, the skill re-asks the same direct question rather than treating the reply as consent — the gate is never inferred from tone or silence.
+A "sounds good," an emoji, or silence after a decision-tree summary does **not** satisfy the gate. When the open list is empty, the skill asks directly: _"The open list is empty. Do you confirm shared understanding so I can draft?"_ If the user's reply is not an explicit confirmation, the skill re-asks the same direct question rather than treating the reply as consent — the gate is never inferred from tone or silence.
 
 An empty open-questions list at invocation (nothing to grill) does not silently skip this gate — the direct confirmation question is still asked and must still be explicitly answered.
 
@@ -111,7 +111,7 @@ When `mode="issue"`:
 
 - **Glossary is read-only.** No new term proposals. The glossary is consulted for resolve-before-ask and for the conflict checks in step 3a; a term the issue needs and the glossary lacks is a question for the user, never an edit made here.
 - **Scope is limited** to what the issue changes relative to current behavior — do not open branches outside that delta.
-- **Prior-decision reuse is mandatory, not optional.** Before asking, search prior decisions from *any* feature's `decisions-*.md` for a reusable answer. The scan is keyword-gated: only logs whose `Branch` or `Question` text shares a term with the issue description are read, keeping the lookup bounded as the number of logs grows. A reused answer is cited in qualified form (`<other-feature>#D-NN`) and is not re-asked.
+- **Prior-decision reuse is mandatory, not optional.** Before asking, search prior decisions from _any_ feature's `decisions-*.md` for a reusable answer. The scan is keyword-gated: only logs whose `Branch` or `Question` text shares a term with the issue description are read, keeping the lookup bounded as the number of logs grows. A reused answer is cited in qualified form (`<other-feature>#D-NN`) and is not re-asked.
 - The cap is 8, per the default above (or the configured `docs/tech.md` § Grilling issue-mode value).
 
 ### 11. Assumption-testing reminder (FR-11, SHOULD)
@@ -120,11 +120,11 @@ Once per phase, the skill states plainly that accepting every recommendation rep
 
 ## Cap Configuration
 
-| Mode                  | Default cap | Configured source                       |
-| ---------------------- | ----------- | ---------------------------------------- |
-| Feature Mode, WHAT     | 25          | `docs/tech.md` § Grilling, if present     |
-| Feature Mode, HOW      | 25          | `docs/tech.md` § Grilling, if present     |
-| Issue Mode             | 8           | `docs/tech.md` § Grilling, if present     |
+| Mode               | Default cap | Configured source                     |
+| ------------------ | ----------- | ------------------------------------- |
+| Feature Mode, WHAT | 25          | `docs/tech.md` § Grilling, if present |
+| Feature Mode, HOW  | 25          | `docs/tech.md` § Grilling, if present |
+| Issue Mode         | 8           | `docs/tech.md` § Grilling, if present |
 
 The 25/25/8 defaults apply whenever `docs/tech.md` has no § Grilling subsection, or the subsection's value for this mode is missing, zero, or negative (misconfiguration fallback, noted in the next decision-tree summary).
 

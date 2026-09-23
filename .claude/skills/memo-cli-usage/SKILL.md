@@ -29,11 +29,11 @@ export MEMO_BANK=developer-memory   # bank id convention: <agent-name>-memory
 
 Every entry has a **kind**:
 
-| Kind       | Meaning                                                          | Default bank behavior                          |
-| ---------- | ----------------------------------------------------------------- | ----------------------------------------------- |
-| `self`     | The agent's own persona/context, never trimmed from `recall`      | `kb` rejects `self`; only valid in private banks |
+| Kind       | Meaning                                                           | Default bank behavior                                    |
+| ---------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
+| `self`     | The agent's own persona/context, never trimmed from `recall`      | `kb` rejects `self`; only valid in private banks         |
 | `episodic` | Session-scoped narration (intent/outcome), expires automatically  | requires `--session <id>`; default kind in private banks |
-| `semantic` | Durable, searchable decisions — what `search`/`list` return today | default kind in `kb`                            |
+| `semantic` | Durable, searchable decisions — what `search`/`list` return today | default kind in `kb`                                     |
 
 Rule of thumb: episodic entries are per-session chatter that lives in your private bank and expires; semantic entries are durable knowledge that lives in `kb` (or is promoted there later) and never expires. See [`REFERENCE.md`](./REFERENCE.md) for bank/kind command reference, `memo recall`, `memo timeline`, `memo bank`, and `memo migrate`.
 

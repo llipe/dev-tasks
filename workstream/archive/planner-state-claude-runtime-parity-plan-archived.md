@@ -10,19 +10,19 @@
 
 ## Story Status
 
-| Sequence | Story ID | Issue # | Status         | PR   | Branch                                          |
-| -------- | -------- | ------- | -------------- | ---- | ------------------------------------------------ |
-| 1        | T1.0     | #169    | ✅ Merged      | #180 | issue/169-claude-settings-deliverable (deleted)  |
-| 2        | T9.0     | #177    | ✅ Merged      | #181 | issue/177-fix-planner-merge-path (deleted)       |
-| 3        | T2.0     | #170    | ✅ Merged      | #182 | issue/170-restore-claude-enforcement (deleted)    |
-| 4        | T3.0     | #171    | ✅ Merged      | #183 | issue/171-deliver-claude-root-context (deleted)   |
-| 5        | T4.0     | #172    | ✅ Merged      | #184 | issue/172-withdraw-nextjs-claim (deleted)         |
-| 6        | T5.0     | #173    | ✅ Merged      | #185 | issue/173-collapse-developer-command (deleted)    |
-| 7        | T6.0     | #174    | ✅ Merged      | #186 | issue/174-cost-controls (deleted)                 |
-| 8        | T7.0     | #175    | ✅ Merged      | #187 | issue/175-tool-declaration-parity (deleted)       |
-| 9        | T8.0     | #176    | ✅ Merged      | #188 | issue/176-installed-state-parity-test (deleted)   |
-| 10       | T10.0    | #178    | ✅ Merged      | #189 | issue/178-close-mcp-bypass (deleted)              |
-| 11       | T11.0    | #179    | ✅ Merged      | #190 | issue/179-never-route-around-guard (deleted)      |
+| Sequence | Story ID | Issue # | Status    | PR   | Branch                                          |
+| -------- | -------- | ------- | --------- | ---- | ----------------------------------------------- |
+| 1        | T1.0     | #169    | ✅ Merged | #180 | issue/169-claude-settings-deliverable (deleted) |
+| 2        | T9.0     | #177    | ✅ Merged | #181 | issue/177-fix-planner-merge-path (deleted)      |
+| 3        | T2.0     | #170    | ✅ Merged | #182 | issue/170-restore-claude-enforcement (deleted)  |
+| 4        | T3.0     | #171    | ✅ Merged | #183 | issue/171-deliver-claude-root-context (deleted) |
+| 5        | T4.0     | #172    | ✅ Merged | #184 | issue/172-withdraw-nextjs-claim (deleted)       |
+| 6        | T5.0     | #173    | ✅ Merged | #185 | issue/173-collapse-developer-command (deleted)  |
+| 7        | T6.0     | #174    | ✅ Merged | #186 | issue/174-cost-controls (deleted)               |
+| 8        | T7.0     | #175    | ✅ Merged | #187 | issue/175-tool-declaration-parity (deleted)     |
+| 9        | T8.0     | #176    | ✅ Merged | #188 | issue/176-installed-state-parity-test (deleted) |
+| 10       | T10.0    | #178    | ✅ Merged | #189 | issue/178-close-mcp-bypass (deleted)            |
+| 11       | T11.0    | #179    | ✅ Merged | #190 | issue/179-never-route-around-guard (deleted)    |
 
 ## Current Position
 

@@ -48,6 +48,7 @@ This directory contains completed execution artifacts from finished features and
 ### Claude Runtime Parity (Issues #169–#179, #191; mostly closed)
 
 **Main artifacts:**
+
 - `tasks-claude-runtime-parity-plan.md`
 - `test-plan-claude-runtime-parity.md`
 - `traceability-matrix-claude-runtime-parity.md`
@@ -55,6 +56,7 @@ This directory contains completed execution artifacts from finished features and
 - `fidelity-report-claude-runtime-parity-rollup.md`
 
 **Per-issue fidelity reports (closed issues #169–#174, #177–#179, #191):**
+
 - `fidelity-report-169.md` through `fidelity-report-179.md` (gaps for #175, #176)
 - `fidelity-report-191.md`
 

@@ -2,23 +2,23 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                               | Author           |
-| ------- | ---------- | ------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-18 | Initial version. Five stories, issues #195 to #199.                                                    | product-engineer |
+| Version | Date       | Summary                                                                                                                                                                               | Author                      |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1.0     | 2026-09-18 | Initial version. Five stories, issues #195 to #199.                                                                                                                                   | product-engineer            |
 | 1.1     | 2026-09-19 | Verifier corrections: five-failure baseline as a set (D-40), both publish assertions, four alias files, format globs, exit-code repoint, six expected test edits, bitbucket template. | verifier / product-engineer |
-| 1.2     | 2026-09-19 | D-41 supersedes D-28: tasks 5.12/5.13 no longer set `package.json`'s version or author a release commit — that is `scripts/release.sh`, run manually on `main` after merge. | @llipe / product-engineer |
+| 1.2     | 2026-09-19 | D-41 supersedes D-28: tasks 5.12/5.13 no longer set `package.json`'s version or author a release commit — that is `scripts/release.sh`, run manually on `main` after merge.           | @llipe / product-engineer   |
 
 ## Scope
 
 All five Phase 0 stories, delivered on one integration branch as one consolidated pull request (D-29).
 
-| Story | Issue | Title                                          |
-| ----- | ----- | ------------------------------------------------ |
-| S-001 | [#195](https://github.com/llipe/dev-tasks/issues/195) | Remove the `dt` source tree            |
+| Story | Issue                                                 | Title                                      |
+| ----- | ----------------------------------------------------- | ------------------------------------------ |
+| S-001 | [#195](https://github.com/llipe/dev-tasks/issues/195) | Remove the `dt` source tree                |
 | S-002 | [#196](https://github.com/llipe/dev-tasks/issues/196) | Remove `dt` tests and guard the retirement |
-| S-003 | [#197](https://github.com/llipe/dev-tasks/issues/197) | Prune `dt` dependencies and fix release |
+| S-003 | [#197](https://github.com/llipe/dev-tasks/issues/197) | Prune `dt` dependencies and fix release    |
 | S-004 | [#198](https://github.com/llipe/dev-tasks/issues/198) | Remove `dt` from prompt trees and registry |
-| S-005 | [#199](https://github.com/llipe/dev-tasks/issues/199) | Retire `dt` docs and record ADR-007    |
+| S-005 | [#199](https://github.com/llipe/dev-tasks/issues/199) | Retire `dt` docs and record ADR-007        |
 
 **Branch:** `integration/prd-shared-understanding-phase-0`
 **Sources:** PRD FR-53 to FR-58; spec v1.1; decisions D-14, D-28 to D-38.
@@ -27,12 +27,12 @@ All five Phase 0 stories, delivered on one integration branch as one consolidate
 
 Run `pnpm run test` on `main` and save the failing-test list. Eleven fail today; **six** live in files this phase deletes (four `ctxFetch`, two `dt init --components`). The phase is correct when exactly these **five** remain, compared as a set of full test names rather than as a count (D-40, superseding D-36 which said four and miscounted):
 
-| Failing test                                             | Cause          |
-| ---------------------------------------------------------- | -------------- |
-| `doctor > checkCacheDir > fails when path is not writable` | runs as root   |
-| `runUpdate > --force with unwritable backup dir`           | runs as root   |
-| `deploy.sh > exits 2 when yq is missing from PATH`         | `yq` present   |
-| `bootstrap > doctor` (2 integration cases)                 | environment    |
+| Failing test                                               | Cause        |
+| ---------------------------------------------------------- | ------------ |
+| `doctor > checkCacheDir > fails when path is not writable` | runs as root |
+| `runUpdate > --force with unwritable backup dir`           | runs as root |
+| `deploy.sh > exits 2 when yq is missing from PATH`         | `yq` present |
+| `bootstrap > doctor` (2 integration cases)                 | environment  |
 
 A sixth failure, or the disappearance of one of these five, is caused by this work. Compare sets, not counts: a count survives a regression that removes one failure and introduces another.
 
@@ -196,40 +196,40 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 
 ## Acceptance-Criteria to Task Mapping
 
-| Story | AC        | Verifying task           |
-| ----- | --------- | -------------------------- |
-| S-001 | AC-1      | 1.10                     |
-| S-001 | AC-2      | 1.11                     |
-| S-001 | AC-3, 4   | 1.12                     |
-| S-001 | AC-5      | 1.13                     |
-| S-001 | AC-6      | 1.14                     |
-| S-001 | AC-7      | 1.15                     |
-| S-002 | AC-1      | 2.1, 2.2                 |
-| S-002 | AC-2      | 2.3                      |
-| S-002 | AC-3      | 2.4                      |
-| S-002 | AC-4      | 2.11                     |
-| S-002 | AC-5      | 2.5, 2.6                 |
-| S-002 | AC-6      | 2.12                     |
-| S-003 | AC-1 to 3 | 3.1, 3.2, 3.3            |
-| S-003 | AC-4      | 3.5                      |
-| S-003 | AC-5      | 3.7, 3.11                |
-| S-003 | AC-6      | 3.8, 3.9                 |
-| S-003 | AC-7      | 3.10                     |
-| S-004 | AC-1, 8   | 4.11                     |
-| S-004 | AC-2      | 4.1, 4.2                 |
-| S-004 | AC-3      | 4.3, 4.10                |
-| S-004 | AC-4      | 4.4, 4.5, 4.6            |
-| S-004 | AC-5, 6   | 4.7, 4.8                 |
-| S-004 | AC-7      | 4.12                     |
-| S-005 | AC-1      | 5.1                      |
-| S-005 | AC-2      | 5.2, 5.9                 |
-| S-005 | AC-3      | 5.3, 5.4                 |
-| S-005 | AC-4      | 5.5                      |
-| S-005 | AC-5      | 5.6                      |
-| S-005 | AC-6      | 5.7                      |
-| S-005 | AC-7      | 5.8                      |
-| S-005 | AC-8      | 5.11, 5.12               |
-| S-005 | AC-9      | 5.13                     |
+| Story | AC        | Verifying task |
+| ----- | --------- | -------------- |
+| S-001 | AC-1      | 1.10           |
+| S-001 | AC-2      | 1.11           |
+| S-001 | AC-3, 4   | 1.12           |
+| S-001 | AC-5      | 1.13           |
+| S-001 | AC-6      | 1.14           |
+| S-001 | AC-7      | 1.15           |
+| S-002 | AC-1      | 2.1, 2.2       |
+| S-002 | AC-2      | 2.3            |
+| S-002 | AC-3      | 2.4            |
+| S-002 | AC-4      | 2.11           |
+| S-002 | AC-5      | 2.5, 2.6       |
+| S-002 | AC-6      | 2.12           |
+| S-003 | AC-1 to 3 | 3.1, 3.2, 3.3  |
+| S-003 | AC-4      | 3.5            |
+| S-003 | AC-5      | 3.7, 3.11      |
+| S-003 | AC-6      | 3.8, 3.9       |
+| S-003 | AC-7      | 3.10           |
+| S-004 | AC-1, 8   | 4.11           |
+| S-004 | AC-2      | 4.1, 4.2       |
+| S-004 | AC-3      | 4.3, 4.10      |
+| S-004 | AC-4      | 4.4, 4.5, 4.6  |
+| S-004 | AC-5, 6   | 4.7, 4.8       |
+| S-004 | AC-7      | 4.12           |
+| S-005 | AC-1      | 5.1            |
+| S-005 | AC-2      | 5.2, 5.9       |
+| S-005 | AC-3      | 5.3, 5.4       |
+| S-005 | AC-4      | 5.5            |
+| S-005 | AC-5      | 5.6            |
+| S-005 | AC-6      | 5.7            |
+| S-005 | AC-7      | 5.8            |
+| S-005 | AC-8      | 5.11, 5.12     |
+| S-005 | AC-9      | 5.13           |
 
 ## Migration Requirements
 

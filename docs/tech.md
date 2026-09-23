@@ -2,13 +2,13 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                          | Author           |
-| ------- | ---------- | -------------------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-07-20 | Initial repository-wide technical constitution                                   | product-engineer |
-| 1.1     | 2026-08-18 | Added `qa-engineer` coverage gate to the golden path; named `/TESTING.md`        | technical-writer |
-| 1.2     | 2026-09-19 | Recorded repository shape and the package map (S-005, PRD AC-29)                 | developer        |
-| 1.3     | 2026-09-19 | Root script fan-out contract; glossary and simplicity baseline ownership (S-006) | developer        |
-| 1.4     | 2026-09-21 | Added `Grilling` question-cap configuration subsection (S-007, `shared-understanding#D-55`) | developer        |
+| Version | Date       | Summary                                                                                                                                  | Author           |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.0     | 2026-07-20 | Initial repository-wide technical constitution                                                                                           | product-engineer |
+| 1.1     | 2026-08-18 | Added `qa-engineer` coverage gate to the golden path; named `/TESTING.md`                                                                | technical-writer |
+| 1.2     | 2026-09-19 | Recorded repository shape and the package map (S-005, PRD AC-29)                                                                         | developer        |
+| 1.3     | 2026-09-19 | Root script fan-out contract; glossary and simplicity baseline ownership (S-006)                                                         | developer        |
+| 1.4     | 2026-09-21 | Added `Grilling` question-cap configuration subsection (S-007, `shared-understanding#D-55`)                                              | developer        |
 | 1.5     | 2026-09-22 | Package-map bounded context is now a canonical glossary term; the D-45 freeform placeholder retired (S-006, `shared-understanding#D-69`) | developer        |
 
 ## Package Map
@@ -79,11 +79,11 @@ continue or stop rather than auto-deciding either way (`shared-understanding#D-5
 FR-9). The caps are configurable here; a repository with no table below uses
 the hardcoded defaults.
 
-| Setting     | Default | Meaning                                |
-| ----------- | ------- | --------------------------------------- |
-| `cap.what`  | 25      | WHAT-phase question cap, Feature Mode  |
-| `cap.how`   | 25      | HOW-phase question cap, Feature Mode   |
-| `cap.issue` | 8       | Total question cap, Issue Mode         |
+| Setting     | Default | Meaning                               |
+| ----------- | ------- | ------------------------------------- |
+| `cap.what`  | 25      | WHAT-phase question cap, Feature Mode |
+| `cap.how`   | 25      | HOW-phase question cap, Feature Mode  |
+| `cap.issue` | 8       | Total question cap, Issue Mode        |
 
 `activity-grill` reads this table if present; this section is optional
 configuration, not a required file — `activity-init` does not need to

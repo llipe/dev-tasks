@@ -2,10 +2,10 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                      | Author           |
-| ------- | ---------- | -------------------------------------------- | ---------------- |
+| Version | Date       | Summary                                                                                                                            | Author           |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | 1.1     | 2026-09-11 | Added S-010 (caller wiring and workflow chains). Phase 2 caller wiring folded into S-009. S-006 no longer authors workflow chains. | product-engineer |
-| 1.0     | 2026-09-11 | Initial version, from PRD v1.3 and spec v1.0 | product-engineer |
+| 1.0     | 2026-09-11 | Initial version, from PRD v1.3 and spec v1.0                                                                                       | product-engineer |
 
 Source: `docs/requirements/prd-infra-engineer.md` (v1.3), `workstream/specification-infra-engineer.md` (v1.0).
 

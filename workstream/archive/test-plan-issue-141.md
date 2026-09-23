@@ -2,9 +2,9 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                          | Author   |
-| ------- | ---------- | ------------------------------------------------ | -------- |
-| 1.0     | 2026-09-14 | Initial Design-Mode test plan for the #141 MVP   | verifier |
+| Version | Date       | Summary                                        | Author   |
+| ------- | ---------- | ---------------------------------------------- | -------- |
+| 1.0     | 2026-09-14 | Initial Design-Mode test plan for the #141 MVP | verifier |
 
 ## Source Input Summary
 
@@ -53,35 +53,35 @@ Test-first order: author `test/unit/pr-teaching-template-parity.test.ts` and con
 
 There is no browser/service E2E surface. The "end-to-end" observable is a reviewer/agent consuming the template. These are validated as manual black-box scenarios plus the automated parity test.
 
-| ID    | Scenario                                                                                                   | Expected observable result                                                                                          | AC        |
-| ----- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------- |
-| E2E-1 | Author a PR for a **behavioral / user-visible** change using the extended template.                        | All three teaching sections present; **Examples populated** with a concrete before/after (required for this class). | AC-1,AC-2 |
-| E2E-2 | Author a PR for a **trivial** change (typo / dependency bump / formatting).                                | All three teaching sections may be omitted; What/Why/Testing/Checklist/Attribution still present; no rule violated. | AC-2      |
-| E2E-3 | Author a PR for a **user-visible-but-no-code** change (e.g. copy change).                                  | Examples still required (before/after copy); other two sections SHOULD.                                             | AC-2      |
-| E2E-4 | A reviewer unfamiliar with the area reads only the body of an E2E-1 PR.                                     | Can state what the area does, what changed and why, and cite the example — without opening the diff first.          | AC-1      |
+| ID    | Scenario                                                                            | Expected observable result                                                                                          | AC        |
+| ----- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------- |
+| E2E-1 | Author a PR for a **behavioral / user-visible** change using the extended template. | All three teaching sections present; **Examples populated** with a concrete before/after (required for this class). | AC-1,AC-2 |
+| E2E-2 | Author a PR for a **trivial** change (typo / dependency bump / formatting).         | All three teaching sections may be omitted; What/Why/Testing/Checklist/Attribution still present; no rule violated. | AC-2      |
+| E2E-3 | Author a PR for a **user-visible-but-no-code** change (e.g. copy change).           | Examples still required (before/after copy); other two sections SHOULD.                                             | AC-2      |
+| E2E-4 | A reviewer unfamiliar with the area reads only the body of an E2E-1 PR.             | Can state what the area does, what changed and why, and cite the example — without opening the diff first.          | AC-1      |
 
-### Contract validation scenarios (the template *is* the contract)
+### Contract validation scenarios (the template _is_ the contract)
 
-| ID   | Contract assertion                                                                                                                | Method                                | AC              |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | --------------- |
-| CT-1 | Canonical template in `.github/agents/github-ops.agent.md` contains the three new section headings, appended after the existing sections (What/Why/How/Testing/Checklist/Attribution all still present). | parity test (regex/section presence)  | AC-1            |
-| CT-2 | The three trees' PR-template blocks are **structurally identical** — same section set, same order, same rule text (behavioral parity, not incidental whitespace). | parity test (normalized compare)      | AC-3            |
-| CT-3 | Template text explicitly states the SHOULD level and the "Examples REQUIRED for user-visible/API/contract changes" carve-out, and the trivial-PR omission allowance. | parity test (rule-text presence)      | AC-2            |
-| CT-4 | All four `developer` files' shorthand reference reflects the extended template (no stale "What / Why / How / Testing / Checklist" that omits the teaching sections, or an explicit pointer to the github-ops template of record). | parity test (reference assertion ×4)  | AC-4            |
-| CT-5 | The parity test fails against the pre-change template and passes after implementation.                                            | run test on base rev, then on branch  | AC-5            |
+| ID   | Contract assertion                                                                                                                                                                                                                | Method                               | AC   |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ---- |
+| CT-1 | Canonical template in `.github/agents/github-ops.agent.md` contains the three new section headings, appended after the existing sections (What/Why/How/Testing/Checklist/Attribution all still present).                          | parity test (regex/section presence) | AC-1 |
+| CT-2 | The three trees' PR-template blocks are **structurally identical** — same section set, same order, same rule text (behavioral parity, not incidental whitespace).                                                                 | parity test (normalized compare)     | AC-3 |
+| CT-3 | Template text explicitly states the SHOULD level and the "Examples REQUIRED for user-visible/API/contract changes" carve-out, and the trivial-PR omission allowance.                                                              | parity test (rule-text presence)     | AC-2 |
+| CT-4 | All four `developer` files' shorthand reference reflects the extended template (no stale "What / Why / How / Testing / Checklist" that omits the teaching sections, or an explicit pointer to the github-ops template of record). | parity test (reference assertion ×4) | AC-4 |
+| CT-5 | The parity test fails against the pre-change template and passes after implementation.                                                                                                                                            | run test on base rev, then on branch | AC-5 |
 
 ### Edge-case catalog (categorized)
 
-| ID   | Category            | Case                                                                                     | Expected                                                                                  | AC        |
-| ---- | ------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------- |
-| EC-1 | State transition    | One tree edited, the other two not (three-tree drift).                                   | Parity test **fails** (drift caught).                                                     | AC-3,AC-5 |
-| EC-2 | Boundary            | Trivial PR omits all three teaching sections.                                            | Allowed; no violation.                                                                    | AC-2      |
-| EC-3 | Boundary            | User-visible change omits **Examples**.                                                  | Violation of the REQUIRED carve-out (manual/reviewer catch; template text must make this checkable). | AC-2      |
-| EC-4 | Input domain        | Section headings use a level other than `##`, or a table without a header row.           | Accessibility constraint violated; template must use flat `##` + header rows.             | AC-1      |
-| EC-5 | Security (negative) | An example in the template embeds a literal secret/token/connection string.              | **Must not occur** — examples reference env/config by key name only.                      | AC-6      |
-| EC-6 | Security (negative) | Example shows an env var with a real-looking value (`API_KEY=sk-live-...`).              | **Must not occur** — key name only, placeholder value or omitted.                         | AC-6      |
-| EC-7 | Scope guard         | A test asserts a tier, `dt changemap`, skill, enforcement, or write-back.                | **Must not exist** — that is Phase 2+; presence indicates scope creep.                    | scope     |
-| EC-8 | Idempotency         | Re-running the parity test after a formatted (`format:check`) template.                  | Still green — prettier normalization does not break structural assertions.                | AC-3,AC-7 |
+| ID   | Category            | Case                                                                           | Expected                                                                                             | AC        |
+| ---- | ------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | --------- |
+| EC-1 | State transition    | One tree edited, the other two not (three-tree drift).                         | Parity test **fails** (drift caught).                                                                | AC-3,AC-5 |
+| EC-2 | Boundary            | Trivial PR omits all three teaching sections.                                  | Allowed; no violation.                                                                               | AC-2      |
+| EC-3 | Boundary            | User-visible change omits **Examples**.                                        | Violation of the REQUIRED carve-out (manual/reviewer catch; template text must make this checkable). | AC-2      |
+| EC-4 | Input domain        | Section headings use a level other than `##`, or a table without a header row. | Accessibility constraint violated; template must use flat `##` + header rows.                        | AC-1      |
+| EC-5 | Security (negative) | An example in the template embeds a literal secret/token/connection string.    | **Must not occur** — examples reference env/config by key name only.                                 | AC-6      |
+| EC-6 | Security (negative) | Example shows an env var with a real-looking value (`API_KEY=sk-live-...`).    | **Must not occur** — key name only, placeholder value or omitted.                                    | AC-6      |
+| EC-7 | Scope guard         | A test asserts a tier, `dt changemap`, skill, enforcement, or write-back.      | **Must not exist** — that is Phase 2+; presence indicates scope creep.                               | scope     |
+| EC-8 | Idempotency         | Re-running the parity test after a formatted (`format:check`) template.        | Still green — prettier normalization does not break structural assertions.                           | AC-3,AC-7 |
 
 ### Randomized / property tactics
 

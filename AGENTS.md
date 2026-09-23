@@ -41,25 +41,25 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.cla
 
 ### Activity Skills
 
-| Skill                                    | Purpose                                                   | Consumer         |
-| ---------------------------------------- | --------------------------------------------------------- | ---------------- |
-| activity-init                            | Establish product context and technical guidelines        | product-engineer |
-| activity-refine                          | Issue refinement or full PRD creation                     | product-engineer |
+| Skill                                    | Purpose                                                                                     | Consumer         |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------- | ---------------- |
+| activity-init                            | Establish product context and technical guidelines                                          | product-engineer |
+| activity-refine                          | Issue refinement or full PRD creation                                                       | product-engineer |
 | activity-grill                           | One-question-at-a-time, depth-first interview to a confirmed shared-understanding exit gate | product-engineer |
-| activity-codebase-research               | Bounded codebase investigation with structured artifact   | researcher       |
-| activity-generate-spec                   | PRD to technical specification                            | product-engineer |
-| activity-generate-stories                | Spec to user stories with coverage validation             | product-engineer |
-| activity-publish-github                  | Publish stories as GitHub Issues                          | product-engineer |
-| activity-e2e-test-design                 | E2E scenario generation from spec/stories                 | verifier         |
-| activity-contract-test-design            | Contract and schema compatibility test strategy           | verifier         |
-| activity-edge-case-refinement            | Systematic edge-case discovery                            | verifier         |
-| activity-random-test-tactics             | Randomized/fuzz/property test generation                  | verifier         |
-| activity-test-standards                  | Establish/maintain TESTING.md, detect harness defects     | qa-engineer      |
-| activity-test-implementation             | Author Layer 1-2 tests with security-negative category    | qa-engineer      |
-| activity-integration-test-implementation | Layer 2.5 tests against real databases                    | qa-engineer      |
-| activity-e2e-test-implementation         | Playwright E2E from verifier scenario tables              | qa-engineer      |
-| activity-coverage-gap-analysis           | Coverage measurement or structural gap analysis           | qa-engineer      |
-| activity-drift-reconciliation            | Route drift findings to task expansion or spec write-back | product-engineer |
+| activity-codebase-research               | Bounded codebase investigation with structured artifact                                     | researcher       |
+| activity-generate-spec                   | PRD to technical specification                                                              | product-engineer |
+| activity-generate-stories                | Spec to user stories with coverage validation                                               | product-engineer |
+| activity-publish-github                  | Publish stories as GitHub Issues                                                            | product-engineer |
+| activity-e2e-test-design                 | E2E scenario generation from spec/stories                                                   | verifier         |
+| activity-contract-test-design            | Contract and schema compatibility test strategy                                             | verifier         |
+| activity-edge-case-refinement            | Systematic edge-case discovery                                                              | verifier         |
+| activity-random-test-tactics             | Randomized/fuzz/property test generation                                                    | verifier         |
+| activity-test-standards                  | Establish/maintain TESTING.md, detect harness defects                                       | qa-engineer      |
+| activity-test-implementation             | Author Layer 1-2 tests with security-negative category                                      | qa-engineer      |
+| activity-integration-test-implementation | Layer 2.5 tests against real databases                                                      | qa-engineer      |
+| activity-e2e-test-implementation         | Playwright E2E from verifier scenario tables                                                | qa-engineer      |
+| activity-coverage-gap-analysis           | Coverage measurement or structural gap analysis                                             | qa-engineer      |
+| activity-drift-reconciliation            | Route drift findings to task expansion or spec write-back                                   | product-engineer |
 
 ### Operational Skills
 

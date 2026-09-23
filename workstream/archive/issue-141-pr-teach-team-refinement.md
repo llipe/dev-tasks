@@ -2,8 +2,8 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                             | Author           |
-| ------- | ---------- | --------------------------------------------------- | ---------------- |
+| Version | Date       | Summary                                              | Author           |
+| ------- | ---------- | ---------------------------------------------------- | ---------------- |
 | 1.0     | 2026-09-14 | Initial refinement — MVP subset of PR-KT PRD Phase 1 | product-engineer |
 
 ## Summary

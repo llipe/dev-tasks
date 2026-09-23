@@ -31,10 +31,10 @@ A ninth term arrives the same way the first eight did — proposed in a PRD's
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                                                                                                                                       | Author           |
-| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Version | Date       | Summary                                                                                                                                                                                                         | Author           |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | 1.1     | 2026-09-22 | Seeded from Phase 3 specification §8.7 (`shared-understanding#D-69`, closing `#D-45`), +decision log, +grilling, +exit gate, +bounded context, +package map, +runbook, +install-if-absent, +foundation document | product-engineer |
-| 1.0     | 2026-09-21 | Delivered empty, install-if-absent on every profile (`shared-understanding#D-57`, ADR-008)                                                                                                                     | product-engineer |
+| 1.0     | 2026-09-21 | Delivered empty, install-if-absent on every profile (`shared-understanding#D-57`, ADR-008)                                                                                                                      | product-engineer |
 
 ## Bounded Context: AI-assisted development workflow
 

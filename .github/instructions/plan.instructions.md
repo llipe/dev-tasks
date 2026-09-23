@@ -77,8 +77,8 @@ The task list **MUST** follow this structure:
 ## Decisions Consumed
 
 | ID   | Decision (short form) |
-| ---- | ---------------------- |
-| D-NN | …                       |
+| ---- | --------------------- |
+| D-NN | …                     |
 ```
 
 ## Decision Citations
@@ -94,7 +94,7 @@ end of the line: `- [ ] 3.2 Add cap-reached prompt (D-55)` (FR-16).
   You **MUST NOT** fabricate a citation to give a task one.
 - The task list closes with a `## Decisions Consumed` section aggregating
   every decision ID cited anywhere in the list, in the same `ID | Decision
-  (short form)` table shape the decision log itself uses. A task list that
+(short form)` table shape the decision log itself uses. A task list that
   cites no decisions still includes the section, empty (header plus
   table skeleton, no rows) — consistent with how `activity-refine`'s and
   `activity-generate-spec`'s own `## Decisions` sections may legitimately
@@ -179,7 +179,7 @@ If this is a **greenfield project** or a **new component**, you **MUST** include
 5. You **MUST** ensure all Implementation Steps, Acceptance Criteria, and Testing requirements are preserved as sub-tasks.
 6. For JS/TS repositories, you **MUST** prefer `pnpm` commands and canonical script names in generated tasks.
 7. You **MUST** ensure each task includes both implementation and test/validation steps, including edge-case validation.
-7a. When a decision log exists for the feature, you **MUST** cite the decision ID inline on any traceable sub-task and populate the closing `## Decisions Consumed` section (FR-16) — additively, never fabricated.
+   7a. When a decision log exists for the feature, you **MUST** cite the decision ID inline on any traceable sub-task and populate the closing `## Decisions Consumed` section (FR-16) — additively, never fabricated.
 8. For schema/data-model changes, you **MUST** include migration lifecycle tasks and an explicit user-confirmation gate before applying migrations unless an opt-out rationale is documented.
 9. You **MUST** update the corresponding GitHub Issue(s) with the task checklist by delegating to `github-ops` whenever possible. If no issue exists, you **MUST** ask the user whether to create one first.
 10. You **MUST** save the task list file.

@@ -2,13 +2,13 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                              | Author           |
-| ------- | ---------- | ---------------------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-19 | Initial version. Seven stories covering PRD FR-44 to FR-51 and FR-59 to FR-64. | product-engineer |
-| 1.1     | 2026-09-19 | S-002 gains AC-8: `README.md` must document the `migrate docs` process so a consumer upgrading across the release learns it from the README alone. | @llipe / product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Author                      |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1.0     | 2026-09-19 | Initial version. Seven stories covering PRD FR-44 to FR-51 and FR-59 to FR-64.                                                                                                                                                                                                                                                                                                                                                                                                                                            | product-engineer            |
+| 1.1     | 2026-09-19 | S-002 gains AC-8: `README.md` must document the `migrate docs` process so a consumer upgrading across the release learns it from the README alone.                                                                                                                                                                                                                                                                                                                                                                        | @llipe / product-engineer   |
 | 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-46 to D-52). S-001: AC-2 scoped to rewritable files with ADRs/PRDs/`workstream/` excluded (D-50), AC-3 must not copy Phase 0's scan roots, new AC-8 for `.gitignore`, count corrected to 51. S-003: AC-5 names `templates/scripts/release.sh`, not this repo's `scripts/release.sh`. S-004: AC-1 "pure" restated, AC-4 gains a checkable filename regex and hand-parsed frontmatter (D-49), AC-7 pinned to `tsx` not `dist/` (D-48), new AC-10 for the two false-failure constraints. | verifier / product-engineer |
-| 1.3     | 2026-09-19 | Synced to `main` at `c14905e`: S-001 AC-8 marked delivered ahead by PR #209 (verify, do not re-implement), reference count corrected 51 → 50 with root back to 5. | product-engineer |
-| 1.4     | 2026-09-19 | D-51 and D-52 accepted. FR-49a's 18 infra change kinds deferred; S-002's Context corrected — the existing `migrate` is detect-and-apply, so `migrate docs` is the first sub-verb to propose by default and AC-8's README section must state the asymmetry. No open items remain. | @llipe / product-engineer |
+| 1.3     | 2026-09-19 | Synced to `main` at `c14905e`: S-001 AC-8 marked delivered ahead by PR #209 (verify, do not re-implement), reference count corrected 51 → 50 with root back to 5.                                                                                                                                                                                                                                                                                                                                                         | product-engineer            |
+| 1.4     | 2026-09-19 | D-51 and D-52 accepted. FR-49a's 18 infra change kinds deferred; S-002's Context corrected — the existing `migrate` is detect-and-apply, so `migrate docs` is the first sub-verb to propose by default and AC-8's README section must state the asymmetry. No open items remain.                                                                                                                                                                                                                                          | @llipe / product-engineer   |
 
 ## Source Documents
 
@@ -35,8 +35,8 @@ flowchart LR
 
 Branch: `integration/prd-shared-understanding-phase-1`. Recommended orchestrator: `planner`.
 
-| Story | Issue |
-| ----- | ----- |
+| Story | Issue                                                 |
+| ----- | ----------------------------------------------------- |
 | S-001 | [#202](https://github.com/llipe/dev-tasks/issues/202) |
 | S-002 | [#203](https://github.com/llipe/dev-tasks/issues/203) |
 | S-003 | [#204](https://github.com/llipe/dev-tasks/issues/204) |
@@ -173,7 +173,7 @@ Note the precedent is weaker than FR-45 originally claimed (D-52, PRD v1.13): `m
 
 #### Migration Requirements
 
-- Migration artifact: this story *is* the migration path; no data-model migration exists.
+- Migration artifact: this story _is_ the migration path; no data-model migration exists.
 - Rollback/impact notes: backups written before any rename; documented in the runbook delivered by S-003 (`runbook-migrate-foundation-docs`).
 - Apply step: only under explicit `--force` by the consumer. No agent runs it unprompted.
 - Verification after apply: the command reports both new paths and the backup location.
@@ -516,7 +516,7 @@ So that procedural knowledge accumulates instead of evaporating with the PR.
 
 #### Context
 
-S-003 created the runbooks and S-004 made their structure a gate. What neither does is notice a *missing* runbook for work that just happened. That judgment — "was this procedure worth writing down?" — cannot be a deterministic check, so it belongs to the `verifier` as a finding (FR-49b).
+S-003 created the runbooks and S-004 made their structure a gate. What neither does is notice a _missing_ runbook for work that just happened. That judgment — "was this procedure worth writing down?" — cannot be a deterministic check, so it belongs to the `verifier` as a finding (FR-49b).
 
 #### Acceptance Criteria
 
@@ -583,31 +583,31 @@ Not applicable.
 
 ### Requirement Mapping
 
-| PRD requirement                                            | Story ID(s)   | Status     |
-| ------------------------------------------------------------ | ------------- | ---------- |
-| FR-44 — rename both foundation documents                    | S-001         | ✅ Covered |
-| FR-45 — propose migration, one-release fallback             | S-001 (fallback), S-002 (proposal) | ✅ Covered |
-| FR-46 — behavior-preserving `refactor:` commit              | S-001         | ✅ Covered |
-| FR-47 — `docs/runbooks/`, index, template, initial set      | S-003         | ✅ Covered |
-| FR-48 — runbook frontmatter and fixed body shape            | S-003         | ✅ Covered |
-| FR-49 — coverage and procedure triggers                     | S-003 (a, coverage), S-007 (b, procedure) | ✅ Covered |
-| FR-50 — `technical-writer` hygiene + deterministic check under `lint` | S-004 (check), S-007 (hygiene) | ✅ Covered |
-| FR-51 — ownership: `technical-writer`, not `housekeeping`   | S-007         | ✅ Covered |
-| FR-59 — shape terminology and detection signals             | S-005         | ✅ Covered |
-| FR-60 — package map in `docs/tech.md`, `doctor` warning     | S-005         | ✅ Covered |
-| FR-61 — root script fan-out, `validate` single entry point  | S-006 (agent/contract scope; CI template is Phase 4) | ✅ Covered |
-| FR-62 — `TESTING.md` per-package runners, reachability      | S-006         | ✅ Covered |
-| FR-63 — package-scoped findings, tasks, commits; one glossary | S-006       | ✅ Covered |
-| FR-64 — one root simplicity baseline keyed by path          | S-006         | ✅ Covered |
-| AC-22 — no old-name reference remains; parity test asserts  | S-001         | ✅ Covered |
-| AC-23 — old names keep working; `doctor` warns              | S-001 (fallback), S-002 (`doctor`) | ✅ Covered |
-| AC-24 — `validate` fails on runbook structure breaks        | S-004         | ✅ Covered |
-| AC-25 — every script/workflow named by a runbook            | S-003         | ✅ Covered |
-| AC-26 — `activity-init` creates the three files, confirms `SIMPLICITY.md` | S-005 | ✅ Covered |
-| AC-29 — monorepo package map, `doctor` warns on drift       | S-005         | ✅ Covered |
-| AC-30 — root `validate` runs every package; CI scopes to affected | S-006 (root fan-out); **Phase 4** (CI template) | ⚠️ Split |
-| AC-31 — verifier finding for a procedure PR with no runbook | S-007         | ✅ Covered |
-| AC-32 — `validate` fails on index/file mismatch             | S-004         | ✅ Covered |
+| PRD requirement                                                           | Story ID(s)                                          | Status     |
+| ------------------------------------------------------------------------- | ---------------------------------------------------- | ---------- |
+| FR-44 — rename both foundation documents                                  | S-001                                                | ✅ Covered |
+| FR-45 — propose migration, one-release fallback                           | S-001 (fallback), S-002 (proposal)                   | ✅ Covered |
+| FR-46 — behavior-preserving `refactor:` commit                            | S-001                                                | ✅ Covered |
+| FR-47 — `docs/runbooks/`, index, template, initial set                    | S-003                                                | ✅ Covered |
+| FR-48 — runbook frontmatter and fixed body shape                          | S-003                                                | ✅ Covered |
+| FR-49 — coverage and procedure triggers                                   | S-003 (a, coverage), S-007 (b, procedure)            | ✅ Covered |
+| FR-50 — `technical-writer` hygiene + deterministic check under `lint`     | S-004 (check), S-007 (hygiene)                       | ✅ Covered |
+| FR-51 — ownership: `technical-writer`, not `housekeeping`                 | S-007                                                | ✅ Covered |
+| FR-59 — shape terminology and detection signals                           | S-005                                                | ✅ Covered |
+| FR-60 — package map in `docs/tech.md`, `doctor` warning                   | S-005                                                | ✅ Covered |
+| FR-61 — root script fan-out, `validate` single entry point                | S-006 (agent/contract scope; CI template is Phase 4) | ✅ Covered |
+| FR-62 — `TESTING.md` per-package runners, reachability                    | S-006                                                | ✅ Covered |
+| FR-63 — package-scoped findings, tasks, commits; one glossary             | S-006                                                | ✅ Covered |
+| FR-64 — one root simplicity baseline keyed by path                        | S-006                                                | ✅ Covered |
+| AC-22 — no old-name reference remains; parity test asserts                | S-001                                                | ✅ Covered |
+| AC-23 — old names keep working; `doctor` warns                            | S-001 (fallback), S-002 (`doctor`)                   | ✅ Covered |
+| AC-24 — `validate` fails on runbook structure breaks                      | S-004                                                | ✅ Covered |
+| AC-25 — every script/workflow named by a runbook                          | S-003                                                | ✅ Covered |
+| AC-26 — `activity-init` creates the three files, confirms `SIMPLICITY.md` | S-005                                                | ✅ Covered |
+| AC-29 — monorepo package map, `doctor` warns on drift                     | S-005                                                | ✅ Covered |
+| AC-30 — root `validate` runs every package; CI scopes to affected         | S-006 (root fan-out); **Phase 4** (CI template)      | ⚠️ Split   |
+| AC-31 — verifier finding for a procedure PR with no runbook               | S-007                                                | ✅ Covered |
+| AC-32 — `validate` fails on index/file mismatch                           | S-004                                                | ✅ Covered |
 
 ### Gaps
 
@@ -625,21 +625,21 @@ Not applicable.
 
 **None. All four are resolved.**
 
-| Item | Resolution |
-| ---- | ---------- |
-| Tenth runbook (`runbook-deploy-service`) | Confirmed as `D-46`; Design Mode independently reproduced the coverage arithmetic. |
-| One consolidated PR vs. three by family | One, as `D-47`. |
+| Item                                      | Resolution                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tenth runbook (`runbook-deploy-service`)  | Confirmed as `D-46`; Design Mode independently reproduced the coverage arithmetic.                                                                                                                                                                                                                                                                                            |
+| One consolidated PR vs. three by family   | One, as `D-47`.                                                                                                                                                                                                                                                                                                                                                               |
 | FR-49a's 18 `infra-engineer` change kinds | **Deferred** as `D-51`. Five are read-only discovery and are not procedures worth a runbook; the other thirteen have no script or workflow for FR-49a's "same draft PR" rule to attach to. S-007 AC-4 states the rule going forward, so the next `infra-engineer` change that touches a kind brings its runbook with it. Recorded as a deliberate deferral, not an oversight. |
-| FR-45's "detect-and-propose" description | **Corrected** as `D-52`. PRD v1.13 amends FR-45 to say detect-and-**apply**; the legacy path's behavior is unchanged. |
+| FR-45's "detect-and-propose" description  | **Corrected** as `D-52`. PRD v1.13 amends FR-45 to say detect-and-**apply**; the legacy path's behavior is unchanged.                                                                                                                                                                                                                                                         |
 
 ## Execution Plan
 
 | Order | Story | Gate that proves it                                                |
-| ----- | ----- | -------------------------------------------------------------------- |
-| 1     | S-001 | Old-name absence test green; `validate` at the D-40 baseline        |
-| 2     | S-002 | `migrate docs` propose/apply tests; legacy `migrate` unchanged      |
-| 3     | S-003 | Runbook set test green; every script/workflow covered               |
-| 4     | S-004 | Each seeded docs break fails `validate`; clean tree passes          |
-| 5     | S-005 | Both workspace fixtures produce a correct package map               |
-| 6     | S-006 | Parity suites green; reachability check passes on the mono fixture  |
-| 7     | S-007 | Parity suites green; verifier audit runs clean on this phase's PR   |
+| ----- | ----- | ------------------------------------------------------------------ |
+| 1     | S-001 | Old-name absence test green; `validate` at the D-40 baseline       |
+| 2     | S-002 | `migrate docs` propose/apply tests; legacy `migrate` unchanged     |
+| 3     | S-003 | Runbook set test green; every script/workflow covered              |
+| 4     | S-004 | Each seeded docs break fails `validate`; clean tree passes         |
+| 5     | S-005 | Both workspace fixtures produce a correct package map              |
+| 6     | S-006 | Parity suites green; reachability check passes on the mono fixture |
+| 7     | S-007 | Parity suites green; verifier audit runs clean on this phase's PR  |

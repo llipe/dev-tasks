@@ -267,11 +267,11 @@ export MEMO_BANK=developer-memory
 
 ### `kind` — Entry Nature
 
-| Kind       | Meaning                                                                 | Where it lives                                    | Expires?                                    |
-| ---------- | ------------------------------------------------------------------------ | -------------------------------------------------- | -------------------------------------------- |
-| `self`     | The agent's own persona/context entries (never ranked, never trimmed)    | private banks only — `kb` rejects `--kind self`     | no (subject to a soft cap warning, not a hard block) |
-| `episodic` | Session-scoped narration — intent/outcome entries tied to one `--session` | private banks (default kind there)                  | yes — `policy.expires_in_days` or `--expires-in` |
-| `semantic` | Durable, searchable decisions — what `search`/`list` return by default   | `kb` (default kind there); may also exist in a private bank | no                                           |
+| Kind       | Meaning                                                                   | Where it lives                                              | Expires?                                             |
+| ---------- | ------------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------- |
+| `self`     | The agent's own persona/context entries (never ranked, never trimmed)     | private banks only — `kb` rejects `--kind self`             | no (subject to a soft cap warning, not a hard block) |
+| `episodic` | Session-scoped narration — intent/outcome entries tied to one `--session` | private banks (default kind there)                          | yes — `policy.expires_in_days` or `--expires-in`     |
+| `semantic` | Durable, searchable decisions — what `search`/`list` return by default    | `kb` (default kind there); may also exist in a private bank | no                                                   |
 
 `--kind` is case-insensitive (`--kind Self`, `--kind SELF`, `--kind self` all normalize to `self`). Default kind is `episodic` in a private bank, `semantic` in `kb`.
 
@@ -484,14 +484,14 @@ memo recall "<task description>" --bank $MEMO_BANK --json
 
 The 1.3.0 replacement for the four-command session-start sequence (`list` + `tags list` + `search` + `search --scope related`). Gathers, in one call (≤ 4 s target):
 
-| Section        | Content                                                              | Omitted when       |
-| -------------- | ----------------------------------------------------------------------- | -------------------- |
-| `SELF`         | This agent's own persona/context entries, newest first, never trimmed    | `--bank` resolves to `kb` |
-| `POLICIES`     | Ranked semantic policy entries from `kb`                                 | never (empty until later phases add policy entries) |
-| `SHARED`       | Ranked semantic entries from `kb`, scoped by `--scope`                    | never                |
-| `MINE`         | Ranked semantic entries from this agent's own bank                        | `--bank` resolves to `kb` |
-| `LAST SESSION` | The most recent episodic session's entries, in `seq` order                | `--bank` resolves to `kb` |
-| `CONFLICTS`    | Pending-contradiction entries (empty until a later phase)                 | never                |
+| Section        | Content                                                               | Omitted when                                        |
+| -------------- | --------------------------------------------------------------------- | --------------------------------------------------- |
+| `SELF`         | This agent's own persona/context entries, newest first, never trimmed | `--bank` resolves to `kb`                           |
+| `POLICIES`     | Ranked semantic policy entries from `kb`                              | never (empty until later phases add policy entries) |
+| `SHARED`       | Ranked semantic entries from `kb`, scoped by `--scope`                | never                                               |
+| `MINE`         | Ranked semantic entries from this agent's own bank                    | `--bank` resolves to `kb`                           |
+| `LAST SESSION` | The most recent episodic session's entries, in `seq` order            | `--bank` resolves to `kb`                           |
+| `CONFLICTS`    | Pending-contradiction entries (empty until a later phase)             | never                                               |
 
 **Flags:**
 

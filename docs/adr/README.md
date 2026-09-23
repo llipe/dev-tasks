@@ -9,16 +9,16 @@ Durable records of architectural decisions for `dev-tasks`. One file per decisio
 
 ## Index
 
-| ADR                                                     | Title                                                                        | Status                |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------- |
-| [ADR-001](ADR-001-component-json-manifest-format.md)    | `component.json` as the sole manifest format                                 | Superseded by ADR-007 |
-| [ADR-002](ADR-002-exit-code-contract.md)                | Spec-aligned exit-code contract with deprecated aliases                      | Superseded by ADR-007 |
-| [ADR-003](ADR-003-qa-engineer-coverage-gate.md)         | `qa-engineer` coverage gate in the documented golden path                    | Accepted              |
-| [ADR-004](ADR-004-researcher-pre-spec-research-step.md) | Pre-spec codebase research step via `researcher` agent                       | Accepted              |
-| [ADR-005](ADR-005-infra-engineer-lifecycle-gates.md)    | `infra-engineer` approval-gated infrastructure change lifecycle              | Accepted              |
-| [ADR-006](ADR-006-claude-settings-ownership.md)         | `.claude/settings.json` ownership — install-if-absent, not managed-overwrite | Accepted              |
-| [ADR-007](ADR-007-retire-multi-repo-context-layer.md)   | Retire the multi-repo context layer (`dt`)                                   | Accepted              |
-| [ADR-008](ADR-008-grilling-exit-gate-and-install-if-absent-category.md) | `activity-grill`'s hard exit gate, and the platform-agnostic install-if-absent category | Accepted |
+| ADR                                                                     | Title                                                                                   | Status                |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------- |
+| [ADR-001](ADR-001-component-json-manifest-format.md)                    | `component.json` as the sole manifest format                                            | Superseded by ADR-007 |
+| [ADR-002](ADR-002-exit-code-contract.md)                                | Spec-aligned exit-code contract with deprecated aliases                                 | Superseded by ADR-007 |
+| [ADR-003](ADR-003-qa-engineer-coverage-gate.md)                         | `qa-engineer` coverage gate in the documented golden path                               | Accepted              |
+| [ADR-004](ADR-004-researcher-pre-spec-research-step.md)                 | Pre-spec codebase research step via `researcher` agent                                  | Accepted              |
+| [ADR-005](ADR-005-infra-engineer-lifecycle-gates.md)                    | `infra-engineer` approval-gated infrastructure change lifecycle                         | Accepted              |
+| [ADR-006](ADR-006-claude-settings-ownership.md)                         | `.claude/settings.json` ownership — install-if-absent, not managed-overwrite            | Accepted              |
+| [ADR-007](ADR-007-retire-multi-repo-context-layer.md)                   | Retire the multi-repo context layer (`dt`)                                              | Accepted              |
+| [ADR-008](ADR-008-grilling-exit-gate-and-install-if-absent-category.md) | `activity-grill`'s hard exit gate, and the platform-agnostic install-if-absent category | Accepted              |
 
 ## Naming
 

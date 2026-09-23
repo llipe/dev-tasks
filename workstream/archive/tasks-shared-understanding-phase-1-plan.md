@@ -2,28 +2,28 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                               | Author           |
-| ------- | ---------- | ------------------------------------------------------- | ---------------- |
-| 1.0     | 2026-09-19 | Initial version. Seven stories, issues pending creation. | product-engineer |
-| 1.1     | 2026-09-19 | S-002 AC-8 added (README documents the migrate process): tasks 2.13 to 2.15. Issues #202 to #208 created and recorded in the Scope table. | @llipe / product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                | Author                      |
+| ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1.0     | 2026-09-19 | Initial version. Seven stories, issues pending creation.                                                                                                                                                                                                                                                                                                                               | product-engineer            |
+| 1.1     | 2026-09-19 | S-002 AC-8 added (README documents the migrate process): tasks 2.13 to 2.15. Issues #202 to #208 created and recorded in the Scope table.                                                                                                                                                                                                                                              | @llipe / product-engineer   |
 | 1.2     | 2026-09-19 | Verifier Design Mode corrections (D-46 to D-52): task 4.9 pinned to `tsx` with a fresh-clone verification at 4.9a; task 4.10 reversed (hand-parse, do not promote `yaml`); tasks 4.3/4.4 gain the false-failure constraints; task 3.7 corrected to `templates/scripts/release.sh`; tasks 1.1/1.1a scope the parity test away from immutable records; task 1.9a added for `.gitignore`. | verifier / product-engineer |
-| 1.3     | 2026-09-19 | Synced to `main` at `c14905e`: task 1.9a becomes verify-only (PR #209 shipped the `.gitignore` fix); baseline note re-confirmed against the merged base. | product-engineer |
-| 1.4     | 2026-09-19 | D-51 and D-52 accepted; open-items list closed. Task 2.14 must document the `migrate` / `migrate docs` asymmetry. | @llipe / product-engineer |
-| 1.5     | 2026-09-19 | S-001 complete (`7449ab0`), draft PR #211 opened. Three sub-tasks added for references discovered beyond the enumerated 50: directory-form paths in `technical-writer`, stale `activity-init` frontmatter descriptions, and prose references in `CLAUDE.md`. | developer |
+| 1.3     | 2026-09-19 | Synced to `main` at `c14905e`: task 1.9a becomes verify-only (PR #209 shipped the `.gitignore` fix); baseline note re-confirmed against the merged base.                                                                                                                                                                                                                               | product-engineer            |
+| 1.4     | 2026-09-19 | D-51 and D-52 accepted; open-items list closed. Task 2.14 must document the `migrate` / `migrate docs` asymmetry.                                                                                                                                                                                                                                                                      | @llipe / product-engineer   |
+| 1.5     | 2026-09-19 | S-001 complete (`7449ab0`), draft PR #211 opened. Three sub-tasks added for references discovered beyond the enumerated 50: directory-form paths in `technical-writer`, stale `activity-init` frontmatter descriptions, and prose references in `CLAUDE.md`.                                                                                                                           | developer                   |
 
 ## Scope
 
 All seven Phase 1 stories, delivered on one integration branch as one consolidated pull request (proposed `D-47`, mirroring Phase 0's D-29).
 
-| Story | Issue | Title                                          |
-| ----- | ----- | ------------------------------------------------ |
-| S-001 | [#202](https://github.com/llipe/dev-tasks/issues/202) | Rename the foundation documents and update every reference |
+| Story | Issue                                                 | Title                                                        |
+| ----- | ----------------------------------------------------- | ------------------------------------------------------------ |
+| S-001 | [#202](https://github.com/llipe/dev-tasks/issues/202) | Rename the foundation documents and update every reference   |
 | S-002 | [#203](https://github.com/llipe/dev-tasks/issues/203) | Propose the rename to consumers via `dev-tasks migrate docs` |
-| S-003 | [#204](https://github.com/llipe/dev-tasks/issues/204) | Scaffold `docs/runbooks/` and seed the initial runbook set |
+| S-003 | [#204](https://github.com/llipe/dev-tasks/issues/204) | Scaffold `docs/runbooks/` and seed the initial runbook set   |
 | S-004 | [#205](https://github.com/llipe/dev-tasks/issues/205) | Create `core/checks` and enforce docs structure under `lint` |
-| S-005 | [#206](https://github.com/llipe/dev-tasks/issues/206) | Detect repository shape and record the package map |
-| S-006 | [#207](https://github.com/llipe/dev-tasks/issues/207) | Make agents package-aware                       |
-| S-007 | [#208](https://github.com/llipe/dev-tasks/issues/208) | Enforce runbook coverage and docs ownership     |
+| S-005 | [#206](https://github.com/llipe/dev-tasks/issues/206) | Detect repository shape and record the package map           |
+| S-006 | [#207](https://github.com/llipe/dev-tasks/issues/207) | Make agents package-aware                                    |
+| S-007 | [#208](https://github.com/llipe/dev-tasks/issues/208) | Enforce runbook coverage and docs ownership                  |
 
 **Branch:** `integration/prd-shared-understanding-phase-1`
 **Sources:** PRD v1.13, FR-44 to FR-51 and FR-59 to FR-64; spec v1.4; stories v1.4; decisions D-16, D-21, D-42 to D-52 — all resolved.
@@ -33,7 +33,7 @@ All seven Phase 1 stories, delivered on one integration branch as one consolidat
 
 `pnpm run test` on `main` fails on exactly five pre-existing environment cases (D-40). Capture the **full failing test names** to a file at task 0.2; every later gate compares against that set, not a count:
 
-| Failing test                                             | Cause        |
+| Failing test                                               | Cause        |
 | ---------------------------------------------------------- | ------------ |
 | `doctor > checkCacheDir > fails when path is not writable` | runs as root |
 | `runUpdate > --force with unwritable backup dir`           | runs as root |
@@ -146,7 +146,7 @@ None. Phase 1 is additive plus one rename.
   - [x] 3.4 Add `templates/runbooks/README.md` (index template) and `templates/runbooks/runbook-template.md`
   - [x] 3.5 Register both in `INSTALL_IF_ABSENT_FILES` with the agnostic tag
   - [x] 3.6 Author `runbook-install-dev-tasks` and `runbook-configure-branch-protection`
-  - [x] 3.7 Author `runbook-release-npm` (related: **`templates/scripts/release.sh`** — the consumer template, 6443 B, *not* this repo's own `scripts/release.sh`, 13617 B; only the template is an AC-25 surface — plus `.github/workflows/publish-npm.yml` and `.github/workflows/release-bundle.yml`)
+  - [x] 3.7 Author `runbook-release-npm` (related: **`templates/scripts/release.sh`** — the consumer template, 6443 B, _not_ this repo's own `scripts/release.sh`, 13617 B; only the template is an AC-25 surface — plus `.github/workflows/publish-npm.yml` and `.github/workflows/release-bundle.yml`)
   - [x] 3.8 Author `runbook-deploy-service` (related: `templates/scripts/deploy.sh`, `deploy-verify.sh`, `deploy-status.sh`, `templates/workflows/deploy-dev.yml`, `deploy-prod.yml`) — the tenth runbook that closes AC-25; see Open Items
   - [x] 3.9 Author `runbook-rollback-deploy` (related: `templates/scripts/rollback.sh`, `templates/workflows/rollback.yml`)
   - [x] 3.10 Author `runbook-migrate-foundation-docs` (related: the S-002 command), `runbook-troubleshoot-hooks`, `runbook-setup-supabase-local`, `runbook-setup-simplicity-tooling`, `runbook-retire-dt`
@@ -253,48 +253,47 @@ None. Phase 1 is additive plus one rename.
 
 ## Acceptance-Criteria to Task Mapping
 
-| Story | AC          | Verifying task |
-| ----- | ----------- | ---------------- |
-| S-001 | AC-1        | 1.12           |
-| S-001 | AC-2, AC-3  | 1.13           |
-| S-001 | AC-4, AC-5  | 1.14           |
-| S-001 | AC-6        | 1.15           |
-| S-001 | AC-7        | 1.17           |
-| S-001 | AC-8        | 1.9a           |
-| S-004 | AC-10       | 4.3, 4.4       |
-| S-002 | AC-1, 2, 6  | 2.11           |
-| S-002 | AC-3        | 2.10           |
-| S-002 | AC-4        | 2.11           |
-| S-002 | AC-5        | 2.8            |
-| S-002 | AC-7        | 2.12           |
-| S-002 | AC-8        | 2.13, 2.14, 2.15 |
-| S-003 | AC-1 to 3   | 3.15           |
-| S-003 | AC-4        | 3.1            |
-| S-003 | AC-5        | 3.14           |
-| S-003 | AC-6, AC-7  | 3.11, 3.12     |
-| S-003 | AC-8        | 3.13           |
-| S-004 | AC-1 to 6   | 4.1 to 4.7     |
-| S-004 | AC-7        | 4.12           |
-| S-004 | AC-8        | 4.13           |
-| S-004 | AC-9        | 4.8            |
-| S-005 | AC-1 to 4   | 5.12           |
-| S-005 | AC-5        | 5.9, 5.12      |
-| S-005 | AC-6        | 5.5, 5.12      |
-| S-005 | AC-7        | 5.8, 5.12      |
-| S-005 | AC-8        | 5.11, 5.12     |
-| S-006 | AC-1, 4 to 6 | 6.11          |
-| S-006 | AC-2        | 6.5, 6.11      |
-| S-006 | AC-3        | 6.6, 6.10      |
-| S-007 | AC-1 to 4   | 7.7            |
-| S-007 | AC-5, AC-6  | 7.4, 7.5       |
-| S-007 | AC-7        | 7.6            |
+| Story | AC           | Verifying task   |
+| ----- | ------------ | ---------------- |
+| S-001 | AC-1         | 1.12             |
+| S-001 | AC-2, AC-3   | 1.13             |
+| S-001 | AC-4, AC-5   | 1.14             |
+| S-001 | AC-6         | 1.15             |
+| S-001 | AC-7         | 1.17             |
+| S-001 | AC-8         | 1.9a             |
+| S-004 | AC-10        | 4.3, 4.4         |
+| S-002 | AC-1, 2, 6   | 2.11             |
+| S-002 | AC-3         | 2.10             |
+| S-002 | AC-4         | 2.11             |
+| S-002 | AC-5         | 2.8              |
+| S-002 | AC-7         | 2.12             |
+| S-002 | AC-8         | 2.13, 2.14, 2.15 |
+| S-003 | AC-1 to 3    | 3.15             |
+| S-003 | AC-4         | 3.1              |
+| S-003 | AC-5         | 3.14             |
+| S-003 | AC-6, AC-7   | 3.11, 3.12       |
+| S-003 | AC-8         | 3.13             |
+| S-004 | AC-1 to 6    | 4.1 to 4.7       |
+| S-004 | AC-7         | 4.12             |
+| S-004 | AC-8         | 4.13             |
+| S-004 | AC-9         | 4.8              |
+| S-005 | AC-1 to 4    | 5.12             |
+| S-005 | AC-5         | 5.9, 5.12        |
+| S-005 | AC-6         | 5.5, 5.12        |
+| S-005 | AC-7         | 5.8, 5.12        |
+| S-005 | AC-8         | 5.11, 5.12       |
+| S-006 | AC-1, 4 to 6 | 6.11             |
+| S-006 | AC-2         | 6.5, 6.11        |
+| S-006 | AC-3         | 6.6, 6.10        |
+| S-007 | AC-1 to 4    | 7.7              |
+| S-007 | AC-5, AC-6   | 7.4, 7.5         |
+| S-007 | AC-7         | 7.6              |
 
 ## Open Items Carried From the Stories
 
 1. ~~**`runbook-deploy-service`** (task 3.8) is a tenth runbook beyond FR-47's named nine.~~ Confirmed as `D-46`; Design Mode independently verified the coverage arithmetic.
 2. ~~**One consolidated PR** versus three by family.~~ Confirmed as `D-47`.
-4. ~~**FR-49a's 18 infra change kinds** have no covering criterion.~~ Deferred as `D-51`. S-007 AC-4 carries the rule forward; no runbooks for change kinds are authored in this phase.
-5. ~~**`dev-tasks migrate` is detect-and-apply, not detect-and-propose.**~~ Corrected as `D-52`; PRD v1.13 amends FR-45. Task 2.14's README subsection must state the asymmetry (`migrate` applies, `migrate docs` proposes) rather than gloss it.
+3. ~~**FR-49a's 18 infra change kinds** have no covering criterion.~~ Deferred as `D-51`. S-007 AC-4 carries the rule forward; no runbooks for change kinds are authored in this phase.
+4. ~~**`dev-tasks migrate` is detect-and-apply, not detect-and-propose.**~~ Corrected as `D-52`; PRD v1.13 amends FR-45. Task 2.14's README subsection must state the asymmetry (`migrate` applies, `migrate docs` proposes) rather than gloss it.
 
-**No open items remain. Phase 1 is ready to implement.**
-3. ~~**GitHub issues** for S-001 to S-007 are not yet created (task 0.3).~~ Done: #202 to #208.
+**No open items remain. Phase 1 is ready to implement.** 3. ~~**GitHub issues** for S-001 to S-007 are not yet created (task 0.3).~~ Done: #202 to #208.
