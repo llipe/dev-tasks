@@ -86,6 +86,21 @@ describe("planner reads the roadmap and updates it in the consolidated PR", () =
   });
 });
 
+describe("roadmap prompt text is identical across platforms", () => {
+  const section = (f: string, start: string, end: string): string | undefined =>
+    read(f).match(new RegExp(`${start}[\\s\\S]*?${end}`))?.[0];
+  it("product-engineer's Roadmap Maintenance section", () => {
+    const s = PRODUCT_ENGINEER.map((f) => section(f, "## Roadmap Maintenance", "## memo-cli"));
+    expect(s[0]).toBeDefined();
+    for (const x of s) expect(x).toBe(s[0]);
+  });
+  it("verifier's Roadmap-Mismatch Finding section", () => {
+    const s = VERIFIER.map((f) => section(f, "## Roadmap-Mismatch Finding", "\\n## "));
+    expect(s[0]).toBeDefined();
+    for (const x of s) expect(x).toBe(s[0]);
+  });
+});
+
 describe("verifier reports roadmap drift as advisory", () => {
   it.each(VERIFIER)("%s carries the roadmap-mismatch finding and never blocks on it", (f) => {
     const content = read(f);
@@ -105,13 +120,27 @@ describe("the roadmap is registered and well-formed", () => {
   );
 
   it("docs/roadmap.md exists with one table whose statuses are from the fixed set", () => {
-    const rows = read("docs/roadmap.md")
+    const table = read("docs/roadmap.md")
       .split("\n")
-      .filter((l) => l.startsWith("| [")); // data rows begin with a PRD link
+      .filter((l) => l.startsWith("|"));
+    const cells = (l: string): string[] =>
+      l
+        .split("|")
+        .slice(1, -1)
+        .map((c) => c.trim());
+    expect(cells(table[0])).toEqual([
+      "PRD",
+      "Phase/Wave",
+      "Scope (one line)",
+      "Status",
+      "Issues/PRs",
+      "What's missing",
+    ]);
+    const rows = table.slice(2); // header, separator, then data
     expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) {
-      const status = row.split("|")[4].trim();
-      expect(STATUSES, `bad status in: ${row}`).toContain(status);
+      expect(cells(row), `wrong column count in: ${row}`).toHaveLength(6);
+      expect(STATUSES, `bad status in: ${row}`).toContain(cells(row)[3]);
     }
   });
 

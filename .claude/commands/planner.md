@@ -500,8 +500,8 @@ After all stories are merged into integration:
 10. **Post-integration deploy handoff (conditional).** When the merged scope includes deployable changes and the repository declares environments in `infra/environments.yaml`, planner **MUST** hand the deploy off to `infra-engineer` rather than running any platform write or deploy command itself. This handoff is conditional — it applies only when infrastructure/deploy scope is present; a docs- or test-only integration triggers no deploy. Planner names `infra-engineer` as the owner of the post-integration deploy (dev on merge to `main`, production behind the protected-environment reviewer on the release tag via the `deploy-ops` workflow templates) and never invokes `deploy.sh`, `release.sh`, `flyctl`, `aws`, or `supabase` directly.
 11. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
 
-- Preferred: run `git checkout integration/<plan-id>-<short-description>`.
-- Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
+    - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
+    - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
 
 12. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
 

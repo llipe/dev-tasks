@@ -257,7 +257,7 @@ memo-cli 1.3.0 adds a second axis of scoping — **banks** — and a third field
 
 A bank is a namespace for entries, resolved in this priority order (B3): `--bank <id>` flag > `$MEMO_BANK` env var > `config.bank.default` > `kb`. `kb` is the shared, org-wide knowledge base every repo reads from by default; any other bank id (kebab-case or UUID) is a **private** bank — conventionally named `<agent-name>-memory` (e.g. `developer-memory`, `technical-writer-memory`, `product-engineer-memory`, `planner-memory`) for a long-lived agent's own session memory.
 
-**Agents: always pass `--bank <id>` literally on every command.** Agent runtimes run each shell command in a fresh shell, so an `export MEMO_BANK=…` from an earlier command is gone by the next one. An unquoted empty `$MEMO_BANK` is dropped by the shell, and the flag parser then reads the next token as the bank id (`--bank --rationale …` → bank `--rationale`), which memo-cli rejects with `VALIDATION_FAILED` (dev-tasks issue #253). Never write `--bank <agent>-memory` in an agent prompt or command.
+**Agents: always pass `--bank <id>` literally on every command.** Agent runtimes run each shell command in a fresh shell, so an `export MEMO_BANK=…` from an earlier command is gone by the next one. An unquoted empty `$MEMO_BANK` is dropped by the shell, and the flag parser then reads the next token as the bank id (`--bank --rationale …` → bank `--rationale`), which memo-cli rejects with `VALIDATION_FAILED` (dev-tasks issue #253). Never write `--bank $MEMO_BANK` in an agent prompt or command.
 
 ```bash
 memo write --bank developer-memory ...   # bank id convention: <agent-name>-memory

@@ -23,7 +23,7 @@ If validation fails, run: `memo setup init --repo <repo> --org <org> --domain <d
 
 A **bank** is a namespace an agent's entries live in — the shared `kb` (default, semantic knowledge base) or a private bank like `developer-memory`, one per long-lived agent. Set `--bank <id>` on any command.
 
-**Agents: always pass `--bank <id>` literally on every command.** Agent runtimes run each shell command in a fresh shell, so an `export MEMO_BANK=…` from an earlier command is gone by the next one. An unquoted empty `$MEMO_BANK` is dropped by the shell, and the flag parser then reads the next token as the bank id (`--bank --rationale …` → bank `--rationale`), which memo-cli rejects with `VALIDATION_FAILED` (dev-tasks issue #253). Never write `--bank <agent>-memory` in an agent prompt or command.
+**Agents: always pass `--bank <id>` literally on every command.** Agent runtimes run each shell command in a fresh shell, so an `export MEMO_BANK=…` from an earlier command is gone by the next one. An unquoted empty `$MEMO_BANK` is dropped by the shell, and the flag parser then reads the next token as the bank id (`--bank --rationale …` → bank `--rationale`), which memo-cli rejects with `VALIDATION_FAILED` (dev-tasks issue #253). Never write `--bank $MEMO_BANK` in an agent prompt or command.
 
 ```bash
 memo write --bank developer-memory ...   # bank id convention: <agent-name>-memory

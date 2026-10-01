@@ -267,7 +267,7 @@ memo write \
   --session ISSUE-<n> \
   --bank developer-memory \
   --rationale "Context: Completed ISSUE-<##> after implementing <scope>. Delivery: shipped <behavior>, deviations <none|details>, AC <x/y> verified. Learned: <rejected approaches, surprises, constraints discovered|none>. Impact: quality gates test=<pass|fail>; lint=<pass|fail>; format:check=<pass|fail>; typecheck=<pass|fail>; audit=<pass|fail>; docs=<clean|drift-fixed>; migration=<none|details>." \
-  --tags "<domain>,issue-<number>,outcome,gates-pass[,<impact-tag>][,<boundary-tag>]" \
+  --tags "<domain>,issue-<number>,outcome,gates-pass[,<impact-or-boundary-tag>]" \
   --entry-type decision \
   --source agent \
   --commit "$(git rev-parse HEAD)" \
@@ -276,6 +276,8 @@ memo write \
   --on-duplicate consolidate \
   --json
 ```
+
+memo-cli accepts 2–5 tags per entry and rejects more with `VALIDATION_FAILED`; keep both templates within that limit.
 
 Session sequence numbers (`--seq`) auto-increment per `--session`; do not pass `--seq` explicitly unless replaying a specific position.
 

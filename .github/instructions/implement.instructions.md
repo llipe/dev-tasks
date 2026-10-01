@@ -148,8 +148,8 @@ When `workstream/decisions-<feature>.md` exists and was read per step 2 above:
 9. The PR **MUST** be converted from draft to ready for review.
 10. The PR **MUST** be approved by the appropriate reviewer per the merge authority policy in `github-ops`:
 
-- PRs targeting an **integration branch**: `planner` reviews and approves.
-- PRs targeting **`main`**: the **user** reviews and approves.
+    - PRs targeting an **integration branch**: `planner` reviews and approves.
+    - PRs targeting **`main`**: the **user** reviews and approves.
 
 11. The PR **MUST** be merged by the authorized party (planner for integration branches, user for `main`).
 12. You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.

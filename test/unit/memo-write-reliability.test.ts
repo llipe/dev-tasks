@@ -111,6 +111,14 @@ describe("memo-cli commands name the bank literally (#253 defect 1)", () => {
     }
   });
 
+  it("every technical-writer memo write names its bank literally", () => {
+    for (const f of TECHNICAL_WRITER) {
+      const writes = memoSection(read(f)).match(/memo write[\s\S]*?--json/g) ?? [];
+      expect(writes.length, `${f} has no memo write`).toBeGreaterThanOrEqual(1);
+      for (const w of writes) expect(w, f).toMatch(/--bank (kb|technical-writer-memory)\b/);
+    }
+  });
+
   it("planner's run-outcome write names planner-memory", () => {
     for (const f of PLANNER) {
       expect(memoSection(read(f)), f).toContain("--bank planner-memory");
@@ -134,6 +142,18 @@ describe("semantic kb writes satisfy memo-cli's provenance rule (#253 defect 2)"
       expect(section, f).toContain("Decision Write-Back");
       expect(section, f).toMatch(/--kind semantic[\s\S]*--bank kb[\s\S]*--manual/);
       expect(section, f).not.toMatch(/does NOT write to memo/);
+    }
+  });
+});
+
+describe("memo write templates stay within memo-cli's limits", () => {
+  it("no --tags template can expand past memo-cli's 5-tag maximum", () => {
+    const files = [...DEVELOPER, ...TECHNICAL_WRITER, ...PRODUCT_ENGINEER, ...PLANNER];
+    for (const f of files) {
+      for (const [, tags] of memoSection(read(f)).matchAll(/--tags "([^"]+)"/g)) {
+        const count = tags.replace(/[[\]]/g, "").split(",").length;
+        expect(count, `${f}: ${tags}`).toBeLessThanOrEqual(5);
+      }
     }
   });
 });
@@ -217,7 +237,24 @@ describe("memo sections stay identical across platforms", () => {
   for (const group of [DEVELOPER, TECHNICAL_WRITER, PLANNER]) {
     it(`${group[0]} matches its mirrors`, () => {
       const [first, ...rest] = group.map((f) => memoSection(read(f)));
+      expect(first, `${group[0]} has no memo-cli section`).not.toBe("");
       for (const [i, other] of rest.entries()) expect(other, group[i + 1]).toBe(first);
     });
   }
+
+  it.each(["memo-cli-usage/SKILL.md", "memo-cli-usage/REFERENCE.md"])(
+    "%s is identical in all three trees",
+    (rel) => {
+      const [first, ...rest] = PROMPT_TREES.map((t) => read(`${t}/skills/${rel}`));
+      for (const other of rest) expect(other).toBe(first);
+    },
+  );
+
+  it("the implement skill's start and close gates are identical in all three trees", () => {
+    const gates = IMPLEMENT.map(
+      (f) => read(f).match(/## Before Starting Work[\s\S]*?## GitHub Execution Rules/)?.[0],
+    );
+    expect(gates[0]).toBeDefined();
+    for (const g of gates) expect(g).toBe(gates[0]);
+  });
 });
