@@ -10,6 +10,7 @@ Entry point for `dev-tasks` documentation. Each document below is the single sou
 | Understand what the system is and how it fits together | [`system-overview.md`](system-overview.md)             |
 | Look up a `dev-tasks` command                          | [`dev-tasks-user-manual.md`](dev-tasks-user-manual.md) |
 | Know which agent to invoke, in what order              | [`workflow-chains.md`](workflow-chains.md)             |
+| See what each PRD phase delivered and what is missing  | [`roadmap.md`](roadmap.md)                             |
 | Run a multi-step operational procedure                 | [`runbooks/`](runbooks/README.md)                      |
 
 ## Reference
@@ -18,6 +19,7 @@ Entry point for `dev-tasks` documentation. Each document below is the single sou
 | ---------------------------------------------------- | --------------------------------------------------------------------------- |
 | [`system-overview.md`](system-overview.md)           | Purpose, architecture, components, integrations, runtime flows, NFR posture |
 | [`product.md`](product.md)                           | Product constitution: problem, users, goals, metrics, constraints           |
+| [`roadmap.md`](roadmap.md)                           | PRD phases and waves: status, issues/PRs, what is missing                   |
 | [`tech.md`](tech.md)                                 | Enforceable engineering rules and quality gates                             |
 | [`agents-md-guidelines.md`](agents-md-guidelines.md) | Sizing and content rules for `AGENTS.md`                                    |
 | [`adr/`](adr/README.md)                              | Architecture decision records                                               |

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- feat(roadmap): `docs/roadmap.md` overview of PRD phases and waves, owned by `product-engineer`, updated by `planner` in the consolidated PR, and checked by a `verifier` roadmap-mismatch finding (#254)
+- feat(memo): `product-engineer` writes confirmed grilling decisions to `kb`; `planner` verifies per-story memo fields and writes one run-outcome entry (#253)
+
+### Fixed
+
+- fix(memo): name memo banks literally instead of `--bank $MEMO_BANK`, which is empty in a fresh shell and made every write fail; use `--manual` for `technical-writer` `kb` entries without provenance; record every write result in the closeout payload and gate merges on its presence (#253)
+
 ## [0.16.1] - 2026-09-23
 
 ### Fixed
