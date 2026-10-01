@@ -257,10 +257,10 @@ memo-cli 1.3.0 adds a second axis of scoping — **banks** — and a third field
 
 A bank is a namespace for entries, resolved in this priority order (B3): `--bank <id>` flag > `$MEMO_BANK` env var > `config.bank.default` > `kb`. `kb` is the shared, org-wide knowledge base every repo reads from by default; any other bank id (kebab-case or UUID) is a **private** bank — conventionally named `<agent-name>-memory` (e.g. `developer-memory`, `technical-writer-memory`, `product-engineer-memory`, `planner-memory`) for a long-lived agent's own session memory.
 
-Export the bank once per session so every subsequent command inherits it:
+**Agents: always pass `--bank <id>` literally on every command.** Agent runtimes run each shell command in a fresh shell, so an `export MEMO_BANK=…` from an earlier command is gone by the next one. An unquoted empty `$MEMO_BANK` is dropped by the shell, and the flag parser then reads the next token as the bank id (`--bank --rationale …` → bank `--rationale`), which memo-cli rejects with `VALIDATION_FAILED` (dev-tasks issue #253). Never write `--bank <agent>-memory` in an agent prompt or command.
 
 ```bash
-export MEMO_BANK=developer-memory
+memo write --bank developer-memory ...   # bank id convention: <agent-name>-memory
 ```
 
 `kb` and private banks are isolated from each other: a `search`/`list`/`recall` scoped to a private bank never returns `kb` entries and vice versa, unless you explicitly pass `--bank kb`.
@@ -275,7 +275,7 @@ export MEMO_BANK=developer-memory
 
 `--kind` is case-insensitive (`--kind Self`, `--kind SELF`, `--kind self` all normalize to `self`). Default kind is `episodic` in a private bank, `semantic` in `kb`.
 
-**Rule of thumb for agent definitions in this repository:** intent/outcome entries are `--kind episodic --session ISSUE-<n> --bank $MEMO_BANK`; ADR/decision entries stay `--kind semantic --bank kb`.
+**Rule of thumb for agent definitions in this repository:** intent/outcome entries are `--kind episodic --session ISSUE-<n> --bank <agent>-memory`; ADR/decision entries stay `--kind semantic --bank kb`.
 
 ---
 
@@ -298,7 +298,7 @@ Episodic example — intent entry in a private bank:
 memo write \
   --kind episodic \
   --session ISSUE-42 \
-  --bank $MEMO_BANK \
+  --bank <agent>-memory \
   --rationale "Context: Starting ISSUE-42. Decision: implement via a middleware. Impact: affects the auth pipeline." \
   --tags "auth,issue-42,intent,middleware" \
   --entry-type decision \
@@ -391,7 +391,7 @@ Most-recent-first listing with optional date range.
 ### `memo timeline` — Replay Episodic Memory
 
 ```bash
-memo timeline --bank $MEMO_BANK --session ISSUE-42 --json
+memo timeline --bank <agent>-memory --session ISSUE-42 --json
 ```
 
 Replays episodic memory **in sequence order** — never ranked. Two shapes:
@@ -479,7 +479,7 @@ Migrates legacy v1 stored payloads to schema v2, idempotently (a point that alre
 ### `memo recall` — One-Call Context Restore
 
 ```bash
-memo recall "<task description>" --bank $MEMO_BANK --json
+memo recall "<task description>" --bank <agent>-memory --json
 ```
 
 The 1.3.0 replacement for the four-command session-start sequence (`list` + `tags list` + `search` + `search --scope related`). Gathers, in one call (≤ 4 s target):
@@ -504,7 +504,7 @@ When the budget is tight, sections are trimmed in this order: `conflicts` → `l
 
 **On failure:** `memo recall` exits `2` on an embeddings failure (`EMBEDDING_API_ERROR`) or a mid-gather Qdrant failure (`QDRANT_OPERATION_FAILED`) — there is no partial-bundle fallback. Treat this the same as any other exit-`2` failure: surface the warning, and continue the session without recalled context rather than blocking on it.
 
-**When `$MEMO_BANK` is unset** (resolves to `kb`): `SELF`, `MINE`, and `LAST SESSION` are omitted from the response entirely (omitted keys, not empty arrays) — you still get `POLICIES`, `SHARED`, `CONFLICTS`.
+**When no private bank is passed** (resolves to `kb`): `SELF`, `MINE`, and `LAST SESSION` are omitted from the response entirely (omitted keys, not empty arrays) — you still get `POLICIES`, `SHARED`, `CONFLICTS`.
 
 **Fallback when `memo recall` is unavailable** (`memo --version` below `1.3.0`, or the command errors as unrecognized): fall back to the four-command sequence documented under **Session Start — Restore Context** in `SKILL.md`.
 
@@ -571,7 +571,7 @@ Exactly one of `--id`, `--all-by-repo`, or `--all-by-org` is required.
 memo setup validate
 
 # 2. Restore SELF, POLICIES, SHARED, MINE, LAST SESSION, CONFLICTS in one bundle
-memo recall "<current task or feature description>" --bank $MEMO_BANK --json
+memo recall "<current task or feature description>" --bank <agent>-memory --json
 ```
 
 **Fallback (`memo --version` below `1.3.0`):** run this sequence instead, before writing a single line of code:
@@ -968,12 +968,12 @@ memo setup init --repo <r> --org <o> --domain <d>              # Initialize conf
 memo setup validate                                              # Verify config
 memo setup show [--json]                                         # Display config
 
-memo recall "<task>" --bank $MEMO_BANK [--json]                  # Restore full context (1.3.0+)
+memo recall "<task>" --bank <agent>-memory [--json]                  # Restore full context (1.3.0+)
 memo write --rationale "..." --tags "a,b,c" [--json]             # Record a semantic decision (kb)
-memo write --kind episodic --session ID --bank $MEMO_BANK [--json]  # Record an intent/outcome entry
+memo write --kind episodic --session ID --bank <agent>-memory [--json]  # Record an intent/outcome entry
 memo search "query" [--scope related] [--bank ID] [--kind K] [--json]  # Semantic search
 memo list [--from DATE] [--to DATE] [--bank ID] [--kind K] [--json]     # Browse entries
-memo timeline [--session ID] --bank $MEMO_BANK [--last N] [--json]      # Replay episodic memory in order
+memo timeline [--session ID] --bank <agent>-memory [--last N] [--json]      # Replay episodic memory in order
 memo tags list [--sort frequency] [--json]                       # Discover tags
 memo inspect [--json]                                             # Global facets
 memo bank list [--json]                                           # List all banks

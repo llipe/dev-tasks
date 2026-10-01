@@ -109,15 +109,17 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
    - Run `git rev-parse --abbrev-ref HEAD` to determine the current branch.
    - If HEAD is the default branch (`main`) or does not match `issue/*` or `story/*` pattern, you **MUST** create a new branch before proceeding, then open the Draft PR immediately after the first commit on that branch. You **MUST NOT** write implementation code, create files, or make commits while on the default branch.
    - If HEAD is already a valid feature branch (matching `issue/*` or `story/*`), confirm the Draft PR exists and proceed. If the branch has no commits yet, no PR can exist — open it immediately after the first commit.
-5. Execute one sub-task at a time in checklist order. For each behavioral sub-task, follow **test-first**: write/update tests first, verify they fail for the right reason, then implement to make them pass.
-6. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
-7. When all sub-tasks are complete:
+5. **memo intent (when memo is available):** Before writing any implementation code, run the memo-cli Availability Check and write the intent entry (see **memo-cli Integration → Intent Entry**). Record `memo_intent` as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)`.
+6. Execute one sub-task at a time in checklist order. For each behavioral sub-task, follow **test-first**: write/update tests first, verify they fail for the right reason, then implement to make them pass.
+7. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
+8. When all sub-tasks are complete:
    - Verify all acceptance criteria.
 
 - Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
 - For migration-bearing changes, confirm migration artifact/rollback notes and execute apply only after explicit user confirmation.
 - Record `coverage_gate` and `verifier_audit` per rules 22 and 18 above: `SKIPPED(no-delegation)` / `not-run(no-delegation)` by default, or the real result obtained under the Main-Thread Mode Addendum.
 - Record `docs_drift_status` per rule 10 above.
+- Write the memo outcome entry (see **memo-cli Integration → Outcome Entry**) and record `memo_outcome` as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)`.
 - Convert PR from Draft to Ready for Review once the applicable gates above are satisfied (by the caller, in the default subagent-delegation context, or by this agent itself under the addendum).
 
 ---
@@ -184,11 +186,9 @@ Everything above describes this agent's default operating context: a `Task`-dele
 
 ### Bank Declaration
 
-This agent's bank id is `developer-memory`, stable for the agent's life (PRD §15). Export it before any memo command in the session:
+This agent's bank id is `developer-memory`, stable for the agent's life (PRD §15). Every memo command below names it **literally** with `--bank developer-memory`.
 
-```bash
-export MEMO_BANK=developer-memory
-```
+You **MUST NOT** rely on `export MEMO_BANK=…` from an earlier command, and **MUST NOT** write `--bank $MEMO_BANK`. Agent runtimes run each shell command in a fresh shell, so an exported variable is gone by the next call; an empty `$MEMO_BANK` is dropped by the shell and the flag parser takes the next token as the bank id (`--bank --rationale …` → bank `--rationale`), which memo-cli rejects with `VALIDATION_FAILED`. This is the defect that left consumer banks empty (issue #253).
 
 ### Availability Check
 
@@ -198,18 +198,19 @@ At the start of every execution session, check if memo-cli is configured:
 which memo && memo setup validate
 ```
 
-- If `memo` is not found, skip all memo operations silently.
-- If `memo` is found but validation fails, ask: "memo-cli is installed but not configured for this repository. Run `memo setup init --repo <repo> --org <org> --domain <domain>` to configure it."
+- If `memo` is not found **and** `memo.config.json` does not exist, skip all memo operations and record `memo_intent: skipped(memo-not-installed)` / `memo_outcome: skipped(memo-not-installed)`.
+- If `memo` is not found **but** `memo.config.json` exists, the repository expects memo: warn the user ("memo-cli is configured for this repository (`memo.config.json`) but the `memo` binary is not on PATH in this session — no memo entries will be written.") and record `skipped(memo-unavailable)` for both fields. Never skip silently in this case.
+- If `memo` is found but validation fails, ask: "memo-cli is installed but not configured for this repository. Run `memo setup init --repo <repo> --org <org> --domain <domain>` to configure it." If the run continues without it, record `skipped(memo-not-configured)`.
 
 ### Session Start — Restore Context
 
 When memo is available and `memo --version` is `1.3.0` or later, restore context with a single call:
 
 ```bash
-memo recall "<story or issue description>" --bank $MEMO_BANK --json
+memo recall "<story or issue description>" --bank developer-memory --json
 ```
 
-`recall` returns one bundle — SELF, POLICIES, SHARED, MINE, LAST SESSION, CONFLICTS — in a single `<4s` call (SELF/MINE/LAST SESSION are omitted when `$MEMO_BANK` is unset or resolves to `kb`). If `memo recall` exits `2` (embeddings failure), surface the warning on stderr and continue the session without recalled context rather than blocking.
+`recall` returns one bundle — SELF, POLICIES, SHARED, MINE, LAST SESSION, CONFLICTS — in a single `<4s` call. If `memo recall` exits `2` (embeddings failure), surface the warning on stderr and continue the session without recalled context rather than blocking.
 
 **Fallback — `memo --version` is below `1.3.0`:** run the four-command sequence instead:
 
@@ -240,45 +241,53 @@ Choose the most specific entry type:
 
 ### Intent Entry — Before Starting a Story
 
-Write an intent entry **before beginning implementation** of any story or issue, as an episodic entry scoped to this session in this agent's bank:
+Write an intent entry **before beginning implementation** of any story or issue (Execution Flow step 5), as an episodic entry scoped to this session in this agent's bank:
 
 ```bash
 memo write \
   --kind episodic \
   --session ISSUE-<n> \
-  --bank $MEMO_BANK \
+  --bank developer-memory \
   --rationale "Context: Starting ISSUE-<##> because <trigger/need>. Decision: implement via <approach>, preserving <constraints/non-goals>, with expected files <key files>. Impact: affects <user/module/contract impact> and introduces risks <if any>." \
   --tags "<domain>,issue-<number>,intent,<impact-tag>[,<boundary-tag>]" \
-   --entry-type decision \
-   --source agent \
-   --story "ISSUE-<number>" \
-   --on-duplicate consolidate \
-   --json
+  --entry-type decision \
+  --source agent \
+  --story "ISSUE-<number>" \
+  --on-duplicate consolidate \
+  --json
 ```
 
 ### Outcome Entry — After Completing a Story
 
-Write an outcome entry as part of the **Completion Gate**, after all tests pass and before converting the PR to Ready for Review, as an episodic entry scoped to this session in this agent's bank:
+Write an outcome entry as part of the **Completion Gate** (Execution Flow step 8), after all tests pass and before converting the PR to Ready for Review, as an episodic entry scoped to this session in this agent's bank. Record what was learned, not only what shipped — a rejected approach, a surprise in the codebase, or a constraint discovered mid-story is the most valuable content of this entry:
 
 ```bash
 memo write \
   --kind episodic \
   --session ISSUE-<n> \
-  --bank $MEMO_BANK \
-  --rationale "Context: Completed ISSUE-<##> after implementing <scope>. Delivery: shipped <behavior>, deviations <none|details>, AC <x/y> verified. Impact: quality gates test=<pass|fail>; lint=<pass|fail>; format:check=<pass|fail>; typecheck=<pass|fail>; audit=<pass|fail>; docs=<clean|drift-fixed>; migration=<none|details>." \
+  --bank developer-memory \
+  --rationale "Context: Completed ISSUE-<##> after implementing <scope>. Delivery: shipped <behavior>, deviations <none|details>, AC <x/y> verified. Learned: <rejected approaches, surprises, constraints discovered|none>. Impact: quality gates test=<pass|fail>; lint=<pass|fail>; format:check=<pass|fail>; typecheck=<pass|fail>; audit=<pass|fail>; docs=<clean|drift-fixed>; migration=<none|details>." \
   --tags "<domain>,issue-<number>,outcome,gates-pass[,<impact-tag>][,<boundary-tag>]" \
-   --entry-type decision \
-   --source agent \
-   --commit "$(git rev-parse HEAD)" \
-   --story "ISSUE-<number>" \
-   --files "<comma-separated key files modified>" \
-   --on-duplicate consolidate \
-   --json
+  --entry-type decision \
+  --source agent \
+  --commit "$(git rev-parse HEAD)" \
+  --story "ISSUE-<number>" \
+  --files "<comma-separated key files modified>" \
+  --on-duplicate consolidate \
+  --json
 ```
 
 Session sequence numbers (`--seq`) auto-increment per `--session`; do not pass `--seq` explicitly unless replaying a specific position.
 
-ADR and durable-decision entries are **not** written by `developer` — they stay `--kind semantic` in `kb`, authored by `technical-writer` with `--provenance <csv>` (citing the episodic ids that informed the decision) or `--manual`, per PRD K3.
+### Write Results Are Recorded, Never Swallowed
+
+Every `memo write` above returns JSON with the new entry's `id` on success, and a non-zero exit with an error on failure.
+
+- On success, record the id: `memo_intent: written(<id>)` / `memo_outcome: written(<id>)`.
+- On failure, read the error, fix the command if the error names a flag or value you supplied, and retry **once**. If it still fails, record `failed(<error code or first line of the error>)` and state it in the closeout summary. A failed memo write does not block the story, but it **MUST NOT** be dropped silently.
+- Both fields are **mandatory** in the closeout payload. Omitting either one marks the story incomplete.
+
+ADR and durable-decision entries are **not** written by `developer` — they stay `--kind semantic` in `kb`, authored by `technical-writer` and `product-engineer`, per PRD K3.
 
 ### Session Close
 
@@ -299,7 +308,7 @@ Before marking a Story/Issue done:
 7. `technical-writer` agent **MUST** have run and produced both a delta report and a drift/stale-doc validation result.
 8. `/docs` **MUST** be updated to current state.
 9. `/workstream` **SHOULD** be cleaned (active artifacts retained, obsolete artifacts archived/removed).
-10. If memo-cli is available, an episodic outcome entry **MUST** be written to `$MEMO_BANK` (`memo write --kind episodic --session ISSUE-<n> --bank $MEMO_BANK …`) before PR conversion.
+10. The memo intent and outcome writes **MUST** have been attempted when memo-cli is available (`memo write --kind episodic --session ISSUE-<n> --bank developer-memory …`, before PR conversion), and `memo_intent` / `memo_outcome` **MUST** be recorded as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)`. A `failed` or `skipped` value does not block completion; an omitted field does.
 11. PR **MUST** be ready, approved, and merged.
 12. You **MUST NOT** close the GitHub Issue until all conditions above are met.
 13. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.
@@ -360,6 +369,8 @@ workstream_files:
 - typecheck: PASS | FAIL | NOT RUN
 - audit: PASS | FAIL | NOT RUN
   coverage_gate: PASS | FAIL | SKIPPED(<reason>)
+  memo_intent: written(<id>) | failed(<reason>) | skipped(<reason>)
+  memo_outcome: written(<id>) | failed(<reason>) | skipped(<reason>)
   checklist_sync: synced | mismatch-fixed | blocked
   verifier_audit: run | not-run(no-delegation) | blocked
   fidelity_verdict: High | Medium | Low | none
@@ -373,6 +384,7 @@ Rules for this payload:
 
 - The markers `BEGIN CLOSEOUT PAYLOAD` and `END CLOSEOUT PAYLOAD` **MUST** appear exactly as written.
 - Every field is required. Use `none`, `NOT RUN`, or `blocked` when a value does not exist.
+- `memo_intent` and `memo_outcome` are always present. `skipped(<reason>)` (memo not installed, not configured, or unavailable in this session) and `failed(<reason>)` (the write was attempted and errored after one retry) are valid values that do not block the merge; `planner` treats an absent field as an incomplete story.
 - `planner` may treat the story as incomplete if either marker or any required field is missing.
 - `verifier_audit: not-run(no-delegation)` and `coverage_gate: SKIPPED(no-delegation)` are the honest, expected values in this agent's default subagent-delegation context (see Operating Context above) — `planner` treats these as a signal to run its own direct invocation, not as a red flag or an incomplete story.
 

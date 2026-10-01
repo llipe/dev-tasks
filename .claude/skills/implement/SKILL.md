@@ -78,6 +78,7 @@ fix(web): stop double-submitting the checkout form
    - PR title **MUST** follow Conventional Commits (e.g., `feat: implement issue 37`).
    - PR description **MUST** include `Closes #<issue-number>`.
 5. You **MUST** ensure the task list in the GitHub Issue matches the local `/workstream/tasks-*.md` file.
+6. **memo intent (when memo-cli is available):** Before the first implementation sub-task, you **MUST** run the memo-cli Availability Check and write the episodic intent entry defined in the `developer` agent contract (**memo-cli Integration → Intent Entry**), naming the bank literally (`--bank developer-memory`, never `--bank $MEMO_BANK`). Record `memo_intent` as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)` — a failed write is retried once and then reported, never dropped silently.
 
 If `github-ops` delegation is unavailable in the current runtime, you **MUST** apply `github-ops` conventions directly and explicitly note that fallback in your status output.
 
@@ -144,14 +145,17 @@ When `workstream/decisions-<feature>.md` exists and was read per step 2 above:
 5. `technical-writer` validation **MUST** include a drift/stale-doc check report, and completion **MUST NOT** proceed while unresolved drift remains.
 6. A `qa-engineer` pass **MUST** have run and `coverage_gate` **MUST** be recorded as `PASS`, `FAIL`, or `SKIPPED(<reason>)`. The reason **MUST** be non-empty when skipped; an omitted field is treated as incomplete. A `FAIL` or `SKIPPED` value does not block completion — only omission does.
 7. A `verifier` audit in `audit` mode **MUST** have run against the delivered implementation, with its human-readable summary posted to the issue/PR. This gate is mandatory and non-skippable — it **MUST NOT** be skipped regardless of drift findings, and drift findings reported by this audit **MUST NOT** block completion. This condition is satisfied once the audit has run and been posted; any resulting drift is handled by `product-engineer`'s `activity-drift-reconciliation` flow after this gate, not before it.
-8. The PR **MUST** be converted from draft to ready for review.
-9. The PR **MUST** be approved by the appropriate reviewer per the merge authority policy in `github-ops`:
-   - PRs targeting an **integration branch**: `planner` reviews and approves.
-   - PRs targeting **`main`**: the **user** reviews and approves.
-10. The PR **MUST** be merged by the authorized party (planner for integration branches, user for `main`).
-11. You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.
-12. You **MUST NOT** close the issue while the PR is still in draft or pending review.
-13. You **MUST** notify the user when the PR is ready for review — explicitly inform them so they can review and merge.
+8. **memo outcome (when memo-cli is available):** Before the PR is converted to ready for review, you **MUST** write the episodic outcome entry defined in the `developer` agent contract (**memo-cli Integration → Outcome Entry**) and record `memo_outcome` as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)`. A `failed` or `skipped` value does not block completion — only an omitted field does.
+9. The PR **MUST** be converted from draft to ready for review.
+10. The PR **MUST** be approved by the appropriate reviewer per the merge authority policy in `github-ops`:
+
+- PRs targeting an **integration branch**: `planner` reviews and approves.
+- PRs targeting **`main`**: the **user** reviews and approves.
+
+11. The PR **MUST** be merged by the authorized party (planner for integration branches, user for `main`).
+12. You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.
+13. You **MUST NOT** close the issue while the PR is still in draft or pending review.
+14. You **MUST** notify the user when the PR is ready for review — explicitly inform them so they can review and merge.
 
 ---
 
