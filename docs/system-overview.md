@@ -61,13 +61,13 @@ Eleven agents (`product-engineer`, `developer`, `planner`, `researcher`, `verifi
 
 ## Integrations
 
-| Integration  | Used for                                                                  | Status                                               |
-| ------------ | ------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Git          | Prerequisite check only: `dev-tasks doctor` requires git >= 2.37          | Active                                               |
-| npm registry | Package distribution and pinned-version fetch during `dev-tasks update`   | Active (`@llipe.com/dev-tasks`)                      |
-| GitHub       | Issues/PRs as execution state, Releases for bundle assets, Actions for CI | Active                                               |
-| `memo-cli`   | Cross-session architectural memory for agents                             | Optional; skipped silently when absent               |
-| MCP servers  | Consumer-owned agent tool extensions                                      | Consumer-configured; not provided by this repository |
+| Integration  | Used for                                                                  | Status                                                                  |
+| ------------ | ------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Git          | Prerequisite check only: `dev-tasks doctor` requires git >= 2.37          | Active                                                                  |
+| npm registry | Package distribution and pinned-version fetch during `dev-tasks update`   | Active (`@llipe.com/dev-tasks`)                                         |
+| GitHub       | Issues/PRs as execution state, Releases for bundle assets, Actions for CI | Active                                                                  |
+| `memo-cli`   | Cross-session architectural memory for agents                             | Optional; warns when `memo.config.json` exists but the binary is absent |
+| MCP servers  | Consumer-owned agent tool extensions                                      | Consumer-configured; not provided by this repository                    |
 
 ## Key Runtime Flows
 

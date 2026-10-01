@@ -20,6 +20,7 @@ All work in this repository **MUST**:
 - Use canonical `package.json` script names for JS/TS projects: `lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `test`, `test:unit`, `test:integration`, `test:e2e`, `audit`, `validate`.
 - Before developer/planner completion, enforce and record quality gates: `test`, `lint`, `format:check`, `typecheck`, `audit`.
 - `qa-engineer` runs at the completion gate, before the `verifier` audit, and records `coverage_gate: PASS | FAIL | SKIPPED(<reason>)`. Skipping requires a non-empty reason; omitting the field is treated as incomplete.
+- `docs/roadmap.md` is the roadmap overview — one row per PRD phase or wave with status (`Not started` / `In progress` / `Done`), issues/PRs, and what is missing. `product-engineer` reads it at session start and owns its rows; `planner` reads it in Phase 0 and updates the rows a run delivers in the consolidated PR; the `verifier` reports a roadmap mismatch with merged work as an advisory finding.
 - `/TESTING.md` is the canonical testing contract — owned by `qa-engineer`, kept current by `developer`, and treated as "no standard established" while unfilled.
 - Reference GitHub Issues in branch names and commits; follow the `github-ops` conventions for all GitHub artifacts (issues, PRs, branches, labels, milestones, comments).
 - Treat `/DESIGN.md` as the source of truth for visual tokens, components, and design guidance; update it whenever UI contracts change.
@@ -40,7 +41,7 @@ GitHub operations run through the **`gh` CLI** (over Bash). The `github-ops` sub
 
 ## memo-cli (Optional)
 
-If `memo-cli` is installed and `memo setup validate` passes: `product-engineer` reads context at session start; `developer` writes intent/outcome entries per story; `technical-writer` writes one entry per ADR and significant doc change. If installed but not configured, ask the user to run `memo setup init` first. If not installed, skip silently. See the `memo-cli-usage` skill.
+If `memo-cli` is installed and `memo setup validate` passes: `product-engineer` reads context at session start and writes each confirmed grilling decision to `kb`; `developer` writes intent/outcome entries per story; `technical-writer` writes one entry per ADR and significant doc change; `planner` verifies per-story memo fields and writes one run-outcome entry. Every memo command names `--bank <id>` literally — never `--bank $MEMO_BANK`, which is empty in a fresh shell and makes memo-cli reject the write. Every write is reported as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)`; a failure is never dropped silently. If installed but not configured, ask the user to run `memo setup init` first. If not installed and `memo.config.json` is absent, skip; if `memo.config.json` exists but the binary is missing, warn. See the `memo-cli-usage` skill.
 
 ---
 

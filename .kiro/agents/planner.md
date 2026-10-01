@@ -88,13 +88,39 @@ If any required input is missing, ask one focused question with a default option
 
 ### Bank Declaration
 
-This agent's bank id is `planner-memory`, stable for the agent's life (PRD §15). Export it before any memo command in the session:
+This agent's bank id is `planner-memory`, stable for the agent's life (PRD §15). Name it **literally** in every memo command (`--bank planner-memory`); never rely on an `export MEMO_BANK=…` from an earlier command and never write `--bank $MEMO_BANK` — each shell command runs in a fresh shell, the variable is empty, and memo-cli rejects the resulting bank id (issue #253).
+
+### Availability Check
+
+At the start of every run:
 
 ```bash
-export MEMO_BANK=planner-memory
+which memo && memo setup validate
 ```
 
-`planner` does not read or write memo entries itself — orchestration-scoped context comes from the task file/GitHub milestone, and each delegated `developer` subagent runs its own `memo recall`/`memo write` sequence scoped to `developer-memory`. This declaration exists for AC parity with the other long-lived agent definitions and for any future orchestration-level use of `--bank $MEMO_BANK`.
+- If `memo` is not found and `memo.config.json` does not exist, skip all memo operations.
+- If `memo` is not found but `memo.config.json` exists, warn the user that the repository expects memo-cli but the binary is not on PATH in this session, and record `memo_run_outcome: skipped(memo-unavailable)`. Never skip silently in this case.
+
+### Responsibilities
+
+- **Per story — verify, don't write.** Each delegated `developer` subagent writes its own intent/outcome entries to `developer-memory`. Planner verifies them through the closeout payload's `memo_intent` / `memo_outcome` fields (merge gate 3). An absent field means the story is incomplete; `skipped(<reason>)` or `failed(<reason>)` is reported in the story status table and does not block the merge.
+- **Per run — write one outcome entry.** Before opening the consolidated PR (Phase 5 step 6), write one episodic entry summarizing the run:
+
+```bash
+memo write \
+  --kind episodic \
+  --session <plan-id> \
+  --bank planner-memory \
+  --rationale "Context: Ran <plan-id> (<PRD/milestone>, <roadmap phase/wave>). Delivery: <n> stories merged, <n> blocked, integration branch <branch>. Learned: <recurring failures, rework, dependency surprises, gates that caught real problems|none>. Memo coverage: <n>/<n> stories with written intent+outcome; <skipped/failed summary|none>." \
+  --tags "<domain>,<plan-id>,run-outcome,<roadmap-phase-tag>" \
+  --entry-type decision \
+  --source agent \
+  --commit "$(git rev-parse HEAD)" \
+  --on-duplicate consolidate \
+  --json
+```
+
+Record the result as `memo_run_outcome: written(<id>) | failed(<reason>) | skipped(<reason>)` in the planner state file and the consolidated PR body. On failure, fix the command if the error names a flag or value you supplied and retry once; never drop a failure silently.
 
 ### Session Close
 
@@ -138,6 +164,10 @@ Expected return for each issue:
 - linked issues/dependencies
 
 Map milestone issues into the same internal story model used by Option A.
+
+### Roadmap Read
+
+Read `docs/roadmap.md` (the roadmap overview — see **Roadmap Maintenance** below). Identify the PRD and the phase/wave row this run delivers, and state it when confirming the source. If the file is missing, or no row matches this run's scope, say so and ask `product-engineer` (or the user) to add the row before Phase 4; do not invent a row's scope yourself.
 
 Confirm source and story count before Phase 0.5.
 
@@ -367,6 +397,7 @@ Integration target branch: {{ integration_branch }}
 Test-first: YES — write/update tests before implementation for each behavioral sub-task
 Test plan: {{ test_plan_path | default: "none — derive tests from acceptance criteria" }}
 Decision log: {{ decision_log_path }}
+Memo: if memo-cli is available, write the intent entry before coding and the outcome entry before PR conversion, with `--bank developer-memory` named literally; return `memo_intent` and `memo_outcome` in the closeout payload
 
 Implement only this story scope.
 Follow test-first design: for each behavioral sub-task, write tests first, verify they fail, then implement.
@@ -452,7 +483,7 @@ For each completed story PR:
 
 1. Verify PR base branch is the integration branch.
 2. Verify required checks are successful.
-3. Verify delegated closeout payload reports `docs_drift_status` as `clean` or `drift-fixed`.
+3. Verify delegated closeout payload reports `docs_drift_status` as `clean` or `drift-fixed`, and carries both `memo_intent` and `memo_outcome` fields. An absent memo field marks the story incomplete (retry the closeout once, as for any missing payload field); a `skipped(<reason>)` or `failed(<reason>)` value is recorded in the story status table and does **NOT** block the merge.
 4. Verify delegated quality gates are all `PASS` (`test`, `lint`, `format:check`, `typecheck`, `audit`).
 5. Verify the delegated closeout payload reports `coverage_gate` with a value of `PASS`, `FAIL`, or `SKIPPED(<reason>)` carrying a non-empty reason. An omitted field means the QA gate was never reached — treat the story as incomplete. A `FAIL` or `SKIPPED` value does **NOT** block the merge; only omission does.
 6. Verify the delegated closeout payload reports `verifier_audit: run` — this confirms `developer` invoked the mandatory `verifier` audit for this story. This check is a merge gate on trigger evidence only; the audit's drift findings (`fidelity_verdict`/`highest_drift_impact`/`drift_findings`) **MUST NOT** block the merge.
@@ -489,14 +520,18 @@ After all stories are merged into integration:
 2. Invoke `qa-engineer` at **PRD scope** (all packages affected by the merged stories, all layers) for a coverage and gap rollup. Report a PRD-level `coverage_gate` that aggregates per-story gates. Scope to packages affected by the merged stories, not the entire workspace.
 3. Invoke `verifier` in `audit` mode for a **PRD-level rollup audit** against the full integrated scope (all merged stories on the integration branch, cross-checked against the source PRD/spec/milestone). This is mandatory and non-skippable — it runs whether or not any story-level drift was previously reported. Post the resulting human-readable summary to the plan/milestone issue via `github-ops` comment conventions. Rollup drift findings **MUST NOT** block the consolidated PR handoff; Unintended/Intended drift routes to `product-engineer`'s `activity-drift-reconciliation` flow.
 4. Invoke `technical-writer` for a planner-level drift/stale-doc validation pass against integrated changes; unresolved drift **MUST** block handoff.
-5. Open one consolidated PR from integration branch to `main`.
-6. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
-7. Wait for the user to approve and merge the PR into `main`.
-8. **Post-integration deploy handoff (conditional).** When the merged scope includes deployable changes and the repository declares environments in `infra/environments.yaml`, planner **MUST** hand the deploy off to `infra-engineer` rather than running any platform write or deploy command itself. This handoff is conditional — it applies only when infrastructure/deploy scope is present; a docs- or test-only integration triggers no deploy. Planner names `infra-engineer` as the owner of the post-integration deploy (dev on merge to `main`, production behind the protected-environment reviewer on the release tag via the `deploy-ops` workflow templates) and never invokes `deploy.sh`, `release.sh`, `flyctl`, `aws`, or `supabase` directly.
-9. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
-   - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
-   - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
-10. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
+5. **Roadmap update (mandatory).** Update the run's row(s) in `docs/roadmap.md` on the integration branch, so the change ships in the consolidated PR itself: set `Status` (`Done` when every story in the phase/wave merged, otherwise `In progress`), fill `Issues/PRs` with the story issues and the consolidated PR, rewrite `What's missing` to the remaining scope (`—` when none), and set the `Last updated` date. A consolidated PR without this roadmap change is incomplete. See **Roadmap Maintenance** below.
+6. **memo run outcome.** Write the per-run outcome entry described in **memo-cli Integration → Responsibilities** and record `memo_run_outcome`.
+7. Open one consolidated PR from integration branch to `main`.
+8. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
+9. Wait for the user to approve and merge the PR into `main`.
+10. **Post-integration deploy handoff (conditional).** When the merged scope includes deployable changes and the repository declares environments in `infra/environments.yaml`, planner **MUST** hand the deploy off to `infra-engineer` rather than running any platform write or deploy command itself. This handoff is conditional — it applies only when infrastructure/deploy scope is present; a docs- or test-only integration triggers no deploy. Planner names `infra-engineer` as the owner of the post-integration deploy (dev on merge to `main`, production behind the protected-environment reviewer on the release tag via the `deploy-ops` workflow templates) and never invokes `deploy.sh`, `release.sh`, `flyctl`, `aws`, or `supabase` directly.
+11. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
+
+    - Preferred: run `git checkout integration/<plan-id>-<short-description>`.
+    - Alternative (if checkout is not possible in the current runtime): explicitly verify and report current branch, and provide the exact checkout command the user can run.
+
+12. Final user response **MUST** include a `PR Directives (User Action Required)` section with:
 
 - consolidated PR URL
 - current CI/check status
@@ -510,10 +545,23 @@ Consolidated PR should include:
 - Per-story changed files and test results
 - Manual validation instructions per story
 - Integration test summary
+- Roadmap row(s) updated in `docs/roadmap.md` (before → after status)
+- Memo coverage: per-story `memo_intent` / `memo_outcome` values and `memo_run_outcome`
 
 PR title **MUST** follow Conventional Commits and PR body **MUST** follow `github-ops` conventions.
 
 Planner **MUST NOT** merge the consolidated PR. Only the user may approve and merge PRs targeting `main`.
+
+---
+
+## Roadmap Maintenance
+
+`docs/roadmap.md` is the one-page overview of every PRD's phases or waves: what is done, what is in progress, and what is missing. It is an index over the PRDs, GitHub issues, and merged PRs — when they disagree, they win and the roadmap is corrected.
+
+- **Read** it in Phase 0 (see **Roadmap Read**).
+- **Update** the run's row(s) in Phase 5 step 5, in the consolidated PR. Never leave the roadmap claiming `In progress` for a phase this run finished, or `Done` for one it did not.
+- Change only the rows this run touched; rows for other PRDs belong to `product-engineer` and to the planner runs that deliver them.
+- The `verifier` rollup audit (Phase 5 step 3) compares the roadmap against merged work and reports a mismatch as an advisory finding.
 
 ---
 

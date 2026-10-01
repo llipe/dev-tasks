@@ -325,13 +325,9 @@ Ensure:
 
 ### Bank Declaration
 
-This agent's bank id is `technical-writer-memory`, stable for the agent's life (PRD §15). Export it before any memo command in the session:
+This agent's bank id is `technical-writer-memory`, stable for the agent's life (PRD §15). Name banks **literally** in every memo command (`--bank kb`, `--bank technical-writer-memory`); never rely on an `export MEMO_BANK=…` from an earlier command and never write `--bank $MEMO_BANK` — each shell command runs in a fresh shell, the variable is empty, and memo-cli rejects the resulting bank id (issue #253).
 
-```bash
-export MEMO_BANK=technical-writer-memory
-```
-
-ADR and decision entries this agent writes stay `--kind semantic` in `kb` (never in `$MEMO_BANK`) — see **Write Template** below.
+ADR and decision entries this agent writes stay `--kind semantic` in `kb` (never in its private bank) — see **Write Template** below.
 
 ### Availability Check
 
@@ -341,7 +337,8 @@ At the start of every run, check if memo-cli is configured:
 which memo && memo setup validate
 ```
 
-- If `memo` is not found, skip all memo operations silently.
+- If `memo` is not found and `memo.config.json` does not exist, skip all memo operations.
+- If `memo` is not found but `memo.config.json` exists, warn the user that the repository expects memo-cli but the binary is not on PATH in this session, and report `memo: skipped(memo-unavailable)` in the run summary. Never skip silently in this case.
 - If `memo` is found but validation fails (missing `memo.config.json` or env vars), **STOP** and ask: "memo-cli is installed but not configured for this repository. Run `memo setup init --repo <repo> --org <org> --domain <domain>` to configure it, then re-run."
 
 ### Read Before Write
@@ -382,7 +379,7 @@ memo write \
 	--tags "<domain-tag>,<entry-nature-tag>,<story-ref-if-known>" \
 	--entry-type <decision|structure|integration_point> \
 	--source agent \
-	--provenance "<csv of episodic entry ids this decision consolidates, if any>" \
+	--provenance "<csv of episodic entry ids this decision consolidates>" \
 	--commit "$(git rev-parse HEAD)" \
 	--story "<issue-or-story-id-if-known>" \
 	--files "<path/to/doc.md>,<path/to/adr.md>" \
@@ -390,7 +387,12 @@ memo write \
 	--json
 ```
 
-ADR and durable-decision entries are always `--kind semantic` in `kb`, never in `$MEMO_BANK` — this agent is the one long-lived agent that writes to the shared `kb`, not a private bank. Per PRD K3, a `semantic` entry with `--source agent` **MUST** carry `--provenance <csv>` (the episodic entry ids — typically `developer`'s intent/outcome entries — that informed the decision) unless `--manual` is passed instead (human-authored, no episodic origin).
+ADR and durable-decision entries are always `--kind semantic` in `kb`, never in a private bank. Per PRD K3, memo-cli **rejects** a `semantic` entry with `--source agent` and no provenance (`VALIDATION_FAILED`), so choose exactly one form:
+
+- **Provenance known:** find the episodic ids that informed the decision — typically `developer`'s intent/outcome entries for the story — with `memo list --bank developer-memory --session ISSUE-<n> --json`, and pass them as `--source agent --provenance "<id1>,<id2>"`.
+- **No episodic ids found:** drop both `--source agent` and `--provenance`, and pass `--manual` instead. Never pass an empty `--provenance ""`.
+
+**Write results are recorded, never swallowed.** On success, the JSON response carries the entry `id`; list every written id in the run summary. On failure, fix the command if the error names a flag or value you supplied and retry once; if it still fails, report `memo: failed(<error>)` in the run summary. A failed write does not block the documentation run, but it **MUST NOT** be dropped silently.
 
 **Rationale quality rule:** Answer three questions in one coherent paragraph: (1) what changed and why it was needed, (2) what was decided or documented, (3) what it affects downstream. Never use bullet points inside `--rationale`.
 

@@ -101,17 +101,38 @@ If any required input is missing, you **MUST** ask concise clarifying questions.
 
 ---
 
+## Roadmap Maintenance
+
+`docs/roadmap.md` is the one-page overview of every PRD's phases or waves: what is done, what is in progress, and what is missing. `product-engineer` owns its rows and structure; `planner` updates the status of the rows a run delivers. It is an index over the PRDs, GitHub issues, and merged PRs — when they disagree, they win and the roadmap is corrected.
+
+- **Read it at session start**, in every mode, before any activity, so a new PRD or issue is placed against what already exists and what is still missing.
+- **Create it** in Init Mode, or the first time a PRD is written in a repository that has none, from the template shape below.
+- **Add rows when a PRD is created or changed** (`activity-refine`): one row per delivery phase or wave the PRD defines, or a single `All` row when it defines none, each `Not started`. A PRD changelog that adds, removes, or re-scopes a phase updates its rows in the same change.
+- **Fill `Issues/PRs` when stories are published** (`activity-publish-github`), and set the row to `In progress` once its first story is being implemented.
+- **Correct it during drift reconciliation** (`activity-drift-reconciliation`) when a `verifier` roadmap-mismatch finding is confirmed.
+- Never mark a row `Done` yourself on the strength of a plan; `Done` requires merged work, and `planner` sets it in the consolidated PR that delivers it.
+
+Shape (one table, one row per PRD phase or wave, newest PRD first):
+
+```markdown
+# Roadmap
+
+Last updated: YYYY-MM-DD
+
+| PRD                                      | Phase/Wave | Scope (one line) | Status      | Issues/PRs  | What's missing   |
+| ---------------------------------------- | ---------- | ---------------- | ----------- | ----------- | ---------------- |
+| [prd-<name>](requirements/prd-<name>.md) | 1          | <scope>          | Not started | #12, PR #20 | <remaining or —> |
+```
+
+`Status` is exactly one of `Not started`, `In progress`, `Done`.
+
+---
+
 ## memo-cli Integration (When Available)
 
 ### Bank Declaration
 
-This agent's bank id is `product-engineer-memory`, stable for the agent's life (PRD §15). Export it before any memo command in the session:
-
-```bash
-export MEMO_BANK=product-engineer-memory
-```
-
-`product-engineer` does not write episodic or semantic entries itself (see below), so this declaration exists for AC parity with the other long-lived agent definitions and for any future read-side use of `--bank $MEMO_BANK`.
+This agent's bank id is `product-engineer-memory`, stable for the agent's life (PRD §15). The decisions this agent records go to the shared `kb` (see **Decision Write-Back** below), not its private bank. Name the bank **literally** in every memo command (`--bank kb`); never rely on an `export MEMO_BANK=…` from an earlier command and never write `--bank $MEMO_BANK` — each shell command runs in a fresh shell, the variable is empty, and memo-cli rejects the resulting bank id (issue #253).
 
 ### Availability Check
 
@@ -121,7 +142,8 @@ At the start of every session, verify memo-cli is configured:
 which memo && memo setup validate
 ```
 
-- If `memo` is not found, skip all memo operations silently.
+- If `memo` is not found and `memo.config.json` does not exist, skip all memo operations.
+- If `memo` is not found but `memo.config.json` exists, warn the user that the repository expects memo-cli but the binary is not on PATH in this session, so no decisions will be recorded in memo. Never skip silently in this case.
 - If `memo` is found but validation fails, ask: "memo-cli is installed but not configured for this repository. Run `memo setup init --repo <repo> --org <org> --domain <domain>` to configure it."
 
 ### Session Start — Restore Context
@@ -165,7 +187,31 @@ Before making design choices in `activity-refine`, `activity-generate-spec`, or 
 memo search "<specific topic, technology, or module>" --json
 ```
 
-**product-engineer does NOT write to memo.** All writes are delegated to `technical-writer` (ADRs and doc changes) and `developer` (intent/outcome entries).
+### Decision Write-Back — After Each Grilling Exit Gate
+
+The decisions made with the user during refinement and specification are the most durable knowledge the workflow produces; they **MUST** reach memo, not only `workstream/decisions-<feature>.md`.
+
+When `activity-grill`'s exit gate is satisfied (the WHAT phase in `activity-refine`, the HOW phase in `activity-generate-spec`, or Issue Mode refinement), write **one `kb` entry per user-answered decision row** recorded in that phase. Skip self-resolved rows (`Accepted rec.` is `n/a`): they restate knowledge that already exists. Do not batch several decisions into one entry.
+
+```bash
+memo write \
+  --kind semantic \
+  --bank kb \
+  --manual \
+  --rationale "<feature>#D-NN (<WHAT|HOW>): <question in one sentence>. Decided: <answer>. Why: <reason given or the accepted recommendation's reasoning>. Rejected: <alternatives considered|none>." \
+  --tags "<domain>,<feature>,decision,<phase-lowercase>,<feature>-d-NN" \
+  --entry-type decision \
+  --story "<issue-or-feature-id-if-known>" \
+  --files "workstream/decisions-<feature>.md" \
+  --on-duplicate consolidate \
+  --json
+```
+
+- `--manual` is correct here: the decision was made by the user in conversation, so it has no episodic provenance, and memo-cli rejects an agent-sourced semantic entry without one.
+- A row that supersedes an earlier decision is written as a new entry naming the superseded ID in its rationale; `--on-duplicate consolidate` merges near-duplicates.
+- **Write results are recorded, never swallowed.** Report the written ids (or `skipped(<reason>)`) in the phase's completion summary. On failure, fix the command if the error names a flag or value you supplied and retry once; then report `failed(<error>)`. A failed write never blocks the phase.
+
+`technical-writer` still owns ADR and doc-change entries, and `developer` owns per-story intent/outcome entries.
 
 ### Session Close
 

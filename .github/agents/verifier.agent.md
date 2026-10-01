@@ -245,6 +245,21 @@ new category. Never hold a PR on it.
 | Test-harness setup                  | `qa-engineer`    |
 | Tooling setup                       | `housekeeping`   |
 
+## Roadmap-Mismatch Finding
+
+`docs/roadmap.md` is the one-page index of every PRD's phases or waves and their status. It goes stale silently unless something compares it with what actually merged, so that comparison lives here as a finding.
+
+**Trigger** (PRD-level rollup audits, and story audits whose story completes a phase or wave). Report the finding when any of these hold:
+
+1. The audited work completes a PRD phase or wave, and its roadmap row is not `Done` in the delivered tree.
+2. A roadmap row is `Done`, but the audited scope shows that phase's stories unmerged or its acceptance criteria unmet.
+3. The audited PRD defines a phase or wave with no roadmap row, or `docs/roadmap.md` is missing while `docs/requirements/` holds a PRD.
+4. A row's `Issues/PRs` or `What's missing` contradicts the audited issues and PRs.
+
+**Not a finding:** rows for PRDs outside the audited scope; a row left `In progress` while some of its stories are still open.
+
+**The finding is advisory.** Like every other drift item it is **non-blocking to PR readiness and to issue completion**, and it routes to `product-engineer`'s `activity-drift-reconciliation` flow, which corrects the row. Classify it with the existing impact/intent vocabulary. Never hold a PR on it.
+
 ## Failure Triage Workflow (Randomized Tests)
 
 When a randomized or fuzz test fails, follow this sequence:

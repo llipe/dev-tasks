@@ -4,10 +4,11 @@ Portable, repo-installed workflow harness for structured, PRD-driven AI-assisted
 
 ## Contracts
 
-| File          | Owner         | Purpose                                        |
-| ------------- | ------------- | ---------------------------------------------- |
-| `/DESIGN.md`  | `ux-engineer` | Canonical design-system tokens and UI guidance |
-| `/TESTING.md` | `qa-engineer` | Layer taxonomy, runners, thresholds, fixtures  |
+| File              | Owner              | Purpose                                        |
+| ----------------- | ------------------ | ---------------------------------------------- |
+| `/DESIGN.md`      | `ux-engineer`      | Canonical design-system tokens and UI guidance |
+| `/TESTING.md`     | `qa-engineer`      | Layer taxonomy, runners, thresholds, fixtures  |
+| `docs/roadmap.md` | `product-engineer` | PRD phases/waves: done, in progress, missing   |
 
 If `/DESIGN.md` is missing and scope includes UI work, agents **MUST** create a baseline before finalizing design-dependent outputs. An unfilled `/TESTING.md` placeholder means "no standard established", never permission.
 
@@ -113,7 +114,8 @@ All agents **MUST**:
 - Run `qa-engineer` at completion gate (record `coverage_gate: PASS | FAIL | SKIPPED(<reason>)`)
 - Run `verifier` audit (mandatory, non-skippable) before PR is ready; drift findings route to `product-engineer`
 - Follow test-first design: write tests before implementation code
-- If `memo-cli` is available: read/write entries per role
+- If `memo-cli` is available: read/write entries per role, naming `--bank <id>` literally on every command (never `--bank $MEMO_BANK`), and report every write as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)` — never drop a failure silently
+- Keep `docs/roadmap.md` current: `product-engineer` reads it at session start and adds a row per PRD phase/wave; `planner` reads it in Phase 0 and updates the delivered rows in the consolidated PR; `verifier` reports a mismatch with merged work as an advisory finding
 - **Foundation documents: resolve the new name, fall back to the old one.** The canonical names are `docs/product.md` and `docs/tech.md`. A repository installed before the rename still carries `docs/product-context.md` and `docs/technical-guidelines.md`, and `dev-tasks update` never renames a consumer-owned file on its own. So when **reading** a foundation document, resolve the new name first and fall back to the old one only when the new name is absent; when **writing**, always write the new name. Propose `dev-tasks migrate docs` on encountering an old name. This applies to every agent and skill that reads these documents, for one release cycle (FR-45)
 - Deliver a runbook in the **same PR** as any new or materially changed script under `templates/scripts/`, workflow under `templates/workflows/` or `.github/workflows/`, or `infra-engineer` change kind (FR-49a). Updating an existing runbook satisfies this
 - Route a docs-structure failure in `validate` to `technical-writer`, never to `housekeeping` (FR-51): `technical-writer` owns documentation structure and content

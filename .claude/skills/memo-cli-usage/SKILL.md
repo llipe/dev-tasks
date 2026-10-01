@@ -21,10 +21,12 @@ If validation fails, run: `memo setup init --repo <repo> --org <org> --domain <d
 
 ## Banks and Kinds (memo-cli 1.3.0+)
 
-A **bank** is a namespace an agent's entries live in — the shared `kb` (default, semantic knowledge base) or a private bank like `developer-memory`, one per long-lived agent. Set `--bank <id>` on any command, or export `MEMO_BANK` for the session so every command picks it up by default:
+A **bank** is a namespace an agent's entries live in — the shared `kb` (default, semantic knowledge base) or a private bank like `developer-memory`, one per long-lived agent. Set `--bank <id>` on any command.
+
+**Agents: always pass `--bank <id>` literally on every command.** Agent runtimes run each shell command in a fresh shell, so an `export MEMO_BANK=…` from an earlier command is gone by the next one. An unquoted empty `$MEMO_BANK` is dropped by the shell, and the flag parser then reads the next token as the bank id (`--bank --rationale …` → bank `--rationale`), which memo-cli rejects with `VALIDATION_FAILED` (dev-tasks issue #253). Never write `--bank $MEMO_BANK` in an agent prompt or command.
 
 ```bash
-export MEMO_BANK=developer-memory   # bank id convention: <agent-name>-memory
+memo write --bank developer-memory ...   # bank id convention: <agent-name>-memory
 ```
 
 Every entry has a **kind**:
@@ -44,10 +46,10 @@ Rule of thumb: episodic entries are per-session chatter that lives in your priva
 **memo-cli 1.3.0+:** one call restores the full context bundle (SELF, POLICIES, SHARED, MINE, LAST SESSION, CONFLICTS):
 
 ```bash
-memo recall "<current task description>" --bank $MEMO_BANK --json
+memo recall "<current task description>" --bank <agent>-memory --json
 ```
 
-If `$MEMO_BANK` is unset, `recall` resolves to `kb` and omits the private-only sections (`SELF`, `MINE`, `LAST SESSION`).
+If no bank is passed (and `MEMO_BANK` is unset), `recall` resolves to `kb` and omits the private-only sections (`SELF`, `MINE`, `LAST SESSION`).
 
 **Fallback (`memo --version` < 1.3.0, or `memo recall` unavailable):** run the four-command sequence instead:
 
@@ -75,7 +77,7 @@ Synthesize findings (either path) into:
 memo write \
   --kind episodic \
   --session ISSUE-<number> \
-  --bank $MEMO_BANK \
+  --bank <agent>-memory \
   --rationale "Context: Starting ISSUE-<##> because <trigger>. Decision: implement via <approach>, preserving <constraints>. Impact: affects <modules/contracts>." \
   --tags "<domain>,issue-<number>,intent,<impact-tag>" \
   --entry-type decision \
@@ -91,7 +93,7 @@ memo write \
 memo write \
   --kind episodic \
   --session ISSUE-<number> \
-  --bank $MEMO_BANK \
+  --bank <agent>-memory \
   --rationale "Context: Completed ISSUE-<##>. Delivery: shipped <behavior>, deviations <none|details>, AC <x/y> verified. Impact: quality gates test=<p/f>; lint=<p/f>; format:check=<p/f>; typecheck=<p/f>; audit=<p/f>." \
   --tags "<domain>,issue-<number>,outcome,gates-pass" \
   --entry-type decision \
@@ -180,12 +182,12 @@ No memo action in Phase 2. `memo used` and `memo decay` arrive with memo-cli 1.4
 
 ```
 memo setup validate                                        # Verify config
-memo recall "<task>" --bank $MEMO_BANK --json               # Restore full context (1.3.0+)
+memo recall "<task>" --bank <agent>-memory --json               # Restore full context (1.3.0+)
 memo write --rationale "..." --tags "a,b,c" --json          # Record a semantic decision (kb)
-memo write --kind episodic --session ID --bank $MEMO_BANK   # Record an intent/outcome entry
+memo write --kind episodic --session ID --bank <agent>-memory   # Record an intent/outcome entry
 memo search "query" [--scope related] --json                # Semantic search
 memo list [--limit N] --json                                # Browse recent
-memo timeline [--session ID] --bank $MEMO_BANK --json        # Replay episodic memory in order
+memo timeline [--session ID] --bank <agent>-memory --json        # Replay episodic memory in order
 memo tags list [--sort frequency] --json                    # Discover tags
 memo inspect --json                                          # Global facets
 memo bank list --json                                        # List all banks
