@@ -5,3 +5,9 @@ node_modules/
 *.tar.gz
 *.tar.gz.sha256
 test/fixtures/
+
+# format / format:check cover bin/, core/, test/, root files, and the
+# platform trees .claude/, .github/, .kiro/ (#246). Local Claude Code
+# settings are excluded: the file is untracked, per-developer state and is
+# absent on CI runners, so checking it would fail the gate locally only.
+.claude/settings.local.json
