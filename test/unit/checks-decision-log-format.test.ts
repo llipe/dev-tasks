@@ -102,6 +102,105 @@ describe("checkDecisionLogContent", () => {
     expect(result.staleness).toEqual([]);
   });
 
+  describe("cell-count validation (#245)", () => {
+    // `splitRow` splits on every `|`, escaped or not. An escaped pipe
+    // (`\\|`) inside any cell adds a cell and slides every later column
+    // one position right. Before this rule, only the three positional
+    // reads (ID, Phase, Supersedes) could notice — a shift landing after
+    // `Supersedes` (Author, Date) was completely silent. Each column gets
+    // its own injection so none of them can regress back to silence.
+    const COLUMNS = [
+      "ID",
+      "Phase",
+      "Branch",
+      "Question",
+      "Recommended",
+      "Answer",
+      "Accepted rec.",
+      "Supersedes",
+      "Author",
+      "Date",
+    ];
+    const CLEAN = ["D-01", "WHAT", "b", "q", "r", "a", "yes", "—", "@llipe", "2026-09-20"];
+
+    function rowWithEscapedPipeIn(column: number): string {
+      const cells = [...CLEAN];
+      cells[column] = `${cells[column]} \\| injected`;
+      return `| ${cells.join(" | ")} |\n`;
+    }
+
+    it.each(COLUMNS.map((name, index) => [name, index] as const))(
+      "fails a row with an escaped pipe in the %s column, naming the cell counts",
+      (_name, index) => {
+        const content = "## WHAT phase\n\n" + HEADER + rowWithEscapedPipeIn(index);
+        const result = checkDecisionLogContent(content, "workstream/decisions-x.md");
+        const mismatch = result.failures.filter((f) => f.rule === "cell-count-mismatch");
+        expect(mismatch, JSON.stringify(result, null, 2)).toHaveLength(1);
+        expect(mismatch[0].message).toContain("11 cells");
+        expect(mismatch[0].message).toContain("10");
+        // The row is skipped, not read positionally: no shifted-column
+        // finding may ride along with the mismatch.
+        expect(result.failures.filter((f) => f.rule !== "cell-count-mismatch")).toEqual([]);
+        expect(result.staleness).toEqual([]);
+      },
+    );
+
+    it("fails a row with too few cells", () => {
+      const content =
+        "## WHAT phase\n\n" + HEADER + "| D-01 | WHAT | b | q | r | a | yes | — | @llipe |\n";
+      const result = checkDecisionLogContent(content, "workstream/decisions-x.md");
+      expect(
+        result.failures.some(
+          (f) => f.rule === "cell-count-mismatch" && f.message.includes("9 cells"),
+        ),
+      ).toBe(true);
+    });
+
+    it("still checks the well-formed rows around a malformed one", () => {
+      const content =
+        "## WHAT phase\n\n" +
+        HEADER +
+        row("D-01", "WHAT") +
+        rowWithEscapedPipeIn(8) +
+        row("D-02", "WHY");
+      const result = checkDecisionLogContent(content, "workstream/decisions-x.md");
+      const rules = result.failures.map((f) => f.rule).sort();
+      expect(rules).toEqual(["cell-count-mismatch", "invalid-phase"]);
+    });
+
+    it("reports the real D-60 row shape (6 escaped pipes, 16 cells) instead of mis-parsing it", () => {
+      // The row as it stood before changelog 1.14 of
+      // workstream/decisions-shared-understanding.md reworded it. Parsed
+      // positionally it put `function\` in the Supersedes column and
+      // printed a `dangling-supersedes` line on every `lint` run.
+      const d60 =
+        "| D-60 | HOW   | phase-3/fr-23-extraction | FR-23 needs new exported identifiers from a diff. " +
+        "TypeScript compiler API, or a regex over `export` declarations? | — | " +
+        "Resolved from D-49's reasoning: regex over added lines matching " +
+        "`export (const\\|let\\|function\\|class\\|type\\|interface\\|enum) <Identifier>` " +
+        "(and `export { … }` lists). | n/a | — | product-engineer | 2026-09-21 |\n";
+      const content = "## HOW phase\n\n" + HEADER + d60;
+      const result = checkDecisionLogContent(content, "workstream/decisions-x.md");
+      expect(result.staleness, "must not mis-parse into dangling-supersedes").toEqual([]);
+      const mismatch = result.failures.filter((f) => f.rule === "cell-count-mismatch");
+      expect(mismatch).toHaveLength(1);
+      expect(mismatch[0].message).toContain("D-60");
+      expect(mismatch[0].message).toContain("16 cells");
+      expect(mismatch[0].message).toContain("10");
+    });
+  });
+
+  it("imports no Markdown or other parser — it ships inside dist/core without devDependencies", () => {
+    const source = readFileSync(join(REPO_ROOT, "core/checks/decision-log-format.ts"), "utf-8");
+    const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]);
+    for (const specifier of imports) {
+      const allowed =
+        specifier.startsWith("node:") || specifier.startsWith("./") || specifier.startsWith("../");
+      expect(allowed, `unexpected import '${specifier}'`).toBe(true);
+    }
+    expect(source).not.toMatch(/from\s+"(yaml|js-yaml|marked|remark|markdown-it|typescript)"/);
+  });
+
   it("passes the real, large, known-good workstream/decisions-shared-understanding.md fixture", () => {
     const content = readFileSync(
       join(REPO_ROOT, "workstream/decisions-shared-understanding.md"),
