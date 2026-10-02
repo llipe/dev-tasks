@@ -64,14 +64,14 @@ The package is a CLI and filesystem toolkit, so Node is the correct environment;
 - CI workflows `validate.yml` and `publish-npm.yml` use Node `24`.
 - The package declares production engine `>=24`.
 - Local validation has been observed on Node `v26.7.0`, which is above the declared engine floor.
-- The full test suite runs with zero failures on both runtimes: locally on Node 26, and on Node 24 in the `validate.yml` pull request check.
-- A deployment of CI against Node 24 while the development environment uses Node 26 represents a minor runtime mismatch but carries no known risk to the harness itself; the CLI and toolkit operate across both versions without defect.
+- The full test suite passes on both runtimes, locally on Node 26 and on Node 24 in the `validate.yml` pull request check, apart from the known HEAD-dependent test listed under [Harness defects to track](#harness-defects-to-track). That test depends on the git state of the checkout, not on the Node version.
+- A deployment of CI against Node 24 while the development environment uses Node 26 represents a minor runtime mismatch but carries no known risk to the harness itself; no runtime-specific failure has been observed on either version.
 
 ## Commands
 
 | Script             | Purpose                                                                                               | Status                              |
 | ------------------ | ----------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| `lint`             | ESLint static analysis **and** `tsx core/checks/run.ts` (docs-structure gate)                         | present                             |
+| `lint`             | ESLint **and** `tsx core/checks/run.ts` (docs-structure, decision-log, glossary, vocabulary checks)   | present                             |
 | `lint:fix`         | ESLint auto-fix                                                                                       | present                             |
 | `format`           | Prettier write                                                                                        | present                             |
 | `format:check`     | Prettier verification                                                                                 | present                             |
@@ -133,7 +133,7 @@ This package has no authentication or authorization implementation path in the a
 
 ### Environment-fragility patterns
 
-The test suite runs to completion with zero failures. However, some patterns in test design carry environment-fragility risk if new tests adopt them. Avoid these patterns:
+The test suite runs to completion, and its only known intermittent failure is the HEAD-dependent test in item 5 below. Some patterns in test design carry environment-fragility risk if new tests adopt them. Avoid these patterns:
 
 - **Root-permission assumptions.** A test that `chmod`s a path unwritable and expects a failure passes only as a non-root user. Root ignores the bits. `test/unit/migrate-docs.test.ts` shows the correct pattern: probe whether writes are actually blocked, and `ctx.skip()` when they are not. `checkCacheDir` and `runUpdate --force` should adopt it if they are written.
 - **PATH assumptions.** A test that sets `PATH=/usr/bin:/bin` to simulate a missing binary depends on that binary being absent from those directories. `yq` is present at `/usr/bin/yq` in some containers. A purpose-built empty directory is the reliable form.
@@ -141,4 +141,5 @@ The test suite runs to completion with zero failures. However, some patterns in 
 1. `vitest.config.ts`: `restoreMocks` is not enabled. Expected state: enable explicit mock restoration if mocks/stubs are introduced, and retain per-test cleanup for any global stubs.
 2. Coverage of `bin/**`: resolved for `core/**` by #247 (provider, `test:coverage`, and a recorded baseline). `bin/**` still measures 0% because it is exercised only through child processes, which in-process V8 coverage does not capture. Expected state: either measure child processes (for example via `NODE_V8_COVERAGE`) or record `bin/**` as out of measured scope.
 3. CI/deploy wiring: the pull request half is resolved by #248 — `validate.yml` runs `pnpm run validate` on every pull request. Still open: no deploy workflow invokes the aggregate test command, and the pull request check is not yet a _required_ status check in branch protection (a manual repository setting, see `docs/runbooks/runbook-configure-branch-protection.md`). Expected state: every CI test job and deploy quality gate runs `pnpm run test` or `pnpm run validate`, and the pull request check is required.
-4. Runtime alignment: `validate.yml` and `publish-npm.yml` use Node 24 while local development uses Node 26. Both runtimes pass the full test suite with zero failures, so there is no blocker to release. Future work may align these to a single supported range or explicitly document the tested range in the engine constraint.
+4. Runtime alignment: `validate.yml` and `publish-npm.yml` use Node 24 while local development uses Node 26. Both runtimes pass the full test suite (the HEAD-dependent test in item 5 aside, which is not runtime-related), so there is no blocker to release. Future work may align these to a single supported range or explicitly document the tested range in the engine constraint.
+5. HEAD-dependent test: `test/unit/infra-script-contract.test.ts`, case `deploy.sh prod — ref rules (AC-4) > refuses when the ref is not an annotated tag on main`, expects a refusal and fails when `HEAD` is the tagged release commit. It was observed failing intermittently during the quality-gate-hardening batch (#245–#248). The pull request runbook (`docs/runbooks/runbook-diagnose-pr-validate.md`) tells a reader to re-run the job once when it is the only failure. Expected state: the test's result does not depend on which commit is checked out.
