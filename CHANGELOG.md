@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- fix(git-guard): read each command's arguments from its own segment of a chained command, so a feature push followed by `gh pr create --base main` or a commit message mentioning tags no longer blocks, and every push, merge, and tag command in a chain is checked instead of only the last one (#256)
 - fix(memo): name memo banks literally instead of `--bank $MEMO_BANK`, which is empty in a fresh shell and made every write fail; use `--manual` for `technical-writer` `kb` entries without provenance; record every write result in the closeout payload and gate merges on its presence (#253)
 
 ## [0.16.1] - 2026-09-23

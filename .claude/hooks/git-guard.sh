@@ -19,6 +19,14 @@
 #      allowed. The tag-push detector matches an exact `vX.Y.Z` ref position
 #      (bare token or refspec destination), not any substring, so a branch
 #      named e.g. `issue/42-bump-v1.2.3` is not misdetected as a tag push.
+#
+# Rules 1 and 4 read each command's arguments from its own simple-command
+# segment (split at `&&`, `||`, `;`, `|`, `&`, and newlines outside quotes —
+# see command_segments()), never from the rest of the command string. A
+# chained `gh pr create --base main` is not a push to `main`, a `--tags` in a
+# commit message is not a tag push, and every push or merge in a chain is
+# checked, not only the last one (issue #256).
+#
 #   5. (Issue #178) The same "no write to the default branch" invariant as
 #      rule 1, enforced on the mutating GitHub MCP tool surface, not just
 #      `Bash`. Before this rule, `.claude/settings.json` matched `"Bash"`
@@ -214,22 +222,99 @@ tokenize() {
   printf '%s' "$1" | xargs -n1 -- printf '%s\n' 2>/dev/null
 }
 
-# Does any `git push` destination token in $norm equal $1? Checks bare tokens
-# and the destination (right-hand) side of `src:dst` refspecs; strips a
-# leading `+` (force-push shorthand) before comparing. Flags are skipped.
+# Split the raw command into simple-command segments, one per output line,
+# at `&&`, `||`, `;`, `|`, `&`, and newlines outside single or double quotes
+# (backslash escapes honored). Every rule that reads a command's arguments
+# reads them from its own segment, never from the rest of the string. Before
+# this, `git push -u origin feat && gh pr create --base main` read `main` as
+# a push destination, `--tags` anywhere in the string read as a tag push, and
+# a greedy `.*git push` match checked only the LAST push in a chained
+# command, so `git push origin main && git push origin feat` was allowed
+# (issue #256). Portable awk only: macOS ships BSD awk, not gawk.
+command_segments() {
+  printf '%s\n' "$cmd" | awk '
+    { s = s (NR > 1 ? "\n" : "") $0 }
+    END {
+      out = ""; q = ""; n = length(s)
+      for (i = 1; i <= n; i++) {
+        c = substr(s, i, 1)
+        if (q != "") {
+          out = out c
+          if (c == q) q = ""
+          else if (c == "\\" && q == "\"" && i < n) { i++; out = out substr(s, i, 1) }
+          continue
+        }
+        if (c == "\\" && i < n) { out = out c substr(s, i + 1, 1); i++; continue }
+        if (c == "\"" || c == "\047") { q = c; out = out c; continue }
+        if (c == ";" || c == "|" || c == "&" || c == "\n") { out = out "\n"; continue }
+        out = out c
+      }
+      print out
+    }'
+}
+
+# Segments matching the extended regex $1, whitespace-normalized, one per line.
+segments_matching() {
+  command_segments | tr -s ' \t' '  ' | grep -E -- "$1"
+}
+
+# Argument tokens following EACH `git push` in segment $1, one per line.
+# Quotes, backticks, parentheses, and separators are stripped from tokens so
+# `$(git push origin main)` and `bash -c "git push origin main"` still yield
+# `main`. Every occurrence in the segment is read, not just the last one.
+push_tokens() {
+  printf '%s\n' "$1" | awk '{ n = split($0, parts, /git[ \t]+push/); for (i = 2; i <= n; i++) print parts[i] }' \
+    | tr -s ' \t' '\n\n' | tr -d "\"'\`();|&" | grep -v '^$'
+}
+
+# A segment runs `git push` when the words appear at its start, after
+# whitespace, or after an opening quote, backtick, or parenthesis.
+_push_segment_re="(^|[[:space:](\`\"'])git +push([[:space:]]|$)"
+
+# Does any `git push` destination in the command equal branch $1? Reads each
+# push segment's own tokens only. Checks bare tokens and the destination
+# (right-hand) side of `src:dst` refspecs, strips a leading `+` (force-push
+# shorthand) and a `refs/heads/` prefix before comparing. Flags are skipped.
 push_targets_ref() {
-  local target="$1" rest tok dst
-  rest="$(printf '%s' "$norm" | sed -n 's/.*git[[:space:]][[:space:]]*push[[:space:]][[:space:]]*//p')"
-  for tok in $rest; do
-    case "$tok" in
-      -*) continue ;;
-    esac
-    tok="${tok#+}"
-    dst="${tok##*:}"
-    if [ "$tok" = "$target" ] || [ "$dst" = "$target" ]; then
-      return 0
-    fi
-  done
+  local target="$1" seg tok dst
+  while IFS= read -r seg; do
+    while IFS= read -r tok; do
+      case "$tok" in
+        -*) continue ;;
+      esac
+      tok="${tok#+}"
+      dst="${tok##*:}"
+      tok="${tok#refs/heads/}"
+      dst="${dst#refs/heads/}"
+      if [ "$tok" = "$target" ] || [ "$dst" = "$target" ]; then
+        return 0
+      fi
+    done < <(push_tokens "$seg")
+  done < <(segments_matching "$_push_segment_re")
+  return 1
+}
+
+# Does any push segment push tags? `--tags`, `--follow-tags`, and `--mirror`
+# (which pushes every ref, tags included) as flags of the push itself; a
+# `refs/tags/` refspec; or a destination that is exactly `vX.Y.Z` — anchored,
+# so a branch named e.g. `issue/42-bump-v1.2.3` is not a tag push. The words
+# appearing elsewhere in the command (a commit message, an echo) do not count.
+push_is_tag_push() {
+  local seg tok dst
+  while IFS= read -r seg; do
+    while IFS= read -r tok; do
+      case "$tok" in
+        --tags | --follow-tags | --mirror) return 0 ;;
+        *refs/tags/*) return 0 ;;
+        -*) continue ;;
+      esac
+      tok="${tok#+}"
+      dst="${tok##*:}"
+      if printf '%s' "$dst" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+        return 0
+      fi
+    done < <(push_tokens "$seg")
+  done < <(segments_matching "$_push_segment_re")
   return 1
 }
 
@@ -384,7 +469,7 @@ gh_pr_merge_target() {
 
 # `git push` targeting the default branch (resolved dynamically; not hardcoded
 # to `main` so a repo on `master`/`trunk` is protected identically).
-if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +push'; then
+if printf '%s' "$norm" | grep -Eq "$_push_segment_re|[;&|]git +push"; then
   default_branch="$(resolve_default_branch)"
   if push_targets_ref "$default_branch"; then
     block "pushing to '$default_branch' is not allowed. Open a PR; only the user may merge into $default_branch."
@@ -404,23 +489,33 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +merge([[:space:]]|$)';
   # 1b. Raw-git escape: merging a story/issue branch directly into an
   # integration branch bypasses PR review entirely. This is the confirmed
   # live defect's unreviewable path — block it and name the reviewable one.
-  merge_arg="$(strip_merge_ref_prefix "$(git_merge_arg)")"
-  case "$current_branch" in
-    integration/*)
-      case "$merge_arg" in
-        story/*|issue/*)
-          block "raw 'git merge' of a story/issue branch into an integration branch is not allowed — it bypasses PR review. Use 'gh pr merge <n> --squash --delete-branch' instead."
-          ;;
-      esac
-      ;;
-  esac
+  # Checked per segment, so every merge in a chained command is read with
+  # its own arguments (issue #256).
+  _full_norm="$norm"
+  while IFS= read -r norm; do
+    merge_arg="$(strip_merge_ref_prefix "$(git_merge_arg)")"
+    case "$current_branch" in
+      integration/*)
+        case "$merge_arg" in
+          story/*|issue/*)
+            block "raw 'git merge' of a story/issue branch into an integration branch is not allowed — it bypasses PR review. Use 'gh pr merge <n> --squash --delete-branch' instead."
+            ;;
+        esac
+        ;;
+    esac
+  done < <(segments_matching '(^|[[:space:]])git +merge([[:space:]]|$)')
+  norm="$_full_norm"
 fi
 
 # `gh pr merge`: resolve the PR's actual base via `gh pr view` (the `--base`
 # flag does not exist on `gh pr merge` — it belongs to `gh pr create` — so a
 # text check for it was always vacuous and blocked the tool's own canonical
 # merge command). Fails CLOSED if the lookup itself fails; see header.
-if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +pr +merge([[:space:]]|$)'; then
+# Checked per segment, so every `gh pr merge` in a chained command is read
+# with its own arguments and flags (issue #256). Commands inside the loop read
+# stdin from /dev/null so they cannot consume the segment list.
+_full_norm="$norm"
+while IFS= read -r norm; do
   # `--admin` bypasses branch protection outright; never allowed for agents.
   if printf '%s' "$norm" | grep -Eq -- '(^|[[:space:]])--admin([[:space:]]|$)'; then
     block "'gh pr merge --admin' bypasses branch protection and is not allowed for agents. Only the user may merge with --admin, or via GitHub's UI/API directly."
@@ -450,9 +545,9 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +pr +merge([[:space:]]|$
   lookup_ok=0
   if command -v gh >/dev/null 2>&1; then
     if [ -n "$view_arg" ]; then
-      base="$(gh pr view "$view_arg" --json baseRefName -q .baseRefName 2>/dev/null)" && lookup_ok=1
+      base="$(gh pr view "$view_arg" --json baseRefName -q .baseRefName 2>/dev/null </dev/null)" && lookup_ok=1
     else
-      base="$(gh pr view --json baseRefName -q .baseRefName 2>/dev/null)" && lookup_ok=1
+      base="$(gh pr view --json baseRefName -q .baseRefName 2>/dev/null </dev/null)" && lookup_ok=1
     fi
   fi
 
@@ -462,7 +557,7 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +pr +merge([[:space:]]|$
     block "could not verify the PR's base branch via '$verify_cmd' (gh missing, unauthenticated, or a network error). Refusing to merge (fail-closed): an unverified base could be the default branch. Do not fall back to an unverified merge path or a different tool surface — stop and ask the user to check 'gh auth status'/network access, or merge it themselves."
   fi
 
-  default_branch="$(resolve_default_branch)"
+  default_branch="$(resolve_default_branch </dev/null)"
   if [ "$base" = "$default_branch" ]; then
     block "merging a PR into '$default_branch' is not allowed. Only the user may merge into $default_branch."
   fi
@@ -472,7 +567,8 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])gh +pr +merge([[:space:]]|$
   if printf '%s' "$norm" | grep -Eq -- '(^|[[:space:]])--auto([[:space:]]|$)' && [ "$base" = "$default_branch" ]; then
     block "'gh pr merge --auto' on a PR targeting '$default_branch' is not allowed. Only the user may merge into $default_branch."
   fi
-fi
+done < <(segments_matching '(^|[[:space:]])gh +pr +merge([[:space:]]|$)')
+norm="$_full_norm"
 
 # --- Rule 2: Conventional Commits for git commit ------------------------------
 # Inspect inline -m / --message messages. Commits via editor or -F file are not
@@ -508,44 +604,23 @@ fi
 # Agents may not create, move, delete, or force tags, push tags, or cut a
 # GitHub release. Reading tags is allowed: `git tag -l`, `git tag --list`,
 # `git tag -n`, `git tag` with no args, and `git describe --tags`.
-if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +tag([[:space:]]|$)'; then
+# Checked per segment (issue #256): one read form must not let another
+# segment's tag creation through, e.g. `git tag --list; git tag v1.0.0`.
+while IFS= read -r _seg; do
   # Allow pure list/read forms.
-  if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +tag +(-l|--list|-n[0-9]*)([[:space:]]|$)'; then
+  if printf '%s' "$_seg" | grep -Eq '(^|[[:space:]])git +tag +(-l|--list|-n[0-9]*)([[:space:]]|$)'; then
     :
-  elif printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +tag[[:space:]]*$'; then
+  elif printf '%s' "$_seg" | grep -Eq '(^|[[:space:]])git +tag[[:space:]]*$'; then
     : # `git tag` with no further arguments lists tags.
   else
     block "creating, moving, deleting, or forcing a git tag is not allowed. Tags are human-only, annotated, and point at a 'main' commit. See github-ops 'Tags'."
   fi
-fi
+done < <(segments_matching '(^|[[:space:]])git +tag([[:space:]]|$)')
 
-# Block tag pushes: `--tags`, refs/tags/*, or a push whose destination token
-# (bare, or the right-hand side of a `src:dst` refspec) is an exact `vX.Y.Z`
-# ref — not merely a substring, so a branch like `issue/42-bump-v1.2.3` is not
-# misdetected as a tag push.
-if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +push'; then
-  is_tag_push=0
-  if printf '%s' "$norm" | grep -Eq -- '--tags'; then
-    is_tag_push=1
-  elif printf '%s' "$norm" | grep -Eq 'refs/tags/'; then
-    is_tag_push=1
-  else
-    rest="$(printf '%s' "$norm" | sed -n 's/.*git[[:space:]][[:space:]]*push[[:space:]][[:space:]]*//p')"
-    for tok in $rest; do
-      case "$tok" in
-        -*) continue ;;
-      esac
-      tok="${tok#+}"
-      dst="${tok##*:}"
-      if printf '%s' "$dst" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-        is_tag_push=1
-        break
-      fi
-    done
-  fi
-  if [ "$is_tag_push" -eq 1 ]; then
-    block "pushing a tag is not allowed. Tags are created and pushed by a human only. See github-ops 'Tags'."
-  fi
+# Block tag pushes, read from each push segment's own arguments only: see
+# push_is_tag_push.
+if push_is_tag_push; then
+  block "pushing a tag is not allowed. Tags are created and pushed by a human only. See github-ops 'Tags'."
 fi
 
 # Block `gh release create` (cutting a release implies creating a tag).
