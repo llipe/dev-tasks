@@ -61,7 +61,7 @@ The package is a CLI and filesystem toolkit, so Node is the correct environment;
 
 ### Runtime parity
 
-- CI workflow `publish-npm.yml` uses Node `24`.
+- CI workflows `validate.yml` and `publish-npm.yml` use Node `24`.
 - The package declares production engine `>=24`.
 - Local validation has been observed on Node `v26.7.0`, which is above the declared engine floor.
 - The test suite runs at 64 files / 2138 tests with zero failures on both runtimes.
@@ -87,7 +87,7 @@ The package is a CLI and filesystem toolkit, so Node is the correct environment;
 ### Gate reachability
 
 - **Aggregate test command:** `pnpm run test` (`vitest run`), which includes `test/**/*.test.ts` and excludes `test/fixtures/**`; the single package is reached, including both `test/unit/` and `test/integration/`.
-- **CI gate:** `publish-npm.yml` invokes `pnpm run validate`, which reaches the aggregate test command, but only on its tag-triggered publish workflow. No general CI test workflow/job was detected.
+- **CI gate:** `validate.yml` runs `pnpm run validate`, which reaches the aggregate test command, on every pull request into any base branch (#248; runbook `docs/runbooks/runbook-diagnose-pr-validate.md`). `publish-npm.yml` runs it again on the tag-triggered publish. The PR check is not yet _required_ by branch protection: that is a manual repository setting (`docs/runbooks/runbook-configure-branch-protection.md`). Coverage (`test:coverage`) is not part of either gate.
 - **Deploy gate:** no deploy workflow was detected; deploy quality-gate status is not automatically enforced.
 - `release-bundle.yml` does not invoke `validate` or the aggregate test command.
 
