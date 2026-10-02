@@ -67,8 +67,43 @@ describe(".github/workflows/validate.yml (#248)", () => {
     }
   });
 
+  it("does not narrow which pull requests or events run the gate (AC-1)", () => {
+    // `paths`/`paths-ignore` skip PRs that touch only some files, and
+    // `types` drops the default opened/synchronize/reopened events — each
+    // quietly turns "every PR" into "some PRs".
+    const pr = triggers(load()).pull_request as Record<string, unknown> | null | undefined;
+    for (const key of ["branches", "branches-ignore", "paths", "paths-ignore", "types"]) {
+      expect(pr ?? {}, `pull_request.${key} narrows the gate`).not.toHaveProperty(key);
+    }
+  });
+
   it("requests read-only repository contents", () => {
     expect(load().permissions).toEqual({ contents: "read" });
+  });
+
+  it("does not widen permissions at the job level", () => {
+    const job = onlyJob(load()) as Job & Record<string, unknown>;
+    if ("permissions" in job) {
+      expect(job.permissions, "job-level permissions override the workflow's").toEqual({
+        contents: "read",
+      });
+    }
+  });
+
+  it("cannot be silently skipped or made non-failing", () => {
+    // A job-level `if:` can turn the check off, and `continue-on-error`
+    // reports green while validate fails.
+    const job = onlyJob(load()) as Job & Record<string, unknown>;
+    expect(job, "job-level `if:` can skip the gate").not.toHaveProperty("if");
+    expect(job, "job-level continue-on-error masks failures").not.toHaveProperty(
+      "continue-on-error",
+    );
+    for (const step of job.steps ?? []) {
+      expect(
+        step,
+        `step '${step.name ?? step.uses ?? step.run}' masks failures with continue-on-error`,
+      ).not.toHaveProperty("continue-on-error");
+    }
   });
 
   it("cancels superseded runs for the same pull request", () => {

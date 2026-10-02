@@ -64,7 +64,7 @@ The package is a CLI and filesystem toolkit, so Node is the correct environment;
 - CI workflows `validate.yml` and `publish-npm.yml` use Node `24`.
 - The package declares production engine `>=24`.
 - Local validation has been observed on Node `v26.7.0`, which is above the declared engine floor.
-- The test suite runs at 64 files / 2138 tests with zero failures on both runtimes.
+- The full test suite runs with zero failures on both runtimes: locally on Node 26, and on Node 24 in the `validate.yml` pull request check.
 - A deployment of CI against Node 24 while the development environment uses Node 26 represents a minor runtime mismatch but carries no known risk to the harness itself; the CLI and toolkit operate across both versions without defect.
 
 ## Commands
@@ -140,5 +140,5 @@ The test suite runs to completion with zero failures. However, some patterns in 
 
 1. `vitest.config.ts`: `restoreMocks` is not enabled. Expected state: enable explicit mock restoration if mocks/stubs are introduced, and retain per-test cleanup for any global stubs.
 2. Coverage of `bin/**`: resolved for `core/**` by #247 (provider, `test:coverage`, and a recorded baseline). `bin/**` still measures 0% because it is exercised only through child processes, which in-process V8 coverage does not capture. Expected state: either measure child processes (for example via `NODE_V8_COVERAGE`) or record `bin/**` as out of measured scope.
-3. CI/deploy wiring: no general CI test job and no deploy workflow invoke the aggregate test command. Expected state: every CI test job and deploy quality gate must run `pnpm run test` or `pnpm run validate`.
-4. Runtime alignment: `publish-npm.yml` uses Node 24 while local development uses Node 26. Both runtimes pass the full test suite with zero failures, so there is no blocker to release. Future work may align these to a single supported range or explicitly document the tested range in the engine constraint.
+3. CI/deploy wiring: the pull request half is resolved by #248 — `validate.yml` runs `pnpm run validate` on every pull request. Still open: no deploy workflow invokes the aggregate test command, and the pull request check is not yet a _required_ status check in branch protection (a manual repository setting, see `docs/runbooks/runbook-configure-branch-protection.md`). Expected state: every CI test job and deploy quality gate runs `pnpm run test` or `pnpm run validate`, and the pull request check is required.
+4. Runtime alignment: `validate.yml` and `publish-npm.yml` use Node 24 while local development uses Node 26. Both runtimes pass the full test suite with zero failures, so there is no blocker to release. Future work may align these to a single supported range or explicitly document the tested range in the engine constraint.
