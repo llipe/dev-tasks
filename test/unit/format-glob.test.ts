@@ -18,7 +18,10 @@ const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8")) as 
   scripts: Record<string, string>;
 };
 
-const EXISTING_TARGETS = ["bin/", "core/", "test/", "*.json"];
+// `*.ts` and `eslint.config.js` are the root-level source files (for
+// example `vitest.config.ts`); dropping either would silently leave them
+// unformatted, so they are pinned alongside the directory targets.
+const EXISTING_TARGETS = ["bin/", "core/", "test/", "*.json", "*.ts", "eslint.config.js"];
 const PLATFORM_TREES = [".claude/", ".github/", ".kiro/"];
 
 /** Returns the double-quoted path arguments of a prettier script. */
