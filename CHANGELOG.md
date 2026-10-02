@@ -18,11 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - feat(roadmap): `docs/roadmap.md` overview of PRD phases and waves, owned by `product-engineer`, updated by `planner` in the consolidated PR, and checked by a `verifier` roadmap-mismatch finding (#254)
 - feat(memo): `product-engineer` writes confirmed grilling decisions to `kb`; `planner` verifies per-story memo fields and writes one run-outcome entry (#253)
+- feat(ci): `validate.yml` runs `pnpm run validate` on every pull request, with runbook `docs/runbooks/runbook-diagnose-pr-validate.md` (#248)
+- feat(test): `@vitest/coverage-v8` and `pnpm run test:coverage`; coverage baseline recorded (not enforced) in `TESTING.md`; coverage stays out of `validate` (#247)
 
 ### Fixed
 
 - fix(git-guard): read each command's arguments from its own segment of a chained command, so a feature push followed by `gh pr create --base main` or a commit message mentioning tags no longer blocks, and every push, merge, and tag command in a chain is checked instead of only the last one (#256)
 - fix(memo): name memo banks literally instead of `--bank $MEMO_BANK`, which is empty in a fresh shell and made every write fail; use `--manual` for `technical-writer` `kb` entries without provenance; record every write result in the closeout payload and gate merges on its presence (#253)
+- fix(checks): decision-log rows whose cell count differs from the header now fail with `cell-count-mismatch` instead of being parsed with shifted columns (#245)
+- fix(deps): `brace-expansion` pnpm overrides bounded to their own major (patched floors unchanged) (#247)
+
+### Changed
+
+- chore(format): `format` and `format:check` cover `.claude/`, `.github/`, and `.kiro/` (#246)
 
 ## [0.16.1] - 2026-09-23
 

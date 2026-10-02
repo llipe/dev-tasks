@@ -18,10 +18,14 @@
  * content, small enough that a directory tree buys nothing.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { checkDecisionLogContent } from "../../core/checks/decision-log-format.js";
+import {
+  checkDecisionLogContent,
+  checkDecisionLogFormat,
+} from "../../core/checks/decision-log-format.js";
 
 const REPO_ROOT = join(import.meta.dirname, "../..");
 
@@ -216,5 +220,76 @@ describe("checkDecisionLogContent", () => {
     // the Supersedes column. A row that needs an escaped pipe should say
     // the same thing in words instead.
     expect(result.staleness, JSON.stringify(result.staleness, null, 2)).toEqual([]);
+  });
+});
+
+describe("checkDecisionLogFormat (repository walk)", () => {
+  // `checkDecisionLogFormat` is what `core/checks/run.ts` calls: it
+  // discovers `workstream/decisions-*.md` files (via the private
+  // `decisionLogFiles`) and runs the content check on each. These cases
+  // pin the discovery and the wiring, not the row rules themselves.
+  function tempRepo(): string {
+    return mkdtempSync(join(tmpdir(), "decision-log-format-"));
+  }
+
+  function withRepo(fn: (root: string) => void): void {
+    const root = tempRepo();
+    try {
+      fn(root);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  it("reports a cell-count-mismatch failure for a mismatched row in workstream/decisions-x.md", () => {
+    withRepo((root) => {
+      mkdirSync(join(root, "workstream"));
+      const mismatched =
+        "| D-01 | WHAT | b | q | r \\| injected | a | yes | — | @llipe | 2026-09-20 |\n";
+      writeFileSync(
+        join(root, "workstream", "decisions-x.md"),
+        "## WHAT phase\n\n" + HEADER + mismatched,
+      );
+
+      const result = checkDecisionLogFormat(root);
+      expect(result.failures.map((f) => f.rule)).toContain("cell-count-mismatch");
+      expect(result.failures.every((f) => f.path === "workstream/decisions-x.md")).toBe(true);
+    });
+  });
+
+  it("reports nothing for a well-formed workstream/decisions-x.md", () => {
+    withRepo((root) => {
+      mkdirSync(join(root, "workstream"));
+      writeFileSync(
+        join(root, "workstream", "decisions-x.md"),
+        "## WHAT phase\n\n" + HEADER + row("D-01", "WHAT"),
+      );
+
+      const result = checkDecisionLogFormat(root);
+      expect(result.failures).toEqual([]);
+      expect(result.staleness).toEqual([]);
+    });
+  });
+
+  it("ignores files in workstream/ that are not decisions-*.md", () => {
+    withRepo((root) => {
+      mkdirSync(join(root, "workstream"));
+      writeFileSync(
+        join(root, "workstream", "tasks-x.md"),
+        "## WHAT phase\n\n" + HEADER + row("D-01", "NOT-A-PHASE"),
+      );
+
+      const result = checkDecisionLogFormat(root);
+      expect(result.failures).toEqual([]);
+    });
+  });
+
+  it("reports nothing and does not throw when there is no workstream/ directory", () => {
+    withRepo((root) => {
+      expect(() => checkDecisionLogFormat(root)).not.toThrow();
+      const result = checkDecisionLogFormat(root);
+      expect(result.failures).toEqual([]);
+      expect(result.staleness).toEqual([]);
+    });
   });
 });
