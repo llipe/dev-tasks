@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.16.2] - 2026-10-02
+
+### Fixed
+
+- fix(git-guard): read each command's arguments from its own segment (#257)
+- fix(memo): make memo writes succeed and add docs/roadmap.md (#255)
+
 ## [Unreleased]
 
 ### Added
