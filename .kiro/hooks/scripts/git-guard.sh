@@ -71,12 +71,23 @@ command_segments() {
       for (i = 1; i <= n; i++) {
         c = substr(s, i, 1)
         if (q != "") {
+          # Inside quotes a newline is part of the argument, never a
+          # separator: map it to a space so the segment stays whole.
+          if (c == "\n") { out = out " "; continue }
+          if (c == q) { q = ""; out = out c; continue }
+          if (c == "\\" && q == "\"" && i < n) {
+            d = substr(s, i + 1, 1); i++
+            if (d != "\n") out = out c d   # backslash-newline is a continuation
+            continue
+          }
           out = out c
-          if (c == q) q = ""
-          else if (c == "\\" && q == "\"" && i < n) { i++; out = out substr(s, i, 1) }
           continue
         }
-        if (c == "\\" && i < n) { out = out c substr(s, i + 1, 1); i++; continue }
+        if (c == "\\" && i < n) {
+          d = substr(s, i + 1, 1); i++
+          if (d != "\n") out = out c d     # backslash-newline is a continuation
+          continue
+        }
         if (c == "\"" || c == "\047") { q = c; out = out c; continue }
         if (c == ";" || c == "|" || c == "&" || c == "\n") { out = out "\n"; continue }
         out = out c
@@ -96,12 +107,14 @@ segments_matching() {
 # `main`. Every occurrence in the segment is read, not just the last one.
 push_tokens() {
   printf '%s\n' "$1" | awk '{ n = split($0, parts, /git[ \t]+push/); for (i = 2; i <= n; i++) print parts[i] }' \
-    | tr -s ' \t' '\n\n' | tr -d "\"'\`();|&" | grep -v '^$'
+    | tr -s ' \t' '\n\n' | tr -d "\"'\`();|&" | sed 's/[<>].*//' | grep -v '^$'
 }
 
-# A segment runs `git push` when the words appear at its start, after
-# whitespace, or after an opening quote, backtick, or parenthesis.
-_push_segment_re="(^|[[:space:](\`\"'])git +push([[:space:]]|$)"
+# A command word counts when it appears at a segment's start, after
+# whitespace, after an opening quote, backtick, or parenthesis, or after a
+# path (`/usr/bin/git`).
+_cmd_prefix="(^|[[:space:](\`\"'/])"
+_push_segment_re="${_cmd_prefix}git +push([[:space:]]|$)"
 
 # Does any `git push` destination in the command equal branch $1? Reads each
 # push segment's own tokens only; checks bare tokens and the right-hand side
@@ -145,7 +158,7 @@ fi
 # Checked per segment, so a later `gh pr create --base main` in the same
 # command is not read as this merge's base (issue #256).
 while IFS= read -r _seg; do
-  if printf '%s' "$_seg" | grep -Eq -- '--base[ =]main([[:space:]]|$)|-B[ =]main([[:space:]]|$)'; then
+  if printf '%s' "$_seg" | grep -Eq -- "(--base|-B)[ =][\"']?main([^[:alnum:]_./-]|$)"; then
     block "merging a PR into 'main' is not allowed. Only the user may merge into main."
   fi
   # No explicit base given: gh defaults to the PR's base. Warn-block to be safe

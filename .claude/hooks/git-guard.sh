@@ -239,12 +239,23 @@ command_segments() {
       for (i = 1; i <= n; i++) {
         c = substr(s, i, 1)
         if (q != "") {
+          # Inside quotes a newline is part of the argument, never a
+          # separator: map it to a space so the segment stays whole.
+          if (c == "\n") { out = out " "; continue }
+          if (c == q) { q = ""; out = out c; continue }
+          if (c == "\\" && q == "\"" && i < n) {
+            d = substr(s, i + 1, 1); i++
+            if (d != "\n") out = out c d   # backslash-newline is a continuation
+            continue
+          }
           out = out c
-          if (c == q) q = ""
-          else if (c == "\\" && q == "\"" && i < n) { i++; out = out substr(s, i, 1) }
           continue
         }
-        if (c == "\\" && i < n) { out = out c substr(s, i + 1, 1); i++; continue }
+        if (c == "\\" && i < n) {
+          d = substr(s, i + 1, 1); i++
+          if (d != "\n") out = out c d     # backslash-newline is a continuation
+          continue
+        }
         if (c == "\"" || c == "\047") { q = c; out = out c; continue }
         if (c == ";" || c == "|" || c == "&" || c == "\n") { out = out "\n"; continue }
         out = out c
@@ -264,12 +275,14 @@ segments_matching() {
 # `main`. Every occurrence in the segment is read, not just the last one.
 push_tokens() {
   printf '%s\n' "$1" | awk '{ n = split($0, parts, /git[ \t]+push/); for (i = 2; i <= n; i++) print parts[i] }' \
-    | tr -s ' \t' '\n\n' | tr -d "\"'\`();|&" | grep -v '^$'
+    | tr -s ' \t' '\n\n' | tr -d "\"'\`();|&" | sed 's/[<>].*//' | grep -v '^$'
 }
 
-# A segment runs `git push` when the words appear at its start, after
-# whitespace, or after an opening quote, backtick, or parenthesis.
-_push_segment_re="(^|[[:space:](\`\"'])git +push([[:space:]]|$)"
+# A command word counts when it appears at a segment's start, after
+# whitespace, after an opening quote, backtick, or parenthesis, or after a
+# path (`/usr/bin/git`).
+_cmd_prefix="(^|[[:space:](\`\"'/])"
+_push_segment_re="${_cmd_prefix}git +push([[:space:]]|$)"
 
 # Does any `git push` destination in the command equal branch $1? Reads each
 # push segment's own tokens only. Checks bare tokens and the destination
@@ -477,7 +490,7 @@ if printf '%s' "$norm" | grep -Eq "$_push_segment_re|[;&|]git +push"; then
 fi
 
 # `git merge`: two independent checks.
-if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +merge([[:space:]]|$)'; then
+if printf '%s' "$norm" | grep -Eq "${_cmd_prefix}git +merge([[:space:]]|$)|[;&|]git +merge([[:space:]]|$)"; then
   current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '')"
   default_branch="$(resolve_default_branch)"
 
@@ -503,7 +516,7 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +merge([[:space:]]|$)';
         esac
         ;;
     esac
-  done < <(segments_matching '(^|[[:space:]])git +merge([[:space:]]|$)')
+  done < <(segments_matching "${_cmd_prefix}git +merge([[:space:]]|$)")
   norm="$_full_norm"
 fi
 
@@ -567,7 +580,7 @@ while IFS= read -r norm; do
   if printf '%s' "$norm" | grep -Eq -- '(^|[[:space:]])--auto([[:space:]]|$)' && [ "$base" = "$default_branch" ]; then
     block "'gh pr merge --auto' on a PR targeting '$default_branch' is not allowed. Only the user may merge into $default_branch."
   fi
-done < <(segments_matching '(^|[[:space:]])gh +pr +merge([[:space:]]|$)')
+done < <(segments_matching "${_cmd_prefix}gh +pr +merge([[:space:]]|$)")
 norm="$_full_norm"
 
 # --- Rule 2: Conventional Commits for git commit ------------------------------
@@ -608,14 +621,14 @@ fi
 # segment's tag creation through, e.g. `git tag --list; git tag v1.0.0`.
 while IFS= read -r _seg; do
   # Allow pure list/read forms.
-  if printf '%s' "$_seg" | grep -Eq '(^|[[:space:]])git +tag +(-l|--list|-n[0-9]*)([[:space:]]|$)'; then
+  if printf '%s' "$_seg" | grep -Eq "${_cmd_prefix}git +tag +(-l|--list|-n[0-9]*)([[:space:]\"'\`)]|$)"; then
     :
   elif printf '%s' "$_seg" | grep -Eq '(^|[[:space:]])git +tag[[:space:]]*$'; then
     : # `git tag` with no further arguments lists tags.
   else
     block "creating, moving, deleting, or forcing a git tag is not allowed. Tags are human-only, annotated, and point at a 'main' commit. See github-ops 'Tags'."
   fi
-done < <(segments_matching '(^|[[:space:]])git +tag([[:space:]]|$)')
+done < <(segments_matching "${_cmd_prefix}git +tag([[:space:]]|$)")
 
 # Block tag pushes, read from each push segment's own arguments only: see
 # push_is_tag_push.

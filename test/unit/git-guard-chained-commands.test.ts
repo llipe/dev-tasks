@@ -128,10 +128,71 @@ describe("kiro git-guard — chained commands", () => {
     "git push origin HEAD:main",
     `git push origin main && git push origin ${FEATURE}`,
     "gh pr merge 5 --base main",
+    // Verifier findings on the first cut of this fix: forms the old broad
+    // match caught must still be caught.
+    'bash -c "gh pr merge 5 --base=main"',
+    "$(gh pr merge 5 --base main)",
+    'gh pr merge 5 --base "main"',
+    "git push origin main>/dev/null",
+    "/usr/bin/git push origin main",
   ];
   for (const cmd of blocked) {
     it(`blocks: ${cmd}`, () => {
       expect(runHook(KIRO_HOOK, cmd), cmd).toBe(2);
     });
   }
+});
+
+describe("multi-line commands keep one command whole (both guards)", () => {
+  // A backslash continuation and a newline inside quotes belong to the same
+  // command; splitting there would let a push to main through.
+  const blocked: readonly string[] = [
+    "git push \\\norigin main",
+    "git push origin \\\nmain",
+    'git push -o "a\nb" origin main',
+    "git push origin main>/dev/null",
+    "/usr/bin/git push origin main",
+  ];
+  for (const hook of [CLAUDE_HOOK, KIRO_HOOK]) {
+    for (const cmd of blocked) {
+      it(`${hook.includes(".kiro") ? "kiro" : "claude"} blocks: ${JSON.stringify(cmd)}`, () => {
+        expect(runHook(hook, cmd), cmd).toBe(2);
+      });
+    }
+  }
+
+  it("a multi-line commit message before a feature push is allowed", () => {
+    const cmd = `git commit -m "fix: x\n\nBody line." && git push origin ${FEATURE}`;
+    expect(runHook(CLAUDE_HOOK, cmd)).toBe(0);
+    expect(runHook(KIRO_HOOK, cmd)).toBe(0);
+  });
+});
+
+describe("claude git-guard — remaining verifier findings", () => {
+  it("reads --admin across a newline inside a quoted --subject", () => {
+    const status = runHook(CLAUDE_HOOK, 'gh pr merge 13 --subject "a\nb" --admin', {
+      GIT_GUARD_STUB_PR_BASE_FOR_13: "integration/x",
+    });
+    expect(status).toBe(2);
+  });
+
+  it("blocks a tag created inside bash -c", () => {
+    expect(runHook(CLAUDE_HOOK, 'bash -c "git tag v1.0.0"')).toBe(2);
+  });
+
+  it("a gh that drains stdin cannot swallow the remaining merges in a chain", () => {
+    const status = runHook(CLAUDE_HOOK, "gh pr merge 13 --squash && gh pr merge 12 --squash", {
+      GIT_GUARD_STUB_DRAIN_STDIN: "1",
+      GIT_GUARD_STUB_PR_BASE_FOR_12: "main",
+      GIT_GUARD_STUB_PR_BASE_FOR_13: "integration/x",
+    });
+    expect(status).toBe(2);
+  });
+
+  it("pins the known over-block: quoted text naming a push to main still blocks", () => {
+    // Splitting cannot tell a quoted subcommand (`bash -c "..."`) from quoted
+    // prose, so the guard errs toward blocking. See issue #256.
+    const cmd = `git commit -m "docs: x; git push origin main" && git push origin ${FEATURE}`;
+    expect(runHook(CLAUDE_HOOK, cmd)).toBe(2);
+  });
 });
