@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- refactor(merge-policy): the default merge strategy for issue and story PRs is now a merge commit (`gh pr merge <n> --merge --delete-branch`) instead of squash, so the per-task Conventional Commits survive to `main`; squash and rebase merges require an explicit user request on a specific PR. Updated in `git-ops`, `github-ops`, and `planner` on all three platforms, and in the `git-guard` hook guidance
+- refactor(merge-policy): the default merge strategy for issue and story PRs is now a merge commit (`gh pr merge <n> --merge --delete-branch`) instead of squash, so the per-task Conventional Commits survive to `main`; squash and rebase merges require an explicit user request on a specific PR. Updated in `git-ops`, `github-ops`, and `planner` on all three platforms, and in the `git-guard` hook guidance (#266)
 
 ### Added
 
