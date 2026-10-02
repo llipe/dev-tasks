@@ -112,7 +112,9 @@ Measured 2026-10-02 at commit `463638d` (branch `story/S-247-coverage-baseline`,
 
 How to read these numbers:
 
-- **`bin/**`at 0% is a measurement artifact, not an absence of tests.**`test/unit/cli-binaries.test.ts`and the integration suite exercise`bin/dev-tasks.ts`by spawning it in a`tsx`child process. V8 coverage instruments only the Vitest worker process, so child-process execution is not recorded. The`All files`row is pulled down by this artifact;`core/\*\*` is the meaningful baseline.
+- The 0% for `bin/**` is mostly a measurement artifact. `test/unit/cli-binaries.test.ts` and the integration suite run `bin/dev-tasks.ts` by spawning it in a `tsx` child process. V8 coverage instruments only the Vitest worker process, so child-process execution is not recorded.
+- `bin/parse-args.ts` is a real gap as well as an artifact: no test imports it directly, so it is exercised only end to end through the CLI child process.
+- The same artifact affects `core/**`. `core/checks/run.ts` reads 0% (57 statements) because it runs only through `tsx`, from the `lint` script or a child process. The `core/**` baseline is therefore slightly understated, but it is still the meaningful baseline; the `All files` row is pulled down mainly by `bin/**`.
 - Statements and lines are identical because the V8 provider maps coverage per line.
 
 When coverage cannot be measured, report `coverage_gate: SKIPPED(<non-empty reason>)` and enumerate untested or weakly tested surfaces, source-to-test ratios, exclusions, and limitations. Never infer zero coverage or a pass.

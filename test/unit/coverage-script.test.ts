@@ -8,7 +8,8 @@
  *   - `@vitest/coverage-v8` is an exact-pinned devDependency matching `vitest`
  *   - `test:coverage` runs vitest with `--coverage`
  *   - `validate` does not run coverage (refinement §5 Q1: recorded, not enforced)
- *   - the coverage output directory is ignored by git and prettier
+ *   - the coverage output directory is ignored by git, prettier, and eslint
+ *   - `vitest.config.ts` declares no coverage thresholds (baseline recorded, not enforced)
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -54,5 +55,16 @@ describe("coverage tooling (#247)", () => {
   it("ignores the coverage output directory in git and prettier", () => {
     expect(ignoreLines(".gitignore")).toContain("coverage/");
     expect(ignoreLines(".prettierignore")).toContain("coverage/");
+  });
+
+  it("ignores the coverage output directory in eslint", () => {
+    const eslintConfig = readFileSync(resolve(ROOT, "eslint.config.js"), "utf-8");
+    expect(eslintConfig).toMatch(/ignores:\s*\[[^\]]*"coverage\/"/);
+  });
+
+  it("declares no coverage thresholds, so the baseline is recorded but not enforced", () => {
+    const vitestConfig = readFileSync(resolve(ROOT, "vitest.config.ts"), "utf-8");
+    expect(vitestConfig).toContain('provider: "v8"');
+    expect(vitestConfig).not.toMatch(/thresholds/);
   });
 });
