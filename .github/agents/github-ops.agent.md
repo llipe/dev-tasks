@@ -45,7 +45,7 @@ Use this table to translate each convention in this file into a `gh` invocation 
 | Update PR                                              | `gh pr edit <number> --title "<title>" --body "<body>"`                                                                                               | `update_pull_request`                          |
 | Comment on PR                                          | `gh pr comment <number> --body "<comment>"`                                                                                                           | `add_issue_comment` (PRs share issue comments) |
 | Review a PR                                            | `gh pr review <number> --approve\|--request-changes\|--comment --body "<comment>"`                                                                    | `create_pull_request_review`                   |
-| Merge PR (integration branch only, planner-authorized) | `gh pr merge <number> --squash --delete-branch`                                                                                                       | `merge_pull_request`                           |
+| Merge PR (integration branch only, planner-authorized) | `gh pr merge <number> --merge --delete-branch`                                                                                                        | `merge_pull_request`                           |
 | List/audit PRs                                         | `gh pr list --state all --json number,title,body,baseRefName,headRefName,labels --limit 500`                                                          | `list_pull_requests`                           |
 | Create/list labels                                     | `gh label create "<name>" --color "<hex>" --description "<desc>"` / `gh label list`                                                                   | `create_label` / `list_labels`                 |
 | Create/list milestones                                 | `gh api repos/<owner>/<repo>/milestones -f title="<title>" -f description="<desc>" -f due_on="<ISO date>"` / `gh api repos/<owner>/<repo>/milestones` | (no dedicated MCP tool; use REST)              |
@@ -263,7 +263,7 @@ Rules:
 
 ## Branch-Type Merge Rules
 
-- Issue and story PRs **MUST** merge by squash with source-branch deletion. The planner merges them into an integration branch; the user merges them into `main`.
+- Issue and story PRs **MUST** merge by merge commit with source-branch deletion (`--merge --delete-branch`), so the per-task commits are preserved. Squash and rebase merges are **NOT** used unless the user explicitly asks for one on a specific PR. The planner merges them into an integration branch; the user merges them into `main`.
 - Integration PRs **MUST** merge into `main` by merge commit, and only the user may merge them.
 
 ---
