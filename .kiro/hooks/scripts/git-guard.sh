@@ -54,13 +54,97 @@ block() {
   exit 2
 }
 
+# Split the raw command into simple-command segments, one per output line,
+# at `&&`, `||`, `;`, `|`, `&`, and newlines outside single or double quotes
+# (backslash escapes honored). Every rule that reads a command's arguments
+# reads them from its own segment, never from the rest of the string. Before
+# this, `git push -u origin feat && gh pr create --base main` read `main` as
+# a push destination, `--tags` anywhere in the string read as a tag push, and
+# a greedy `.*git push` match checked only the LAST push in a chained
+# command, so `git push origin main && git push origin feat` was allowed
+# (issue #256). Portable awk only: macOS ships BSD awk, not gawk.
+command_segments() {
+  printf '%s\n' "$cmd" | awk '
+    { s = s (NR > 1 ? "\n" : "") $0 }
+    END {
+      out = ""; q = ""; n = length(s)
+      for (i = 1; i <= n; i++) {
+        c = substr(s, i, 1)
+        if (q != "") {
+          # Inside quotes a newline is part of the argument, never a
+          # separator: map it to a space so the segment stays whole.
+          if (c == "\n") { out = out " "; continue }
+          if (c == q) { q = ""; out = out c; continue }
+          if (c == "\\" && q == "\"" && i < n) {
+            d = substr(s, i + 1, 1); i++
+            if (d != "\n") out = out c d   # backslash-newline is a continuation
+            continue
+          }
+          out = out c
+          continue
+        }
+        if (c == "\\" && i < n) {
+          d = substr(s, i + 1, 1); i++
+          if (d != "\n") out = out c d     # backslash-newline is a continuation
+          continue
+        }
+        if (c == "\"" || c == "\047") { q = c; out = out c; continue }
+        if (c == ";" || c == "|" || c == "&" || c == "\n") { out = out "\n"; continue }
+        out = out c
+      }
+      print out
+    }'
+}
+
+# Segments matching the extended regex $1, whitespace-normalized, one per line.
+segments_matching() {
+  command_segments | tr -s ' \t' '  ' | grep -E -- "$1"
+}
+
+# Argument tokens following EACH `git push` in segment $1, one per line.
+# Quotes, backticks, parentheses, and separators are stripped from tokens so
+# `$(git push origin main)` and `bash -c "git push origin main"` still yield
+# `main`. Every occurrence in the segment is read, not just the last one.
+push_tokens() {
+  printf '%s\n' "$1" | awk '{ n = split($0, parts, /git[ \t]+push/); for (i = 2; i <= n; i++) print parts[i] }' \
+    | tr -s ' \t' '\n\n' | tr -d "\"'\`();|&" | sed 's/[<>].*//' | grep -v '^$'
+}
+
+# A command word counts when it appears at a segment's start, after
+# whitespace, after an opening quote, backtick, or parenthesis, or after a
+# path (`/usr/bin/git`).
+_cmd_prefix="(^|[[:space:](\`\"'/])"
+_push_segment_re="${_cmd_prefix}git +push([[:space:]]|$)"
+
+# Does any `git push` destination in the command equal branch $1? Reads each
+# push segment's own tokens only; checks bare tokens and the right-hand side
+# of `src:dst` refspecs, stripping a leading `+` and a `refs/heads/` prefix.
+push_targets_ref() {
+  local target="$1" seg tok dst
+  while IFS= read -r seg; do
+    while IFS= read -r tok; do
+      case "$tok" in
+        -*) continue ;;
+      esac
+      tok="${tok#+}"
+      dst="${tok##*:}"
+      tok="${tok#refs/heads/}"
+      dst="${dst#refs/heads/}"
+      if [ "$tok" = "$target" ] || [ "$dst" = "$target" ]; then
+        return 0
+      fi
+    done < <(push_tokens "$seg")
+  done < <(segments_matching "$_push_segment_re")
+  return 1
+}
+
 # --- Rule 1: never merge/push into main ---------------------------------------
-# Block `git push ... main` (pushing to the main branch) and any merge/PR-merge
-# that targets main. Branch-creation and normal feature pushes are unaffected.
-case "$norm" in
-  *"git push"*" main"*|*"git push"*":main"*|*"git push"*" origin main"*|*"git push"*" HEAD:main"*)
-    block "pushing to 'main' is not allowed. Open a PR; only the user may merge into main." ;;
-esac
+# Block a push whose destination is main, and any merge/PR-merge that targets
+# main. Branch-creation and normal feature pushes are unaffected, including a
+# feature push chained with `gh pr create --base main` (issue #256).
+if push_targets_ref main; then
+  block "pushing to 'main' is not allowed. Open a PR; only the user may merge into main."
+fi
 
 # `git merge` while the checked-out branch is main (i.e. merging INTO main).
 if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +merge([[:space:]]|$)'; then
@@ -71,17 +155,19 @@ if printf '%s' "$norm" | grep -Eq '(^|[;&|[:space:]])git +merge([[:space:]]|$)';
 fi
 
 # `gh pr merge` targeting main (either via --base main or merging a PR onto main).
-if printf '%s' "$norm" | grep -Eq 'gh +pr +merge'; then
-  if printf '%s' "$norm" | grep -Eq -- '--base[ =]main|-B[ =]main'; then
+# Checked per segment, so a later `gh pr create --base main` in the same
+# command is not read as this merge's base (issue #256).
+while IFS= read -r _seg; do
+  if printf '%s' "$_seg" | grep -Eq -- "(--base|-B)[ =][\"']?main([^[:alnum:]_./-]|$)"; then
     block "merging a PR into 'main' is not allowed. Only the user may merge into main."
   fi
   # No explicit base given: gh defaults to the PR's base. Warn-block to be safe
   # for the common case where PRs target main. Story PRs targeting integration
   # branches should pass --base <integration-branch> explicitly.
-  if ! printf '%s' "$norm" | grep -Eq -- '--base[ =]|-B[ =]'; then
+  if ! printf '%s' "$_seg" | grep -Eq -- '--base[ =]|-B[ =]'; then
     block "refusing 'gh pr merge' without an explicit --base. PRs to main require user approval; for integration branches pass --base <integration-branch>."
   fi
-fi
+done < <(segments_matching 'gh +pr +merge')
 
 # --- Rule 2: Conventional Commits for git commit ------------------------------
 # Inspect inline -m / --message messages. Commits via editor or -F file are not

@@ -17,7 +17,14 @@
 #   GIT_GUARD_STUB_PR_BASE_EXIT  - exit code for that same call (default 0; non-zero simulates
 #                                  an unauthenticated session or a network/lookup failure)
 #   GIT_GUARD_STUB_DEFAULT_BRANCH - stdout for `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`
+#   GIT_GUARD_STUB_DRAIN_STDIN   - when "1", read and discard all of stdin first, like a
+#                                  real `gh` that consumes input; proves the guard's
+#                                  per-segment loops do not hand it their segment list
 set -uo pipefail
+
+if [ "${GIT_GUARD_STUB_DRAIN_STDIN:-}" = "1" ]; then
+  cat >/dev/null
+fi
 
 sanitize_key() {
   printf '%s' "$1" | tr -c 'A-Za-z0-9' '_' | tr 'a-z' 'A-Z'
