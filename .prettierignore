@@ -1,4 +1,5 @@
 dist/
+coverage/
 .git/
 .dev-tasks-backup/
 node_modules/
