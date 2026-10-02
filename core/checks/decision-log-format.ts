@@ -8,7 +8,20 @@
  * file (the column is intra-file only — a value that happens to match
  * another feature's `D-NN` is still dangling here).
  *
- * Uniqueness and `Phase` are hard failures. A dangling `Supersedes` is
+ * Every body row must also have exactly as many cells as its table's
+ * header (#245). `splitRow` splits on every `|`, and a Markdown-escaped
+ * pipe (`\|`) inside a cell is still a `|` to it: the row grows a cell
+ * and every later column slides one position right. Read positionally,
+ * that row yields garbage — a regex fragment in `Supersedes`, or, for a
+ * shift landing after `Supersedes`, a silently corrupted `Author` and
+ * `Date` with no finding at all. So a row whose cell count differs from
+ * the header's is reported as `cell-count-mismatch` and skipped, never
+ * read. Teaching `splitRow` the escape is deliberately not done here;
+ * the point is that corruption is loud, not that it is repaired.
+ *
+ * Uniqueness, `Phase`, and cell count are hard failures — a shifted row
+ * makes every column read from it untrustworthy, which is a defect in
+ * the file, not work in progress. A dangling `Supersedes` is
  * reported the same way docs-structure reports staleness (D-21's
  * precedent): printed, not failed, so a decision log mid-session — a
  * row citing a `Supersedes` ID not yet appended — never blocks
@@ -26,7 +39,7 @@ import { join } from "node:path";
 /** A single format finding. */
 export interface DecisionLogFinding {
   /** Stable rule identifier, for grouping output. */
-  rule: "duplicate-id" | "invalid-phase" | "dangling-supersedes";
+  rule: "duplicate-id" | "invalid-phase" | "cell-count-mismatch" | "dangling-supersedes";
   /** Repo-relative path of the file the finding is about. */
   path: string;
   /** One line, naming the row and the condition. */
@@ -34,7 +47,7 @@ export interface DecisionLogFinding {
 }
 
 export interface DecisionLogResult {
-  /** Findings that fail the gate: duplicate ID, invalid Phase. */
+  /** Findings that fail the gate: duplicate ID, invalid Phase, cell-count mismatch. */
   failures: DecisionLogFinding[];
   /** Findings that are reported and do not fail the gate: dangling Supersedes. */
   staleness: DecisionLogFinding[];
@@ -52,6 +65,25 @@ interface Row {
   id: string;
   phase: string;
   supersedes: string;
+}
+
+/** A body row whose cell count differs from its table header's. */
+interface MalformedRow {
+  /** 1-based line number in the file. */
+  line: number;
+  /** The row's first cell, as split — usually the (possibly mangled) ID. */
+  firstCell: string;
+  /** Cells the row split into. */
+  cells: number;
+  /** Cells the header split into. */
+  expected: number;
+}
+
+export interface ParsedDecisionRows {
+  /** Rows whose cell count matched their header, read positionally. */
+  rows: Row[];
+  /** Rows skipped because their cell count did not match (#245). */
+  malformed: MalformedRow[];
 }
 
 /** True for a Markdown table separator row: `| --- | :--- | ---: |`. */
@@ -76,14 +108,20 @@ function splitRow(line: string): string[] {
  * each is read independently by its own header, and all rows are
  * pooled — `ID` uniqueness and `Supersedes` resolution are file-wide,
  * not per-table (the format has one ID space for the whole file).
+ *
+ * A body row is read positionally only after its cell count is checked
+ * against the header's; a mismatched row is returned in `malformed`
+ * and never in `rows` (#245).
  */
-export function parseDecisionRows(content: string): Row[] {
+export function parseDecisionRows(content: string): ParsedDecisionRows {
   const lines = content.split("\n");
   const rows: Row[] = [];
+  const malformed: MalformedRow[] = [];
 
   let idCol = -1;
   let phaseCol = -1;
   let supersedesCol = -1;
+  let headerCount = 0;
   let inTable = false;
 
   for (let i = 0; i < lines.length; i++) {
@@ -107,6 +145,7 @@ export function parseDecisionRows(content: string): Row[] {
       supersedesCol = headerCells.indexOf("supersedes");
       if (idCol === -1) continue; // not a decision table
 
+      headerCount = headerCells.length;
       inTable = true;
       i++; // consume the separator row too
       continue;
@@ -115,6 +154,20 @@ export function parseDecisionRows(content: string): Row[] {
     if (isSeparatorRow(trimmed)) continue;
 
     const cells = splitRow(trimmed);
+
+    // Before any positional read: a row that split into a different
+    // number of cells than its header has shifted columns, and every
+    // value read from it by index would be wrong.
+    if (cells.length !== headerCount) {
+      malformed.push({
+        line: i + 1,
+        firstCell: cells[0] ?? "",
+        cells: cells.length,
+        expected: headerCount,
+      });
+      continue;
+    }
+
     const id = cells[idCol];
     if (id === undefined || id.length === 0) {
       inTable = false;
@@ -128,7 +181,7 @@ export function parseDecisionRows(content: string): Row[] {
     });
   }
 
-  return rows;
+  return { rows, malformed };
 }
 
 /**
@@ -136,9 +189,19 @@ export function parseDecisionRows(content: string): Row[] {
  * repo-relative path used only in finding messages.
  */
 export function checkDecisionLogContent(content: string, path: string): DecisionLogResult {
-  const rows = parseDecisionRows(content);
+  const { rows, malformed } = parseDecisionRows(content);
   const failures: DecisionLogFinding[] = [];
   const staleness: DecisionLogFinding[] = [];
+
+  for (const bad of malformed) {
+    failures.push({
+      rule: "cell-count-mismatch",
+      path,
+      message:
+        `${path}:${bad.line}: row '${bad.firstCell}' has ${bad.cells} cells, header has ${bad.expected}. ` +
+        "A '|' inside a cell — escaped as '\\|' or not — splits it; reword the cell without a pipe.",
+    });
+  }
 
   const seen = new Set<string>();
   const ids = new Set(rows.map((r) => r.id));
