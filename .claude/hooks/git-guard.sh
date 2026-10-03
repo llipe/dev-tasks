@@ -10,7 +10,7 @@
 #      `gh pr merge --admin` (blocked outright), `gh pr merge --auto` when the
 #      resolved base is the default branch, and the raw-git escape of merging a
 #      `story/*`/`issue/*` branch directly into an `integration/*` branch (the
-#      reviewable path is `gh pr merge <n> --squash --delete-branch`).
+#      reviewable path is `gh pr merge <n> --merge --delete-branch`).
 #   2. `git commit` messages must follow Conventional Commits.
 #   3. `gh issue|pr create|edit|comment|review` must not pass a multi-line body
 #      inline via `--body`; `--body-file` (or stdin `--body-file -`) is required.
@@ -511,7 +511,7 @@ if printf '%s' "$norm" | grep -Eq "${_cmd_prefix}git +merge([[:space:]]|$)|[;&|]
       integration/*)
         case "$merge_arg" in
           story/*|issue/*)
-            block "raw 'git merge' of a story/issue branch into an integration branch is not allowed — it bypasses PR review. Use 'gh pr merge <n> --squash --delete-branch' instead."
+            block "raw 'git merge' of a story/issue branch into an integration branch is not allowed — it bypasses PR review. Use 'gh pr merge <n> --merge --delete-branch' instead."
             ;;
         esac
         ;;

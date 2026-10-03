@@ -454,7 +454,7 @@ For each completed story PR:
 8. Verify branch is up to date with integration branch (update/rebase if required by policy). Use the `git-ops` skill for rebase and conflict resolution.
 9. Detect merge conflicts before attempting merge. If conflicts are found, invoke the `git-ops` skill to resolve them.
 10. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test and quality-gate results) and approve it.
-11. Merge PR into integration branch using one consistent strategy (default: `squash`).
+11. Merge PR into integration branch using one consistent strategy (default: `merge`, a merge commit with source-branch deletion; never squash or rebase unless the user explicitly asks for it).
 12. Confirm integration branch is green after merge before moving to next story.
 13. **Write checkpoint** — update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table.
 
