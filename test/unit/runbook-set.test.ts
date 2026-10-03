@@ -29,10 +29,12 @@ const TEMPLATE_DIR = join(ROOT, "templates/runbooks");
  * The initial set: FR-47's nine, plus `runbook-deploy-service`. Those
  * nine leave five deploy-surface files uncovered, which fails PRD AC-25
  * — the tenth closes the gap (recorded as a decision in S-003).
+ * `runbook-diagnose-pr-validate` arrived with the PR `validate` workflow (#248).
  */
 const EXPECTED_RUNBOOKS = [
   "runbook-configure-branch-protection",
   "runbook-deploy-service",
+  "runbook-diagnose-pr-validate",
   "runbook-install-dev-tasks",
   "runbook-migrate-foundation-docs",
   "runbook-release-npm",

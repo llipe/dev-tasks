@@ -48,11 +48,12 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0 && tsx core/checks/run.ts",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"bin/\" \"core/\" \"test/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
-    "format:check": "prettier --check \"bin/\" \"core/\" \"test/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
+    "format": "prettier --write \"bin/\" \"core/\" \"test/\" \".claude/\" \".github/\" \".kiro/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
+    "format:check": "prettier --check \"bin/\" \"core/\" \"test/\" \".claude/\" \".github/\" \".kiro/\" \"*.json\" \"*.ts\" \"eslint.config.js\" --ignore-unknown",
     "test": "vitest run",
     "test:unit": "vitest run test/unit",
     "test:integration": "vitest run test/integration",
+    "test:coverage": "vitest run --coverage",
     "audit": "pnpm audit --prod",
     "validate": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test"
   },
@@ -74,6 +75,7 @@
     "@types/node": "24.13.3",
     "@typescript-eslint/eslint-plugin": "8.32.1",
     "@typescript-eslint/parser": "8.32.1",
+    "@vitest/coverage-v8": "3.2.6",
     "eslint": "9.27.0",
     "eslint-config-prettier": "10.1.5",
     "globals": "16.1.0",
@@ -92,9 +94,9 @@
   },
   "pnpm": {
     "overrides": {
-      "brace-expansion@>=2.0.0 <2.1.4": ">=2.1.4",
-      "brace-expansion@>=4.0.0 <5.0.9": ">=5.0.9",
-      "brace-expansion@<1.1.18": ">=1.1.18"
+      "brace-expansion@>=2.0.0 <2.1.4": "^2.1.4",
+      "brace-expansion@>=4.0.0 <5.0.9": "^5.0.9",
+      "brace-expansion@<1.1.18": "^1.1.18"
     }
   }
 }
