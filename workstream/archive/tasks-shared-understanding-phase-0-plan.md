@@ -83,6 +83,7 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 - [x] 1.0 Implement Story S-001: Remove the `dt` source tree — [#195](https://github.com/llipe/dev-tasks/issues/195)
 
   > Note: `core/index.ts` re-exports every deleted module. Prune it in the same commit as the deletion or `typecheck` fails mid-commit. This whole story is one commit.
+
   - [x] 1.1 Move `adapters/cli/parse-args.ts` to `bin/parse-args.ts` and update the import in `bin/dev-tasks.ts` to a relative path
   - [x] 1.2 Delete `bin/dt.ts` and the `dt` entry from `package.json` `bin`
   - [x] 1.3 Delete the rest of `adapters/`, including `adapters/cli/index.ts`
@@ -110,6 +111,7 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 - [x] 2.0 Implement Story S-002: Remove `dt` tests and guard the retirement — [#196](https://github.com/llipe/dev-tasks/issues/196)
 
   > Note: two commits. The deletion first, then the absence test on its own so it is reviewable. The absence test is expected red until task 4.0 lands.
+
   - [x] 2.1 Delete the 74 `dt` test files under `test/unit/` and `test/integration/`
   - [x] 2.2 Delete `test/fixtures/catalog`, `context`, `extract`, `schemas`, `verify`
   - [x] 2.3 Verify AC-2: `test/fixtures/git-guard`, `infra`, `qa-standards` are untouched
@@ -127,6 +129,7 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 - [x] 3.0 Implement Story S-003: Prune `dt` dependencies and fix release — [#197](https://github.com/llipe/dev-tasks/issues/197)
 
   > Note: the publish workflow assertion is the one deletion that breaks release rather than CI. It only runs on publish.
+
   - [x] 3.1 Remove `ajv` from `dependencies`
   - [x] 3.2 Remove the `pg` optional peer and its `peerDependenciesMeta` entry
   - [x] 3.3 Remove the `fast-uri` entry from `pnpm.overrides`; leave the `brace-expansion` overrides in place
@@ -145,6 +148,7 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 - [x] 4.0 Implement Story S-004: Remove `dt` from prompt trees and registry — [#198](https://github.com/llipe/dev-tasks/issues/198)
 
   > Note: parity across the three trees is mandatory. Edit all three together; the parity test fails otherwise. This task turns the absence test green.
+
   - [x] 4.1 Delete `activity-contract-validation` from `.claude/skills/`, `.github/skills/`, `.kiro/skills/`
   - [x] 4.2 Remove its rows from `AGENTS.md`, `AGENTS.md.template`, and `CLAUDE.md`; confirm `activity-contract-test-design` is retained and unchanged (AC-2)
   - [x] 4.3 Remove the multi-repo mode and `component.json` detection from `activity-init` in all three trees (AC-3)
@@ -164,6 +168,7 @@ A sixth failure, or the disappearance of one of these five, is caused by this wo
 - [x] 5.0 Implement Story S-005: Retire `dt` docs and record ADR-007 — [#199](https://github.com/llipe/dev-tasks/issues/199)
 
   > Note: two commits. Documentation and ADR first, then the release commit last so the version bump is the final change.
+
   - [x] 5.1 Delete `docs/dt-user-manual.md`, `docs/data-model.md`, `docs/artifact-formats.md`, `docs/requirements/prd-multi-repo-context.md` (AC-1)
   - [x] 5.2 Update `docs/README.md` so it lists no deleted document (AC-2)
   - [x] 5.3 Delegate the `docs/system-overview.md` rewrite to `technical-writer`: rewrite the affected sections, do not strip them, since about 30 `dt` mentions run through the architecture prose

@@ -87,6 +87,7 @@ None. Phase 1 is additive plus one rename.
 - [x] 1.0 Implement Story S-001: Rename the foundation documents and update every reference
 
   > Note: behavior-preserving `refactor:` commit. Content of both documents is untouched (FR-46, `SIMPLICITY.md` B1). Simplifying either document is a separate change and is out of scope.
+
   - [x] 1.1 Write `test/unit/foundation-docs-naming.test.ts` first: scan `.claude/`, `.github/`, `.kiro/`, `core/`, `bin/`, `test/`, `docs/`, and the root for `product-context.md` and `technical-guidelines.md`; it must fail against the current tree. Write the scan roots from scratch — **do not copy** `test/unit/dt-retirement-absence.test.ts`'s `SCAN_ROOTS`, which omits `docs/` entirely and would pass while checking nothing
   - [x] 1.1a Exclude per D-50: `docs/adr/**`, `docs/requirements/**`, and `workstream/` (24 tracked files there carry the old names), each with a reason comment
   - [x] 1.2 Add the seeded-match self-test proving the matcher fires, and the false-positive rejection case (Phase 0 guard pattern)
@@ -114,6 +115,7 @@ None. Phase 1 is additive plus one rename.
 - [x] 2.0 Implement Story S-002: Propose the rename to consumers via `dev-tasks migrate docs`
 
   > Note: `update` **MUST NOT** rename a consumer-owned file on its own (FR-45). `--force` keeps its existing meaning: perform the mutating action, back up first.
+
   - [x] 2.1 Write `test/unit/migrate-docs.test.ts` first: detection with both old names, one, neither; propose mutates nothing; `--force` renames and backs up; content hash identical before and after
   - [x] 2.2 Add `core/distribution/migrate-docs.ts` with `detectOldFoundationDocs()` and `runDocsMigration()` as separate exports, so `doctor` reuses detection without the mutation path
   - [x] 2.3 Reuse `createBackupDir`/`backupFile` from `core/distribution/backup.ts`; do not add a second backup mechanism
@@ -137,6 +139,7 @@ None. Phase 1 is additive plus one rename.
 - [x] 3.0 Implement Story S-003: Scaffold `docs/runbooks/` and seed the initial runbook set
 
   > Note: the delivery-registry gap is real work, not a detail — `INSTALL_IF_ABSENT_FILES` tags every entry with one platform, and a runbook belongs to the repository. Phase 3's glossary needs the same fix.
+
   - [x] 3.1 Write `test/unit/runbook-set.test.ts` first: frontmatter validity, the five fixed headings, index-matches-disk, and AC-5's reverse coverage (every script/workflow named by some runbook)
   - [x] 3.2 Extend `InstallIfAbsentFile` with a platform-agnostic tag reusing the `ROOT_PROFILE_TAG` pattern; do **not** add a third delivery category
   - [x] 3.3 Update `core/distribution/install-if-absent.ts` to honor the agnostic tag: installed once per run regardless of how many platforms the profile resolves to
@@ -159,6 +162,7 @@ None. Phase 1 is additive plus one rename.
 - [x] 4.0 Implement Story S-004: Create `core/checks` and enforce docs structure under `lint`
 
   > Note: this creates the module FR-57 reserved and D-33 kept out of Phase 0. Exactly one check lands here. No registry or plugin interface for the Phase 3/5/6 checks (AC-8).
+
   - [x] 4.1 Write `test/unit/checks-docs-structure.test.ts` first, with fixtures under `test/fixtures/docs-structure/` for each condition
   - [x] 4.2 Implement `core/checks/docs-structure.ts` returning failures and staleness findings separately
   - [x] 4.3 Condition: index lists a file that does not exist (AC-2) — resolve repo-root-aware and tolerate directory links, or `docs/README.md`'s links to `../README.md`, `requirements/`, and five root files produce false failures on the clean tree (AC-10)
@@ -181,6 +185,7 @@ None. Phase 1 is additive plus one rename.
 - [x] 5.0 Implement Story S-005: Detect repository shape and record the package map
 
   > Note: `dev-tasks` is single-package. The monorepo path is built and tested against a fixture, not exercised on this repository.
+
   - [x] 5.1 Write `test/unit/workspace.test.ts` first: enumeration per signal type, single-package fallback, drift detection both directions
   - [x] 5.2 Create `test/fixtures/workspace-single/` and `test/fixtures/workspace-mono/` (a `pnpm-workspace.yaml` monorepo with two packages)
   - [x] 5.3 Implement `core/distribution/workspace.ts`: detect shape from `pnpm-workspace.yaml`, `workspaces` in `package.json`, `turbo.json`, `nx.json`, `lerna.json`, `[tool.uv.workspace]`
@@ -201,6 +206,7 @@ None. Phase 1 is additive plus one rename.
 - [x] 6.0 Implement Story S-006: Make agents package-aware
 
   > Note: the CI template that scopes to affected packages is **Phase 4** (FR-41, FR-42). This story delivers agent behavior and the documented contract only.
+
   - [x] 6.1 Update `researcher` in all three trees: name the package for each finding
   - [x] 6.2 Update `plan` in all three trees: name the package for each task
   - [x] 6.3 Update `implement` in all three trees: package as the Conventional Commits scope (`feat(api): …`), optional in a single-package repository
@@ -219,6 +225,7 @@ None. Phase 1 is additive plus one rename.
 - [x] 7.0 Implement Story S-007: Enforce runbook coverage and docs ownership
 
   > Note: deterministic conditions stay in `core/checks` (task 4.0). This task adds only the judgment-based finding and the ownership statements.
+
   - [x] 7.1 Add the runbook-coverage finding trigger to `verifier` in all three trees: a PR whose task list has ≥3 setup/configuration/migration/credential/data steps and adds or updates no runbook
   - [x] 7.2 State the finding is advisory and does not block PR readiness (AC-2)
   - [x] 7.3 Add the FR-49a same-PR delivery rule to `infra-engineer`, `developer`, `qa-engineer`, and `housekeeping` in all three trees (AC-3, AC-4)

@@ -45,7 +45,8 @@ function read(relPath: string): string {
  */
 function triggers(doc: Record<string, unknown>): Record<string, unknown> {
   const on = (doc.on ?? (doc as Record<string, unknown>).true) as
-    Record<string, unknown> | undefined;
+    | Record<string, unknown>
+    | undefined;
   return on ?? {};
 }
 
@@ -97,7 +98,8 @@ describe("infra workflow templates — AC-1 triggers", () => {
   it("rollback.yml triggers on workflow_dispatch with an environment input", () => {
     const doc = parseYaml(read(ROLLBACK)) as Record<string, unknown>;
     const dispatch = triggers(doc).workflow_dispatch as
-      { inputs?: Record<string, unknown> } | undefined;
+      | { inputs?: Record<string, unknown> }
+      | undefined;
     expect(dispatch, "rollback.yml has no workflow_dispatch trigger").toBeDefined();
     const inputs = dispatch?.inputs ?? {};
     const inputKeys = Object.keys(inputs).map((k) => k.toLowerCase());
