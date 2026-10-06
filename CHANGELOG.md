@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.16.3] - 2026-10-06
+
+### Added
+
+- feat: quality-gate hardening — PR validate CI, coverage baseline, format scope, decision-log row validation (#245, #246, #247, #248) (#265)
+
+### Changed
+
+- chore: prettier update
+- refactor(merge-policy): default issue/story PR merges to merge commit (#267)
+
 ## [0.16.2] - 2026-10-02
 
 ### Fixed
