@@ -58,7 +58,6 @@
 - [x] 1.0 Implement Issue #139 - https://github.com/gaib-ai/dev-tasks/issues/139: Create `activity-codebase-research` skill
 
   > Note: The skill carries the slice procedure and budget caps. It is the single source of truth for the eight-slice taxonomy and context budget constants. Agent definitions reference the skill.
-
   - [x] 1.1 Author `.github/skills/activity-codebase-research/SKILL.md` with full procedure: eight-slice taxonomy (S1-S8), budget caps (250 lines, 30 files), artifact path contract, ten required sections, intake/execution/output phases, multi-repo detection, staleness provenance, and untrusted-input handling
   - [x] 1.2 Copy to `.claude/skills/activity-codebase-research/SKILL.md` (identical behavioral content, platform frontmatter may differ)
   - [x] 1.3 Copy to `.kiro/skills/activity-codebase-research/SKILL.md` (identical behavioral content, Kiro frontmatter)
@@ -69,7 +68,6 @@
 - [x] 2.0 Implement Issue #139 - https://github.com/gaib-ai/dev-tasks/issues/139: Create `researcher` agent definitions
 
   > Note: The agent ships on all three platforms plus both entry points. Kiro variant requires specific frontmatter (description, tools, no permissions). All variants must carry equivalent behavioral contract.
-
   - [x] 2.1 Author `.kiro/agents/researcher.md` with YAML frontmatter (`description`, `tools: [read, shell, write]`, no `permissions` block), behavioral contract (read-only authority, eight-slice reference, budget caps, artifact path, non-mandatory status, staleness provenance, multi-repo fallback, untrusted-input rule), and single-procedure execution flow
   - [x] 2.2 Author `.github/agents/researcher.agent.md` with equivalent behavioral contract adapted for Copilot format
   - [x] 2.3 Author `.claude/agents/researcher.md` as a subagent with equivalent behavioral contract adapted for Claude Code format
@@ -83,7 +81,6 @@
 - [x] 3.0 Implement Issue #139 - https://github.com/gaib-ai/dev-tasks/issues/139: Wire callers with conditional triggers
 
   > Note: `product-engineer` (Issue Mode pre-refine, Feature Mode pre-spec), `developer` (troubleshooting), `planner` (pre-orchestration). All wiring is conditional/recommended, never mandatory. Trivial issues skip research.
-
   - [x] 3.1 Update `.kiro/agents/product-engineer.md` - add research step in Issue Mode (pre-refine) and Feature Mode (pre-spec) with trigger heuristics; update mode-detection table; state conditional/non-blocking
   - [x] 3.2 Update `.github/agents/product-engineer.agent.md` - equivalent wiring
   - [x] 3.3 Update `.claude/commands/product-engineer.md` - equivalent wiring
@@ -100,7 +97,6 @@
 - [x] 4.0 Implement Issue #139 - https://github.com/gaib-ai/dev-tasks/issues/139: Artifact contract tests
 
   > Note: Pure test helpers for the ten required sections, slice completeness, and budget-cap boundary comparators. These validate the contract structurally even without a real research run.
-
   - [x] 4.1 Write `test/unit/researcher-artifact-contract.test.ts` with: ten required sections listed and ordered, slice completeness check (populated or `N/A` with reason), budget-cap boundary comparators (249/250/251 lines; 29/30/31 files), provenance fields check (base branch + commit SHA), and relevance-ranking assertion
   - [x] 4.2 Verify AC-3: Artifact section contract validatable (section order, slice completeness)
   - [x] 4.3 Verify AC-4: Budget comparators test boundary conditions
@@ -110,7 +106,6 @@
 - [x] 5.0 Implement Issue #139 - https://github.com/gaib-ai/dev-tasks/issues/139: ADR-004 and documentation updates
 
   > Note: Update all registries and docs to list the new agent and skill with corrected counts.
-
   - [x] 5.1 Create `docs/adr/ADR-004-researcher-pre-spec-research-step.md` with Context, Decision, Consequences, and Alternatives Considered sections
   - [x] 5.2 Add index row to `docs/adr/README.md`
   - [x] 5.3 Update `AGENTS.md` - add `researcher` to agents table, add `activity-codebase-research` to activity skills table, update platform-coverage sentence (Copilot/Kiro ten, Claude subagents eight)

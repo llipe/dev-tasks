@@ -20,12 +20,12 @@ This specification implements the MRC PRD as a single `@llipe/dev-tasks` npm pac
 
 ## 3. Affected Repositories
 
-| Repository            | Role                                        | Scope of Changes                                                                                                                                                                                                                |
+| Repository | Role | Scope of Changes |
 | --------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
-| `llipe/dev-tasks`     | Source of truth for the distributed harness | Adds the `@llipe/dev-tasks` package (two binaries), `core/` library (catalog, extract, context, scope, providers), CLI/MCP adapters, JSON Schemas, the `dev-tasks.sh` migration shim, and rewritten `init` skill/agent content. |
-| Meta-repo (new)       | Catalog aggregation                         | New repository: `architecture.md`, `domains.md`, `glossary.md`, `conventions.md`, `platform.yaml`, `registry.yaml`, `adr/`, generated `catalog/`, hand-authored `catalog/flows/`, and `schemas/`.                               |
-| Component repos (~20) | Consume the harness; own their metadata     | Each gains a root `component.json`, `contracts/openapi                                                                                                                                                                          | asyncapi/`, generated `docs/schema.md`, `AGENTS.md`, and `.dev-tasks/` (`version`pin,`manifest.json`, `config.yaml`). |
-| CI (Bitbucket/GitHub) | Enforcement                                 | Meta-repo: scheduled + on-push `dt catalog build                                                                                                                                                                                | validate`. Component repo: PR-time `dt validate-component`and`dt verify contract-diff                                 | impact`. |
+| `llipe/dev-tasks` | Source of truth for the distributed harness | Adds the `@llipe/dev-tasks` package (two binaries), `core/` library (catalog, extract, context, scope, providers), CLI/MCP adapters, JSON Schemas, the `dev-tasks.sh` migration shim, and rewritten `init` skill/agent content. |
+| Meta-repo (new) | Catalog aggregation | New repository: `architecture.md`, `domains.md`, `glossary.md`, `conventions.md`, `platform.yaml`, `registry.yaml`, `adr/`, generated `catalog/`, hand-authored `catalog/flows/`, and `schemas/`. |
+| Component repos (~20) | Consume the harness; own their metadata | Each gains a root `component.json`, `contracts/openapi                                                                                                                                                                          | asyncapi/`, generated `docs/schema.md`, `AGENTS.md`, and `.dev-tasks/` (`version`pin,`manifest.json`, `config.yaml`). |
+| CI (Bitbucket/GitHub) | Enforcement | Meta-repo: scheduled + on-push `dt catalog build                                                                                                                                                                                | validate`. Component repo: PR-time `dt validate-component`and`dt verify contract-diff                                 | impact`. |
 
 No other repository is in scope. There is no runtime deployment target beyond the distributed package and the YAML/JSON artifacts it produces.
 
@@ -513,15 +513,15 @@ The eval set is the project's most valuable asset; build it during Phases 1-2 fr
 
 ## 18. Implementation Plan (indicative)
 
-| Week | Deliverable                                                                                              |
+| Week | Deliverable |
 | ---- | -------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------ | ----------------------------- |
-| 1    | npm package, two binaries, hashed manifest, migration shim                                               |
-| 2-3  | `dt extract detect                                                                                       | schema                           | openapi(routes 1 & 3)    | asyncapi(topics)` for Node/TS |
-| 4    | `dt extract component` + provenance + human gate; run on 3 pilot repos of the checkout flow              |
-| 5    | Measure OpenAPI strategy distribution → close open question 1; run extract over the 20 repos             |
-| 6    | Meta-repo: `architecture.md`, `domains.md`, `glossary.md` (human consolidation — the real schedule risk) |
-| 7    | `dt catalog build                                                                                        | validate                         | coverage` + scheduled CI |
-| 8    | `dt ctx fetch                                                                                            | assemble`+`dt init --components` |
-| 9-10 | LLM scoping + gate; measure against the eval set before enabling by default                              |
-| 11   | Rewritten `init` skill; multi-repo active                                                                |
-| 12+  | `dt verify` and the outer loop                                                                           |
+| 1 | npm package, two binaries, hashed manifest, migration shim |
+| 2-3 | `dt extract detect                                                                                       | schema                           | openapi(routes 1 & 3)    | asyncapi(topics)` for Node/TS |
+| 4 | `dt extract component` + provenance + human gate; run on 3 pilot repos of the checkout flow |
+| 5 | Measure OpenAPI strategy distribution → close open question 1; run extract over the 20 repos |
+| 6 | Meta-repo: `architecture.md`, `domains.md`, `glossary.md` (human consolidation — the real schedule risk) |
+| 7 | `dt catalog build                                                                                        | validate                         | coverage` + scheduled CI |
+| 8 | `dt ctx fetch                                                                                            | assemble`+`dt init --components` |
+| 9-10 | LLM scoping + gate; measure against the eval set before enabling by default |
+| 11 | Rewritten `init` skill; multi-repo active |
+| 12+ | `dt verify` and the outer loop |

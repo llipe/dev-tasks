@@ -91,11 +91,11 @@ Before merging any PR or branch, verify:
 
 Choose the appropriate strategy based on context:
 
-| Strategy         | When to Use                                                                                                                                       | Command                                     |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Strategy         | When to Use                                                                                                                                      | Command                                     |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
 | **Merge commit** | **Default for every PR.** Issue/story PRs → integration (planner) or `main` (user), and integration PRs → `main` (user). Preserves every commit. | `gh pr merge <pr> --merge --delete-branch`  |
-| **Squash merge** | Not part of the policy; use only when the user explicitly asks for a single-commit history on a specific PR.                                      | `gh pr merge <pr> --squash --delete-branch` |
-| **Rebase merge** | Not part of the policy; use only when the user explicitly approves it on a specific PR.                                                           | `gh pr merge <pr> --rebase`                 |
+| **Squash merge** | Not part of the policy; use only when the user explicitly asks for a single-commit history on a specific PR.                                     | `gh pr merge <pr> --squash --delete-branch` |
+| **Rebase merge** | Not part of the policy; use only when the user explicitly approves it on a specific PR.                                                          | `gh pr merge <pr> --rebase`                 |
 
 **Default**: Every PR merges by merge commit, so the per-task Conventional Commits survive to `main`. Issue/story PRs also delete the source branch. Planner handles integration targets, and the user handles `main`. Never squash or rebase unless the user asks for it on a specific PR.
 

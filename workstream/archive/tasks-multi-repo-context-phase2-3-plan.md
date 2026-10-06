@@ -49,7 +49,6 @@
 - [x] 1.0 Implement Story S-010 - https://github.com/llipe/dev-tasks/issues/42: JSON Schemas and dt validate-component
 
   > Establishes the JSON Schema artifacts every later validation reuses. Local validation with no network access.
-
   - [x] 1.1 Author `schemas/component.schema.json` (JSON Schema 2020-12): all fields from spec §5, `id` pattern `^[a-z][a-z0-9-]{2,49}$`, `_provenance` structure, version field for future evolution
   - [x] 1.2 Author `schemas/flow.schema.json`: flow definition per spec §5.3, version field
   - [x] 1.3 Author `schemas/scope-output.schema.json`: `primary` (1-6), `secondary` (≤8), `contracts_crossed`, `confidence`, `unresolved`, `rationale` (≤600 chars), optional `flow`, version field
@@ -68,7 +67,6 @@
 - [x] 2.0 Implement Story S-011 - https://github.com/llipe/dev-tasks/issues/43: dt catalog build — aggregate manifests and generate the index
 
   > Aggregates component manifests into the meta-repo and generates `catalog/index.yaml`. Idempotent; single repo failure is recorded, not fatal.
-
   - [x] 2.1 Define `core/catalog/index-model.ts` — types for `index.yaml`: component summaries, `contracts` map with inverted consumer index, `domains`, `flows`, `extraction_quality` counts, `generated_at`, `generator`, per-component origin SHA, `errors[]`
   - [x] 2.2 Implement registry reading: parse `registry.yaml` (list of repos with git URLs and optional branches/paths)
   - [x] 2.3 Implement manifest mirroring: for each registry entry, fetch `component.json` (reuse sparse-fetch pattern or direct git-archive) into `catalog/components/<id>.json`
@@ -93,7 +91,6 @@
 - [x] 3.0 Implement Story S-012 - https://github.com/llipe/dev-tasks/issues/45: dt catalog validate — referential integrity and V01-V19
 
   > Enforces referential integrity and V01-V19 checks. Errors abort with exit 4; warnings do not.
-
   - [x] 3.1 Define check severity types and result aggregation model in `core/catalog/validate.ts`
   - [x] 3.2 Implement `core/catalog/graph.ts` — graph construction from index: nodes (components), edges (consumes→provides), domain grouping; cycle detection (Tarjan or DFS)
   - [x] 3.3 Implement V01: component.json schema validation (reuse S-010 validator)
@@ -124,7 +121,6 @@
 - [x] 4.0 Implement Story S-013 - https://github.com/llipe/dev-tasks/issues/46: Catalog query and routing (resolve, get, deps, consumers, flow, closure, coverage)
 
   > Deterministic catalog queries — especially the lexical `resolve` scorer — plus dependency, consumer, flow, closure, and coverage reads.
-
   - [x] 4.1 Implement text normalization in `core/catalog/resolve.ts`: lowercase, de-accent (NFD strip combining marks), light es/en stemming (suffix removal), stopword removal
   - [x] 4.2 Implement weighted scorer: exact id (100), alias exact (80), alias substring (40), provides[].id (80), flow alias (75), domain (60), description words (25); normalize scores; default threshold 20; return top 12 with score + matched signal
   - [x] 4.3 Implement `dt catalog resolve --text "<query>" [--threshold] [--limit] [--json]`
@@ -149,7 +145,6 @@
 - [x] 5.0 Implement Story S-014 - https://github.com/llipe/dev-tasks/issues/47: Meta-repo scaffold and scheduled CI rebuild
 
   > Meta-repo scaffold and scheduled CI that builds, validates, and commits the catalog.
-
   - [x] 5.1 Implement `core/catalog/scaffold.ts` — generate meta-repo directory layout: `architecture.md`, `domains.md`, `glossary.md`, `conventions.md`, `platform.yaml`, `registry.yaml`, `adr/`, `catalog/`, `catalog/flows/`, `schemas/`
   - [x] 5.2 Create scaffold templates under `templates/meta-repo/` for each generated file (with placeholder content and instructions)
   - [x] 5.3 Wire `dt catalog scaffold [--out <dir>]` CLI command
@@ -171,7 +166,6 @@
 - [x] 6.0 Implement Story S-015 - https://github.com/llipe/dev-tasks/issues/48: dt ctx fetch — sparse clone and SHA cache
 
   > Sparse-clone only `component.json`, `docs/`, and `contracts/` and cache by SHA. Fast, immutable, never pulls whole repos.
-
   - [x] 6.1 Implement `core/context/fetch.ts` — sparse-clone git sequence via `execa`: `git clone --filter=blob:none --no-checkout --depth 1 <url> <tmp>` → `git -C <tmp> sparse-checkout set docs contracts component.json` → `git -C <tmp> checkout <sha>`
   - [x] 6.2 Implement `core/context/cache.ts` — SHA-keyed cache directory structure: `~/.dev-tasks/cache/<host>/<org>/<repo>/<sha>/`; treat as immutable once written
   - [x] 6.3 Implement cache hit logic: if `<sha>/` dir exists and is complete → return cached path without git operations
@@ -193,7 +187,6 @@
 - [x] 7.0 Implement Story S-016 - https://github.com/llipe/dev-tasks/issues/49: dt ctx assemble — layered, budgeted, deterministic bundle
 
   > Build a fixed-order, budget-capped context bundle with recorded truncation. Deterministic and reproducible.
-
   - [x] 7.1 Implement `core/context/tokens.ts` — token counting utility: estimate token count from text (cl100k_base approximation or tiktoken if available); expose `countTokens(text): number`
   - [x] 7.2 Define layer model: layer id, priority (numeric, lower = higher priority), truncable (boolean), per-layer token cap, render function
   - [x] 7.3 Implement `core/context/layers/` — per-layer renderers in fixed order per spec §6.3:
@@ -223,7 +216,6 @@
 - [x] 8.0 Implement Story S-017 - https://github.com/llipe/dev-tasks/issues/51: dt init --components — manual scope, pin, freshness, session lock
 
   > Pin meta-repo, check freshness, assemble bundle, emit session.lock.json. Deterministic init path (no LLM).
-
   - [x] 8.1 Implement meta-repo pin resolution in `core/context/init.ts`: resolve meta-repo path to a git SHA; pin for the session
   - [x] 8.2 Implement sparse fetch of meta-repo content: `*.md`, `catalog/`, `schemas/`, `adr/` via the fetch module (S-015)
   - [x] 8.3 Implement index freshness check: read `generated_at` from `catalog/index.yaml`; compare to `--max-index-age` (default 240 minutes); exit 9 if stale

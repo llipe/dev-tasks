@@ -33,7 +33,6 @@
 - [x] 1.0 Implement Story S-018 - https://github.com/llipe/dev-tasks/issues/52: LLM scoping step with schema-validated output and repair retry
 
   > LLM receives only lexical candidates; returns schema-validated scope JSON with one repair retry. Bounded, explainable, no hallucinated components.
-
   - [x] 1.1 Implement `core/scope/prompt.ts` — scoping prompt template: system instructions (choose only from candidates, `low` when ambiguous, list unmapped in `unresolved`), input slots for task text, candidates (from S-013 resolve), flows, and domains
   - [x] 1.2 Implement scoping input assembler: accept task text + resolve results → build the constrained input containing only `task`, `candidates`, `flows`, `domains` (spec §7.1); never include the full catalog
   - [x] 1.3 Implement schema validation: validate LLM output against `scope-output.schema.json` (required: `primary` 1-6, `secondary` ≤8, `contracts_crossed`, `confidence`, `unresolved`, `rationale` ≤600 chars; optional: `flow`)
@@ -55,7 +54,6 @@
 - [x] 2.0 Implement Story S-019 - https://github.com/llipe/dev-tasks/issues/55: Graph closure and dt scope gate with partition proposal
 
   > Scope expanded by graph closure, gated (G1-G7). Over-broad or ambiguous scopes abort with a partition proposal.
-
   - [x] 2.1 Implement `core/scope/closure.ts` — graph closure expansion: add `contracts_crossed` consumers and flow neighbors to `secondary`; deduplicate (primary wins over secondary); record `scope.source` per component (`llm` or `closure`)
   - [x] 2.2 Implement deduplication logic: if a component appears in both primary (from LLM) and closure (from graph), primary wins; track source attribution
   - [x] 2.3 Implement `core/scope/gate.ts` — gate rules:
@@ -82,7 +80,6 @@
 - [x] 3.0 Implement Story S-020 - https://github.com/llipe/dev-tasks/issues/54: Full dt init orchestration (candidates → scope → closure → gate → bundle)
 
   > `dt init --task "<text>"` runs the full pipeline end-to-end. Wires deterministic and LLM steps into a single command.
-
   - [x] 3.1 Extend `core/context/init.ts` — add the `--task` path alongside the existing `--components` path (S-017): pin → candidates (resolve from S-013) → LLM scope (S-018) → closure (S-019) → gate (S-019) → fetch (S-015) → assemble (S-016) → session lock
   - [x] 3.2 Implement exit-code mapping for each failure point in the pipeline: 9 (stale index), 11 (no candidates from resolve), 10 (invalid scope after retry), 12 (unknown component post-closure), 7 (gate abort), 6 (budget overflow)
   - [x] 3.3 Implement short-circuit behavior: on gate abort (exit 7), skip fetch/assemble entirely; on stale index (exit 9), skip everything after pin
@@ -105,7 +102,6 @@
 - [x] 4.0 Implement Story S-021 - https://github.com/llipe/dev-tasks/issues/56: Rewrite the init skill with mono/multi/greenfield mode detection
 
   > The init skill detects mono-repo, multi-repo, and undocumented-repo modes. Multi-repo routes through `dt`; the skill never walks repos directly.
-
   - [x] 4.1 Implement mode-detection logic in the init skill: check for `component.json` at repo root → multi-repo mode; else check `/docs` present → mono-repo (current flow); else → undocumented/greenfield mode
   - [x] 4.2 Document multi-repo mode behavior: invoke `dt init --task --json`; handle exit codes:
     - Exit 7 (partition proposal) → present the proposal to the user, stop
@@ -130,7 +126,6 @@
 - [x] 5.0 Implement Story S-022 - https://github.com/llipe/dev-tasks/issues/59: architecture-change task type with meta-repo write authority
 
   > The only mode allowing meta-repo writes. Requires ADR and human approval. Agents cannot write to the meta-repo outside this task type.
-
   - [x] 5.1 Define the `architecture-change` task type in agent contracts: document the write scope (may modify `architecture.md`, `domains.md`, `glossary.md`, `conventions.md`, `catalog/flows/`; may NOT modify `catalog/components/` or `catalog/index.yaml`)
   - [x] 5.2 Document the ADR requirement: before any meta-repo PR, an ADR must be produced with context, decision, consequences, and alternatives considered
   - [x] 5.3 Document the human-approval gate: PRs from this task type targeting the meta-repo require explicit human review and approval; no auto-merge into the default branch
@@ -151,7 +146,6 @@
 - [x] 6.0 Implement Story S-023 - https://github.com/llipe/dev-tasks/issues/57: Cross-repo partitioning into per-repo sub-tasks
 
   > Multi-primary features are partitioned into per-repo sub-tasks. Boundary contract is the interface; producer before consumers.
-
   - [x] 6.1 Document the partitioning procedure in agent contracts: when scope contains >1 `primary` component, the agent MUST produce one sub-task per repo, scoped exclusively to that repo
   - [x] 6.2 Document contract-as-interface: each sub-task uses the boundary contract (with a target version) as its interface; acceptance criteria reference the contract, not the foreign repo's implementation
   - [x] 6.3 Document ordering rule: sub-tasks MUST be ordered producer-before-consumers (provider implements first, consumer adapts second)
@@ -174,7 +168,6 @@
 - [x] 7.0 Implement Story S-024 - https://github.com/llipe/dev-tasks/issues/60: dt verify contract-diff (OpenAPI + AsyncAPI breaking-change detection)
 
   > Deterministic breaking-change detection. No LLM. Skips low-payload contracts to avoid false positives.
-
   - [x] 7.1 Integrate `oasdiff` for OpenAPI breaking-change detection: wrap the binary (or use its Node bindings if available); accept base and head spec paths; return structured diff with breaking/non-breaking classification
   - [x] 7.2 Implement `core/verify/asyncapi-diff.ts` — custom AsyncAPI comparator with breaking-change classes:
     - [x] 7.2.1 Removed channel → breaking
@@ -201,7 +194,6 @@
 - [x] 8.0 Implement Story S-025 - https://github.com/llipe/dev-tasks/issues/61: dt verify impact and dt verify drift
 
   > Impact lists affected consumers with criticality. Drift flags stale docs as a prioritization signal. Both support --json.
-
   - [x] 8.1 Implement `core/verify/impact.ts` — `impact --contract <id>`: read the inverted consumer index from the catalog; return list of consumers with each consumer's `criticality` field
   - [x] 8.2 Implement `--emit-tasks` option: when enabled, produce per-consumer derived task descriptions via the tracker provider interface; emit as structured output
   - [x] 8.3 Implement `core/providers/tracker.ts` — tracker provider interface stub: define `createTask(component_id, contract_id, change_summary): TaskRef`; implement a no-op/mock provider that logs but does nothing; document that the real implementation comes from the Platform Providers spec
