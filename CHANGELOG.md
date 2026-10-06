@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.16.4] - 2026-10-06
+
+### Changed
+
+- chore: validation update pre release
+- chore(lock): reformat pnpm-lock.yaml with prettier
+
 ## [0.16.3] - 2026-10-06
 
 ### Added
