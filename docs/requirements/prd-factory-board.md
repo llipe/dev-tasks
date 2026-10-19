@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                                                                      | Author                    |
 | ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.2     | 2026-10-19 | OQ-3 resolved: the command also prints a one-screen terminal summary (D-13, FR-21, AC-12).                                                                                                   | @llipe / product-engineer |
 | 1.1     | 2026-10-19 | OQ-1 and OQ-2 resolved: page ships in wave 1 (D-11), the command inlines the JSON into the page (D-12). No decision remains pending.                                                         | @llipe / product-engineer |
 | 1.0     | 2026-10-18 | Initial draft from the review of the Claude Design "Software Factory" canvas. Decisions D-01 to D-12 in `workstream/decisions-factory-board.md`; D-11 and D-12 pending (see Open Questions). | @llipe / product-engineer |
 
@@ -94,6 +95,10 @@ Consumer repositories receive the command through the package and the workflow t
 - **FR-10.** Roadmap drift is computed, never stored by hand (D-09): a row reading `Not started` whose wave has any card past `backlog`; a row reading `In progress` whose cards are all `done`; a row reading `Done` with an `absent` Audit stage; a PRD file with no roadmap row; a roadmap row whose PRD file is missing.
 - **FR-11.** `board.json` carries `meta.generatedAt` as an RFC 3339 timestamp and `meta.repo` as `owner/name`. Relative times are computed by the page, never stored (D-08).
 - **FR-12.** `activity-publish-github` is changed in all three skill trees so the `**Story:**` body line of FR-7 is mandatory, with a parity test (D-03).
+
+### Terminal summary (wave 1)
+
+- **FR-21.** After writing the files, the command prints a one-screen summary to stdout: one line per wave not yet shipped with its PRD slug, phase, roadmap status and the first absent stage; one line per active checkpoint with its current story and blocked count; one line per drift entry; and the path of the generated page. Shipped waves are summarised as one count per PRD. The summary is derived from the same `board.json` the page receives, with no second data path (D-13).
 
 ### Page (wave 1)
 
@@ -186,6 +191,7 @@ This feature has UI scope. **Recommended:** use `ux-engineer` (lite mode) to con
 - **AC-8.** The page, opened from disk with no network, renders every section from the inlined JSON and shows the stale pill when `generatedAt` is set 25 hours in the past (FR-13, FR-14).
 - **AC-9.** Every issue and PR reference on the page is an anchor whose `href` is `https://github.com/<repo>/issues/N` or `/pull/N`; a card with no issue number has no anchor (FR-15).
 - **AC-10.** (wave 2) The workflow template pushes only to `gh-pages`, never to the default branch, proven by a test over the template's YAML; its runbook lands in the same PR (FR-17, FR-18).
+- **AC-12.** On the three-PRD fixture, the stdout summary names every unshipped wave with its first absent stage, every checkpoint, every drift entry, and the page path, and contains no value that is absent from the fixture's `board.json` (FR-21).
 - **AC-11.** `pnpm run validate` passes with the new tests included.
 
 ## Success Metrics
@@ -216,7 +222,6 @@ This feature has UI scope. **Recommended:** use `ux-engineer` (lite mode) to con
 
 ## Open Questions
 
-- **OQ-3.** Should the command also print a one-screen text summary to stdout, so a terminal-only session gets the four answers without opening a browser? Not in scope unless confirmed; it would add one function and no options.
 - **OQ-4.** Wave 2 only: pull-request close is the proposed trigger alongside the schedule. Confirm whether issue events should also trigger, at the cost of more workflow runs.
 
 ## Decisions
@@ -235,6 +240,7 @@ This feature has UI scope. **Recommended:** use `ux-engineer` (lite mode) to con
 | D-10 | Card stage comes from PR state first; labels and checkpoint refine the rest.            |
 | D-11 | Two waves; the page ships in wave 1.                                                    |
 | D-12 | The command inlines the JSON into the page.                                             |
+| D-13 | The command also prints a one-screen terminal summary derived from the same JSON.       |
 
 ## Vocabulary
 
