@@ -1,5 +1,5 @@
 ---
-version: 1.1
+version: 1.2
 name: Ubiquitous Language
 description: Canonical domain vocabulary, organized by bounded context. Append-only; terms are superseded, never deleted.
 status: active
@@ -33,6 +33,7 @@ A ninth term arrives the same way the first eight did — proposed in a PRD's
 
 | Version | Date       | Summary                                                                                                                                                                                                         | Author           |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.2     | 2026-10-19 | PRD factory-board approved (`factory-board#D-01` to `#D-13`), +board, +wave stage, +roadmap drift                                                                                                               | product-engineer |
 | 1.1     | 2026-09-22 | Seeded from Phase 3 specification §8.7 (`shared-understanding#D-69`, closing `#D-45`), +decision log, +grilling, +exit gate, +bounded context, +package map, +runbook, +install-if-absent, +foundation document | product-engineer |
 | 1.0     | 2026-09-21 | Delivered empty, install-if-absent on every profile (`shared-understanding#D-57`, ADR-008)                                                                                                                      | product-engineer |
 
@@ -105,4 +106,28 @@ AI-assisted development.
 - Forbidden synonyms: product-context, technical-guidelines
 - Invariants: Read by resolving the canonical name first and falling back to the retired name only when the canonical one is absent; always written under the canonical name.
 - Origin: docs/requirements/prd-shared-understanding-refinement.md FR-44
+- Status: active
+
+### board
+
+- Definition: The generated, read-only page and its `board.json` that show every PRD's waves, stories and progress, derived from repository files and GitHub.
+- Forbidden synonyms: dashboard, factory
+- Invariants: Regenerated whole by `dev-tasks board` on every run; no field is hand-edited and no output is committed to the default branch.
+- Origin: docs/requirements/prd-factory-board.md, factory-board#D-01, factory-board#D-06
+- Status: active
+
+### wave stage
+
+- Definition: One of the eight evidence-backed steps a wave passes through: Refine, Spec, Stories, Publish, Plan, Build, Audit, Ship.
+- Forbidden synonyms: phase step, milestone
+- Invariants: A stage is `present` only when its evidence file exists or its derived condition holds; stages are recorded individually, never as a count, so a skipped stage stays visible.
+- Origin: docs/requirements/prd-factory-board.md FR-6, factory-board#D-05
+- Status: active
+
+### roadmap drift
+
+- Definition: A disagreement between a `docs/roadmap.md` row and the state GitHub or `workstream/` evidence shows for the same wave.
+- Forbidden synonyms: roadmap mismatch
+- Invariants: GitHub wins. The board reports the drift and never edits the roadmap; correction stays with `planner` in the consolidated PR and with `product-engineer`.
+- Origin: docs/requirements/prd-factory-board.md FR-10, factory-board#D-09
 - Status: active

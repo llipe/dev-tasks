@@ -569,16 +569,22 @@ describe("checkGlossary — filesystem wrapper (UT-G10, UT-G11, CT-6, EC-33)", (
       join(REPO_ROOT, "workstream/decisions-shared-understanding.md"),
       "utf-8",
     );
+    const boardLog = readFileSync(
+      join(REPO_ROOT, "workstream/decisions-factory-board.md"),
+      "utf-8",
+    );
     expect(realGlossary).toContain("shared-understanding#D-01");
 
     const baseline = scratch({
       "docs/tech.md": realTech,
       "workstream/decisions-shared-understanding.md": realLog,
+      "workstream/decisions-factory-board.md": boardLog,
       [GLOSSARY_PATH]: realGlossary,
     });
     const control = scratch({
       "docs/tech.md": realTech,
       "workstream/decisions-shared-understanding.md": realLog,
+      "workstream/decisions-factory-board.md": boardLog,
       [GLOSSARY_PATH]: realGlossary.replace("shared-understanding#D-01", "no-such-feature#D-01"),
     });
     try {
@@ -1864,8 +1870,13 @@ describe("this repository's own glossary (UT-G17, E2E-11, S-006 AC-1/AC-5, D-69)
     expect(result.staleness, JSON.stringify(result.staleness, null, 2)).toEqual([]);
   });
 
-  it("carries exactly the eight terms of specification §8.7 and no others (AC-1)", () => {
-    expect(headings(glossary)).toEqual(SEED_TERMS);
+  it("carries the eight terms of specification §8.7 first, and grows only by appending after them (AC-1)", () => {
+    // The seed is a prefix, not the whole file: the glossary says a ninth
+    // term arrives by PRD approval, and the first one did
+    // (`factory-board#D-01`). Append-only means the seed never moves.
+    const terms = headings(glossary);
+    expect(terms.slice(0, SEED_TERMS.length)).toEqual(SEED_TERMS);
+    expect(new Set(terms).size).toBe(terms.length);
   });
 
   it("names its one bounded context exactly as the docs/tech.md package map does (FR-63)", () => {
@@ -1887,7 +1898,8 @@ describe("this repository's own glossary (UT-G17, E2E-11, S-006 AC-1/AC-5, D-69)
     expect(frontmatter).toContain("status: active");
     expect(frontmatter).toContain("owner: product-engineer");
     expect(frontmatter).not.toContain("status: unfilled");
-    expect(frontmatter).toMatch(/^version: 1\.1$/m);
+    expect(frontmatter).toMatch(/^version: \d+\.\d+$/m);
+    expect(frontmatter).not.toMatch(/^version: 1\.0$/m);
   });
 
   it("records the eight terms in one `+term` changelog row (AC-1, FR-19)", () => {
@@ -1895,23 +1907,23 @@ describe("this repository's own glossary (UT-G17, E2E-11, S-006 AC-1/AC-5, D-69)
     const rows = changelog
       .split("\n")
       .filter((line) => line.trim().startsWith("|") && line.includes("+"));
-    expect(rows).toHaveLength(1);
-    for (const term of SEED_TERMS) expect(rows[0]).toContain(`+${term}`);
+    const seedRow = rows.find((row) => row.includes("+decision log"));
+    expect(seedRow, "the seed row names +decision log").toBeDefined();
+    for (const term of SEED_TERMS) expect(seedRow).toContain(`+${term}`);
   });
 
   it("traces every Origin to a PRD requirement, an ADR, or a decision ID (AC-5)", () => {
     const origins = [...glossary.matchAll(/^-\s*Origin:\s*(.+?)\s*$/gm)].map((m) => m[1]);
-    expect(origins).toHaveLength(SEED_TERMS.length);
+    expect(origins).toHaveLength(headings(glossary).length);
     for (const origin of origins) {
-      expect(origin, origin).toMatch(
-        /prd-shared-understanding-refinement\.md FR-\d+|shared-understanding#D-\d+|ADR-\d+/,
-      );
+      expect(origin, origin).toMatch(/prd-[a-z-]+\.md( FR-\d+)?|[a-z-]+#D-\d+|ADR-\d+/);
     }
   });
 
   it("marks every term `active` (AC-1)", () => {
     const statuses = [...glossary.matchAll(/^-\s*Status:\s*(.+?)\s*$/gm)].map((m) => m[1]);
-    expect(statuses).toEqual(SEED_TERMS.map(() => "active"));
+    expect(statuses).toHaveLength(headings(glossary).length);
+    expect(statuses).toEqual(statuses.map(() => "active"));
   });
 
   it("gives `bounded context` no forbidden synonyms, and `package`/`module` none anywhere (D-72)", () => {
@@ -1926,7 +1938,7 @@ describe("this repository's own glossary (UT-G17, E2E-11, S-006 AC-1/AC-5, D-69)
     const forbidden = [...glossary.matchAll(/^-\s*Forbidden synonyms:\s*(.+?)\s*$/gm)].map(
       (m) => m[1],
     );
-    expect(forbidden).toHaveLength(SEED_TERMS.length);
+    expect(forbidden).toHaveLength(headings(glossary).length);
     for (const value of forbidden) {
       expect(value, value).not.toMatch(/\bpackages?\b/i);
       expect(value, value).not.toMatch(/\bmodules?\b/i);
