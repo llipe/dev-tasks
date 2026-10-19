@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                                                                      | Author                    |
 | ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.3     | 2026-10-19 | OQ-4 deferred by @llipe to the wave 2 spec: decide the workflow triggers after wave 1 is built and used.                                                                                     | @llipe / product-engineer |
 | 1.2     | 2026-10-19 | OQ-3 resolved: the command also prints a one-screen terminal summary (D-13, FR-21, AC-12).                                                                                                   | @llipe / product-engineer |
 | 1.1     | 2026-10-19 | OQ-1 and OQ-2 resolved: page ships in wave 1 (D-11), the command inlines the JSON into the page (D-12). No decision remains pending.                                                         | @llipe / product-engineer |
 | 1.0     | 2026-10-18 | Initial draft from the review of the Claude Design "Software Factory" canvas. Decisions D-01 to D-12 in `workstream/decisions-factory-board.md`; D-11 and D-12 pending (see Open Questions). | @llipe / product-engineer |
@@ -222,7 +223,7 @@ This feature has UI scope. **Recommended:** use `ux-engineer` (lite mode) to con
 
 ## Open Questions
 
-- **OQ-4.** Wave 2 only: pull-request close is the proposed trigger alongside the schedule. Confirm whether issue events should also trigger, at the cost of more workflow runs.
+- **OQ-4.** Wave 2 only, deferred on purpose: pull-request close is the proposed trigger alongside the schedule. Whether issue events also trigger, at the cost of more workflow runs, is decided in the wave 2 spec after wave 1 has been built and used. Wave 1 does not depend on the answer.
 
 ## Decisions
 
