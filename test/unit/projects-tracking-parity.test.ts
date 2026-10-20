@@ -344,3 +344,122 @@ describe("activity-publish-github", () => {
     }
   });
 });
+
+// --- implement (S-003, #272) -------------------------------------------------
+
+const IMPLEMENT_TREES = {
+  claude: ".claude/skills/implement/SKILL.md",
+  github: ".github/instructions/implement.instructions.md",
+  kiro: ".kiro/steering/implement.md",
+};
+
+describe("implement", () => {
+  // Frontmatter differs per tree (skill, `applyTo` instruction, `fileMatchPattern`
+  // steering); the bodies are byte-identical and `memo-write-reliability.test.ts`
+  // pins the `## Before Starting Work` … `## GitHub Execution Rules` span, which
+  // contains every edit below (A-15, EC-19).
+  const trees = loadTrees(IMPLEMENT_TREES);
+
+  // `## During Implementation` is split at its `###` subsections, so the
+  // assertions are scoped to the span up to `## Before Closing` instead.
+  function duringImplementation(copy: TreeCopy): string {
+    const span = copy.body.match(/## During Implementation[\s\S]*?## Before Closing/)?.[0];
+    expect(span, `${copy.path}: no During Implementation span`).toBeDefined();
+    return span!;
+  }
+
+  // PT-12 — S-003 AC-1; FR-23, D-25, D-38
+  it("mandatory rule", () => {
+    for (const copy of trees) {
+      const section = duringImplementation(copy);
+      expect(section, copy.path).toMatch(/\*\*MUST\*\* keep the story's status comment current/);
+      expect(section, copy.path).toContain("Status comment");
+      for (const event of [
+        "first sub-task completion",
+        "PR open",
+        "each gate recorded",
+        "on block",
+      ]) {
+        expect(section, `${copy.path}: event "${event}" missing`).toContain(event);
+      }
+      // The template is referenced, never restated (D-33): no fenced status table here.
+      expect(copy.body, copy.path).not.toContain("| Sub-tasks ");
+    }
+  });
+
+  // PT-13 — S-003 AC-1; FR-23; A-10 / EC-20 vocabulary
+  it("old optional rule gone", () => {
+    for (const copy of trees) {
+      expect(copy.body, copy.path).not.toContain("**SHOULD** add brief issue or PR comments");
+      expect(copy.body, copy.path).not.toMatch(/progress comments?/i);
+      const final = sectionOf(copy, "Final Instructions");
+      expect(final, copy.path).toContain("status comment");
+    }
+  });
+
+  // PT-14 / CT-1 / CT-7 — S-003 AC-2; D-26, D-28, D-37; A-8 duplicate case (EC-15)
+  it("procedure and report field", () => {
+    for (const copy of trees) {
+      const section = duringImplementation(copy);
+      expect(section, copy.path).toContain("issues/{n}/comments --paginate");
+      expect(section, copy.path).toContain('startswith("<!-- dev-tasks:status -->")');
+      expect(section, copy.path).toContain("gh issue comment");
+      expect(section, copy.path).toContain("--body-file");
+      expect(section, copy.path).toContain("gh api -X PATCH");
+      expect(section, copy.path).toContain("issues/comments/{id}");
+      expect(section, copy.path).toContain("-F body=@");
+      expect(section, copy.path).toContain(
+        "status_comment: written | failed(<reason>) | skipped(no issue)",
+      );
+      expect(section, copy.path).toContain("failed(duplicate marker)");
+      // EC-17: the marker is the first byte of the body file.
+      expect(section, copy.path).toMatch(/first byte/);
+      // Every body goes through a file; git-guard blocks inline `--body`.
+      expect(copy.body, copy.path).not.toContain('--body "');
+    }
+  });
+
+  // PT-15 / CT-7 — S-003 AC-3; FR-24, D-29; A-8 missing-comment case (EC-18)
+  it("main-thread wave update", () => {
+    for (const copy of trees) {
+      const section = duringImplementation(copy);
+      expect(section, copy.path).toContain("issues/{n}/parent");
+      expect(section, copy.path).toContain("PR open");
+      expect(section, copy.path).toContain("PR ready");
+      expect(section, copy.path).toContain("404");
+      expect(section, copy.path).toContain("wave_status: skipped(no parent)");
+      expect(section, copy.path).toContain("wave_status: owned-by-planner");
+      expect(section, copy.path).toContain("wave_status: written");
+      // Parent found but the wave has no status comment yet: create it (A-8).
+      expect(section, copy.path).toMatch(/no status comment[^\n]*create/i);
+    }
+  });
+
+  // PT-16 — S-003 AC-4; FR-23
+  it("checklist rules unchanged", () => {
+    for (const copy of trees) {
+      const section = duringImplementation(copy);
+      expect(section, copy.path).toContain("Mark it `[x]` in the GitHub Issue checklist.");
+      expect(section, copy.path).toContain(
+        "keep the local task list and the GitHub Issue checklist aligned at all times",
+      );
+      expect(section, copy.path).toContain(
+        "you **MUST** reconcile immediately and report the reconciliation",
+      );
+    }
+  });
+
+  // S-003 AC-4; FR-23 — the lifecycle table's "During" row names the status comment.
+  it("lifecycle row", () => {
+    for (const copy of trees) {
+      const section = sectionOf(copy, "GitHub Execution Rules Summary");
+      const during = section.split("\n").find((line) => line.startsWith("| **During coding**"));
+      expect(during, `${copy.path}: no During coding row`).toBeDefined();
+      expect(during!, copy.path).toMatch(/status comment/i);
+      // The "Before coding" row is unchanged (spec §8.3).
+      expect(squashSpaces(section), copy.path).toContain(
+        "| **Before coding** | Confirm issue open → Create branch (`github-ops`) → First commit → Open draft PR (`github-ops`) → Sync checklists",
+      );
+    }
+  });
+});
