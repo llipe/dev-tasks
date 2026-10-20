@@ -57,8 +57,10 @@ board, which is a later wave of the same PRD.
    assume these three; nothing in dev-tasks reads any other value.
 
 4. Open the Project's **Workflows** page (the `…` menu → **Workflows**) and
-   keep every default workflow as shipped. The ones that move Status, with
-   the names read from `llipe/riel` Project 4 on 2026-10-20 (D-43), are:
+   keep every default workflow as shipped. The ones that move Status are
+   GitHub's documented defaults, to be confirmed on the Workflows page during
+   the exercise; only **Pull request linked to issue** was read from
+   `llipe/riel` Project 4 on 2026-10-20 (D-43):
 
    - **Item added to project** → Todo
    - **Item reopened** → Todo
@@ -73,6 +75,8 @@ board, which is a later wave of the same PRD.
    close an issue (PRD AC-5). While on this page, record the exact names
    shown for each workflow in the pull request that exercises this runbook;
    if a label differs from the list above, update the list, not the Project.
+   Before any change is made on this page, record for every workflow both its
+   name and whether it is active, so the exercise captures the shipped state.
 
 5. On the same page open **Auto-add to project**, choose this repository, and
    set the filter to `is:issue` (the template's filter also matches pull
@@ -157,7 +161,7 @@ that set it.
 The owner of this runbook is `product-engineer`. Escalate with the Project
 number, the owner login, and the output of the two verification commands.
 
-- A 403 on `gh project create`, `field-delete` or `delete` means the token
+- A 403 on `gh project field-delete` or `gh project delete` means the token
   lacks the `project` scope or you are not an owner: re-run step 1, then ask
   an owner.
 - A Workflows page that does not show one of the five default workflows named
