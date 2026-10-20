@@ -56,22 +56,22 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 2.12 Verify Acceptance Criterion: report template lines
   - [x] 2.13 Run Tests: `pnpm run test:unit`, `pnpm run validate`; record in the PR body that AC-1 of the PRD (live hierarchy) is dogfood for wave 2's publish (D-39)
 
-- [ ] 3.0 Implement Story S-003: Implement keeps a mandatory story status comment and updates the wave comment when it has no planner (#272)
+- [x] 3.0 Implement Story S-003: Implement keeps a mandatory story status comment and updates the wave comment when it has no planner (#272)
 
-  - [ ] 3.1 Add a `describe("implement")` block asserting the MUST sentence, the find/create/PATCH procedure with the `status_comment:` report values, the main-thread parent lookup with `wave_status:` values, the unchanged checklist rules and the lifecycle "During" entry, and the absence of the old "SHOULD add brief issue or PR comments" sentence, across the skill, the instruction and the steering file; confirm red
-  - [ ] 3.2 Replace the optional progress-comment rule in `.claude/skills/implement/SKILL.md` with the mandatory status-comment rule referencing github-ops § Status comment, with its event list (D-25, D-38)
-  - [ ] 3.2a Replace "progress comment" in implement's Final Instructions with "status comment" (Design Mode A-10)
-  - [ ] 3.3 Add the procedure: find by marker via `gh api .../comments --paginate`; create with `gh issue comment --body-file`; edit with `gh api -X PATCH ... -F body=@file`; report `status_comment: written | failed(<reason>) | skipped(no issue)` (D-26, D-28, D-37)
-  - [ ] 3.3a State the duplicate case: two comments carry the marker → edit the oldest and report `status_comment: failed(duplicate marker)` (Design Mode A-8)
-  - [ ] 3.4 Add the main-thread rule: after PR open and at PR ready, `GET .../issues/{n}/parent`; 200 edits this story's row in the wave comment; 404 reports `wave_status: skipped(no parent)`; under the planner `wave_status: owned-by-planner` (D-29)
-  - [ ] 3.4a State the missing-comment case: parent found but the wave has no status comment → create it from the wave table and report `wave_status: written` (Design Mode A-8)
-  - [ ] 3.5 Add the lifecycle table "During" entry naming the status comment; leave the checklist alignment rules untouched
-  - [ ] 3.6 Apply the same body text to `.github/instructions/implement.instructions.md` and `.kiro/steering/implement.md`, keeping each file's own frontmatter
-  - [ ] 3.7 Verify Acceptance Criterion: mandatory rule with the event list in all three
-  - [ ] 3.8 Verify Acceptance Criterion: procedure and report values
-  - [ ] 3.9 Verify Acceptance Criterion: main-thread wave update with both skip values
-  - [ ] 3.10 Verify Acceptance Criterion: checklist rules unchanged; lifecycle entry present
-  - [ ] 3.11 Run Tests: `pnpm run test:unit`, `pnpm run validate`; this story's own issue #272 carries the first real status comment (dogfood for PRD AC-3, D-39)
+  - [x] 3.1 Add a `describe("implement")` block asserting the MUST sentence, the find/create/PATCH procedure with the `status_comment:` report values, the main-thread parent lookup with `wave_status:` values, the unchanged checklist rules and the lifecycle "During" entry, and the absence of the old "SHOULD add brief issue or PR comments" sentence, across the skill, the instruction and the steering file; confirm red
+  - [x] 3.2 Replace the optional progress-comment rule in `.claude/skills/implement/SKILL.md` with the mandatory status-comment rule referencing github-ops § Status comment, with its event list (D-25, D-38)
+  - [x] 3.2a Replace "progress comment" in implement's Final Instructions with "status comment" (Design Mode A-10)
+  - [x] 3.3 Add the procedure: find by marker via `gh api .../comments --paginate`; create with `gh issue comment --body-file`; edit with `gh api -X PATCH ... -F body=@file`; report `status_comment: written | failed(<reason>) | skipped(no issue)` (D-26, D-28, D-37)
+  - [x] 3.3a State the duplicate case: two comments carry the marker → edit the oldest and report `status_comment: failed(duplicate marker)` (Design Mode A-8)
+  - [x] 3.4 Add the main-thread rule: after PR open and at PR ready, `GET .../issues/{n}/parent`; 200 edits this story's row in the wave comment; 404 reports `wave_status: skipped(no parent)`; under the planner `wave_status: owned-by-planner` (D-29)
+  - [x] 3.4a State the missing-comment case: parent found but the wave has no status comment → create it from the wave table and report `wave_status: written` (Design Mode A-8)
+  - [x] 3.5 Add the lifecycle table "During" entry naming the status comment; leave the checklist alignment rules untouched
+  - [x] 3.6 Apply the same body text to `.github/instructions/implement.instructions.md` and `.kiro/steering/implement.md`, keeping each file's own frontmatter
+  - [x] 3.7 Verify Acceptance Criterion: mandatory rule with the event list in all three
+  - [x] 3.8 Verify Acceptance Criterion: procedure and report values
+  - [x] 3.9 Verify Acceptance Criterion: main-thread wave update with both skip values
+  - [x] 3.10 Verify Acceptance Criterion: checklist rules unchanged; lifecycle entry present
+  - [x] 3.11 Run Tests: `pnpm run test:unit`, `pnpm run validate`; this story's own issue #272 carries the first real status comment (dogfood for PRD AC-3, D-39)
 
 - [ ] 4.0 Implement Story S-004: Developer agent and command report the status-comment outcomes and define merged as merged to main (#273)
 
