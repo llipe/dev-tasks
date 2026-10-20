@@ -2,9 +2,10 @@
 
 ## Changelog
 
-| Version | Date       | Summary                                                                                                                                                                                      | Author                    |
-| ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| 1.0     | 2026-10-20 | Initial draft from the riel experiment (`llipe/riel`, `workstream/experiment-projects-campaign-ui.md`). Decisions D-01 to D-16 in `workstream/decisions-projects-tracking.md`; D-06 pending. | @llipe / product-engineer |
+| Version | Date       | Summary                                                                                                                                                                                                                           | Author                    |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.1     | 2026-10-20 | Migration becomes wave 3 with its own requirements (FR-17 to FR-22, D-17 to D-21): dry-run plan, mapping precedence, rules for closed waves, standalone issues and titles, roadmap conversion, document backfill, adoption order. | @llipe / product-engineer |
+| 1.0     | 2026-10-20 | Initial draft from the riel experiment (`llipe/riel`, `workstream/experiment-projects-campaign-ui.md`). Decisions D-01 to D-16 in `workstream/decisions-projects-tracking.md`; D-06 pending.                                      | @llipe / product-engineer |
 
 ## Executive Summary
 
@@ -62,7 +63,7 @@ Consumer repositories receive the conventions through the prompt trees. An exist
 3. As a developer, I want the planner to commit its checkpoint and keep one comment on the wave issue current, so that I can see where a run stands from GitHub, including from my phone.
 4. As a developer, I want the planner to rewrite the roadmap row from GitHub at the end of a batch, so that the roadmap stops claiming states that ended a day earlier.
 5. As a developer, I want activity-init to set the Project up correctly, including turning off the automation that closes issues from a Status edit, so that an agent's write can never close real work.
-6. As a maintainer of an existing consumer, I want a runbook to migrate my open waves into the hierarchy and retire the stage labels, so that riel can adopt this in one sitting.
+6. As a maintainer of an existing consumer, I want a migration mode that shows me every write it intends before it makes one, maps my issues to waves by rules I can read, and tells me which it could not map, so that riel adopts this in one approved sitting.
 7. As a developer with no Project, I want everything except the Status writes to work unchanged, so that the conventions do not force a Project on me.
 
 ## Functional Requirements
@@ -80,7 +81,7 @@ Consumer repositories receive the conventions through the prompt trees. An exist
 - **FR-9.** activity-publish-github names `gh` as the primary surface and MCP as optional, matching CLAUDE.md (D-16).
 - **FR-10.** Parity tests across the three prompt trees for FR-1, FR-2, FR-3, FR-6, FR-7 and FR-9.
 
-### Wave 2 — Planner, verifier and migration
+### Wave 2 — Planner and verifier
 
 - **FR-11.** The planner commits `workstream/planner-state-<plan-id>.md` on the integration branch after every story merge, in the same step that writes it (D-11).
 - **FR-12.** The planner posts one checkpoint comment on the wave issue at the first story merge and edits it in place after every later merge. It keeps the `🔄 Update:` prefix and references the wave issue. github-ops records that a designated checkpoint comment may be edited in place and every other comment is append-only (D-12).
@@ -88,7 +89,15 @@ Consumer repositories receive the conventions through the prompt trees. An exist
 - **FR-14.** The planner's roadmap update derives the row's Status and Issues/PRs cells from `gh issue list` and `gh pr list` output, cites the commands in the consolidated PR body, and never writes a state it did not observe (D-13).
 - **FR-15.** The consolidated PR body carries `Closes #<wave issue>` so the wave issue closes when the PR merges to main; story references stay `Refs` (D-13).
 - **FR-16.** The verifier rollup audit compares the roadmap row with the wave issue and its sub-issues and reports a mismatch as an advisory finding, replacing the current roadmap-versus-merged-work comparison.
-- **FR-17.** A migration runbook for an existing consumer: create the PRD and wave tracking issues for every open wave, attach existing stories as sub-issues, backfill Status from PR state, remove retired labels, and update the Project per FR-8. Ships in the same PR as the planner change.
+
+### Wave 3 — Migration of an existing repository
+
+- **FR-17.** github-ops gains a migration mode that first writes a dry-run plan to `workstream/migration-projects.md` and writes nothing to GitHub until the user approves the plan. The plan lists every proposed write grouped into batches (labels, tracking issues, sub-issue links, Status backfill, label removals, Project settings), and a separate list of issues it could not map (D-17).
+- **FR-18.** An existing issue maps to its wave by this precedence: the `**Story:** workstream/user-stories-<slug>-phase-<N>.md` body line; else a `phase:` label resolved against the roadmap; else the milestone when exactly one wave shares it; else unmapped. Unmapped issues are never guessed; they wait for the user (D-18).
+- **FR-19.** Scope rules: one PRD tracking issue per PRD file; a wave tracking issue only for a wave with at least one open story or an active planner run; no tracking issue for a shipped wave, whose roadmap row remains its record; no `level:` label and no parent on standalone bugs and chores; existing titles are never changed, since the sub-issue link carries the hierarchy and the title forms apply to new issues (D-19).
+- **FR-20.** Status backfill reads pull-request state per FR-6's meaning: an open PR with `Closes #N` sets In review, a story branch with no PR sets In progress, `status: deferred` sets Deferred, else Ready; then the retired stage labels are removed and `status: deferred` is retired with them. Pull-request items are removed from the Project and the auto-add filter narrowed to `is:issue` (D-20).
+- **FR-21.** Document backfill: `docs/roadmap.md` is converted to the canonical table (one row per PRD phase or wave, Status from the fixed set, Issues/PRs naming the wave tracking issue) with any existing narrative kept below the table; every active `planner-state-*.md` gains `Wave issue: #N` and `Checkpoint comment: <id>` lines, and the state-file format in the planner gains the same two lines; the `docs/tech.md` `## GitHub Project` section is written (D-21). Publication reports are history and stay unchanged.
+- **FR-22.** `docs/runbooks/runbook-migrate-to-projects-tracking.md` documents the mode and ships in the same PR. Adoption order is this repository first, then `llipe/riel`; wave 3 is Done only after riel has migrated and one planner batch has run under the conventions.
 
 ## Business Rules
 
@@ -97,6 +106,7 @@ Consumer repositories receive the conventions through the prompt trees. An exist
 - A tracking issue is a container: no `type:`, no `priority:`, no assignee required (D-05).
 - The roadmap row is derived at the batch boundary. A row written from memory is a defect the verifier reports (D-13).
 - Without a `## GitHub Project` section, no agent runs a `gh project` command (D-09).
+- Migration never guesses: an issue it cannot map by FR-18 is listed for the user, and no existing title is changed (D-18, D-19).
 
 ## Data Requirements
 
@@ -149,13 +159,16 @@ No UI is built. The only user-facing surfaces are GitHub issues and the Project,
 - **AC-8.** (wave 2) After a planner story merge on a fixture run, the integration branch carries the state file and the wave issue carries one checkpoint comment whose text names the merged PR; a second merge edits that comment rather than adding one (FR-11, FR-12).
 - **AC-9.** (wave 2) The consolidated PR body contains `Closes #<wave>` and the `gh` commands the roadmap row was derived from (FR-14, FR-15).
 - **AC-10.** (wave 2) The verifier rollup reports a roadmap row that disagrees with the wave issue's sub-issue states as an advisory finding (FR-16).
-- **AC-11.** `pnpm run validate` passes.
+- **AC-11.** (wave 3) On a fixture repository with one PRD, two waves, six stories (two linked by body line, two by `phase:` label, one by milestone, one unmappable) and one standalone bug, the dry-run plan lists exactly the writes FR-19 permits, names the unmappable issue, proposes no title change and no parent for the bug, and nothing on GitHub changes before approval (FR-17, FR-18, FR-19).
+- **AC-12.** (wave 3) After the approved run, every open story in the fixture has the Status FR-20 derives, carries no retired label, and the Project holds no pull-request item (FR-20).
+- **AC-13.** (wave 3) The fixture's roadmap passes the roadmap-parity test after conversion, each active planner-state file carries the two new lines, and `docs/tech.md` carries the section (FR-21).
+- **AC-14.** `pnpm run validate` passes.
 
 ## Success Metrics
 
 - riel's next two batches run under these conventions with zero roadmap corrections after the fact.
 - The riel Project answers "what is in progress" and "what is next" from its own views, with no generated page.
-- No `status: ready` label remains on an open riel story after migration.
+- No `status: ready` label remains on an open riel story after migration, and the migration plan's unmapped list for riel is resolved by the owner, not guessed.
 
 ## Assumptions
 
@@ -166,7 +179,7 @@ No UI is built. The only user-facing surfaces are GitHub issues and the Project,
 ## Constraints and Dependencies
 
 - `prd-factory-board.md` is parked, not cancelled. It depends on wave kinds, which this PRD does not define.
-- Wave 2's migration runbook is exercised on `llipe/riel` before wave 2 is called Done.
+- Wave 3 is exercised on this repository first and on `llipe/riel` second; it is Done only after one riel planner batch has run under the conventions (FR-22).
 - The runbook-in-same-PR rule (shared-understanding FR-49a) applies to both runbooks.
 
 ## Security and Compliance
