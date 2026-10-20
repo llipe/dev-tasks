@@ -41,13 +41,13 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
 - [ ] 2.0 Implement Story S-002: Publish creates the tracking-issue hierarchy and reuses it on later waves (#271)
 
-  - [ ] 2.1 Add a `describe("activity-publish-github")` block asserting the `gh` primary rule, the absence of the parent-epic question, the find-or-create step with the `gh issue list --label "level: prd"` search, the wave body template headings, the sub-issue attach and verify sentence with `hierarchy:` reporting, and the three report lines, in all three trees; confirm red
-  - [ ] 2.2 Rewrite the execution-method rules to name `gh` as primary and MCP as optional, keeping the recorded-method rule (D-16)
-  - [ ] 2.3 Remove the parent-epic clarifying question; add the find-or-create step for the PRD and wave tracking issues before story creation: one match reuses, zero creates, more than one stops and lists the numbers (D-02, D-36)
-  - [ ] 2.3a Filter the search result client-side with `--jq` on `startswith("[PRD-<name>]")` before counting matches, since GitHub's `in:title` search tokenises leniently (Design Mode A-13)
-  - [ ] 2.4 Add the wave issue body template: scope line, `Integration branch: TBD`, `## Artifacts` with spec and story-set links and `Task plan: pending`, `## Stories` list, no checkboxes (D-14)
-  - [ ] 2.5 Add the per-story sub-issue attach (`POST .../sub_issues` with the child's numeric id), the wave-under-PRD attach, the `GET .../sub_issues` verification and the `hierarchy: verified(<n> of <n>) | failed(<reason>)` report line; all bodies via `--body-file` (D-02)
-  - [ ] 2.6 Add `PRD issue`, `Wave issue` and `Hierarchy` lines to the publication report template and a hierarchy sentence to Final Instructions
+  - [x] 2.1 Add a `describe("activity-publish-github")` block asserting the `gh` primary rule, the absence of the parent-epic question, the find-or-create step with the `gh issue list --label "level: prd"` search, the wave body template headings, the sub-issue attach and verify sentence with `hierarchy:` reporting, and the three report lines, in all three trees; confirm red
+  - [x] 2.2 Rewrite the execution-method rules to name `gh` as primary and MCP as optional, keeping the recorded-method rule (D-16)
+  - [x] 2.3 Remove the parent-epic clarifying question; add the find-or-create step for the PRD and wave tracking issues before story creation: one match reuses, zero creates, more than one stops and lists the numbers (D-02, D-36)
+  - [x] 2.3a Filter the search result client-side with `--jq` on `startswith("[PRD-<name>]")` before counting matches, since GitHub's `in:title` search tokenises leniently (Design Mode A-13)
+  - [x] 2.4 Add the wave issue body template: scope line, `Integration branch: TBD`, `## Artifacts` with spec and story-set links and `Task plan: pending`, `## Stories` list, no checkboxes (D-14)
+  - [x] 2.5 Add the per-story sub-issue attach (`POST .../sub_issues` with the child's numeric id), the wave-under-PRD attach, the `GET .../sub_issues` verification and the `hierarchy: verified(<n> of <n>) | failed(<reason>)` report line; all bodies via `--body-file` (D-02)
+  - [x] 2.6 Add `PRD issue`, `Wave issue` and `Hierarchy` lines to the publication report template and a hierarchy sentence to Final Instructions
   - [ ] 2.7 Apply the same edits to the `.github/` and `.kiro/` copies
   - [ ] 2.8 Verify Acceptance Criterion: `gh` primary and method recorded
   - [ ] 2.9 Verify Acceptance Criterion: epic question gone; find-or-create step with the three outcomes
