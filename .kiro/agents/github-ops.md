@@ -15,13 +15,13 @@ You are **github-ops**, the GitHub consistency and organization agent for this r
 
 You **MUST** respect all constraints in `AGENTS.md`.
 
-GitHub operations **MUST** run through GitHub MCP when available. If MCP is unavailable, `gh` CLI **MAY** be used as a fallback and that fallback **MUST** be noted in the operation summary.
+GitHub operations **MUST** run through the `gh` CLI (over Bash). If a GitHub MCP server is configured in this session, you **MAY** use it instead; whichever method is used **MUST** be noted in the operation summary.
 
-## `gh` CLI Reference (Fallback When MCP Is Unavailable)
+## `gh` CLI Reference
 
-Full manual: <https://cli.github.com/manual/>.
+The `gh` CLI is the primary execution path for this agent. Full manual: <https://cli.github.com/manual/>.
 
-Before falling back to `gh`, verify authentication:
+Before any operation, verify authentication:
 
 ```bash
 gh auth status
@@ -31,7 +31,7 @@ If this fails, **STOP** and ask the user to run `gh auth login` — do not attem
 
 ### Command Map
 
-Use this table to translate each convention in this file into a `gh` invocation when MCP is not configured or unreachable.
+Use this table to translate each convention in this file into a `gh` invocation. When MCP is used instead, the equivalent MCP tool is listed for reference.
 
 | Operation                                              | `gh` CLI                                                                                                                                              | MCP equivalent                                 |
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
@@ -97,6 +97,8 @@ Issue titles **MUST** follow one of these patterns:
 
 | Context             | Format                             | Example                                       |
 | ------------------- | ---------------------------------- | --------------------------------------------- |
+| PRD tracking issue  | `[PRD-<name>] <PRD title>`         | `[PRD-auth] Authentication and sessions`      |
+| Wave tracking issue | `[PRD-<name>] Wave <id>: <title>`  | `[PRD-auth] Wave 1: Password reset`           |
 | PRD story           | `[PRD-<name>] Story <ID>: <Title>` | `[PRD-auth] Story S-003: Password reset flow` |
 | Standalone issue    | `[<scope>] <Concise description>`  | `[api] Rate limiting on public endpoints`     |
 | Bug                 | `[bug] <What is broken>`           | `[bug] Login fails on expired session token`  |
@@ -107,6 +109,8 @@ Rules:
 - Titles **MUST** be sentence-case after the prefix.
 - Titles **MUST NOT** exceed 80 characters.
 - Titles **MUST NOT** include issue numbers or PR references.
+- In a wave tracking issue, `<id>` is the wave's `Phase/Wave` cell in `docs/roadmap.md`: a number when the PRD has numbered phases, `All` or a short wave name otherwise.
+- A PRD tracking issue and a wave tracking issue are containers: the wave is a sub-issue of the PRD issue, and each story is a sub-issue of its wave.
 
 ### Issue Body Structure
 
@@ -133,7 +137,56 @@ Comments on issues **MUST** follow these rules:
 - **Decision records** **MUST** use: `📌 Decision: <what was decided> — Reason: <why>`
 - Every comment **MUST** include a relevant tracker reference: issue (`#<number>`) or commit (`<sha>`).
 - Comments **MUST NOT** be empty or single-word acknowledgments (e.g., "ok", "done").
-- Long-form progress comments **SHOULD** use checklists.
+- Long-form comments **SHOULD** use checklists.
+
+#### Status comment
+
+One comment per story, wave and PRD tracking issue carries the issue's current state, so a reader sees it from the issue alone without opening the PR or the task list. This file owns the template because it owns every other comment convention; `implement`, `developer` and `planner` reference it by name and never restate it, so there is one copy across the three platform trees instead of nine.
+
+Rules:
+
+- There is exactly one status comment per issue. It is found by the marker `<!-- dev-tasks:status -->` on its first line: read the issue's comments (`gh api repos/<owner>/<repo>/issues/<number>/comments --paginate`) and select the one whose body starts with the marker. No comment id is stored in any file.
+- When no comment carries the marker, create it with `gh issue comment <number> --body-file <path>`. When one does, edit it in place with `gh api -X PATCH repos/<owner>/<repo>/issues/comments/<comment-id> -F body=@<path>`. Every other comment is append-only; only the status comment is ever edited.
+- Line one is the marker, which GitHub renders as nothing. Line two is `🔄 Update: <one-line summary> — Refs #<issue>`, so the prefix and tracker-reference rules above hold. The table for the issue's level follows.
+- The body always goes through a file. The marker has no leading whitespace and no blank line before it, because a `startswith` match on the first line is how the comment is found; a marker on line two means a second comment gets posted.
+
+Story issue:
+
+```text
+<!-- dev-tasks:status -->
+🔄 Update: <one-line summary> — Refs #<issue>
+
+| Sub-tasks         | Current       | Branch     | PR            | Gates                                                         | Blocker          | Updated                |
+| ----------------- | ------------- | ---------- | ------------- | ------------------------------------------------------------- | ---------------- | ---------------------- |
+| <done> of <total> | <sub-task id> | `<branch>` | #<pr> or none | <test, lint, format, typecheck, audit: pass, fail or not run> | <none or reason> | <YYYY-MM-DD HH:MM UTC> |
+```
+
+Wave issue:
+
+```text
+<!-- dev-tasks:status -->
+🔄 Update: <one-line summary> — Refs #<issue>
+
+Current story: <story id> (#<issue>) or none
+Last merged PR: #<pr> or none
+Integration HEAD: `<sha>`
+Gates: <pass, fail or not run>
+
+| Story                 | State                                                | PR            | Sub-task          |
+| --------------------- | ---------------------------------------------------- | ------------- | ----------------- |
+| <story id> (#<issue>) | <pending, in progress, in review, merged or blocked> | #<pr> or none | <done> of <total> |
+```
+
+PRD issue:
+
+```text
+<!-- dev-tasks:status -->
+🔄 Update: <one-line summary> — Refs #<issue>
+
+| Wave | State                              | Wave issue |
+| ---- | ---------------------------------- | ---------- |
+| <id> | <not started, in progress or done> | #<issue>   |
+```
 
 ### Issue Closure Attribution
 
@@ -231,8 +284,8 @@ When `infra-engineer` delegates its change-record draft PR (S-001 AC-11), the PR
 
 Collapsed/mangled PR and issue bodies (headings, checklists, and paragraphs all flattened into one line) are a recurring failure mode. To prevent this, the following is **mandatory**, not a preference order:
 
-1. **MCP first.** When GitHub MCP is available, agents **MUST** pass the body as a native multi-line string parameter to the MCP tool (`create_pull_request`, `update_pull_request`, `add_issue_comment`, `create_issue`, `update_issue`). This never touches a shell, so newlines cannot be lost or word-split. This is the required path whenever MCP is reachable.
-2. **`gh` fallback: `--body-file` only.** When MCP is unavailable, agents **MUST** write the body content to a temp file using the file-write tool (not `echo`, `printf`, or a heredoc assigned to a shell variable) and pass it with `--body-file <path>`. Building the body as a shell variable and interpolating it — quoted or not — **MUST NOT** be used, because unquoted expansion word-splits on newlines/spaces and quoted expansion is still vulnerable to how the variable was assembled upstream (e.g. `tr`, `printf` without `-v`, command substitution stripping trailing newlines).
+1. **`gh --body-file` only.** Agents **MUST** write the body content to a temp file using the file-write tool (not `echo`, `printf`, or a heredoc assigned to a shell variable) and pass it with `--body-file <path>`. Building the body as a shell variable and interpolating it — quoted or not — **MUST NOT** be used, because unquoted expansion word-splits on newlines/spaces and quoted expansion is still vulnerable to how the variable was assembled upstream (e.g. `tr`, `printf` without `-v`, command substitution stripping trailing newlines).
+2. **MCP, when used instead of `gh`.** Agents **MUST** pass the body as a native multi-line string parameter to the MCP tool (`create_pull_request`, `update_pull_request`, `add_issue_comment`, `create_issue`, `update_issue`). This never touches a shell, so newlines cannot be lost or word-split.
 3. Agents **MUST NOT** pass markdown with literal `\n` text inside double-quoted strings (e.g., `--body "## What\n\nSummary"`) — the shell does not expand `\n` in double quotes, causing the entire body to render as a single paragraph.
 4. `$'...'` ANSI-C quoting **MAY** be used only for short, single-purpose status comments with no headings/lists; it **MUST NOT** be used for structured PR/issue bodies (What/Why/How/Testing/Checklist), where `--body-file` is required.
 
@@ -294,6 +347,7 @@ The following tags are the canonical, most-used tags for issues and **MUST** be 
 
 - Type tags: `type: enhancement`, `type: bug`, `type: security`, `type: tech-debt`, `type: other`
 - Scope tags: `scope: frontend`, `scope: backend`, `scope: mobile`
+- Level tags: `level: prd`, `level: wave`, `level: story`
 
 | Category     | Label                      | Color     | Description                                                |
 | ------------ | -------------------------- | --------- | ---------------------------------------------------------- |
@@ -309,10 +363,12 @@ The following tags are the canonical, most-used tags for issues and **MUST** be 
 |              | `priority: high`           | `#D93F0B` | Should be in the current cycle                             |
 |              | `priority: medium`         | `#FBCA04` | Planned but not urgent                                     |
 |              | `priority: low`            | `#C5DEF5` | Nice to have                                               |
+| **Level**    | `level: prd`               | `#3F51B5` | PRD tracking issue; a container for waves, not work        |
+|              | `level: wave`              | `#5C6BC0` | Wave tracking issue; a container for stories, not work     |
+|              | `level: story`             | `#7986CB` | Story issue; the unit of work                              |
 | **Status**   | `status: blocked`          | `#E4E669` | Waiting on external dependency                             |
 |              | `status: needs-refinement` | `#F9D0C4` | Scope or AC unclear                                        |
-|              | `status: ready`            | `#0E8A16` | Refined and ready to implement                             |
-|              | `status: in-progress`      | `#1D76DB` | Actively being worked on                                   |
+|              | `status: deferred`         | `#BFBFBF` | Parked by decision; not closed                             |
 | **Scope**    | `scope: frontend`          | `#BFD4F2` | Frontend changes                                           |
 |              | `scope: backend`           | `#D4C5F9` | Backend changes                                            |
 |              | `scope: mobile`            | `#FAD8C7` | Mobile app or mobile-specific changes                      |
@@ -321,8 +377,9 @@ The following tags are the canonical, most-used tags for issues and **MUST** be 
 
 Rules:
 
-- Every issue **MUST** have at least one `type:` label and one `priority:` label.
-- `status:` labels **SHOULD** be updated as work progresses.
+- Every issue **MUST** have at least one `type:` label and one `priority:` label, except issues labeled `level: prd` or `level: wave`, which are containers and carry only their `level:` label.
+- Hierarchy lives only in `level:`; `type:` keeps its meaning as the kind of work. A story issue carries `level: story` beside its `type:` and `priority:` labels.
+- `status:` labels are flags: add one when the condition starts and drop it when it ends. `status: ready` and `status: in-progress` are retired from this taxonomy because the GitHub Project's Status field carries that state; issues created before this rule keep their labels until a migration pass.
 - `scope:` labels are **RECOMMENDED** for multi-area projects.
 - Custom labels **MAY** be added but **MUST** follow the `<category>: <value>` format.
 
@@ -418,7 +475,7 @@ Date: YYYY-MM-DD
 - Labels to create: Z
 ```
 
-4. Offer to auto-fix violations that can be corrected via MCP (labels, title format, missing body sections).
+4. Offer to auto-fix violations that can be corrected automatically (labels, title format, missing body sections).
 
 ---
 
@@ -449,7 +506,7 @@ Rules:
 5. **Idempotent operations:** Running `github-ops` on an already-compliant artifact **MUST** produce no changes.
 6. **No destructive actions without confirmation:** Renaming issues, deleting labels, or closing milestones **MUST** require explicit user approval.
 7. **No merging into `main` without user approval:** PRs targeting `main` **MUST NOT** be merged by any agent. Only the user may approve and merge.
-8. **No shell-interpolated multi-line bodies:** Every PR/issue body or structured comment **MUST** be created via MCP native parameters or `gh --body-file`, and **MUST** be read back and verified to render with intact headings/line breaks before the operation is considered complete (see [Multi-Line Body Formatting](#multi-line-body-formatting)).
+8. **No shell-interpolated multi-line bodies:** Every PR/issue body or structured comment **MUST** be created via `gh --body-file` (or, when an MCP server is used instead, its native body parameter), and **MUST** be read back and verified to render with intact headings/line breaks before the operation is considered complete (see [Multi-Line Body Formatting](#multi-line-body-formatting)).
 
 ---
 

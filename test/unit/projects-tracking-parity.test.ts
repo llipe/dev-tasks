@@ -170,11 +170,11 @@ describe("github-ops", () => {
       expect(section, copy.path).toContain("append-only");
       // CT-1: every fenced template starts with the marker on line one, no leading
       // whitespace, and the `🔄 Update:` line with `Refs #<issue>` on line two.
-      const fences = section.match(/```markdown\n[\s\S]*?```/g) ?? [];
+      const fences = section.match(/```text\n[\s\S]*?```/g) ?? [];
       expect(fences.length, `${copy.path}: no fenced status-comment template`).toBeGreaterThan(0);
       for (const fence of fences) {
         expect(fence, copy.path).toMatch(
-          /^```markdown\n<!-- dev-tasks:status -->\n🔄 Update:[^\n]*Refs #<issue>/,
+          /^```text\n<!-- dev-tasks:status -->\n🔄 Update:[^\n]*Refs #<issue>/,
         );
       }
       // A-10: "progress comment" is a forbidden synonym of "status comment".
