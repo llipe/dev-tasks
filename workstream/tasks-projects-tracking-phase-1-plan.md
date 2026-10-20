@@ -19,6 +19,8 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 - `docs/runbooks/README.md` - Runbook row (S-005)
 - `TESTING.md` - Dogfood checks table and changelog row (S-006)
 - `test/unit/projects-tracking-parity.test.ts` - New; one `describe` per story plus the no-Project-writes guard (all)
+- `test/unit/skill-parity-init.test.ts` - Heading pin 16 → 17 (S-005, A-1)
+- `test/unit/runbook-set.test.ts` - New runbook in `EXPECTED_RUNBOOKS` (S-005, A-2)
 
 ## Tasks
 
@@ -28,7 +30,9 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [ ] 1.2 Add the `PRD tracking issue` and `Wave tracking issue` rows to the Title Format table in `.claude/agents/github-ops.md`, with the sentence that `<id>` is the roadmap's Phase/Wave cell (D-04, D-32)
   - [ ] 1.3 Add the Level category with `level: prd`, `level: wave`, `level: story` in one color family; remove the `status: ready` and `status: in-progress` rows; add `status: deferred`; extend the type/priority rule with the `level: prd` / `level: wave` exemption (D-03, D-05, D-07, D-31)
   - [ ] 1.4 Add the **Status comment** subsection under Issue Comments: marker line, `🔄 Update:` line with `Refs #<issue>`, the story, wave and PRD tables, and the one-per-issue, find-by-marker, PATCH-in-place, append-only-otherwise procedure (D-12, D-25, D-26, D-33, D-37)
+  - [ ] 1.4a Replace the phrase "progress comment" wherever github-ops uses it (for example "Long-form progress comments") with "status comment" or neutral wording; the glossary forbids it as a synonym (Design Mode A-10)
   - [ ] 1.5 Apply the same edits to `.github/agents/github-ops.agent.md` and `.kiro/agents/github-ops.md`, and replace their "GitHub MCP SHOULD be used" sentence with the `.claude/` wording "`gh` CLI is the primary execution path" (D-16)
+  - [ ] 1.5a In the `.github/` and `.kiro/` github-ops copies, align every passage that makes MCP primary (the Identity sentence, the fallback heading, the table intro, the Multi-Line Body items, rule 8) to `gh` primary with MCP optional, so the file does not contradict itself; keep what `git-guard-mcp.test.ts` and `infra-engineer-parity.test.ts` require (Design Mode A-3, D-41)
   - [ ] 1.6 Verify Acceptance Criterion: title rows present in all three trees with the `<id>` sentence
   - [ ] 1.7 Verify Acceptance Criterion: Level labels, exemption sentence, no stage-label rows, `status: deferred` present
   - [ ] 1.8 Verify Acceptance Criterion: Status comment subsection with marker, prefix line, three tables and procedure
@@ -40,6 +44,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [ ] 2.1 Add a `describe("activity-publish-github")` block asserting the `gh` primary rule, the absence of the parent-epic question, the find-or-create step with the `gh issue list --label "level: prd"` search, the wave body template headings, the sub-issue attach and verify sentence with `hierarchy:` reporting, and the three report lines, in all three trees; confirm red
   - [ ] 2.2 Rewrite the execution-method rules to name `gh` as primary and MCP as optional, keeping the recorded-method rule (D-16)
   - [ ] 2.3 Remove the parent-epic clarifying question; add the find-or-create step for the PRD and wave tracking issues before story creation: one match reuses, zero creates, more than one stops and lists the numbers (D-02, D-36)
+  - [ ] 2.3a Filter the search result client-side with `--jq` on `startswith("[PRD-<name>]")` before counting matches, since GitHub's `in:title` search tokenises leniently (Design Mode A-13)
   - [ ] 2.4 Add the wave issue body template: scope line, `Integration branch: TBD`, `## Artifacts` with spec and story-set links and `Task plan: pending`, `## Stories` list, no checkboxes (D-14)
   - [ ] 2.5 Add the per-story sub-issue attach (`POST .../sub_issues` with the child's numeric id), the wave-under-PRD attach, the `GET .../sub_issues` verification and the `hierarchy: verified(<n> of <n>) | failed(<reason>)` report line; all bodies via `--body-file` (D-02)
   - [ ] 2.6 Add `PRD issue`, `Wave issue` and `Hierarchy` lines to the publication report template and a hierarchy sentence to Final Instructions
@@ -55,8 +60,11 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
   - [ ] 3.1 Add a `describe("implement")` block asserting the MUST sentence, the find/create/PATCH procedure with the `status_comment:` report values, the main-thread parent lookup with `wave_status:` values, the unchanged checklist rules and the lifecycle "During" entry, and the absence of the old "SHOULD add brief issue or PR comments" sentence, across the skill, the instruction and the steering file; confirm red
   - [ ] 3.2 Replace the optional progress-comment rule in `.claude/skills/implement/SKILL.md` with the mandatory status-comment rule referencing github-ops § Status comment, with its event list (D-25, D-38)
+  - [ ] 3.2a Replace "progress comment" in implement's Final Instructions with "status comment" (Design Mode A-10)
   - [ ] 3.3 Add the procedure: find by marker via `gh api .../comments --paginate`; create with `gh issue comment --body-file`; edit with `gh api -X PATCH ... -F body=@file`; report `status_comment: written | failed(<reason>) | skipped(no issue)` (D-26, D-28, D-37)
+  - [ ] 3.3a State the duplicate case: two comments carry the marker → edit the oldest and report `status_comment: failed(duplicate marker)` (Design Mode A-8)
   - [ ] 3.4 Add the main-thread rule: after PR open and at PR ready, `GET .../issues/{n}/parent`; 200 edits this story's row in the wave comment; 404 reports `wave_status: skipped(no parent)`; under the planner `wave_status: owned-by-planner` (D-29)
+  - [ ] 3.4a State the missing-comment case: parent found but the wave has no status comment → create it from the wave table and report `wave_status: written` (Design Mode A-8)
   - [ ] 3.5 Add the lifecycle table "During" entry naming the status comment; leave the checklist alignment rules untouched
   - [ ] 3.6 Apply the same body text to `.github/instructions/implement.instructions.md` and `.kiro/steering/implement.md`, keeping each file's own frontmatter
   - [ ] 3.7 Verify Acceptance Criterion: mandatory rule with the event list in all three
@@ -80,8 +88,11 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 - [ ] 5.0 Implement Story S-005: activity-init recommends a GitHub Project and ships the configuration runbook (#274)
 
   - [ ] 5.1 Add a `describe("activity-init")` block asserting the "Repository Setup — GitHub Project (Recommended)" subsection and the runbook path in all three trees, plus an `it` over the runbook file asserting each required step and the absence of any instruction to change a default automation; confirm red
+  - [ ] 5.1a Bump the activity-init pin in `test/unit/skill-parity-init.test.ts` from 16 `## ` headings to 17, with a comment naming S-005; leave the numbered-step pin at 54, since the subsection has no numbered steps (Design Mode A-1, D-40)
   - [ ] 5.2 Write `docs/runbooks/runbook-configure-github-project.md` from `templates/runbooks/runbook-template.md`: frontmatter `name`, `trigger`, `owner: product-engineer`, `last_verified`, `related: [docs/requirements/prd-projects-tracking.md]` in inline bracket form; seven sections; steps for `gh auth refresh -s project`, Board template, default Status options and the named default automations kept, auto-add `is:issue`, deleting Priority, Size, Estimate, Start date, Target date, the three views with their filter strings, and verification with `gh project view` and `gh project field-list` (D-10, D-22, D-35)
+  - [ ] 5.2a In the runbook, state that the Auto-close issue automation is off by default and is left alone, and that the exercise must record the exact names shown on the Workflows page, including "Pull request linked to issue" as observed on riel's Project 4 (Design Mode A-5, A-6, D-43)
   - [ ] 5.3 Add the runbook's row to `docs/runbooks/README.md`; run `pnpm run lint` and confirm no docs-structure finding
+  - [ ] 5.3a Add `runbook-configure-github-project` to `EXPECTED_RUNBOOKS` in `test/unit/runbook-set.test.ts` (Design Mode A-2)
   - [ ] 5.4 Add the four-sentence subsection with the runbook link to `.claude/skills/activity-init/SKILL.md` after the Branch Protection subsection, then to the `.github/` and `.kiro/` copies
   - [ ] 5.5 Exercise the runbook once on `llipe/dev-tasks` (stop and ask the user before creating the Project); record the Project number and date in the PR body and set `last_verified` to that date
   - [ ] 5.6 Verify Acceptance Criterion: subsection in all three trees, at most four sentences, link present
@@ -94,8 +105,11 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 - [ ] 6.0 Implement Story S-006: Cross-tree guard against Project writes and the dogfood rows in TESTING.md (#275)
 
   - [ ] 6.1 Add a `describe("no Project writes")` block that walks every `.md` under `.claude/`, `.github/` and `.kiro/` recursively and asserts none contains `gh project item-edit` or `gh project item-add`, with a self-check that the matcher catches a fixture string containing the forbidden command; confirm the self-check is red before the matcher exists (D-23)
+  - [ ] 6.1a Extend the guard walk to `docs/` as well as the three trees, so the runbook cannot carry the two forbidden verbs either (Design Mode A-11, D-44)
   - [ ] 6.2 Add a "Dogfood checks" table to `TESTING.md` with one row per behavioural criterion of wave 1 (PRD AC-1 pending wave 2's publish; PRD AC-3 satisfied by this wave's stories), each row naming the satisfying issue number or `pending`, plus a changelog row (D-39)
-  - [ ] 6.3 Fill the AC-3 rows for S-001 to S-005 with their issue numbers once each story's status comment has been observed
+  - [ ] 6.2a Add a `## Changelog` section to `TESTING.md` and bump its frontmatter `version:`; the Dogfood row is the first changelog entry (Design Mode A-12)
+  - [ ] 6.2b Add a `pending` Dogfood row for FR-24's success path (parent found, wave comment edited), first observable on a main-thread run of a wave 2 story (Design Mode A-16)
+  - [ ] 6.3 Fill the AC-3 rows for S-003 to S-005 with their issue numbers once each story's status comment has been observed; mark the S-001 and S-002 rows `n/a (pre-rule)`, since they ran before S-003's rule existed (Design Mode A-7, D-42)
   - [ ] 6.4 Verify Acceptance Criterion: guard passes on all three trees and fails on the fixture string
   - [ ] 6.5 Verify Acceptance Criterion: Dogfood checks table and changelog row present
   - [ ] 6.6 Verify Acceptance Criterion: S-001 to S-005 rows filled
@@ -130,3 +144,8 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 | D-37 | Marker on the first line.                                               |
 | D-38 | Rule lives in implement.                                                |
 | D-39 | Static parity tests plus next-wave dogfood.                             |
+| D-40 | activity-init subsection stays `##`; heading pin bumped to 17.          |
+| D-41 | S-001 aligns every MCP-primary passage in github-ops, not one sentence. |
+| D-42 | S-001 and S-002 dogfood rows read `n/a (pre-rule)`.                     |
+| D-43 | "Pull request linked to issue" is a default automation, observed on riel. |
+| D-44 | The no-Project-writes guard walks `docs/` too.                          |

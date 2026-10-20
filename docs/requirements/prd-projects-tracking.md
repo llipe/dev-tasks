@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                        | Author                    |
 | ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.4     | 2026-10-20 | Design Mode findings A-5 and A-18 confirmed by @llipe as intended: Security section no longer says agents write to the Project or that auto-close must be turned off; stale `docs/tech.md` section mentions removed. No requirement changed.                                                                                                                                                                                                   | product-engineer          |
 | 1.3     | 2026-10-20 | Approved by @llipe. Vocabulary rows flipped to `existing` after the glossary append (ubiquitous-language v1.3).                                                                                                                                                                                                                                                                                                                                | @llipe / product-engineer |
 | 1.2     | 2026-10-20 | Native status model (D-22 to D-24): no agent writes Project Status; GitHub's own automations move it and `Closes` on the consolidated PR closes stories and the wave at ship. OQ-1 resolved. Mandatory status comments on story, wave and PRD issues, edited in place (D-25, D-26, FR-23 to FR-25). FR-5 withdrawn; FR-6, FR-7, FR-8, FR-12, FR-13, FR-15, FR-20, FR-21 rewritten. Re-lands the v1.1 table rows that prettier padding dropped. | @llipe / product-engineer |
 | 1.1     | 2026-10-20 | Migration becomes wave 3 with its own requirements (FR-17 to FR-22, D-17 to D-21): dry-run plan, mapping precedence, rules for closed waves, standalone issues and titles, roadmap conversion, document backfill, adoption order.                                                                                                                                                                                                              | @llipe / product-engineer |
@@ -48,9 +49,9 @@ graph LR
 
 ## Affected Repositories
 
-| Repository        | Role / Impact                                                                                                                                                                                                                                                                                    |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `llipe/dev-tasks` | Sole repository. Changes github-ops, activity-publish-github, activity-init, developer, implement, planner and verifier across the three prompt trees; adds a `docs/tech.md` template section, two runbooks, and parity tests. No change to `core/` beyond a lint check for the tech.md section. |
+| Repository        | Role / Impact                                                                                                                                                                                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `llipe/dev-tasks` | Sole repository. Changes github-ops, activity-publish-github, activity-init, developer, implement, planner and verifier across the three prompt trees; adds two runbooks and parity tests. No change to `core/` beyond a lint check for the tech.md section. |
 
 Consumer repositories receive the conventions through the prompt trees. An existing consumer migrates with the wave 2 runbook; `llipe/riel` is the first.
 
@@ -117,7 +118,7 @@ Consumer repositories receive the conventions through the prompt trees. An exist
 
 ## Data Requirements
 
-No new files beyond the two runbooks and the `docs/tech.md` section. GitHub holds the data:
+No new files beyond the two runbooks. GitHub holds the data:
 
 | Entity         | Where                                            | Written by                                       |
 | -------------- | ------------------------------------------------ | ------------------------------------------------ |
@@ -192,8 +193,8 @@ No UI is built. The only user-facing surfaces are GitHub issues and the Project,
 
 ## Security and Compliance
 
-- Agents write to the Project with the user's own token. No new credential.
-- Turning off the auto-close automation is a hard requirement, because it is the only path by which a Status edit could close an issue (D-10).
+- No agent writes to the Project. Agents read and write issues and comments with the user's own `gh` login; no new credential.
+- The Project's Auto-close issue automation is off by default and left alone; since no agent writes Status (D-23), no Status edit can close an issue. The runbook records the automation names it observes (D-22, D-43).
 - No change to merge authority. The planner still never merges to main.
 
 ## Open Questions
@@ -238,7 +239,7 @@ For `activity-generate-stories`, so the issue breakdown is mechanical. Each line
 | D-07 | Stage labels retire when a Project is configured; flags stay.                                  |
 | D-08 | Superseded by D-23.                                                                            |
 | D-09 | Superseded by D-24.                                                                            |
-| D-10 | Setup step and runbook in activity-init; auto-close automation off.                            |
+| D-10 | Setup step and runbook in activity-init.                                                       |
 | D-11 | Checkpoint file committed on the integration branch; one comment on the wave issue.            |
 | D-12 | A designated status comment may be edited in place.                                            |
 | D-13 | Roadmap row rewritten from `gh` output; consolidated PR closes the wave issue.                 |
