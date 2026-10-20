@@ -81,6 +81,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 3. **Task synchronization:** Whenever a sub-task is completed, you **MUST** immediately mark `[x]` in:
    - The local task file in `/workstream/`
    - The GitHub Issue checklist
+   - The story's status comment on the GitHub Issue, kept current per the `implement` skill's `### Status Comment` procedure — the procedure and the `github-ops` § Status comment template are referenced by name and never restated here; report each outcome as `status_comment:` and `wave_status:` in the closeout payload
 4. **Branch + PR discipline (before coding):** You **MUST** follow `github-ops` conventions:
    - Create branch per `github-ops` branch naming rules (e.g., `issue/42-short-description`, `story/S-003-short-description`)
    - Open a Draft PR against the default branch unless a base branch override is provided. A PR requires at least one commit, so open it immediately after the first commit on the branch — never before. You **MUST NOT** continue past that first commit without the Draft PR open.
@@ -88,7 +89,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
    - Use the `github-ops` PR description template (What / Why / How / Testing / Checklist)
    - Include `Closes #<issue-number>` in the PR description
 5. **Stop-gate rule:** If mode is `step-gated`, you **MUST** stop after each sub-task and request user approval.
-6. **Do not close issue early:** You **MUST NOT** close the issue; close only after the PR is approved and merged.
+6. **Do not close the issue:** You **MUST NOT** close the issue; GitHub closes it when the consolidated PR merges to main. The story PR links the issue with `Closes #<issue-number>`; merged means merged to main, not to an integration branch.
 7. **Keep scope tight:** You **MUST** work only on the selected issue/stories unless the user explicitly expands scope.
 8. **Update Relevant Files:** You **MUST** keep the task file's Relevant Files section accurate.
 9. **English-only outputs:** You **MUST** produce English-only output for docs, comments, and generated content.
@@ -120,7 +121,7 @@ Follow `.kiro/steering/implement.md`:
    - If HEAD is already a valid feature branch (matching `issue/*` or `story/*`), confirm the Draft PR exists and proceed. If the branch has no commits yet, no PR can exist — open it immediately after the first commit.
 5. **memo intent (when memo is available):** Before writing any implementation code, run the memo-cli Availability Check and write the intent entry (see **memo-cli Integration → Intent Entry**). Record `memo_intent` as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)`.
 6. Execute one sub-task at a time in checklist order. For each behavioral sub-task, follow **test-first**: write/update tests first, verify they fail for the right reason, then implement to make them pass.
-7. After each completed sub-task: mark `[x]` locally and in GitHub, pause for approval if step-gated.
+7. After each completed sub-task: mark `[x]` locally and in GitHub, update the status comment per `implement` § Status Comment, pause for approval if step-gated.
 8. When all sub-tasks are complete:
    - Verify all acceptance criteria.
    - Run mandatory quality gates and record results (`test`, `lint`, `format:check`, `typecheck`, `audit`; `validate` if available).
@@ -319,7 +320,7 @@ Before marking a Story/Issue done:
 9. `/workstream` **SHOULD** be cleaned (active artifacts retained, obsolete artifacts archived/removed).
 10. The memo intent and outcome writes **MUST** have been attempted when memo-cli is available (`memo write --kind episodic --session ISSUE-<n> --bank developer-memory …`, before PR conversion), and `memo_intent` / `memo_outcome` **MUST** be recorded as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)`. A `failed` or `skipped` value does not block completion; an omitted field does.
 11. PR **MUST** be ready, approved, and merged.
-12. You **MUST NOT** close the GitHub Issue until all conditions above are met.
+12. You **MUST NOT** close the GitHub Issue; GitHub closes it when the consolidated PR merges to main (rule 6).
 13. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.
 
 ---
@@ -337,6 +338,7 @@ For each run, return a compact status report with:
 - Files updated in `/docs/` and ADR path (if created)
 - Test results for the current step
 - Quality gate results (`test`, `lint`, `format:check`, `typecheck`, `audit`)
+- Status comment outcome (`status_comment`, `wave_status`)
 - Next exact sub-task awaiting approval or currently executing
 
 When finishing a story/issue execution cycle, return a **complete closeout summary** that includes:
@@ -381,6 +383,8 @@ workstream_files:
   memo_intent: written(<id>) | failed(<reason>) | skipped(<reason>)
   memo_outcome: written(<id>) | failed(<reason>) | skipped(<reason>)
   checklist_sync: synced | mismatch-fixed | blocked
+  status_comment: written | failed(<reason>) | skipped(<reason>)
+  wave_status: written | failed(<reason>) | skipped(<reason>) | owned-by-planner
   verifier_audit: run | blocked
   fidelity_verdict: High | Medium | Low | none
   highest_drift_impact: Critical | Major | Minor | None
@@ -395,5 +399,6 @@ Rules for this payload:
 - Every field is required. Use `none`, `NOT RUN`, or `blocked` when a value does not exist.
 - `memo_intent` and `memo_outcome` are always present. `skipped(<reason>)` (memo not installed, not configured, or unavailable in this session) and `failed(<reason>)` (the write was attempted and errored after one retry) are valid values that do not block the merge; `planner` treats an absent field as an incomplete story.
 - `planner` may treat the story as incomplete if either marker or any required field is missing.
+- `status_comment` and `wave_status` are always present; `skipped(<reason>)` is the floor, never an omission — a task list with no GitHub Issue reports `skipped(no issue)` for both (D-28). Under `planner` the wave comment belongs to the planner, so `wave_status: owned-by-planner` is the expected value in this agent's default subagent-delegation context; `written`, `skipped(no parent)` and `failed(<reason>)` come from the main-thread wave update defined in `implement`.
 
 Do not dump full files unless explicitly requested.
