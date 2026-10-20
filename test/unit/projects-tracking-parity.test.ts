@@ -655,7 +655,7 @@ describe("activity-init", () => {
     // A-5 / D-43: Auto-close issue is off by default and left alone; the
     // exercise records the exact names shown on the Workflows page.
     expect(content).toContain("Auto-close issue");
-    expect(content).toMatch(/off by default/);
+    expect(content).toMatch(/off by\s+default/);
     expect(content).toMatch(/Workflows page/);
 
     // Edge cases: the repository setting that enables Projects (EC-26) and
