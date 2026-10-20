@@ -1,0 +1,68 @@
+{
+  "schema_version": "2",
+  "bank": {
+    "default": "kb"
+  },
+  "banks": {
+    "kb": {
+      "episodic": {
+        "initial_stability_days": 3,
+        "expires_in_days": 90,
+        "promoted_grace_days": 7,
+        "purge_after_days": null
+      },
+      "semantic": {
+        "initial_stability_days": 90,
+        "archive_threshold": 0.05,
+        "archive_noisy": false,
+        "superseded_grace_days": 30,
+        "purge_after_days": null
+      }
+    },
+    "private": {
+      "self": {
+        "soft_cap": 50
+      },
+      "episodic": {
+        "initial_stability_days": 3,
+        "expires_in_days": 30,
+        "promoted_grace_days": 7,
+        "purge_after_days": 30
+      },
+      "semantic": {
+        "initial_stability_days": 30,
+        "archive_threshold": 0.05,
+        "archive_noisy": true,
+        "superseded_grace_days": 30,
+        "purge_after_days": 90
+      }
+    }
+  },
+  "recall": {
+    "max_tokens": 2000
+  },
+  "repo": "dev-tasks",
+  "org": "llipe",
+  "domain": "ai-dev-workflow",
+  "relates_to": ["riel"],
+  "defaults": {
+    "source": "agent",
+    "search_scope": "repo"
+  },
+  "ranking": {
+    "w_similarity": 0.6,
+    "w_recency": 0.3,
+    "w_source": 0.1,
+    "recency_half_life_days": 365,
+    "tag_boost_factor": 0.05,
+    "confidence_thresholds": {
+      "exact": 0.88,
+      "high": 0.75,
+      "medium": 0.6
+    },
+    "staleness_threshold_days": 120,
+    "staleness_tag_overlap_threshold": 0.5,
+    "lexical": true,
+    "lexical_boost_factor": 0.15
+  }
+}
