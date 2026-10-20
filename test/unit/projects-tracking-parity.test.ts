@@ -28,15 +28,23 @@ function stripFrontmatter(content: string): string {
 /**
  * Split the body into (heading, sectionText) pairs so assertions can be
  * scoped to their nearest enclosing heading. The "preamble" before the
- * first heading is recorded under an empty heading string.
+ * first heading is recorded under an empty heading string. Lines inside a
+ * ``` fence are never headings: fenced templates (the wave issue body, the
+ * status comment) carry `##` lines that belong to the enclosing section.
  */
 function splitIntoSections(body: string): Array<{ heading: string; text: string }> {
   const lines = body.split("\n");
   const sections: Array<{ heading: string; text: string }> = [];
   let currentHeading = "";
   let currentLines: string[] = [];
+  let inFence = false;
   for (const line of lines) {
-    const headingMatch = line.match(/^#{1,6}\s+(.*)$/);
+    if (/^\s*```/.test(line)) {
+      inFence = !inFence;
+      currentLines.push(line);
+      continue;
+    }
+    const headingMatch = inFence ? null : line.match(/^#{1,6}\s+(.*)$/);
     if (headingMatch) {
       sections.push({ heading: currentHeading, text: currentLines.join("\n") });
       currentHeading = headingMatch[1];
@@ -83,6 +91,32 @@ function sectionOf(copy: TreeCopy, heading: string, containing?: string): string
 function squashSpaces(text: string): string {
   return text.replace(/[ \t]+/g, " ");
 }
+
+// --- helpers -----------------------------------------------------------------
+
+describe("helpers", () => {
+  // qa-engineer S-001 gate: a `##` line inside a fenced block is template text,
+  // not a heading — the wave body template (S-002) carries `## Artifacts` and
+  // `## Stories` inside a fence, which must not cut the Process section short.
+  it("splitIntoSections ignores headings inside code fences", () => {
+    const body = [
+      "## Process",
+      "step one",
+      "```markdown",
+      "## Artifacts",
+      "inside the fence",
+      "```",
+      "step two",
+      "## Next",
+      "after",
+    ].join("\n");
+    const sections = splitIntoSections(body);
+    expect(sections.map((s) => s.heading)).toEqual(["", "Process", "Next"]);
+    const process = sections.find((s) => s.heading === "Process")!;
+    expect(process.text).toContain("## Artifacts");
+    expect(process.text).toContain("step two");
+  });
+});
 
 // --- github-ops (S-001, #270) -------------------------------------------------
 
@@ -195,6 +229,118 @@ describe("github-ops", () => {
       expect(copy.body, copy.path).not.toMatch(/falling back to `gh`/);
       expect(copy.body, copy.path).not.toMatch(/\*\*MCP first\.\*\*/);
       expect(copy.body, copy.path).not.toMatch(/required path whenever MCP/);
+    }
+  });
+});
+
+// --- activity-publish-github (S-002, #271) -----------------------------------
+
+const PUBLISH_TREES = {
+  claude: ".claude/skills/activity-publish-github/SKILL.md",
+  github: ".github/skills/activity-publish-github/SKILL.md",
+  kiro: ".kiro/skills/activity-publish-github/SKILL.md",
+};
+
+const TRACKING_SEARCH =
+  'gh issue list --label "level: prd" --search "[PRD-<name>] in:title" --state open';
+
+describe("activity-publish-github", () => {
+  // The `.github/` copy has no YAML frontmatter, so `stripFrontmatter` is a
+  // no-op there and every assertion is `toContain`, never `toBe` (A-15, EC-12).
+  const trees = loadTrees(PUBLISH_TREES);
+
+  // PT-6 — S-002 AC-1; FR-9, D-16; PRD AC-6
+  it("gh primary", () => {
+    for (const copy of trees) {
+      expect(copy.body, copy.path).toMatch(/`gh`[^\n]*primary/);
+      expect(copy.body, copy.path).toMatch(/MCP[^\n]*optional/);
+      expect(copy.body, copy.path).toContain("**MUST** be recorded in the publication report");
+      expect(copy.body, copy.path).not.toContain("GitHub MCP **SHOULD** be used when available");
+      // The github-ops delegation fallback sentence is unchanged.
+      expect(copy.body, copy.path).toContain(
+        "If `github-ops` delegation is unavailable in the current runtime",
+      );
+    }
+  });
+
+  // PT-7 / CT-11 — S-002 AC-2; FR-3, D-36; A-13 client-side filter
+  it("find-or-create", () => {
+    for (const copy of trees) {
+      const process = sectionOf(copy, "Process");
+      expect(process, copy.path).toContain(TRACKING_SEARCH);
+      expect(process, copy.path).toContain('--label "level: wave"');
+      expect(process, copy.path).toContain("Wave <id>:");
+      expect(process, copy.path).toContain('startswith("[PRD-<name>]")');
+      expect(process, copy.path).toMatch(/--jq[^\n]*startswith/);
+      // The three outcomes, as text.
+      expect(process, copy.path).toMatch(/one match[^\n]*reuse/i);
+      expect(process, copy.path).toMatch(/zero[^\n]*create/i);
+      expect(process, copy.path).toMatch(/more than one[^\n]*stop[^\n]*list/i);
+      // The search runs before story creation: the find-or-create step comes first.
+      expect(process.indexOf(TRACKING_SEARCH), copy.path).toBeLessThan(
+        process.indexOf("one GitHub Issue per user story"),
+      );
+    }
+  });
+
+  // PT-8 — S-002 AC-2; FR-3
+  it("no epic question", () => {
+    for (const copy of trees) {
+      expect(copy.body, copy.path).not.toContain("parent epic issue or project board association");
+      const questions = sectionOf(copy, "Clarifying Questions");
+      for (const line of questions.split("\n")) {
+        expect(line, `${copy.path}: question still asks for an epic or board`).not.toMatch(
+          /epic|project board/i,
+        );
+      }
+    }
+  });
+
+  // PT-9 / CT-8 — S-002 AC-3; FR-4, D-14
+  it("wave body template", () => {
+    for (const copy of trees) {
+      const fences = copy.body.match(/```[a-z]*\n[\s\S]*?```/g) ?? [];
+      const fence = fences.find((f) => f.includes("Integration branch: TBD"));
+      expect(fence, `${copy.path}: no fenced wave issue body template`).toBeDefined();
+      expect(fence!, copy.path).toMatch(/^Scope:/m);
+      expect(fence!, copy.path).toContain("## Artifacts");
+      expect(fence!, copy.path).toContain("Task plan: pending");
+      expect(fence!, copy.path).toContain("## Stories");
+      // Two root-relative links: the spec and the story set.
+      const links = fence!.match(/\]\(\/workstream\/[^)]+\)/g) ?? [];
+      expect(links.length, `${copy.path}: expected two root-relative links`).toBeGreaterThanOrEqual(
+        2,
+      );
+      // No checkboxes in the wave body; the story template's AC checkboxes
+      // elsewhere in the file are untouched (EC-13).
+      expect(fence!, copy.path).not.toContain("- [ ]");
+    }
+  });
+
+  // PT-10 — S-002 AC-4; FR-3, D-02
+  it("sub-issue attach and verify", () => {
+    for (const copy of trees) {
+      expect(copy.body, copy.path).toContain("/sub_issues");
+      expect(copy.body, copy.path).toContain("sub_issue_id");
+      expect(copy.body, copy.path).toContain("--jq .id");
+      expect(copy.body, copy.path).toContain("hierarchy: verified(<n> of <n>)");
+      expect(copy.body, copy.path).toContain("failed(<reason>)");
+      expect(copy.body, copy.path).toContain("if not already");
+      // Every body goes through a file; git-guard blocks inline `--body`.
+      expect(copy.body, copy.path).not.toContain('--body "');
+      expect(copy.body, copy.path).toContain("--body-file");
+    }
+  });
+
+  // PT-11 — S-002 AC-5; FR-3
+  it("report fields", () => {
+    for (const copy of trees) {
+      const report = sectionOf(copy, "Output Structure");
+      expect(report, copy.path).toMatch(/^- PRD issue:/m);
+      expect(report, copy.path).toMatch(/^- Wave issue:/m);
+      expect(report, copy.path).toMatch(/^- Hierarchy:/m);
+      const final = sectionOf(copy, "Final Instructions");
+      expect(final, copy.path).toContain("hierarchy");
     }
   });
 });
