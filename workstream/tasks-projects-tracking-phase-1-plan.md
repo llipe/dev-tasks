@@ -106,6 +106,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
   - [ ] 6.1 Add a `describe("no Project writes")` block that walks every `.md` under `.claude/`, `.github/` and `.kiro/` recursively and asserts none contains `gh project item-edit` or `gh project item-add`, with a self-check that the matcher catches a fixture string containing the forbidden command; confirm the self-check is red before the matcher exists (D-23)
   - [ ] 6.1a Extend the guard walk to `docs/` as well as the three trees, so the runbook cannot carry the two forbidden verbs either (Design Mode A-11, D-44)
+  - [ ] 6.1b Reword the stage-label retirement rationale bullet in all three github-ops copies so it says the linked pull request shows the state, Project or not, matching FR-7 rather than D-07's older wording (fidelity-report-S-001 DR-1)
   - [ ] 6.2 Add a "Dogfood checks" table to `TESTING.md` with one row per behavioural criterion of wave 1 (PRD AC-1 pending wave 2's publish; PRD AC-3 satisfied by this wave's stories), each row naming the satisfying issue number or `pending`, plus a changelog row (D-39)
   - [ ] 6.2a Add a `## Changelog` section to `TESTING.md` and bump its frontmatter `version:`; the Dogfood row is the first changelog entry (Design Mode A-12)
   - [ ] 6.2b Add a `pending` Dogfood row for FR-24's success path (parent found, wave comment edited), first observable on a main-thread run of a wave 2 story (Design Mode A-16)
