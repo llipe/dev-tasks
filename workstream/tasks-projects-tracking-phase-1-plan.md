@@ -73,17 +73,17 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 3.10 Verify Acceptance Criterion: checklist rules unchanged; lifecycle entry present
   - [x] 3.11 Run Tests: `pnpm run test:unit`, `pnpm run validate`; this story's own issue #272 carries the first real status comment (dogfood for PRD AC-3, D-39)
 
-- [ ] 4.0 Implement Story S-004: Developer agent and command report the status-comment outcomes and define merged as merged to main (#273)
+- [x] 4.0 Implement Story S-004: Developer agent and command report the status-comment outcomes and define merged as merged to main (#273)
 
-  - [ ] 4.1 Add a `describe("developer")` block asserting the two report fields beside `checklist_sync:`, the reworded close rule, and the pointer sentence to implement's procedure, in all three developer agent files; confirm red; confirm `developer-command-collapse.test.ts` still passes before editing
-  - [ ] 4.2 Add `status_comment: written | failed(<reason>) | skipped(<reason>)` and `wave_status: written | skipped(<reason>) | owned-by-planner` to the completion report block in `.claude/agents/developer.md` (D-30)
-  - [ ] 4.3 Reword rule 6 to "You MUST NOT close the issue; GitHub closes it when the consolidated PR merges to main" (D-22)
-  - [ ] 4.4 Replace any restated comment guidance in the pre-coding rules with a pointer to implement's status-comment procedure (D-38)
-  - [ ] 4.5 Apply the same edits to `.github/agents/developer.agent.md` and `.kiro/agents/developer.md`; edit `.claude/commands/developer.md` only if the collapse test demands it
-  - [ ] 4.6 Verify Acceptance Criterion: report fields in all three
-  - [ ] 4.7 Verify Acceptance Criterion: close rule reworded in all three
-  - [ ] 4.8 Verify Acceptance Criterion: pointer, not a copy
-  - [ ] 4.9 Run Tests: `pnpm run test:unit` including `developer-command-collapse.test.ts`, then `pnpm run validate`
+  - [x] 4.1 Add a `describe("developer")` block asserting the two report fields beside `checklist_sync:`, the reworded close rule, and the pointer sentence to implement's procedure, in all three developer agent files; confirm red; confirm `developer-command-collapse.test.ts` still passes before editing
+  - [x] 4.2 Add `status_comment: written | failed(<reason>) | skipped(<reason>)` and `wave_status: written | skipped(<reason>) | owned-by-planner` to the completion report block in `.claude/agents/developer.md` (D-30)
+  - [x] 4.3 Reword rule 6 to "You MUST NOT close the issue; GitHub closes it when the consolidated PR merges to main" (D-22)
+  - [x] 4.4 Replace any restated comment guidance in the pre-coding rules with a pointer to implement's status-comment procedure (D-38)
+  - [x] 4.5 Apply the same edits to `.github/agents/developer.agent.md` and `.kiro/agents/developer.md`; edit `.claude/commands/developer.md` only if the collapse test demands it
+  - [x] 4.6 Verify Acceptance Criterion: report fields in all three
+  - [x] 4.7 Verify Acceptance Criterion: close rule reworded in all three
+  - [x] 4.8 Verify Acceptance Criterion: pointer, not a copy
+  - [x] 4.9 Run Tests: `pnpm run test:unit` including `developer-command-collapse.test.ts`, then `pnpm run validate`
 
 - [ ] 5.0 Implement Story S-005: activity-init recommends a GitHub Project and ships the configuration runbook (#274)
 
