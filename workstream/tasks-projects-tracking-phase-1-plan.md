@@ -87,20 +87,20 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
 - [ ] 5.0 Implement Story S-005: activity-init recommends a GitHub Project and ships the configuration runbook (#274)
 
-  - [ ] 5.1 Add a `describe("activity-init")` block asserting the "Repository Setup — GitHub Project (Recommended)" subsection and the runbook path in all three trees, plus an `it` over the runbook file asserting each required step and the absence of any instruction to change a default automation; confirm red
-  - [ ] 5.1a Bump the activity-init pin in `test/unit/skill-parity-init.test.ts` from 16 `## ` headings to 17, with a comment naming S-005; leave the numbered-step pin at 54, since the subsection has no numbered steps (Design Mode A-1, D-40)
-  - [ ] 5.2 Write `docs/runbooks/runbook-configure-github-project.md` from `templates/runbooks/runbook-template.md`: frontmatter `name`, `trigger`, `owner: product-engineer`, `last_verified`, `related: [docs/requirements/prd-projects-tracking.md]` in inline bracket form; seven sections; steps for `gh auth refresh -s project`, Board template, default Status options and the named default automations kept, auto-add `is:issue`, deleting Priority, Size, Estimate, Start date, Target date, the three views with their filter strings, and verification with `gh project view` and `gh project field-list` (D-10, D-22, D-35)
-  - [ ] 5.2a In the runbook, state that the Auto-close issue automation is off by default and is left alone, and that the exercise must record the exact names shown on the Workflows page, including "Pull request linked to issue" as observed on riel's Project 4 (Design Mode A-5, A-6, D-43)
-  - [ ] 5.3 Add the runbook's row to `docs/runbooks/README.md`; run `pnpm run lint` and confirm no docs-structure finding
-  - [ ] 5.3a Add `runbook-configure-github-project` to `EXPECTED_RUNBOOKS` in `test/unit/runbook-set.test.ts` (Design Mode A-2)
-  - [ ] 5.4 Add the four-sentence subsection with the runbook link to `.claude/skills/activity-init/SKILL.md` after the Branch Protection subsection, then to the `.github/` and `.kiro/` copies
+  - [x] 5.1 Add a `describe("activity-init")` block asserting the "Repository Setup — GitHub Project (Recommended)" subsection and the runbook path in all three trees, plus an `it` over the runbook file asserting each required step and the absence of any instruction to change a default automation; confirm red
+  - [x] 5.1a Bump the activity-init pin in `test/unit/skill-parity-init.test.ts` from 16 `## ` headings to 17, with a comment naming S-005; leave the numbered-step pin at 54, since the subsection has no numbered steps (Design Mode A-1, D-40)
+  - [x] 5.2 Write `docs/runbooks/runbook-configure-github-project.md` from `templates/runbooks/runbook-template.md`: frontmatter `name`, `trigger`, `owner: product-engineer`, `last_verified`, `related: [docs/requirements/prd-projects-tracking.md]` in inline bracket form; seven sections; steps for `gh auth refresh -s project`, Board template, default Status options and the named default automations kept, auto-add `is:issue`, deleting Priority, Size, Estimate, Start date, Target date, the three views with their filter strings, and verification with `gh project view` and `gh project field-list` (D-10, D-22, D-35)
+  - [x] 5.2a In the runbook, state that the Auto-close issue automation is off by default and is left alone, and that the exercise must record the exact names shown on the Workflows page, including "Pull request linked to issue" as observed on riel's Project 4 (Design Mode A-5, A-6, D-43)
+  - [x] 5.3 Add the runbook's row to `docs/runbooks/README.md`; run `pnpm run lint` and confirm no docs-structure finding
+  - [x] 5.3a Add `runbook-configure-github-project` to `EXPECTED_RUNBOOKS` in `test/unit/runbook-set.test.ts` (Design Mode A-2)
+  - [x] 5.4 Add the four-sentence subsection with the runbook link to `.claude/skills/activity-init/SKILL.md` after the Branch Protection subsection, then to the `.github/` and `.kiro/` copies
   - [ ] 5.5 Exercise the runbook once on `llipe/dev-tasks` (stop and ask the user before creating the Project); record the Project number and date in the PR body and set `last_verified` to that date
-  - [ ] 5.6 Verify Acceptance Criterion: subsection in all three trees, at most four sentences, link present
-  - [ ] 5.7 Verify Acceptance Criterion: runbook frontmatter and sections pass the docs-structure check
-  - [ ] 5.8 Verify Acceptance Criterion: every required step present; no default automation changed
-  - [ ] 5.9 Verify Acceptance Criterion: README row present
+  - [x] 5.6 Verify Acceptance Criterion: subsection in all three trees, at most four sentences, link present
+  - [x] 5.7 Verify Acceptance Criterion: runbook frontmatter and sections pass the docs-structure check
+  - [x] 5.8 Verify Acceptance Criterion: every required step present; no default automation changed
+  - [x] 5.9 Verify Acceptance Criterion: README row present
   - [ ] 5.10 Verify Acceptance Criterion: runbook exercised; Project number recorded
-  - [ ] 5.11 Run Tests: `pnpm run lint`, `pnpm run test:unit`, `pnpm run validate`
+  - [x] 5.11 Run Tests: `pnpm run lint`, `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 6.0 Implement Story S-006: Cross-tree guard against Project writes and the dogfood rows in TESTING.md (#275)
 
