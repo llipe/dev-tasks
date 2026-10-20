@@ -1,5 +1,5 @@
 ---
-version: 1.2
+version: 1.3
 name: Ubiquitous Language
 description: Canonical domain vocabulary, organized by bounded context. Append-only; terms are superseded, never deleted.
 status: active
@@ -33,6 +33,7 @@ A ninth term arrives the same way the first eight did — proposed in a PRD's
 
 | Version | Date       | Summary                                                                                                                                                                                                         | Author           |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.3     | 2026-10-20 | PRD projects-tracking approved (`projects-tracking#D-01` to `#D-27`), +tracking issue, +status comment                                                                                                          | product-engineer |
 | 1.2     | 2026-10-19 | PRD factory-board approved (`factory-board#D-01` to `#D-13`), +board, +wave stage, +roadmap drift                                                                                                               | product-engineer |
 | 1.1     | 2026-09-22 | Seeded from Phase 3 specification §8.7 (`shared-understanding#D-69`, closing `#D-45`), +decision log, +grilling, +exit gate, +bounded context, +package map, +runbook, +install-if-absent, +foundation document | product-engineer |
 | 1.0     | 2026-09-21 | Delivered empty, install-if-absent on every profile (`shared-understanding#D-57`, ADR-008)                                                                                                                      | product-engineer |
@@ -130,4 +131,20 @@ AI-assisted development.
 - Forbidden synonyms: roadmap mismatch
 - Invariants: GitHub wins. The board reports the drift and never edits the roadmap; correction stays with `planner` in the consolidated PR and with `product-engineer`.
 - Origin: docs/requirements/prd-factory-board.md FR-10, factory-board#D-09
+- Status: active
+
+### tracking issue
+
+- Definition: A GitHub issue that stands for a PRD or a wave, labeled `level: prd` or `level: wave`, holding its sub-issues and its status comment.
+- Forbidden synonyms: epic, parent issue, umbrella issue
+- Invariants: One per PRD file and one per wave with open stories; created by `activity-publish-github`; exempt from `type:` and `priority:` labels; closed by GitHub when the consolidated PR merges to main, never by an agent.
+- Origin: docs/requirements/prd-projects-tracking.md FR-1, projects-tracking#D-02, projects-tracking#D-05
+- Status: active
+
+### status comment
+
+- Definition: The one marker-identified comment on a story, wave or PRD issue that the owning agent edits in place at defined events to record current state.
+- Forbidden synonyms: progress comment, checkpoint comment, update comment
+- Invariants: Exactly one per issue, found by the marker `<!-- dev-tasks:status -->` and never by a stored id; edited in place, never re-posted; every other comment on the issue stays append-only.
+- Origin: docs/requirements/prd-projects-tracking.md FR-23, projects-tracking#D-25, projects-tracking#D-26
 - Status: active

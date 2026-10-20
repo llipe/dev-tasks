@@ -565,26 +565,27 @@ describe("checkGlossary — filesystem wrapper (UT-G10, UT-G11, CT-6, EC-33)", (
     // exist and asserts the check notices.
     const realGlossary = readFileSync(join(REPO_ROOT, GLOSSARY_PATH), "utf-8");
     const realTech = readFileSync(join(REPO_ROOT, "docs/tech.md"), "utf-8");
-    const realLog = readFileSync(
-      join(REPO_ROOT, "workstream/decisions-shared-understanding.md"),
-      "utf-8",
+    // Every decision log the glossary may cite, so a new feature's log
+    // (each PRD approval adds one) does not break this test.
+    const logs = Object.fromEntries(
+      readdirSync(join(REPO_ROOT, "workstream"))
+        .filter((name) => /^decisions-.*\.md$/.test(name))
+        .map((name) => [
+          `workstream/${name}`,
+          readFileSync(join(REPO_ROOT, "workstream", name), "utf-8"),
+        ]),
     );
-    const boardLog = readFileSync(
-      join(REPO_ROOT, "workstream/decisions-factory-board.md"),
-      "utf-8",
-    );
+    expect(Object.keys(logs)).toContain("workstream/decisions-shared-understanding.md");
     expect(realGlossary).toContain("shared-understanding#D-01");
 
     const baseline = scratch({
       "docs/tech.md": realTech,
-      "workstream/decisions-shared-understanding.md": realLog,
-      "workstream/decisions-factory-board.md": boardLog,
+      ...logs,
       [GLOSSARY_PATH]: realGlossary,
     });
     const control = scratch({
       "docs/tech.md": realTech,
-      "workstream/decisions-shared-understanding.md": realLog,
-      "workstream/decisions-factory-board.md": boardLog,
+      ...logs,
       [GLOSSARY_PATH]: realGlossary.replace("shared-understanding#D-01", "no-such-feature#D-01"),
     });
     try {
