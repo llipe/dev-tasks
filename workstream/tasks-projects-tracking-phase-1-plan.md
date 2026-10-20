@@ -48,7 +48,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 2.4 Add the wave issue body template: scope line, `Integration branch: TBD`, `## Artifacts` with spec and story-set links and `Task plan: pending`, `## Stories` list, no checkboxes (D-14)
   - [x] 2.5 Add the per-story sub-issue attach (`POST .../sub_issues` with the child's numeric id), the wave-under-PRD attach, the `GET .../sub_issues` verification and the `hierarchy: verified(<n> of <n>) | failed(<reason>)` report line; all bodies via `--body-file` (D-02)
   - [x] 2.6 Add `PRD issue`, `Wave issue` and `Hierarchy` lines to the publication report template and a hierarchy sentence to Final Instructions
-  - [ ] 2.7 Apply the same edits to the `.github/` and `.kiro/` copies
+  - [x] 2.7 Apply the same edits to the `.github/` and `.kiro/` copies
   - [ ] 2.8 Verify Acceptance Criterion: `gh` primary and method recorded
   - [ ] 2.9 Verify Acceptance Criterion: epic question gone; find-or-create step with the three outcomes
   - [ ] 2.10 Verify Acceptance Criterion: wave body template as specified
