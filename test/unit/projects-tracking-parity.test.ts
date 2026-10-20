@@ -463,3 +463,95 @@ describe("implement", () => {
     }
   });
 });
+
+// --- developer (S-004, #273) -------------------------------------------------
+
+const DEVELOPER_TREES = {
+  claude: ".claude/agents/developer.md",
+  github: ".github/agents/developer.agent.md",
+  kiro: ".kiro/agents/developer.md",
+};
+
+describe("developer", () => {
+  // The three copies differ in delegation wording (EC-25), so every assertion
+  // is marker-only; no equality across trees. The `/developer` command
+  // inherits through the collapse that `developer-command-collapse.test.ts`
+  // pins (LT-4, S-004 AC-4), so `.claude/commands/developer.md` is not read here.
+  const trees = loadTrees(DEVELOPER_TREES);
+
+  function closeoutPayload(copy: TreeCopy): string {
+    const span = copy.body.match(/BEGIN CLOSEOUT PAYLOAD[\s\S]*?END CLOSEOUT PAYLOAD/)?.[0];
+    expect(span, `${copy.path}: no closeout payload`).toBeDefined();
+    return span!;
+  }
+
+  // PT-19 / CT-7 — S-004 AC-1; FR-23, D-28, D-30. `wave_status` carries four
+  // values: implement already emits `failed(<reason>)` when the wave comment
+  // edit is refused (fidelity-report-S-003 DR-1), so the developer vocabulary
+  // pins `written | failed(<reason>) | skipped(<reason>) | owned-by-planner`.
+  it("report fields", () => {
+    const syncLine = "checklist_sync: synced | mismatch-fixed | blocked";
+    const statusLine = "status_comment: written | failed(<reason>) | skipped(<reason>)";
+    const waveLine =
+      "wave_status: written | failed(<reason>) | skipped(<reason>) | owned-by-planner";
+    for (const copy of trees) {
+      const lines = closeoutPayload(copy).split("\n");
+      const indexOf = (needle: string): number => {
+        const hits = lines.filter((line) => line.includes(needle));
+        expect(hits.length, `${copy.path}: expected exactly one "${needle}"`).toBe(1);
+        return lines.findIndex((line) => line.includes(needle));
+      };
+      const sync = indexOf(syncLine);
+      const status = indexOf(statusLine);
+      const wave = indexOf(waveLine);
+      // Both new lines sit within three lines of `checklist_sync:` (D-30).
+      expect(
+        Math.abs(status - sync),
+        `${copy.path}: status_comment not beside checklist_sync`,
+      ).toBeLessThanOrEqual(3);
+      expect(
+        Math.abs(wave - sync),
+        `${copy.path}: wave_status not beside checklist_sync`,
+      ).toBeLessThanOrEqual(3);
+      // EC-22 / D-28: the no-issue floor is named in the payload rules, and
+      // the planner-run value is named so the subagent never omits the field.
+      expect(copy.body, copy.path).toContain("skipped(no issue)");
+      expect(copy.body, copy.path).toContain("wave_status: owned-by-planner");
+    }
+  });
+
+  // PT-20 — S-004 AC-2; D-22 (FR-13 wording)
+  it("close rule", () => {
+    for (const copy of trees) {
+      const rules = sectionOf(copy, "Non-Negotiable Operating Rules");
+      expect(rules, copy.path).toContain(
+        "You **MUST NOT** close the issue; GitHub closes it when the consolidated PR merges to main",
+      );
+      expect(copy.body, copy.path).not.toContain("close only after the PR is approved and merged");
+    }
+  });
+
+  // PT-21 / CT-2 — S-004 AC-3; D-33, D-38
+  it("pointer not copy", () => {
+    const storyHeader = "| Sub-tasks | Current | Branch | PR | Gates | Blocker | Updated |";
+    for (const copy of trees) {
+      const rules = sectionOf(copy, "Non-Negotiable Operating Rules");
+      const pointer = rules
+        .split("\n")
+        .find((line) => /status comment/i.test(line) && line.includes("implement"));
+      expect(
+        pointer,
+        `${copy.path}: no rule line pointing to implement's status comment procedure`,
+      ).toBeDefined();
+      // The pointer names implement's section, so a reader can find the procedure.
+      expect(pointer!, copy.path).toContain("Status Comment");
+      // Negative: the procedure and the template are never restated here.
+      expect(copy.body, copy.path).not.toContain("gh api -X PATCH");
+      expect(copy.body, copy.path).not.toContain("issues/comments/{id}");
+      expect(copy.body, copy.path).not.toContain("--body-file");
+      expect(squashSpaces(copy.body), copy.path).not.toContain(storyHeader);
+      // A-10: "progress comment" is a forbidden synonym of "status comment".
+      expect(copy.body, copy.path).not.toMatch(/progress comments?/i);
+    }
+  });
+});
