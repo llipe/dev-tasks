@@ -24,20 +24,20 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
 ## Tasks
 
-- [ ] 1.0 Implement Story S-001: github-ops conventions for tracking issues, level labels and the status comment (#270)
+- [x] 1.0 Implement Story S-001: github-ops conventions for tracking issues, level labels and the status comment (#270)
 
-  - [ ] 1.1 Create `test/unit/projects-tracking-parity.test.ts` with `stripFrontmatter()` and `splitIntoSections()` helpers copied from the existing parity tests, and a `describe("github-ops")` block asserting the two title rows, the three `level:` labels, the exemption sentence, the absence of a `status: ready` row in the Tags table, the Status comment subsection marker and the `gh` primary sentence in all three trees; run `pnpm run test:unit` and confirm red (D-34)
-  - [ ] 1.2 Add the `PRD tracking issue` and `Wave tracking issue` rows to the Title Format table in `.claude/agents/github-ops.md`, with the sentence that `<id>` is the roadmap's Phase/Wave cell (D-04, D-32)
-  - [ ] 1.3 Add the Level category with `level: prd`, `level: wave`, `level: story` in one color family; remove the `status: ready` and `status: in-progress` rows; add `status: deferred`; extend the type/priority rule with the `level: prd` / `level: wave` exemption (D-03, D-05, D-07, D-31)
-  - [ ] 1.4 Add the **Status comment** subsection under Issue Comments: marker line, `🔄 Update:` line with `Refs #<issue>`, the story, wave and PRD tables, and the one-per-issue, find-by-marker, PATCH-in-place, append-only-otherwise procedure (D-12, D-25, D-26, D-33, D-37)
-  - [ ] 1.4a Replace the phrase "progress comment" wherever github-ops uses it (for example "Long-form progress comments") with "status comment" or neutral wording; the glossary forbids it as a synonym (Design Mode A-10)
-  - [ ] 1.5 Apply the same edits to `.github/agents/github-ops.agent.md` and `.kiro/agents/github-ops.md`, and replace their "GitHub MCP SHOULD be used" sentence with the `.claude/` wording "`gh` CLI is the primary execution path" (D-16)
-  - [ ] 1.5a In the `.github/` and `.kiro/` github-ops copies, align every passage that makes MCP primary (the Identity sentence, the fallback heading, the table intro, the Multi-Line Body items, rule 8) to `gh` primary with MCP optional, so the file does not contradict itself; keep what `git-guard-mcp.test.ts` and `infra-engineer-parity.test.ts` require (Design Mode A-3, D-41)
-  - [ ] 1.6 Verify Acceptance Criterion: title rows present in all three trees with the `<id>` sentence
-  - [ ] 1.7 Verify Acceptance Criterion: Level labels, exemption sentence, no stage-label rows, `status: deferred` present
-  - [ ] 1.8 Verify Acceptance Criterion: Status comment subsection with marker, prefix line, three tables and procedure
-  - [ ] 1.9 Verify Acceptance Criterion: `gh` primary sentence identical in all three trees
-  - [ ] 1.10 Run Tests: `pnpm run test:unit` green, then `pnpm run validate`; map AC-1 to AC-5 to the `it` names in the PR body
+  - [x] 1.1 Create `test/unit/projects-tracking-parity.test.ts` with `stripFrontmatter()` and `splitIntoSections()` helpers copied from the existing parity tests, and a `describe("github-ops")` block asserting the two title rows, the three `level:` labels, the exemption sentence, the absence of a `status: ready` row in the Tags table, the Status comment subsection marker and the `gh` primary sentence in all three trees; run `pnpm run test:unit` and confirm red (D-34)
+  - [x] 1.2 Add the `PRD tracking issue` and `Wave tracking issue` rows to the Title Format table in `.claude/agents/github-ops.md`, with the sentence that `<id>` is the roadmap's Phase/Wave cell (D-04, D-32)
+  - [x] 1.3 Add the Level category with `level: prd`, `level: wave`, `level: story` in one color family; remove the `status: ready` and `status: in-progress` rows; add `status: deferred`; extend the type/priority rule with the `level: prd` / `level: wave` exemption (D-03, D-05, D-07, D-31)
+  - [x] 1.4 Add the **Status comment** subsection under Issue Comments: marker line, `🔄 Update:` line with `Refs #<issue>`, the story, wave and PRD tables, and the one-per-issue, find-by-marker, PATCH-in-place, append-only-otherwise procedure (D-12, D-25, D-26, D-33, D-37)
+  - [x] 1.4a Replace the phrase "progress comment" wherever github-ops uses it (for example "Long-form progress comments") with "status comment" or neutral wording; the glossary forbids it as a synonym (Design Mode A-10)
+  - [x] 1.5 Apply the same edits to `.github/agents/github-ops.agent.md` and `.kiro/agents/github-ops.md`, and replace their "GitHub MCP SHOULD be used" sentence with the `.claude/` wording "`gh` CLI is the primary execution path" (D-16)
+  - [x] 1.5a In the `.github/` and `.kiro/` github-ops copies, align every passage that makes MCP primary (the Identity sentence, the fallback heading, the table intro, the Multi-Line Body items, rule 8) to `gh` primary with MCP optional, so the file does not contradict itself; keep what `git-guard-mcp.test.ts` and `infra-engineer-parity.test.ts` require (Design Mode A-3, D-41)
+  - [x] 1.6 Verify Acceptance Criterion: title rows present in all three trees with the `<id>` sentence
+  - [x] 1.7 Verify Acceptance Criterion: Level labels, exemption sentence, no stage-label rows, `status: deferred` present
+  - [x] 1.8 Verify Acceptance Criterion: Status comment subsection with marker, prefix line, three tables and procedure
+  - [x] 1.9 Verify Acceptance Criterion: `gh` primary sentence identical in all three trees
+  - [x] 1.10 Run Tests: `pnpm run test:unit` green, then `pnpm run validate`; map AC-1 to AC-5 to the `it` names in the PR body
 
 - [ ] 2.0 Implement Story S-002: Publish creates the tracking-issue hierarchy and reuses it on later waves (#271)
 
