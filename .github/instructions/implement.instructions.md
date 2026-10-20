@@ -118,10 +118,25 @@ When `workstream/decisions-<feature>.md` exists and was read per step 2 above:
 - If drift is detected between local and GitHub, you **MUST** reconcile immediately and report the reconciliation.
 - If schema/data-model changes are in scope, migration artifacts **MUST** be tracked in the task list unless an explicit opt-out rationale is documented.
 
-### Progress Updates
+### Status Comment
 
-- You **SHOULD** add brief issue or PR comments for major milestones or meaningful changes.
-- You **SHOULD** route issue/PR comment updates through `github-ops` whenever possible.
+- You **MUST** keep the story's status comment current per `github-ops` § Status comment: create it at the first sub-task completion, edit it in place at every later sub-task completion, at PR open, at each gate recorded, and on block. The template (marker, prefix line, story table) lives in `github-ops` and is never restated here.
+- You **SHOULD** route the status-comment write through `github-ops` whenever possible; when delegation is unavailable, run the commands below directly.
+- Procedure, for story issue `{n}` of `repos/{o}/{r}`:
+  1. Find the comment by its marker: `gh api repos/{o}/{r}/issues/{n}/comments --paginate --jq '.[] | select(.body | startswith("<!-- dev-tasks:status -->")) | .id'`.
+  2. Absent → create it: `gh issue comment {n} --body-file <path>`.
+  3. Present → edit it in place: `gh api -X PATCH repos/{o}/{r}/issues/comments/{id} -F body=@<path>`.
+  4. Two or more comments carry the marker → edit the oldest (lowest id), never post another, and report `status_comment: failed(duplicate marker)` so a human removes the extra one.
+  5. The marker is the first byte of the body file — no leading blank line, whitespace or BOM — because the `startswith` match on line one is how the comment is found; a marker on line two means a second comment gets posted. The body always goes through a file, never inline.
+- Each write is reported as `status_comment: written | failed(<reason>) | skipped(no issue)`. A task list with no GitHub Issue skips the comment and reports `skipped(no issue)`; a refused write (permissions, locked issue) reports `failed(<reason>)`. A failed write never blocks the sub-task — it is reported, never dropped silently.
+
+### Wave Status Update (Main Thread Only)
+
+- Under the `planner`, the wave's status comment belongs to the planner: report `wave_status: owned-by-planner` and do nothing further.
+- In the main thread with no planner (the interactive `/developer` command), after PR open and at PR ready you **MUST** look up the story's parent: `gh api repos/{o}/{r}/issues/{n}/parent`.
+  - `200` → edit this story's row (state, PR, sub-task count) in the wave issue's status comment, found and edited by the same marker procedure above, and report `wave_status: written`. If the wave issue has no status comment yet, create it from the wave table in `github-ops` § Status comment and report `wave_status: written`.
+  - `404` → the story has no parent (published before the hierarchy convention); report `wave_status: skipped(no parent)`. This is expected, not an error.
+  - A refused read or write → `wave_status: failed(<reason>)`; it never blocks the sub-task.
 
 ---
 
@@ -163,7 +178,7 @@ When `workstream/decisions-<feature>.md` exists and was read per step 2 above:
 | Phase              | Rule                                                                                                                                                                                                                                                                                               |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Before coding**  | Confirm issue open → Create branch (`github-ops`) → First commit → Open draft PR (`github-ops`) → Sync checklists                                                                                                                                                                                  |
-| **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Wait for approval                                                                                                                                                                                                                           |
+| **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Update the status comment (`github-ops` § Status comment) → Wait for approval                                                                                                                                                               |
 | **Before closing** | All ACs verified → Quality gates pass (test/lint/format/typecheck/audit) → migration confirmation/apply/verify (when applicable) → docs drift check clear → coverage_gate recorded → verifier audit run + summary posted (non-blocking on drift) → PR ready → Approved → Merged → Then close issue |
 
 ---
@@ -177,7 +192,7 @@ When `workstream/decisions-<feature>.md` exists and was read per step 2 above:
 ## Final Instructions
 
 1. You **MUST** always respect the task list execution order.
-2. You **MUST** keep the GitHub Issue updated with checklist and progress comments.
+2. You **MUST** keep the GitHub Issue updated with its checklist and its status comment.
 3. You **MUST** ensure branch, PR, and issue naming follow `github-ops` conventions.
 4. You **MUST** stop after each sub-task and request user approval.
 5. You **MUST NOT** close a GitHub Issue without confirming the PR has been reviewed, approved, and merged.
