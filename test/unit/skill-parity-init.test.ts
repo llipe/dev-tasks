@@ -140,9 +140,12 @@ describe("activity-init skill parity", () => {
     // a confirmation step. These two counts are the pin: a new
     // numbered step or a new section moves one of them, and the reason
     // the sentence was chosen over a step disappears quietly otherwise.
+    // S-005 (#274, projects-tracking D-40) added the `## Repository Setup
+    // — GitHub Project (Recommended)` sibling: 16 headings became 17. It
+    // carries no numbered step, so the step count stays at 54.
     for (const content of [kiroContent, githubContent, claudeContent]) {
       expect(content.match(/^[0-9]+\. /gm) ?? []).toHaveLength(54);
-      expect(content.match(/^## /gm) ?? []).toHaveLength(16);
+      expect(content.match(/^## /gm) ?? []).toHaveLength(17);
     }
   });
 
