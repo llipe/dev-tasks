@@ -115,13 +115,13 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 6.1h Correct `docs/runbooks/runbook-configure-github-project.md` from the Project 5 exercise (D-45, D-46, D-47): Auto-close issue ships enabled and is left as shipped (it fires only on a human Status change); either the Board template (Todo, In Progress, Done) or the Team planning template (Backlog, Ready, In progress, In review, Done) is accepted, both Status sets named, field cleanup kept for the Team planning extras; "Item reopened" dropped and the seven shipped workflows listed (Auto-add to project, Auto-add sub-issues to project, Auto-close issue, Item added to project, Item closed, Pull request linked to issue, Pull request merged); `last_verified: 2026-10-21`; one Verification line recording Project 5, 2026-10-21, seven workflows enabled. Change the PT-25 assertions first (red), then the runbook
   - [x] 6.1i Tick 5.5 and 5.10 in this plan and on issue #274's checklist, and tick AC-5 on #274, citing Project 5 (https://github.com/users/llipe/projects/5)
   - [x] 6.1j In the three activity-init copies' four-sentence subsection, correct any mention of the Board template or "Item reopened" the same way; no change if neither is named
-  - [ ] 6.2 Add a "Dogfood checks" table to `TESTING.md` with one row per behavioural criterion of wave 1 (PRD AC-1 pending wave 2's publish; PRD AC-3 satisfied by this wave's stories), each row naming the satisfying issue number or `pending`, plus a changelog row (D-39)
-  - [ ] 6.2a Add a `## Changelog` section to `TESTING.md` and bump its frontmatter `version:`; the Dogfood row is the first changelog entry (Design Mode A-12)
-  - [ ] 6.2b Add a `pending` Dogfood row for FR-24's success path (parent found, wave comment edited), first observable on a main-thread run of a wave 2 story (Design Mode A-16)
-  - [ ] 6.3 Fill the AC-3 rows for S-003 to S-005 with their issue numbers once each story's status comment has been observed; mark the S-001 and S-002 rows `n/a (pre-rule)`, since they ran before S-003's rule existed (Design Mode A-7, D-42)
-  - [ ] 6.4 Verify Acceptance Criterion: guard passes on all three trees and fails on the fixture string
-  - [ ] 6.5 Verify Acceptance Criterion: Dogfood checks table and changelog row present
-  - [ ] 6.6 Verify Acceptance Criterion: S-001 to S-005 rows filled
+  - [x] 6.2 Add a "Dogfood checks" table to `TESTING.md` with one row per behavioural criterion of wave 1 (PRD AC-1 pending wave 2's publish; PRD AC-3 satisfied by this wave's stories), each row naming the satisfying issue number or `pending`, plus a changelog row (D-39)
+  - [x] 6.2a Add a `## Changelog` section to `TESTING.md` and bump its frontmatter `version:`; the Dogfood row is the first changelog entry (Design Mode A-12)
+  - [x] 6.2b Add a `pending` Dogfood row for FR-24's success path (parent found, wave comment edited), first observable on a main-thread run of a wave 2 story (Design Mode A-16)
+  - [x] 6.3 Fill the AC-3 rows for S-003 to S-005 with their issue numbers once each story's status comment has been observed; mark the S-001 and S-002 rows `n/a (pre-rule)`, since they ran before S-003's rule existed (Design Mode A-7, D-42)
+  - [x] 6.4 Verify Acceptance Criterion: guard passes on all three trees and fails on the fixture string
+  - [x] 6.5 Verify Acceptance Criterion: Dogfood checks table and changelog row present
+  - [x] 6.6 Verify Acceptance Criterion: S-001 to S-005 rows filled
   - [ ] 6.7 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 ## Decisions Consumed

@@ -906,3 +906,46 @@ describe("no Project writes", () => {
     }
   });
 });
+
+// --- TESTING.md dogfood table (S-006, #275) ----------------------------------
+
+describe("TESTING.md", () => {
+  // PT-30 / CT-12 — S-006 AC-2, AC-3; D-39, D-42; A-12, A-16. Behavioural
+  // criteria are verified by dogfood and recorded here with the satisfying
+  // issue number, `n/a (pre-rule)` for the two stories that ran before
+  // S-003's rule existed, or `pending` until the event happens.
+  it("dogfood table", () => {
+    const content = readFileSync(resolve(ROOT, "TESTING.md"), "utf-8");
+    expect(content).toMatch(/^version: 1\.1$/m);
+    const sections = splitIntoSections(stripFrontmatter(content));
+    const dogfood = sections.find((s) => /Dogfood checks/.test(s.heading));
+    expect(dogfood, "TESTING.md: no Dogfood checks section").toBeDefined();
+    const rows = dogfood!.text.split("\n").filter((line) => line.startsWith("|"));
+    expect(squashSpaces(rows[0] ?? "")).toMatch(/^\| Criterion \|.* Issue \|.* Status \|$/);
+    const table = rows.join("\n");
+    expect(table).toMatch(/^\|[^\n]*PRD AC-1[^\n]*pending/m);
+    for (const [story, evidence] of [
+      ["S-001", "#270"],
+      ["S-002", "#271"],
+      ["S-003", "#272"],
+      ["S-004", "#273"],
+      ["S-005", "#274"],
+      ["S-006", "#275"],
+    ]) {
+      const row = rows.find((line) => line.includes("PRD AC-3") && line.includes(story));
+      expect(row, `TESTING.md: no PRD AC-3 row for ${story}`).toBeDefined();
+      expect(row!, story).toContain(evidence);
+      if (story === "S-001" || story === "S-002") {
+        expect(row!, story).toContain("n/a (pre-rule)");
+      } else {
+        expect(row!, story).toMatch(/observed/);
+      }
+    }
+    expect(table).toMatch(/^\|[^\n]*FR-24[^\n]*pending/m);
+    expect(table).toMatch(/^\|[^\n]*D-36[^\n]*pending/m);
+    expect(table).toMatch(/^\|[^\n]*DF-4[^\n]*Project 5[^\n]*D-48/m);
+    const changelog = sections.find((s) => s.heading === "Changelog");
+    expect(changelog, "TESTING.md: no Changelog section").toBeDefined();
+    expect(changelog!.text).toMatch(/^\| 1\.1 +\| \d{4}-\d{2}-\d{2} +\|[^\n]*Dogfood/m);
+  });
+});
