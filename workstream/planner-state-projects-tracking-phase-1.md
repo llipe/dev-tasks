@@ -7,7 +7,7 @@
 - Repository: llipe/dev-tasks
 - Roadmap row: projects-tracking, wave 1
 - Started: 2026-10-20T21:15:00Z
-- Last updated: 2026-10-21T02:05:00Z
+- Last updated: 2026-10-21T02:25:00Z
 
 ## Story Status
 
@@ -36,3 +36,4 @@
 - S-004 merged bf3b0b2. Gates: validate PASS on integration; qa coverage_gate SKIPPED(markdown and test only); verifier High, 3 Minor (fidelity-report-S-004). Dogfood observed on #273. memo_intent written(0797e56e…), memo_outcome written(483cc696…). Routing: DR-1 four-value `wave_status` write-back to spec, story and test-plan changelogs at consolidation; DR-3 (say procedure, not skill, in the Copilot and Kiro developer copies) to S-006 as 6.1g; DR-2 is wave 2 S-010.
 - S-005 merged 3a439f4 by the owner. Gates: validate PASS on integration; qa coverage_gate SKIPPED(nothing in measured scope); verifier High with 1 Major Undetermined (DR-1: shipped state of default workflows, resolved only by the 5.5 exercise) and 4 Minor; DR-2 and DR-5 fixed on the branch before merge (bc1a0fc). memo_intent written(b1fd5b22…), memo_outcome written(58f0079c…). OPEN ITEM: sub-task 5.5 (exercise the runbook, create this repository's Project) awaits the owner; must close before the consolidated PR: record Project number, workflow names and states, set the runbook's last_verified, tick 5.5 and 5.10 and AC-5.
 - S-006 merged 72d05f6. Gates: validate PASS on integration; qa coverage_gate PASS; verifier High, 1 Major (closed on the head by 034dc7f) and 8 Minor (fidelity-report-S-006). 5.5 closed by Project 5 (D-45 to D-48). memo_intent written(b4b2d940…), memo_outcome written(1de44911…). Follow-ups to open as issues: guard scans only .md and not templates/ (qa S-006 gaps 1 and 2); memo `--on-duplicate consolidate` guidance; github-ops inline `--body` example (Design Mode A-14). Phase 5 started.
+- Phase 5: integration validate PASS (71 files, 2334 tests); qa PRD-level coverage_gate PASS; verifier rollup High, 1 Major (R-1, closed by D-50 at 3542c4d) and 7 Minor (fidelity-report-projects-tracking-phase-1-rollup); technical-writer docs_drift_status clean (40adc9b). Roadmap row rewritten from `gh issue list --search "[PRD-projects-tracking] in:title" --state open` (#270–#275) and `gh pr list --base integration/projects-tracking-phase-1 --state merged` (#276–#281). memo_run_outcome: written(30bca32a-aa2d-4910-b0e3-d91627ae3544).
