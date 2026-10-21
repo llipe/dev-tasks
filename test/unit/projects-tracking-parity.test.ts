@@ -32,10 +32,18 @@ function stripFrontmatter(content: string): string {
  * ``` fence are never headings: fenced templates (the wave issue body, the
  * status comment) carry `##` lines that belong to the enclosing section.
  */
-function splitIntoSections(body: string): Array<{ heading: string; text: string }> {
+interface Section {
+  heading: string;
+  /** Number of `#` on the heading line; 0 for the preamble before the first heading. */
+  level: number;
+  text: string;
+}
+
+function splitIntoSections(body: string): Section[] {
   const lines = body.split("\n");
-  const sections: Array<{ heading: string; text: string }> = [];
+  const sections: Section[] = [];
   let currentHeading = "";
+  let currentLevel = 0;
   let currentLines: string[] = [];
   let inFence = false;
   for (const line of lines) {
@@ -44,16 +52,21 @@ function splitIntoSections(body: string): Array<{ heading: string; text: string 
       currentLines.push(line);
       continue;
     }
-    const headingMatch = inFence ? null : line.match(/^#{1,6}\s+(.*)$/);
+    const headingMatch = inFence ? null : line.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {
-      sections.push({ heading: currentHeading, text: currentLines.join("\n") });
-      currentHeading = headingMatch[1];
+      sections.push({
+        heading: currentHeading,
+        level: currentLevel,
+        text: currentLines.join("\n"),
+      });
+      currentLevel = headingMatch[1].length;
+      currentHeading = headingMatch[2];
       currentLines = [];
     } else {
       currentLines.push(line);
     }
   }
-  sections.push({ heading: currentHeading, text: currentLines.join("\n") });
+  sections.push({ heading: currentHeading, level: currentLevel, text: currentLines.join("\n") });
   return sections;
 }
 
@@ -61,7 +74,7 @@ interface TreeCopy {
   tree: string;
   path: string;
   body: string;
-  sections: Array<{ heading: string; text: string }>;
+  sections: Section[];
 }
 
 function loadTrees(paths: Record<string, string>): TreeCopy[] {
@@ -72,16 +85,32 @@ function loadTrees(paths: Record<string, string>): TreeCopy[] {
 }
 
 /**
+ * The text of section `at` plus every following section of a deeper level,
+ * up to the next heading of equal or higher level; child heading lines are
+ * kept so a span reads like the source.
+ */
+function collectSection(sections: Section[], at: number): string {
+  const parts = [sections[at].text];
+  for (let i = at + 1; i < sections.length && sections[i].level > sections[at].level; i++) {
+    parts.push(`${"#".repeat(sections[i].level)} ${sections[i].heading}`, sections[i].text);
+  }
+  return parts.join("\n");
+}
+
+/**
  * Select one section by heading text and, optionally, by a substring of its
- * body — github-ops has two `### Title Format` sections (issues and PRs), so
- * the issue table is the one whose text contains `PRD story` (A-15).
+ * collected body — github-ops has two `### Title Format` sections (issues and
+ * PRs), so the issue table is the one whose text contains `PRD story` (A-15).
+ * Level-aware: a `##` section includes its `###` children (qa S-003 gate).
  */
 function sectionOf(copy: TreeCopy, heading: string, containing?: string): string {
-  const match = copy.sections.find(
-    (s) => s.heading.includes(heading) && (containing === undefined || s.text.includes(containing)),
-  );
+  const candidates = copy.sections
+    .map((section, index) => ({ section, index }))
+    .filter(({ section }) => section.heading.includes(heading))
+    .map(({ index }) => collectSection(copy.sections, index));
+  const match = candidates.find((text) => containing === undefined || text.includes(containing));
   expect(match, `${copy.path}: no section with heading containing "${heading}"`).toBeDefined();
-  return match!.text;
+  return match!;
 }
 
 /**
@@ -115,6 +144,40 @@ describe("helpers", () => {
     const process = sections.find((s) => s.heading === "Process")!;
     expect(process.text).toContain("## Artifacts");
     expect(process.text).toContain("step two");
+  });
+
+  // qa-engineer S-003 gate (6.1f): `sectionOf` is level-aware — a `##` section
+  // includes its `###` children up to the next heading of equal or higher
+  // level, so an assertion scoped to `## During Implementation` sees the text
+  // under `### Status Comment` without a span workaround.
+  it("sectionOf collects child headings of a deeper level", () => {
+    const body = [
+      "## During",
+      "intro",
+      "### Child",
+      "child text",
+      "#### Grandchild",
+      "grandchild text",
+      "## Before",
+      "after",
+    ].join("\n");
+    const copy: TreeCopy = {
+      tree: "fixture",
+      path: "fixture.md",
+      body,
+      sections: splitIntoSections(body),
+    };
+    const during = sectionOf(copy, "During");
+    expect(during).toContain("intro");
+    expect(during).toContain("child text");
+    expect(during).toContain("grandchild text");
+    expect(during).not.toContain("after");
+    // A `###` lookup stops at the next `###` or `##`, and includes its own `####`.
+    const child = sectionOf(copy, "Child");
+    expect(child).toContain("child text");
+    expect(child).toContain("grandchild text");
+    expect(child).not.toContain("intro");
+    expect(child).not.toContain("after");
   });
 });
 
@@ -179,6 +242,16 @@ describe("github-ops", () => {
       expect(section, copy.path).toMatch(/^\|.*`status: needs-refinement`/m);
       // Wave 1 retires the rows from the taxonomy only; existing issues are untouched (D-31).
       expect(copy.body, copy.path).not.toMatch(/remove .*status: ready/i);
+      // 6.1b / fidelity-report-S-001 DR-1: the retirement reason follows FR-7
+      // ("everywhere, Project or not": the linked PR shows the state natively),
+      // not D-07's older wording that tied it to the Project's Status field.
+      const retirement = copy.body
+        .split("\n")
+        .find((line) => line.includes("are retired from this taxonomy"));
+      expect(retirement, `${copy.path}: no retirement rationale bullet`).toBeDefined();
+      expect(retirement!, copy.path).toContain("Project or not");
+      expect(retirement!, copy.path).toMatch(/linked pull request/);
+      expect(retirement!, copy.path).not.toContain("Project's Status field carries that state");
     }
   });
 
@@ -210,6 +283,24 @@ describe("github-ops", () => {
         expect(fence, copy.path).toMatch(
           /^```text\n<!-- dev-tasks:status -->\n🔄 Update:[^\n]*Refs #<issue>/,
         );
+      }
+      // 6.1e / fidelity-report-S-003 DR-3: FR-23 names `coverage_gate` and the
+      // verifier verdict among the gates recorded, so the story template's
+      // Gates cell carries both beside the five quality gates.
+      const storyFence = fences.find((f) => f.includes("| Sub-tasks"));
+      expect(storyFence, `${copy.path}: no fenced story status template`).toBeDefined();
+      const gatesCell = storyFence!.split("\n").find((line) => line.includes("<done> of <total>"));
+      expect(gatesCell, `${copy.path}: no story row in the template`).toBeDefined();
+      for (const gate of [
+        "test",
+        "lint",
+        "format",
+        "typecheck",
+        "audit",
+        "coverage_gate",
+        "fidelity",
+      ]) {
+        expect(gatesCell!, `${copy.path}: Gates cell lacks ${gate}`).toContain(gate);
       }
       // A-10: "progress comment" is a forbidden synonym of "status comment".
       expect(copy.body, copy.path).not.toMatch(/progress comments?/i);
@@ -317,6 +408,39 @@ describe("activity-publish-github", () => {
     }
   });
 
+  // 6.1c / fidelity-report-S-002 DR-2 (qa S-002 gap): the PRD tracking issue
+  // has a body template so three zero-match publishes produce one shape, and
+  // every story issue is labeled `level: story` (D-03).
+  it("prd body template", () => {
+    for (const copy of trees) {
+      const fences = copy.body.match(/```[a-z]*\n[\s\S]*?```/g) ?? [];
+      const fence = fences.find((f) => f.includes("## Waves"));
+      expect(fence, `${copy.path}: no fenced PRD issue body template`).toBeDefined();
+      expect(fence!, copy.path).toMatch(/^```markdown\n# <PRD title>/);
+      expect(fence!, copy.path).toContain("](/docs/requirements/prd-<prd-name>.md)");
+      expect(fence!, copy.path).toContain("](/docs/roadmap.md)");
+      expect(fence!, copy.path).toMatch(/^- Wave <id>:/m);
+      expect(fence!, copy.path).not.toContain("- [ ]");
+      const process = sectionOf(copy, "Process");
+      expect(process, copy.path).toMatch(/PRD issue body[^\n]*template/);
+      expect(process, copy.path).toContain("labeled `level: story`");
+    }
+  });
+
+  // 6.1d / fidelity-report-S-002 DR-4: the story-issue title form is referenced
+  // from github-ops § Title Format, never restated (D-33), so no reader takes
+  // `<prd-number or name>` for a third convention.
+  it("story title pointer", () => {
+    for (const copy of trees) {
+      const stories = sectionOf(copy, "Story issues");
+      const title = stories.split("\n").find((line) => line.startsWith("- **Title:**"));
+      expect(title, `${copy.path}: no Title bullet under Story issues`).toBeDefined();
+      expect(title!, copy.path).toContain("github-ops § Title Format");
+      expect(copy.body, copy.path).not.toContain("[PRD-<prd-number or name>]");
+      expect(copy.body, copy.path).not.toContain("Story [ID]: [Title]");
+    }
+  });
+
   // PT-10 — S-002 AC-4; FR-3, D-02
   it("sub-issue attach and verify", () => {
     for (const copy of trees) {
@@ -360,18 +484,10 @@ describe("implement", () => {
   // contains every edit below (A-15, EC-19).
   const trees = loadTrees(IMPLEMENT_TREES);
 
-  // `## During Implementation` is split at its `###` subsections, so the
-  // assertions are scoped to the span up to `## Before Closing` instead.
-  function duringImplementation(copy: TreeCopy): string {
-    const span = copy.body.match(/## During Implementation[\s\S]*?## Before Closing/)?.[0];
-    expect(span, `${copy.path}: no During Implementation span`).toBeDefined();
-    return span!;
-  }
-
   // PT-12 — S-003 AC-1; FR-23, D-25, D-38
   it("mandatory rule", () => {
     for (const copy of trees) {
-      const section = duringImplementation(copy);
+      const section = sectionOf(copy, "During Implementation");
       expect(section, copy.path).toMatch(/\*\*MUST\*\* keep the story's status comment current/);
       expect(section, copy.path).toContain("Status comment");
       for (const event of [
@@ -400,7 +516,7 @@ describe("implement", () => {
   // PT-14 / CT-1 / CT-7 — S-003 AC-2; D-26, D-28, D-37; A-8 duplicate case (EC-15)
   it("procedure and report field", () => {
     for (const copy of trees) {
-      const section = duringImplementation(copy);
+      const section = sectionOf(copy, "During Implementation");
       expect(section, copy.path).toContain("issues/{n}/comments --paginate");
       expect(section, copy.path).toContain('startswith("<!-- dev-tasks:status -->")');
       expect(section, copy.path).toContain("gh issue comment");
@@ -422,7 +538,7 @@ describe("implement", () => {
   // PT-15 / CT-7 — S-003 AC-3; FR-24, D-29; A-8 missing-comment case (EC-18)
   it("main-thread wave update", () => {
     for (const copy of trees) {
-      const section = duringImplementation(copy);
+      const section = sectionOf(copy, "During Implementation");
       expect(section, copy.path).toContain("issues/{n}/parent");
       expect(section, copy.path).toContain("PR open");
       expect(section, copy.path).toContain("PR ready");
@@ -430,15 +546,15 @@ describe("implement", () => {
       expect(section, copy.path).toContain("wave_status: skipped(no parent)");
       expect(section, copy.path).toContain("wave_status: owned-by-planner");
       expect(section, copy.path).toContain("wave_status: written");
-      // Parent found but the wave has no status comment yet: create it (A-8).
-      expect(section, copy.path).toMatch(/no status comment[^\n]*create/i);
+      // Parent found but the wave has no status comment yet: create it (A-8, EC-18).
+      expect(section, copy.path).toContain("create it from the wave table");
     }
   });
 
   // PT-16 — S-003 AC-4; FR-23
   it("checklist rules unchanged", () => {
     for (const copy of trees) {
-      const section = duringImplementation(copy);
+      const section = sectionOf(copy, "During Implementation");
       expect(section, copy.path).toContain("Mark it `[x]` in the GitHub Issue checklist.");
       expect(section, copy.path).toContain(
         "keep the local task list and the GitHub Issue checklist aligned at all times",

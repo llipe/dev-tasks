@@ -26,7 +26,7 @@ This activity assumes the following documents exist:
    - Wave: `gh issue list --label "level: wave" --search "[PRD-<name>] Wave <id>: in:title" --state open --json number,title --jq 'map(select(.title | startswith("[PRD-<name>] Wave <id>:")))'`
    - The `--jq` filter is applied client-side before counting, because GitHub's `in:title` search tokenises brackets and hyphens leniently and can return siblings such as `[PRD-<name>-v2]`.
    - Exactly one match: reuse that issue number. Zero matches: create the issue with `gh issue create --title ... --label "level: prd" --body-file <path>` (or `level: wave`); tracking issues carry their `level:` label only, never `type:` or `priority:`. More than one match: stop, list the matching issue numbers, and ask the user which one to keep; never pick one silently.
-   - The PRD issue body links the PRD and the roadmap; the wave issue body follows the template under Issue Formatting Rules.
+   - The PRD issue body follows the PRD tracking issue template and the wave issue body the wave tracking issue template, both under Issue Formatting Rules.
 4. **Map Stories to Issues:** You **MUST** create one GitHub Issue per user story, labeled `level: story` plus its `type:` and `priority:` labels.
 5. **Publish to GitHub:** You **MUST** delegate issue creation and metadata application to `github-ops` whenever possible. After each story issue is created, you **MUST** attach it as a sub-issue of the wave issue (see Sub-issue Hierarchy).
 6. **Attach and Verify the Hierarchy:** After all stories are created, attach the wave under the PRD issue if not already attached, read both `sub_issues` lists back, and record the `hierarchy:` result in the publication report.
@@ -59,7 +59,7 @@ The tracking-issue hierarchy is not optional, so no question asks for it.
 
 Each story GitHub Issue **MUST** be created using:
 
-- **Title:** `[PRD-<prd-number or name>] Story [ID]: [Title]`
+- **Title:** the `PRD story` row of github-ops § Title Format
 - **Body:**
   - User Story (role, goal, benefit)
   - Context
@@ -76,6 +76,21 @@ Each story GitHub Issue **MUST** be created using:
   - Open Questions
 
 For JS/TS projects, command examples in issues **MUST** prefer `pnpm` and canonical scripts (`pnpm run <script>`).
+
+### PRD tracking issue body
+
+The PRD issue body is the entry point to the whole PRD: its title line, a link to the PRD file and to its `docs/roadmap.md` row, and the list of waves. It carries no checkboxes, because progress lives in the issue's status comment (github-ops § Status comment) and in the sub-issue progress GitHub derives from the hierarchy. Each wave line is added, or its issue number filled in, by the publish run that creates that wave's tracking issue.
+
+```markdown
+# <PRD title>
+
+PRD: [docs/requirements/prd-<prd-name>.md](/docs/requirements/prd-<prd-name>.md)
+Roadmap: [docs/roadmap.md](/docs/roadmap.md)
+
+## Waves
+
+- Wave <id>: #<wave-issue> — <wave title>
+```
 
 ### Wave tracking issue body
 
