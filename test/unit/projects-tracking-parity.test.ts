@@ -555,3 +555,127 @@ describe("developer", () => {
     }
   });
 });
+
+// --- activity-init (S-005, #274) ---------------------------------------------
+
+const INIT_TREES = {
+  claude: ".claude/skills/activity-init/SKILL.md",
+  github: ".github/skills/activity-init/SKILL.md",
+  kiro: ".kiro/skills/activity-init/SKILL.md",
+};
+
+const INIT_HEADING = "Repository Setup — GitHub Project (Recommended)";
+const RUNBOOK_PATH = "docs/runbooks/runbook-configure-github-project.md";
+
+/**
+ * Project Status is never written by an agent (D-23); the only `gh project`
+ * verbs that may appear anywhere in the runbook are setup verbs (`create`,
+ * `field-delete`, `view`, `field-list`). S-006's guard extends this walk to
+ * the three trees and `docs/` (D-44); PT-25 carries the negative for the
+ * runbook file in wave 1.
+ */
+const FORBIDDEN_PROJECT_WRITE = /gh\s+project\s+item-(edit|add)\b/;
+
+/** PRD AC-5: no step changes a default automation. */
+const AUTOMATION_TOGGLE =
+  /(turn off|disable|enable|switch on|switch off)[^\n]*(workflow|automation)/i;
+
+describe("activity-init", () => {
+  const trees = loadTrees(INIT_TREES);
+
+  // PT-23 — S-005 AC-1, AC-6; FR-8, D-10, D-40
+  it("init subsection", () => {
+    for (const copy of trees) {
+      const headings = copy.sections.map((s) => s.heading);
+      const at = headings.indexOf(INIT_HEADING);
+      expect(at, `${copy.path}: no "${INIT_HEADING}" section`).toBeGreaterThan(-1);
+      // Placement: after Branch Protection, before Document Changelog Convention (spec §8.4).
+      expect(headings[at - 1], copy.path).toBe("Repository Setup — Branch Protection (Required)");
+      expect(headings[at + 1], copy.path).toBe("Document Changelog Convention");
+      // A `## ` sibling, not a `### ` child (D-40): the raw body carries the `## ` line.
+      expect(copy.body, copy.path).toContain(`\n## ${INIT_HEADING}\n`);
+
+      const text = sectionOf(copy, INIT_HEADING);
+      expect(text, copy.path).toContain(RUNBOOK_PATH);
+      // At most four sentences, counted after inline code spans and link
+      // targets are removed so a path's dots do not count (EC-29).
+      const prose = text.replace(/`[^`]*`/g, "").replace(/\]\([^)]*\)/g, "]");
+      const terminators = prose.match(/[.!?](\s|$)/g) ?? [];
+      expect(
+        terminators.length,
+        `${copy.path}: subsection has more than four sentences`,
+      ).toBeLessThanOrEqual(4);
+      expect(terminators.length, `${copy.path}: subsection is empty`).toBeGreaterThan(0);
+      // No numbered step: the 54-step pin in skill-parity-init stays (A-1).
+      expect(text, copy.path).not.toMatch(/^[0-9]+\. /m);
+    }
+  });
+
+  // PT-25 / CT-10 — S-005 AC-2, AC-3; FR-8, PRD AC-5; D-10, D-22, D-23, D-35, D-43, D-44
+  it("runbook steps", () => {
+    const content = readFileSync(resolve(ROOT, RUNBOOK_PATH), "utf-8");
+    const sections = splitIntoSections(stripFrontmatter(content));
+    const section = (heading: string): string => {
+      const match = sections.find((s) => s.heading === heading);
+      expect(match, `${RUNBOOK_PATH}: no "${heading}" section`).toBeDefined();
+      return match!.text;
+    };
+
+    // CT-10: frontmatter in the quoted inline form the runbook-set parser reads (EC-31).
+    expect(content).toMatch(/^---\nname: runbook-configure-github-project\n/);
+    expect(content).toMatch(/^owner: product-engineer$/m);
+    expect(content).toMatch(/^last_verified: \d{4}-\d{2}-\d{2}$/m);
+    expect(content).toMatch(/^related: \["docs\/requirements\/prd-projects-tracking\.md"\]$/m);
+
+    const steps = section("Steps");
+    for (const marker of [
+      "gh auth refresh -s project",
+      "Board",
+      "is:issue",
+      "Priority",
+      "Size",
+      "Estimate",
+      "Start date",
+      "Target date",
+      "Item added",
+      "Item closed",
+      "Item reopened",
+      "Pull request linked to issue",
+      "Parent issue",
+      'label:"status: blocked"',
+      "level:",
+    ]) {
+      expect(steps, `Steps lacks "${marker}"`).toContain(marker);
+    }
+    // Verification uses the two read verbs (D-10).
+    const verification = section("Verification");
+    expect(verification).toContain("gh project view");
+    expect(verification).toContain("gh project field-list");
+
+    // A-5 / D-43: Auto-close issue is off by default and left alone; the
+    // exercise records the exact names shown on the Workflows page.
+    expect(content).toContain("Auto-close issue");
+    expect(content).toMatch(/off by\s+default/);
+    expect(content).toMatch(/Workflows page/);
+
+    // Edge cases: the repository setting that enables Projects (EC-26) and
+    // `--owner` for user versus organization projects (EC-27).
+    const preconditions = section("Preconditions");
+    expect(preconditions).toMatch(/Projects/);
+    expect(preconditions).toMatch(/Settings/);
+    expect(content).toContain("--owner");
+
+    // Negatives: no Project write anywhere (D-23, D-44); no step toggles a
+    // default automation (PRD AC-5).
+    for (const [index, line] of content.split("\n").entries()) {
+      expect(line, `${RUNBOOK_PATH}:${index + 1} writes a Project item`).not.toMatch(
+        FORBIDDEN_PROJECT_WRITE,
+      );
+    }
+    for (const [index, line] of steps.split("\n").entries()) {
+      expect(line, `${RUNBOOK_PATH} Steps line ${index + 1} toggles an automation`).not.toMatch(
+        AUTOMATION_TOGGLE,
+      );
+    }
+  });
+});
