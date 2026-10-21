@@ -4,10 +4,11 @@
 
 | Version | Date       | Summary                                                                                                                                      | Author                    |
 | ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.2 | 2026-10-21 | The v1.1 row described AC edits that were not made (fidelity-report-S-006 DR-1): S-004 AC-1 and S-005 AC-3 texts now carry them, and the Source line reads PRD v1.5, spec v1.1, D-01 to D-49. | product-engineer |
 | 1.1 | 2026-10-21 | Recorded intended deviations from the audits: S-004 AC-1 `wave_status` has four values (adds `failed(<reason>)`, S-003 DR-1); S-005 AC-3 accepts either template, keeps Auto-close as shipped (enabled) and makes field cleanup optional (D-45 to D-48); S-006 gained 6.1b to 6.1j from the audits and the Project 5 exercise. | product-engineer |
 | 1.0     | 2026-10-20 | Initial story set from `workstream/specification-projects-tracking-phase-1.md` v1.0. Six stories; the PRD's seven candidates collapsed to six. | @llipe / product-engineer |
 
-Source: `docs/requirements/prd-projects-tracking.md` v1.3 (wave 1: FR-1 to FR-10, FR-23, FR-24) · Specification v1.0 · Decisions `workstream/decisions-projects-tracking.md` D-01 to D-39.
+Source: `docs/requirements/prd-projects-tracking.md` v1.5 (wave 1: FR-1 to FR-10, FR-23, FR-24) · Specification v1.1 · Decisions `workstream/decisions-projects-tracking.md` D-01 to D-49.
 
 Execution order: S-001 → S-002 → S-003 → S-004 → S-005 → S-006. S-002, S-003 and S-005 depend on S-001 only; S-004 depends on S-003; S-006 depends on all. Each story adds its own `describe` block to one shared parity test file (D-34), written before the prompt edits (test-first). Three-tree parity is part of every story's Definition of Done, not a separate story.
 
@@ -250,7 +251,7 @@ D-30 placed the two fields in the developer completion report (`.claude/agents/d
 
 #### Acceptance Criteria
 
-- [ ] AC-1: The completion report block in `.claude/agents/developer.md`, `.github/agents/developer.agent.md` and `.kiro/agents/developer.md` gains `status_comment: written | failed(<reason>) | skipped(<reason>)` and `wave_status: written | skipped(<reason>) | owned-by-planner` beside `checklist_sync:` (FR-23, D-30).
+- [ ] AC-1: The completion report block in `.claude/agents/developer.md`, `.github/agents/developer.agent.md` and `.kiro/agents/developer.md` gains `status_comment: written | failed(<reason>) | skipped(<reason>)` and `wave_status: written | failed(<reason>) | skipped(<reason>) | owned-by-planner` (four values, fidelity-report-S-003 DR-1) beside `checklist_sync:` (FR-23, D-30).
 - [ ] AC-2: Rule 6 reads "You MUST NOT close the issue; GitHub closes it when the consolidated PR merges to main" in all three (FR-13 wording, D-22).
 - [ ] AC-3: The developer's pre-coding rules point to implement's status-comment procedure by name rather than restating it (D-38).
 - [ ] AC-4: `test/unit/developer-command-collapse.test.ts` still passes, so `.claude/commands/developer.md` inherits the change; the parity file gains a `describe("developer")` block for AC-1 to AC-3.
@@ -321,7 +322,7 @@ D-10 and D-22 settled the setup: default Status options and automations kept, au
 
 - [ ] AC-1: All three `activity-init/SKILL.md` copies carry a "Repository Setup — GitHub Project (Recommended)" subsection after the Branch Protection one, with at most four sentences and a link to `docs/runbooks/runbook-configure-github-project.md` (FR-8).
 - [ ] AC-2: The runbook exists with frontmatter `name`, `trigger`, `owner: product-engineer`, `last_verified: <date>`, `related: [docs/requirements/prd-projects-tracking.md]` in inline bracket form, and the seven sections of `templates/runbooks/runbook-template.md`; `tsx core/checks/run.ts` reports no docs-structure finding (D-35).
-- [ ] AC-3: The runbook's steps are: `gh auth refresh -s project`; create the Project from the Board template; keep the default Status options and the item-added, item-closed, item-reopened and pull-request-linked automations, each named; set auto-add to `is:issue`; delete Priority, Size, Estimate, Start date, Target date; create three views with these filters: table grouped by Parent issue, board by Status filtered to one wave by `level:` and title, table filtered `label:"status: blocked"`; verify with `gh project view` and `gh project field-list` (FR-8, D-10). It contains no instruction to change a default automation (AC-5 of the PRD).
+- [ ] AC-3: The runbook's steps are: `gh auth refresh -s project`; create the Project from the Board or the Team planning template; keep its Status options and the seven shipped workflows as they are, each named (Auto-add to project, Auto-add sub-issues to project, Auto-close issue, Item added to project, Item closed, Pull request linked to issue, Pull request merged), with Auto-close issue stated as shipping enabled and left as shipped; set auto-add to `is:issue`; optionally delete the Team planning extras Priority, Size, Estimate, Start date, Target date; create three views with these filters: table grouped by Parent issue, board by Status filtered to one wave by `level:` and title, table filtered `label:"status: blocked"`; verify with `gh project view` and `gh project field-list` (FR-8, D-10, D-45 to D-48). It contains no instruction to change a default automation (AC-5 of the PRD).
 - [ ] AC-4: `docs/runbooks/README.md` gains the runbook's row.
 - [ ] AC-5: The runbook has been exercised once on `llipe/dev-tasks`, creating its Project; the runbook's `last_verified` is that date and the PR body names the Project number (spec §14).
 - [ ] AC-6: The parity file gains a `describe("activity-init")` block asserting the subsection and the runbook path in all three trees.
