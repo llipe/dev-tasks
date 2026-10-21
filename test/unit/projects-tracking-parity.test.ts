@@ -10,8 +10,8 @@
  * this file has no cross-test import.
  */
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
@@ -556,6 +556,36 @@ describe("developer", () => {
   });
 });
 
+// --- Project-write guard declarations (S-006, #275) -------------------------
+
+/**
+ * The roots the guard walks: the three platform trees plus `docs/` (D-44), so
+ * the runbook cannot carry a Project write either. Nothing under a root is
+ * excluded except `docs/requirements/`: a PRD states the prohibition by
+ * quoting the command it forbids (prd-projects-tracking goal 2, AC-3), and it
+ * is requirements prose, not a procedure an agent executes.
+ */
+const GUARDED_ROOTS = [".claude", ".github", ".kiro", "docs"] as const;
+const GUARD_EXCLUDED_PREFIX = "docs/requirements/";
+
+/**
+ * Project Status is never written by an agent (D-23). The only `gh project`
+ * verbs that may appear anywhere are the runbook's setup and read verbs
+ * (`create`, `field-delete`, `view`, `field-list`); the two item writes are
+ * forbidden in every file the walk reaches. Hoisted above the activity-init
+ * block because PT-25 reuses it for the runbook's own line-scoped negative.
+ */
+const PROJECT_WRITE = /gh\s+project\s+item-(edit|add)\b/;
+
+/** Every `.md` under `root`, recursive, as a root-relative path, sorted. */
+function markdownFiles(root: string): string[] {
+  return readdirSync(resolve(ROOT, root), { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+    .map((entry) => relative(ROOT, join(entry.parentPath, entry.name)))
+    .filter((path) => !path.startsWith(GUARD_EXCLUDED_PREFIX))
+    .sort();
+}
+
 // --- activity-init (S-005, #274) ---------------------------------------------
 
 const INIT_TREES = {
@@ -566,15 +596,6 @@ const INIT_TREES = {
 
 const INIT_HEADING = "Repository Setup — GitHub Project (Recommended)";
 const RUNBOOK_PATH = "docs/runbooks/runbook-configure-github-project.md";
-
-/**
- * Project Status is never written by an agent (D-23); the only `gh project`
- * verbs that may appear anywhere in the runbook are setup verbs (`create`,
- * `field-delete`, `view`, `field-list`). S-006's guard extends this walk to
- * the three trees and `docs/` (D-44); PT-25 carries the negative for the
- * runbook file in wave 1.
- */
-const FORBIDDEN_PROJECT_WRITE = /gh\s+project\s+item-(edit|add)\b/;
 
 /** PRD AC-5: no step changes a default automation. */
 const AUTOMATION_TOGGLE =
@@ -668,14 +689,75 @@ describe("activity-init", () => {
     // Negatives: no Project write anywhere (D-23, D-44); no step toggles a
     // default automation (PRD AC-5).
     for (const [index, line] of content.split("\n").entries()) {
-      expect(line, `${RUNBOOK_PATH}:${index + 1} writes a Project item`).not.toMatch(
-        FORBIDDEN_PROJECT_WRITE,
-      );
+      expect(line, `${RUNBOOK_PATH}:${index + 1} writes a Project item`).not.toMatch(PROJECT_WRITE);
     }
     for (const [index, line] of steps.split("\n").entries()) {
       expect(line, `${RUNBOOK_PATH} Steps line ${index + 1} toggles an automation`).not.toMatch(
         AUTOMATION_TOGGLE,
       );
+    }
+  });
+});
+
+// --- no Project writes (S-006, #275) -----------------------------------------
+
+describe("no Project writes", () => {
+  // PT-29 / RT-1 — S-006 AC-1: the enumerated matcher table. Deterministic by
+  // construction; every `gh`, whitespace, `project`, whitespace, `item-edit`
+  // or `item-add` string matches, and every `gh project <read verb>` does not.
+  it("matcher self-check", () => {
+    const mustMatch = [
+      "gh project item-edit --id X",
+      "`gh project item-add`",
+      "run gh  project item-edit",
+      "gh project item-edit\n",
+      "gh project item-add --owner llipe --url https://github.com/llipe/dev-tasks/issues/1",
+    ];
+    const mustNotMatch = [
+      "gh project view",
+      "gh project field-list",
+      "gh project item-list",
+      "gh project list",
+      "Item added to project",
+      "gh project create",
+    ];
+    for (const fixture of mustMatch) {
+      expect(fixture, `matcher misses "${fixture}"`).toMatch(PROJECT_WRITE);
+    }
+    for (const fixture of mustNotMatch) {
+      expect(fixture, `matcher wrongly catches "${fixture}"`).not.toMatch(PROJECT_WRITE);
+    }
+  });
+
+  // PT-28 — S-006 AC-1; PRD AC-3a; FR-6; D-23, D-44. Line-scoped so the failure
+  // names the file and line; a code fence quoting the command fails too (EC-34).
+  it("no gh project writes in any tree", () => {
+    for (const root of GUARDED_ROOTS) {
+      const files = markdownFiles(root);
+      expect(files.length, `${root}: walk found no markdown files`).toBeGreaterThan(0);
+      for (const file of files) {
+        const lines = readFileSync(resolve(ROOT, file), "utf-8").split("\n");
+        for (const [index, line] of lines.entries()) {
+          expect(line, `${file}:${index + 1} writes a Project item`).not.toMatch(PROJECT_WRITE);
+        }
+      }
+    }
+  });
+
+  // PT-28b — PRD goal 5; D-23, D-24: no agent needs the Project's identity or
+  // the `project` token scope, and setup verbs live only in the runbook under
+  // `docs/`, never in a prompt tree (EC-38 widens the negative now so wave 3
+  // must consciously relax it with a decision).
+  it("no project scope or project id in any tree", () => {
+    const setupVerb = /gh\s+project\s+(edit|create|delete|field-create|item-delete|item-archive)\b/;
+    for (const root of GUARDED_ROOTS.filter((r) => r !== "docs")) {
+      for (const file of markdownFiles(root)) {
+        const content = readFileSync(resolve(ROOT, file), "utf-8");
+        expect(content, `${file} asks for the project token scope`).not.toContain(
+          "gh auth refresh -s project",
+        );
+        expect(content, `${file} carries a Project setup verb`).not.toMatch(setupVerb);
+      }
     }
   });
 });
