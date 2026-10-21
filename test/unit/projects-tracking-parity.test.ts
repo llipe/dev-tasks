@@ -661,6 +661,15 @@ describe("developer", () => {
       ).toBeDefined();
       // The pointer names implement's section, so a reader can find the procedure.
       expect(pointer!, copy.path).toContain("Status Comment");
+      // 6.1g / fidelity-report-S-004 DR-3: `implement` is a skill only on Claude;
+      // on Copilot it is an instruction and on Kiro a steering file, so those
+      // two copies call it "the `implement` procedure".
+      if (copy.tree === "claude") {
+        expect(pointer!, copy.path).toContain("the `implement` skill's");
+      } else {
+        expect(pointer!, copy.path).toContain("the `implement` procedure");
+        expect(pointer!, copy.path).not.toContain("`implement` skill");
+      }
       // Negative: the procedure and the template are never restated here.
       expect(copy.body, copy.path).not.toContain("gh api -X PATCH");
       expect(copy.body, copy.path).not.toContain("issues/comments/{id}");
@@ -745,6 +754,10 @@ describe("activity-init", () => {
       expect(terminators.length, `${copy.path}: subsection is empty`).toBeGreaterThan(0);
       // No numbered step: the 54-step pin in skill-parity-init stays (A-1).
       expect(text, copy.path).not.toMatch(/^[0-9]+\. /m);
+      // 6.1j / D-46, D-47: the subsection names no template and no reopened
+      // workflow, since either template is accepted and no such default exists.
+      expect(text, copy.path).not.toContain("Board template");
+      expect(text, copy.path).not.toContain("Item reopened");
     }
   });
 
@@ -764,35 +777,51 @@ describe("activity-init", () => {
     expect(content).toMatch(/^last_verified: \d{4}-\d{2}-\d{2}$/m);
     expect(content).toMatch(/^related: \["docs\/requirements\/prd-projects-tracking\.md"\]$/m);
 
+    // 6.1h — D-45 to D-48, read from the Project 5 exercise on 2026-10-21:
+    // either template is accepted and both Status sets are named (D-46); the
+    // seven shipped workflows are listed and "Item reopened" is not one of
+    // them (D-47); the Team planning template's extra fields are kept, so
+    // the field cleanup is an optional note, never a required step (D-48).
     const steps = section("Steps");
     for (const marker of [
       "gh auth refresh -s project",
       "Board",
+      "Team planning",
+      "Todo, In Progress, Done",
+      "Backlog, Ready, In progress, In review, Done",
       "is:issue",
-      "Priority",
-      "Size",
-      "Estimate",
-      "Start date",
-      "Target date",
-      "Item added",
+      "Auto-add to project",
+      "Auto-add sub-issues to project",
+      "Auto-close issue",
+      "Item added to project",
       "Item closed",
-      "Item reopened",
       "Pull request linked to issue",
+      "Pull request merged",
       "Parent issue",
       'label:"status: blocked"',
       "level:",
     ]) {
       expect(steps, `Steps lacks "${marker}"`).toContain(marker);
     }
-    // Verification uses the two read verbs (D-10).
+    expect(content).not.toContain("Item reopened");
+    expect(steps).toMatch(/optional/i);
+    expect(steps).not.toMatch(/^\d+\. Delete/m);
+    // Verification uses the two read verbs (D-10) and records the exercise.
     const verification = section("Verification");
     expect(verification).toContain("gh project view");
     expect(verification).toContain("gh project field-list");
+    expect(verification).toContain("Project 5");
+    expect(verification).toContain("2026-10-21");
+    expect(verification).toContain("is:issue");
+    expect(verification).toMatch(/seven/i);
+    expect(content).toMatch(/^last_verified: 2026-10-21$/m);
 
-    // A-5 / D-43: Auto-close issue is off by default and left alone; the
+    // D-45: Auto-close issue ships enabled and is left as shipped; since no
+    // agent writes Status it can only fire on a human's Status change. The
     // exercise records the exact names shown on the Workflows page.
     expect(content).toContain("Auto-close issue");
-    expect(content).toMatch(/off by\s+default/);
+    expect(content).toMatch(/ships enabled/);
+    expect(content).not.toMatch(/off by\s+default/);
     expect(content).toMatch(/Workflows page/);
 
     // Edge cases: the repository setting that enables Projects (EC-26) and

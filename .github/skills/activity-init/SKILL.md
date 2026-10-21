@@ -35,7 +35,7 @@ See the README "Configure branch protection" step for the exact `gh api` invocat
 
 ## Repository Setup — GitHub Project (Recommended)
 
-Alongside branch protection, recommend one GitHub Project per repository, so the PRD, wave and story issues that `activity-publish-github` creates appear on a board that GitHub keeps current without any agent writing to it. Setup is a one-time human step: `docs/runbooks/runbook-configure-github-project.md` keeps the default Status options and default workflows, narrows auto-add to `is:issue`, deletes the Board template's unused fields, and names the three views to create by hand. No agent ever writes Project Status; a linked pull request and the issue closing at ship are what move it. Skipping this step changes nothing else in the workflow.
+Alongside branch protection, recommend one GitHub Project per repository, so the PRD, wave and story issues that `activity-publish-github` creates appear on a board that GitHub keeps current without any agent writing to it. Setup is a one-time human step: `docs/runbooks/runbook-configure-github-project.md` keeps the template's Status options and GitHub's default workflows, narrows auto-add to `is:issue`, and names the three views to create by hand. No agent ever writes Project Status; a linked pull request and the issue closing at ship are what move it. Skipping this step changes nothing else in the workflow.
 
 ## Document Changelog Convention
 

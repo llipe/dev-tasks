@@ -85,7 +85,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 4.8 Verify Acceptance Criterion: pointer, not a copy
   - [x] 4.9 Run Tests: `pnpm run test:unit` including `developer-command-collapse.test.ts`, then `pnpm run validate`
 
-- [ ] 5.0 Implement Story S-005: activity-init recommends a GitHub Project and ships the configuration runbook (#274)
+- [x] 5.0 Implement Story S-005: activity-init recommends a GitHub Project and ships the configuration runbook (#274)
 
   - [x] 5.1 Add a `describe("activity-init")` block asserting the "Repository Setup — GitHub Project (Recommended)" subsection and the runbook path in all three trees, plus an `it` over the runbook file asserting each required step and the absence of any instruction to change a default automation; confirm red
   - [x] 5.1a Bump the activity-init pin in `test/unit/skill-parity-init.test.ts` from 16 `## ` headings to 17, with a comment naming S-005; leave the numbered-step pin at 54, since the subsection has no numbered steps (Design Mode A-1, D-40)
@@ -94,12 +94,12 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 5.3 Add the runbook's row to `docs/runbooks/README.md`; run `pnpm run lint` and confirm no docs-structure finding
   - [x] 5.3a Add `runbook-configure-github-project` to `EXPECTED_RUNBOOKS` in `test/unit/runbook-set.test.ts` (Design Mode A-2)
   - [x] 5.4 Add the four-sentence subsection with the runbook link to `.claude/skills/activity-init/SKILL.md` after the Branch Protection subsection, then to the `.github/` and `.kiro/` copies
-  - [ ] 5.5 Exercise the runbook once on `llipe/dev-tasks` (stop and ask the user before creating the Project); record the Project number and date in the PR body and set `last_verified` to that date
+  - [x] 5.5 Exercise the runbook once on `llipe/dev-tasks` (stop and ask the user before creating the Project); record the Project number and date in the PR body and set `last_verified` to that date — done by the owner on 2026-10-21 as Project 5 (https://github.com/users/llipe/projects/5), recorded in PR #281's body and the runbook's Verification section
   - [x] 5.6 Verify Acceptance Criterion: subsection in all three trees, at most four sentences, link present
   - [x] 5.7 Verify Acceptance Criterion: runbook frontmatter and sections pass the docs-structure check
   - [x] 5.8 Verify Acceptance Criterion: every required step present; no default automation changed
   - [x] 5.9 Verify Acceptance Criterion: README row present
-  - [ ] 5.10 Verify Acceptance Criterion: runbook exercised; Project number recorded
+  - [x] 5.10 Verify Acceptance Criterion: runbook exercised; Project number recorded (Project 5, 2026-10-21)
   - [x] 5.11 Run Tests: `pnpm run lint`, `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 6.0 Implement Story S-006: Cross-tree guard against Project writes and the dogfood rows in TESTING.md (#275)
@@ -111,10 +111,10 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 6.1d Replace the restated story-issue title form under `### Story issues` in the three publish copies with a reference to github-ops § Title Format (fidelity-report-S-002 DR-4)
   - [x] 6.1e In the github-ops status-comment story template (three copies), make the Gates column carry `coverage_gate` and the fidelity verdict beside the five quality gates, as FR-23 states, and assert it (fidelity-report-S-003 DR-3)
   - [x] 6.1f Make `sectionOf` level-aware in `test/unit/projects-tracking-parity.test.ts` (collect until the next heading of equal or higher level), fold the `duringImplementation()` workaround into it, add a `###`-child test case, and tighten the EC-18 assertion to the literal `create it from the wave table` (qa S-003 gaps)
-  - [ ] 6.1g In the Copilot and Kiro developer copies, say "the `implement` procedure" rather than "the `implement` skill's" where the pointer names it, since implement is an instruction and a steering file there (fidelity-report-S-004 DR-3)
-  - [ ] 6.1h Correct `docs/runbooks/runbook-configure-github-project.md` from the Project 5 exercise (D-45, D-46, D-47): Auto-close issue ships enabled and is left as shipped (it fires only on a human Status change); either the Board template (Todo, In Progress, Done) or the Team planning template (Backlog, Ready, In progress, In review, Done) is accepted, both Status sets named, field cleanup kept for the Team planning extras; "Item reopened" dropped and the seven shipped workflows listed (Auto-add to project, Auto-add sub-issues to project, Auto-close issue, Item added to project, Item closed, Pull request linked to issue, Pull request merged); `last_verified: 2026-10-21`; one Verification line recording Project 5, 2026-10-21, seven workflows enabled. Change the PT-25 assertions first (red), then the runbook
-  - [ ] 6.1i Tick 5.5 and 5.10 in this plan and on issue #274's checklist, and tick AC-5 on #274, citing Project 5 (https://github.com/users/llipe/projects/5)
-  - [ ] 6.1j In the three activity-init copies' four-sentence subsection, correct any mention of the Board template or "Item reopened" the same way; no change if neither is named
+  - [x] 6.1g In the Copilot and Kiro developer copies, say "the `implement` procedure" rather than "the `implement` skill's" where the pointer names it, since implement is an instruction and a steering file there (fidelity-report-S-004 DR-3)
+  - [x] 6.1h Correct `docs/runbooks/runbook-configure-github-project.md` from the Project 5 exercise (D-45, D-46, D-47): Auto-close issue ships enabled and is left as shipped (it fires only on a human Status change); either the Board template (Todo, In Progress, Done) or the Team planning template (Backlog, Ready, In progress, In review, Done) is accepted, both Status sets named, field cleanup kept for the Team planning extras; "Item reopened" dropped and the seven shipped workflows listed (Auto-add to project, Auto-add sub-issues to project, Auto-close issue, Item added to project, Item closed, Pull request linked to issue, Pull request merged); `last_verified: 2026-10-21`; one Verification line recording Project 5, 2026-10-21, seven workflows enabled. Change the PT-25 assertions first (red), then the runbook
+  - [x] 6.1i Tick 5.5 and 5.10 in this plan and on issue #274's checklist, and tick AC-5 on #274, citing Project 5 (https://github.com/users/llipe/projects/5)
+  - [x] 6.1j In the three activity-init copies' four-sentence subsection, correct any mention of the Board template or "Item reopened" the same way; no change if neither is named
   - [ ] 6.2 Add a "Dogfood checks" table to `TESTING.md` with one row per behavioural criterion of wave 1 (PRD AC-1 pending wave 2's publish; PRD AC-3 satisfied by this wave's stories), each row naming the satisfying issue number or `pending`, plus a changelog row (D-39)
   - [ ] 6.2a Add a `## Changelog` section to `TESTING.md` and bump its frontmatter `version:`; the Dogfood row is the first changelog entry (Design Mode A-12)
   - [ ] 6.2b Add a `pending` Dogfood row for FR-24's success path (parent found, wave comment edited), first observable on a main-thread run of a wave 2 story (Design Mode A-16)
