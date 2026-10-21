@@ -74,9 +74,9 @@ board, which is a later wave of the same PRD.
    - **Pull request merged** → Done
 
    No default workflow fires on a reopened item. The three issue-event
-   workflows are why no agent needs to write Status: a story PR carrying `Closes #N` links
-   the issue, and the consolidated PR merging to the default branch closes
-   it. **Auto-close issue** ships enabled (D-45); leave it as shipped. Since
+   workflows are why no agent needs to write Status: a pull request against
+   the default branch carrying `Closes #N` links the issue (a PR into an
+   integration branch does not, D-50), and that PR merging closes it. **Auto-close issue** ships enabled (D-45); leave it as shipped. Since
    no agent writes Status, it can only fire on a human's Status change
    (PRD AC-5). Before leaving this page, record for every workflow both its
    name and whether it is active, so the exercise captures the shipped
