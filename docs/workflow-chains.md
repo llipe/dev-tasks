@@ -12,6 +12,8 @@ developer: implement
 
 > `[researcher]` is conditional — invoked when the feature touches existing implementation, spans multiple modules, or the area is unfamiliar. Skipped for greenfield features.
 >
+> `publish-github` creates one PRD tracking issue (labeled `level: prd`) and one wave tracking issue (labeled `level: wave`) if not already present, then publishes all story issues (labeled `level: story`) as sub-issues of the wave. It references the `docs/roadmap.md` row for the wave number. Each story issue carries its `type:` and `priority:` labels; tracking issues carry `level:` only.
+>
 > `plan` captures the feature's `decision_log_path` (typically `workstream/decisions-<feature>.md`) and passes it unconditionally to `developer`, who reads the log before starting work.
 >
 > When the feature has infrastructure scope, `developer` routes the platform work conditionally to `infra-engineer` (see the Infrastructure Change chain below) rather than running any platform write itself. Skipped when the feature has no infra scope.
@@ -27,6 +29,8 @@ developer: implement
 > `[researcher]` is conditional — invoked when the issue is multi-module, diagnostic, or unfamiliar. Skipped for trivial single-file changes.
 >
 > `plan` captures the feature's `decision_log_path` (if a log exists, typically `workstream/decisions-<feature>.md`) and passes it to `developer`, who reads the log before starting work.
+>
+> `developer: implement` maintains a status comment on the issue (found and edited by marker `<!-- dev-tasks:status -->`), recording task progress and workflow gate completions at each stage.
 >
 > When the issue has infrastructure scope, `developer` routes the platform work conditionally to `infra-engineer` (see the Infrastructure Change chain below) rather than running any platform write itself. Skipped when the issue has no infra scope.
 
@@ -60,7 +64,11 @@ product-engineer: refine → generate-spec → generate-stories → publish-gith
 planner: orchestrate → developer: implement (per story, sequential)
 ```
 
+> `publish-github` creates one PRD tracking issue (labeled `level: prd`) and one wave tracking issue (labeled `level: wave`) if not already present, then publishes all story issues (labeled `level: story`) as sub-issues of the wave. It references the `docs/roadmap.md` row for the wave number. Each story issue carries its `type:` and `priority:` labels; tracking issues carry `level:` only.
+>
 > `plan` captures the feature's `decision_log_path` (typically `workstream/decisions-<feature>.md`). `planner` passes it unconditionally in every story's `developer` handoff; each developer reads the log before starting work on their story.
+>
+> `developer: implement` maintains a status comment on the story issue (found and edited by marker `<!-- dev-tasks:status -->`), recording task progress and workflow gate completions at each stage. `planner` owns the wave status comment separately; a main-thread `developer` may update it after PR open.
 
 ## Quick Fix (Clear Issue, Task List Exists)
 

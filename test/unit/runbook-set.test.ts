@@ -30,9 +30,12 @@ const TEMPLATE_DIR = join(ROOT, "templates/runbooks");
  * nine leave five deploy-surface files uncovered, which fails PRD AC-25
  * — the tenth closes the gap (recorded as a decision in S-003).
  * `runbook-diagnose-pr-validate` arrived with the PR `validate` workflow (#248).
+ * `runbook-configure-github-project` arrived with activity-init's GitHub
+ * Project step (S-005, #274).
  */
 const EXPECTED_RUNBOOKS = [
   "runbook-configure-branch-protection",
+  "runbook-configure-github-project",
   "runbook-deploy-service",
   "runbook-diagnose-pr-validate",
   "runbook-install-dev-tasks",

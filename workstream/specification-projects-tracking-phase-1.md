@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                                 | Author                    |
 | ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.1 | 2026-10-21 | Write-back after the wave 1 story audits and the Project 5 exercise: §6 search gains the client-side `startswith` filter (S-002 DR-3); §8.3 `wave_status` has four values (S-003 DR-1); §8.4 accepts either template, keeps the seven shipped workflows including Auto-close enabled, makes field cleanup optional (D-45 to D-48); HOW decisions D-40 to D-49 listed. | product-engineer |
 | 1.0     | 2026-10-20 | Initial specification for wave 1 (FR-1 to FR-10, FR-23, FR-24) after the HOW-phase interview (D-28 to D-39, 3 asked, 9 self-resolved). | @llipe / product-engineer |
 
 ## 1. Executive Summary
@@ -90,7 +91,7 @@ No service API. The `gh` surface each change uses, all REST, `repo` scope only:
 
 | Operation                        | Command                                                                                                         | Used by                 |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| Find tracking issue (D-36)       | `gh issue list --label "level: prd" --search "[PRD-<name>] in:title" --state open --json number,title`          | publish                 |
+| Find tracking issue (D-36)       | `gh issue list --label "level: prd" --search "[PRD-<name>] in:title" --state open --json number,title --jq 'map(select(.title \| startswith("[PRD-<name>]")))'` | publish                 |
 | Create tracking issue            | `gh issue create --title ... --label "level: prd" --body-file ...` (same for `level: wave`)                     | publish via github-ops  |
 | Child numeric id                 | `gh api repos/{o}/{r}/issues/{n} --jq .id`                                                                      | publish                 |
 | Attach sub-issue                 | `gh api -X POST repos/{o}/{r}/issues/{parent}/sub_issues -F sub_issue_id=<id>`                                  | publish                 |
@@ -158,14 +159,14 @@ Story table (wave 1): `Sub-tasks | Current | Branch | PR | Gates | Blocker | Upd
 
 - implement's optional "SHOULD add brief issue or PR comments" (SKILL.md:124) becomes: "MUST keep the story's status comment current per github-ops § Status comment: create it at the first sub-task completion, edit it in place at every later sub-task completion, at PR open, at each gate recorded, and on block." The checklist alignment rules (104-118) are unchanged.
 - Procedure in implement: find by marker; absent → `gh issue comment --body-file`; present → PATCH. Each write reported as `status_comment: written | failed(<reason>) | skipped(no issue)`.
-- Main-thread rule (FR-24): after PR open and at PR ready, `GET issues/{n}/parent`; 200 → edit the wave's status comment's row for this story; 404 → `wave_status: skipped(no parent)`. Under the planner the developer reports `wave_status: owned-by-planner`.
+- Main-thread rule (FR-24): after PR open and at PR ready, `GET issues/{n}/parent`; 200 → edit the wave's status comment's row for this story, creating the comment from the wave table if absent, and report `wave_status: written`, or `failed(<reason>)` when the edit is refused; 404 → `wave_status: skipped(no parent)`. Under the planner the developer reports `wave_status: owned-by-planner`. Four values in all (S-003 DR-1).
 - developer agent (three trees) and `/developer` command: the completion report gains `status_comment:` and `wave_status:` beside `checklist_sync:` (`.claude/agents/developer.md:376`); rule 6 "do not close issue early" is reworded to define merged as merged to main (FR-13 is wave 2, the wording change is harmless now and avoids a second edit).
 - The lifecycle table row "Before coding" is unchanged; a "During" row gains "update status comment".
 
 ### 8.4 activity-init (FR-8, D-10, D-35)
 
 - A sibling subsection after "Repository Setup — Branch Protection (Required)": "Repository Setup — GitHub Project (Recommended)", four sentences and a pointer to `docs/runbooks/runbook-configure-github-project.md`.
-- The runbook, from `templates/runbooks/runbook-template.md`: frontmatter `name`, `trigger`, `owner: product-engineer`, `last_verified: 2026-10-20`, `related: [docs/requirements/prd-projects-tracking.md]`; steps: `gh auth refresh -s project`, create the Project from the Board template, keep the default Status options and automations (list them), set auto-add to `is:issue`, delete Priority, Size, Estimate, Start date, Target date, create the three views with their filter strings, verify with `gh project view` and `gh project field-list`. Row added to `docs/runbooks/README.md`.
+- The runbook, from `templates/runbooks/runbook-template.md`: frontmatter `name`, `trigger`, `owner: product-engineer`, `last_verified: 2026-10-21`, `related: [docs/requirements/prd-projects-tracking.md]`; steps: `gh auth refresh -s project`, create the Project from the Board or the Team planning template, keep its Status options and the seven shipped workflows as they are (Auto-close issue included, it ships enabled; there is no "item reopened" default), set auto-add to `is:issue`, optionally delete the Team planning extras Priority, Size, Estimate, Start date, Target date, create the three views with their filter strings, verify with `gh project view` and `gh project field-list`. Row added to `docs/runbooks/README.md`.
 
 ### 8.5 Parity test (FR-10, D-34)
 
@@ -240,6 +241,16 @@ None.
 | D-37 | Marker is the first line, an invisible HTML comment.                        |
 | D-38 | The rule lives in implement; agent and command inherit.                     |
 | D-39 | Static parity tests plus next-wave dogfood verify behaviour.                |
+| D-40 | activity-init subsection stays `##`; heading pin bumped to 17.              |
+| D-41 | S-001 aligns every MCP-primary passage in github-ops.                       |
+| D-42 | S-001 and S-002 dogfood rows read `n/a (pre-rule)`.                         |
+| D-43 | "Pull request linked to issue" is a default automation.                     |
+| D-44 | The no-Project-writes guard walks `docs/` too (requirements excluded, D-49). |
+| D-45 | Auto-close issue ships enabled; left as shipped; fires only on human edits. |
+| D-46 | Board or Team planning template; both Status sets accepted.                 |
+| D-47 | No "item reopened" default workflow.                                        |
+| D-48 | Template fields kept by the owner; cleanup optional.                        |
+| D-49 | Guard walk excludes `docs/requirements/`, which quotes the forbidden verbs. |
 
 WHAT-phase decisions consumed: D-02 to D-05, D-07, D-10, D-14, D-22 to D-26.
 
