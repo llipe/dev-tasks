@@ -916,7 +916,9 @@ describe("TESTING.md", () => {
   // S-003's rule existed, or `pending` until the event happens.
   it("dogfood table", () => {
     const content = readFileSync(resolve(ROOT, "TESTING.md"), "utf-8");
-    expect(content).toMatch(/^version: 1\.1$/m);
+    // S-006 bumped the version from 1.0; later changelog rows bump it again, so pin a floor, not a value.
+    expect(content).toMatch(/^version: [1-9]\d*\.\d+$/m);
+    expect(content).not.toMatch(/^version: 1\.0$/m);
     const sections = splitIntoSections(stripFrontmatter(content));
     const dogfood = sections.find((s) => /Dogfood checks/.test(s.heading));
     expect(dogfood, "TESTING.md: no Dogfood checks section").toBeDefined();
