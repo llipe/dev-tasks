@@ -142,9 +142,9 @@ Story issue:
 <!-- dev-tasks:status -->
 🔄 Update: <one-line summary> — Refs #<issue>
 
-| Sub-tasks         | Current       | Branch     | PR            | Gates                                                         | Blocker          | Updated                |
-| ----------------- | ------------- | ---------- | ------------- | ------------------------------------------------------------- | ---------------- | ---------------------- |
-| <done> of <total> | <sub-task id> | `<branch>` | #<pr> or none | <test, lint, format, typecheck, audit: pass, fail or not run> | <none or reason> | <YYYY-MM-DD HH:MM UTC> |
+| Sub-tasks         | Current       | Branch     | PR            | Gates                                                                                                                                       | Blocker          | Updated                |
+| ----------------- | ------------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------- |
+| <done> of <total> | <sub-task id> | `<branch>` | #<pr> or none | <test, lint, format, typecheck, audit: pass, fail or not run; coverage_gate: PASS, FAIL or SKIPPED; fidelity: High, Medium, Low or not run> | <none or reason> | <YYYY-MM-DD HH:MM UTC> |
 ```
 
 Wave issue:
@@ -365,7 +365,7 @@ Rules:
 
 - Every issue **MUST** have at least one `type:` label and one `priority:` label, except issues labeled `level: prd` or `level: wave`, which are containers and carry only their `level:` label.
 - Hierarchy lives only in `level:`; `type:` keeps its meaning as the kind of work. A story issue carries `level: story` beside its `type:` and `priority:` labels.
-- `status:` labels are flags: add one when the condition starts and drop it when it ends. `status: ready` and `status: in-progress` are retired from this taxonomy because the GitHub Project's Status field carries that state; issues created before this rule keep their labels until a migration pass.
+- `status:` labels are flags: add one when the condition starts and drop it when it ends. `status: ready` and `status: in-progress` are retired from this taxonomy everywhere, Project or not, because the linked pull request shows that state natively on the issue (FR-7); issues created before this rule keep their labels until a migration pass.
 - `scope:` labels are **RECOMMENDED** for multi-area projects.
 - Custom labels **MAY** be added but **MUST** follow the `<category>: <value>` format.
 

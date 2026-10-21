@@ -2,7 +2,7 @@
 name: runbook-configure-github-project
 trigger: activity-init recommended a GitHub Project for a repository that has none, or a repository's issues should appear on a board that GitHub's own automations keep current.
 owner: product-engineer
-last_verified: 2026-10-20
+last_verified: 2026-10-21
 related: ["docs/requirements/prd-projects-tracking.md"]
 ---
 
@@ -10,9 +10,9 @@ related: ["docs/requirements/prd-projects-tracking.md"]
 
 Create one GitHub Project per repository so the PRD, wave and story issues
 that `activity-publish-github` publishes show up on a board without any agent
-writing to it. The procedure keeps GitHub's default Status options and default
-workflows, narrows auto-add to issues, deletes the Board template's unused
-fields, and names three views to create by hand. It is a one-time human step:
+writing to it. The procedure keeps the template's Status options and GitHub's
+default workflows, narrows auto-add to issues, and names three views to create
+by hand. It is a one-time human step:
 no agent runs it, and no agent ever writes Project Status afterwards —
 GitHub's own workflows are the only writer (projects-tracking D-22, D-23).
 This is the wrong tool for migrating a repository's existing issues onto the
@@ -43,40 +43,45 @@ board, which is a later wave of the same PRD.
    gh auth refresh -s project
    ```
 
-2. Create the Project from the **Board** template in the browser: on the
-   owner's **Projects** tab choose **New project → Board**, set the title,
-   and create it. Note the Project number from the URL
-   (`/users/<owner>/projects/<number>` or `/orgs/<owner>/projects/<number>`);
-   every command below takes it. The template is what brings the Status
-   field with its default options (Todo, In Progress, Done) and the default
+2. Create the Project from a template in the browser: on the owner's
+   **Projects** tab choose **New project**, pick either the **Board**
+   template or the **Team planning** template, set the title, and create it.
+   Note the Project number from the URL (`/users/<owner>/projects/<number>`
+   or `/orgs/<owner>/projects/<number>`); every command below takes it. A
+   template is what brings the Status field with its options and the default
    workflows; `gh project create` makes a blank Project without them, so the
-   CLI is not used for this step. Reversible (rollback below).
+   CLI is not used for this step. Either template works (D-46): the native
+   model needs only the three workflows that move Status on an issue event,
+   and both templates ship them. Reversible (rollback below).
 
-3. Keep the default Status options as they are: Todo, In Progress, Done. Do
-   not rename, reorder or add an option. Agents and GitHub's own workflows
-   assume these three; nothing in dev-tasks reads any other value.
+3. Keep the template's Status options as they are: Todo, In Progress, Done
+   on the Board template; Backlog, Ready, In progress, In review, Done on the
+   Team planning template. Do not rename, reorder or add an option. Nothing
+   in dev-tasks reads a Status value; GitHub's own workflows are the only
+   thing that sets one.
 
 4. Open the Project's **Workflows** page (the `…` menu → **Workflows**) and
-   keep every default workflow as shipped. The ones that move Status are
-   GitHub's documented defaults, to be confirmed on the Workflows page during
-   the exercise; only **Pull request linked to issue** was read from
-   `llipe/riel` Project 4 on 2026-10-20 (D-43):
+   keep every default workflow as shipped. The shipped set, read from a fresh
+   Project (`llipe/dev-tasks` Project 5, 2026-10-21, D-47; the same seven on
+   `llipe/riel` Project 4) is:
 
-   - **Item added to project** → Todo
-   - **Item reopened** → Todo
+   - **Auto-add to project** (step 5 narrows its filter)
+   - **Auto-add sub-issues to project**
+   - **Auto-close issue**
+   - **Item added to project** → Todo (Backlog on Team planning)
    - **Item closed** → Done
+   - **Pull request linked to issue** → In Progress (In progress on Team planning)
    - **Pull request merged** → Done
-   - **Pull request linked to issue** → In Progress
 
-   These are why no agent needs to write Status: a story PR carrying
-   `Closes #N` links the issue (In Progress), and the consolidated PR merging
-   to the default branch closes it (Done). **Auto-close issue** ships off by
-   default and is left alone; since no agent writes Status, no Status edit can
-   close an issue (PRD AC-5). While on this page, record the exact names
-   shown for each workflow in the pull request that exercises this runbook;
-   if a label differs from the list above, update the list, not the Project.
-   Before any change is made on this page, record for every workflow both its
-   name and whether it is active, so the exercise captures the shipped state.
+   No default workflow fires on a reopened item. The three issue-event
+   workflows are why no agent needs to write Status: a story PR carrying `Closes #N` links
+   the issue, and the consolidated PR merging to the default branch closes
+   it. **Auto-close issue** ships enabled (D-45); leave it as shipped. Since
+   no agent writes Status, it can only fire on a human's Status change
+   (PRD AC-5). Before leaving this page, record for every workflow both its
+   name and whether it is active, so the exercise captures the shipped
+   state; if a label differs from the list above, update the list, not the
+   Project.
 
 5. On the same page open **Auto-add to project**, choose this repository, and
    set the filter to `is:issue` (the template's filter also matches pull
@@ -84,8 +89,10 @@ board, which is a later wave of the same PRD.
    The three-level hierarchy only needs the issues; pull requests reach the
    board through the issue they link.
 
-6. Delete the Board template's five unused fields: **Priority**, **Size**,
-   **Estimate**, **Start date**, **Target date**. List the field ids first,
+6. Optional: the Team planning template's extra fields (**Priority**,
+   **Size**, **Estimate**, **Start date**, **Target date**) do no harm, and
+   nothing in dev-tasks reads or writes them; Project 5 keeps them (D-48).
+   Delete them only if you want a leaner Project. List the field ids first,
    then delete each one. **Not reversible**: a deleted field and every value
    in it are gone; recreating the field by hand gives an empty one.
 
@@ -135,13 +142,18 @@ existing issues if the board must be complete today).
 gh project field-list <number> --owner <owner> --format json --jq '[.fields[].name]'
 ```
 
-Expect `Priority`, `Size`, `Estimate`, `Start date` and `Target date` to be
-absent, and `Status` with `Parent issue` present. Then open the Workflows page
-once more and confirm the default workflows are as shipped and **Auto-add to
+Expect `Status` and `Parent issue` present, and the five optional fields
+absent only if step 6 deleted them. Then open the Workflows page once more
+and confirm the seven default workflows are as shipped and **Auto-add to
 project** shows this repository with the filter `is:issue`.
 
 Finally, open the three views: Roadmap groups by Parent issue, Wave shows the
 Status columns, Blocked lists only issues labeled `status: blocked`.
+
+Exercise record: `llipe/dev-tasks` Project 5 ("Dev-tasks",
+<https://github.com/users/llipe/projects/5>), created by the owner on
+2026-10-21 from the Team planning template; all seven shipped workflows
+enabled, auto-add filter `is:issue`, template fields kept (D-45 to D-48).
 
 ## Rollback
 
@@ -164,9 +176,9 @@ number, the owner login, and the output of the two verification commands.
 - A 403 on `gh project field-delete` or `gh project delete` means the token
   lacks the `project` scope or you are not an owner: re-run step 1, then ask
   an owner.
-- A Workflows page that does not show one of the five default workflows named
-  in step 4, or shows it under a different label, is a documentation drift
-  against PRD FR-6 and D-43, not a reason to add a workflow: record the exact
-  labels in the PR body and route the finding to `product-engineer`.
+- A Workflows page that does not show one of the seven default workflows
+  named in step 4, or shows it under a different label, is a documentation
+  drift against PRD FR-6 and D-47, not a reason to add a workflow: record the
+  exact labels in the PR body and route the finding to `product-engineer`.
 - A repository that is missing from the auto-add picker has Projects turned
   off in its settings; see Preconditions.

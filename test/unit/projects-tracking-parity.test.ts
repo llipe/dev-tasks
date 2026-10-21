@@ -10,8 +10,8 @@
  * this file has no cross-test import.
  */
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
@@ -32,10 +32,18 @@ function stripFrontmatter(content: string): string {
  * ``` fence are never headings: fenced templates (the wave issue body, the
  * status comment) carry `##` lines that belong to the enclosing section.
  */
-function splitIntoSections(body: string): Array<{ heading: string; text: string }> {
+interface Section {
+  heading: string;
+  /** Number of `#` on the heading line; 0 for the preamble before the first heading. */
+  level: number;
+  text: string;
+}
+
+function splitIntoSections(body: string): Section[] {
   const lines = body.split("\n");
-  const sections: Array<{ heading: string; text: string }> = [];
+  const sections: Section[] = [];
   let currentHeading = "";
+  let currentLevel = 0;
   let currentLines: string[] = [];
   let inFence = false;
   for (const line of lines) {
@@ -44,16 +52,21 @@ function splitIntoSections(body: string): Array<{ heading: string; text: string 
       currentLines.push(line);
       continue;
     }
-    const headingMatch = inFence ? null : line.match(/^#{1,6}\s+(.*)$/);
+    const headingMatch = inFence ? null : line.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {
-      sections.push({ heading: currentHeading, text: currentLines.join("\n") });
-      currentHeading = headingMatch[1];
+      sections.push({
+        heading: currentHeading,
+        level: currentLevel,
+        text: currentLines.join("\n"),
+      });
+      currentLevel = headingMatch[1].length;
+      currentHeading = headingMatch[2];
       currentLines = [];
     } else {
       currentLines.push(line);
     }
   }
-  sections.push({ heading: currentHeading, text: currentLines.join("\n") });
+  sections.push({ heading: currentHeading, level: currentLevel, text: currentLines.join("\n") });
   return sections;
 }
 
@@ -61,7 +74,7 @@ interface TreeCopy {
   tree: string;
   path: string;
   body: string;
-  sections: Array<{ heading: string; text: string }>;
+  sections: Section[];
 }
 
 function loadTrees(paths: Record<string, string>): TreeCopy[] {
@@ -72,16 +85,32 @@ function loadTrees(paths: Record<string, string>): TreeCopy[] {
 }
 
 /**
+ * The text of section `at` plus every following section of a deeper level,
+ * up to the next heading of equal or higher level; child heading lines are
+ * kept so a span reads like the source.
+ */
+function collectSection(sections: Section[], at: number): string {
+  const parts = [sections[at].text];
+  for (let i = at + 1; i < sections.length && sections[i].level > sections[at].level; i++) {
+    parts.push(`${"#".repeat(sections[i].level)} ${sections[i].heading}`, sections[i].text);
+  }
+  return parts.join("\n");
+}
+
+/**
  * Select one section by heading text and, optionally, by a substring of its
- * body — github-ops has two `### Title Format` sections (issues and PRs), so
- * the issue table is the one whose text contains `PRD story` (A-15).
+ * collected body — github-ops has two `### Title Format` sections (issues and
+ * PRs), so the issue table is the one whose text contains `PRD story` (A-15).
+ * Level-aware: a `##` section includes its `###` children (qa S-003 gate).
  */
 function sectionOf(copy: TreeCopy, heading: string, containing?: string): string {
-  const match = copy.sections.find(
-    (s) => s.heading.includes(heading) && (containing === undefined || s.text.includes(containing)),
-  );
+  const candidates = copy.sections
+    .map((section, index) => ({ section, index }))
+    .filter(({ section }) => section.heading.includes(heading))
+    .map(({ index }) => collectSection(copy.sections, index));
+  const match = candidates.find((text) => containing === undefined || text.includes(containing));
   expect(match, `${copy.path}: no section with heading containing "${heading}"`).toBeDefined();
-  return match!.text;
+  return match!;
 }
 
 /**
@@ -115,6 +144,40 @@ describe("helpers", () => {
     const process = sections.find((s) => s.heading === "Process")!;
     expect(process.text).toContain("## Artifacts");
     expect(process.text).toContain("step two");
+  });
+
+  // qa-engineer S-003 gate (6.1f): `sectionOf` is level-aware — a `##` section
+  // includes its `###` children up to the next heading of equal or higher
+  // level, so an assertion scoped to `## During Implementation` sees the text
+  // under `### Status Comment` without a span workaround.
+  it("sectionOf collects child headings of a deeper level", () => {
+    const body = [
+      "## During",
+      "intro",
+      "### Child",
+      "child text",
+      "#### Grandchild",
+      "grandchild text",
+      "## Before",
+      "after",
+    ].join("\n");
+    const copy: TreeCopy = {
+      tree: "fixture",
+      path: "fixture.md",
+      body,
+      sections: splitIntoSections(body),
+    };
+    const during = sectionOf(copy, "During");
+    expect(during).toContain("intro");
+    expect(during).toContain("child text");
+    expect(during).toContain("grandchild text");
+    expect(during).not.toContain("after");
+    // A `###` lookup stops at the next `###` or `##`, and includes its own `####`.
+    const child = sectionOf(copy, "Child");
+    expect(child).toContain("child text");
+    expect(child).toContain("grandchild text");
+    expect(child).not.toContain("intro");
+    expect(child).not.toContain("after");
   });
 });
 
@@ -179,6 +242,16 @@ describe("github-ops", () => {
       expect(section, copy.path).toMatch(/^\|.*`status: needs-refinement`/m);
       // Wave 1 retires the rows from the taxonomy only; existing issues are untouched (D-31).
       expect(copy.body, copy.path).not.toMatch(/remove .*status: ready/i);
+      // 6.1b / fidelity-report-S-001 DR-1: the retirement reason follows FR-7
+      // ("everywhere, Project or not": the linked PR shows the state natively),
+      // not D-07's older wording that tied it to the Project's Status field.
+      const retirement = copy.body
+        .split("\n")
+        .find((line) => line.includes("are retired from this taxonomy"));
+      expect(retirement, `${copy.path}: no retirement rationale bullet`).toBeDefined();
+      expect(retirement!, copy.path).toContain("Project or not");
+      expect(retirement!, copy.path).toMatch(/linked pull request/);
+      expect(retirement!, copy.path).not.toContain("Project's Status field carries that state");
     }
   });
 
@@ -210,6 +283,24 @@ describe("github-ops", () => {
         expect(fence, copy.path).toMatch(
           /^```text\n<!-- dev-tasks:status -->\n🔄 Update:[^\n]*Refs #<issue>/,
         );
+      }
+      // 6.1e / fidelity-report-S-003 DR-3: FR-23 names `coverage_gate` and the
+      // verifier verdict among the gates recorded, so the story template's
+      // Gates cell carries both beside the five quality gates.
+      const storyFence = fences.find((f) => f.includes("| Sub-tasks"));
+      expect(storyFence, `${copy.path}: no fenced story status template`).toBeDefined();
+      const gatesCell = storyFence!.split("\n").find((line) => line.includes("<done> of <total>"));
+      expect(gatesCell, `${copy.path}: no story row in the template`).toBeDefined();
+      for (const gate of [
+        "test",
+        "lint",
+        "format",
+        "typecheck",
+        "audit",
+        "coverage_gate",
+        "fidelity",
+      ]) {
+        expect(gatesCell!, `${copy.path}: Gates cell lacks ${gate}`).toContain(gate);
       }
       // A-10: "progress comment" is a forbidden synonym of "status comment".
       expect(copy.body, copy.path).not.toMatch(/progress comments?/i);
@@ -317,6 +408,39 @@ describe("activity-publish-github", () => {
     }
   });
 
+  // 6.1c / fidelity-report-S-002 DR-2 (qa S-002 gap): the PRD tracking issue
+  // has a body template so three zero-match publishes produce one shape, and
+  // every story issue is labeled `level: story` (D-03).
+  it("prd body template", () => {
+    for (const copy of trees) {
+      const fences = copy.body.match(/```[a-z]*\n[\s\S]*?```/g) ?? [];
+      const fence = fences.find((f) => f.includes("## Waves"));
+      expect(fence, `${copy.path}: no fenced PRD issue body template`).toBeDefined();
+      expect(fence!, copy.path).toMatch(/^```markdown\n# <PRD title>/);
+      expect(fence!, copy.path).toContain("](/docs/requirements/prd-<prd-name>.md)");
+      expect(fence!, copy.path).toContain("](/docs/roadmap.md)");
+      expect(fence!, copy.path).toMatch(/^- Wave <id>:/m);
+      expect(fence!, copy.path).not.toContain("- [ ]");
+      const process = sectionOf(copy, "Process");
+      expect(process, copy.path).toMatch(/PRD issue body[^\n]*template/);
+      expect(process, copy.path).toContain("labeled `level: story`");
+    }
+  });
+
+  // 6.1d / fidelity-report-S-002 DR-4: the story-issue title form is referenced
+  // from github-ops § Title Format, never restated (D-33), so no reader takes
+  // `<prd-number or name>` for a third convention.
+  it("story title pointer", () => {
+    for (const copy of trees) {
+      const stories = sectionOf(copy, "Story issues");
+      const title = stories.split("\n").find((line) => line.startsWith("- **Title:**"));
+      expect(title, `${copy.path}: no Title bullet under Story issues`).toBeDefined();
+      expect(title!, copy.path).toContain("github-ops § Title Format");
+      expect(copy.body, copy.path).not.toContain("[PRD-<prd-number or name>]");
+      expect(copy.body, copy.path).not.toContain("Story [ID]: [Title]");
+    }
+  });
+
   // PT-10 — S-002 AC-4; FR-3, D-02
   it("sub-issue attach and verify", () => {
     for (const copy of trees) {
@@ -360,18 +484,10 @@ describe("implement", () => {
   // contains every edit below (A-15, EC-19).
   const trees = loadTrees(IMPLEMENT_TREES);
 
-  // `## During Implementation` is split at its `###` subsections, so the
-  // assertions are scoped to the span up to `## Before Closing` instead.
-  function duringImplementation(copy: TreeCopy): string {
-    const span = copy.body.match(/## During Implementation[\s\S]*?## Before Closing/)?.[0];
-    expect(span, `${copy.path}: no During Implementation span`).toBeDefined();
-    return span!;
-  }
-
   // PT-12 — S-003 AC-1; FR-23, D-25, D-38
   it("mandatory rule", () => {
     for (const copy of trees) {
-      const section = duringImplementation(copy);
+      const section = sectionOf(copy, "During Implementation");
       expect(section, copy.path).toMatch(/\*\*MUST\*\* keep the story's status comment current/);
       expect(section, copy.path).toContain("Status comment");
       for (const event of [
@@ -400,7 +516,7 @@ describe("implement", () => {
   // PT-14 / CT-1 / CT-7 — S-003 AC-2; D-26, D-28, D-37; A-8 duplicate case (EC-15)
   it("procedure and report field", () => {
     for (const copy of trees) {
-      const section = duringImplementation(copy);
+      const section = sectionOf(copy, "During Implementation");
       expect(section, copy.path).toContain("issues/{n}/comments --paginate");
       expect(section, copy.path).toContain('startswith("<!-- dev-tasks:status -->")');
       expect(section, copy.path).toContain("gh issue comment");
@@ -422,7 +538,7 @@ describe("implement", () => {
   // PT-15 / CT-7 — S-003 AC-3; FR-24, D-29; A-8 missing-comment case (EC-18)
   it("main-thread wave update", () => {
     for (const copy of trees) {
-      const section = duringImplementation(copy);
+      const section = sectionOf(copy, "During Implementation");
       expect(section, copy.path).toContain("issues/{n}/parent");
       expect(section, copy.path).toContain("PR open");
       expect(section, copy.path).toContain("PR ready");
@@ -430,15 +546,15 @@ describe("implement", () => {
       expect(section, copy.path).toContain("wave_status: skipped(no parent)");
       expect(section, copy.path).toContain("wave_status: owned-by-planner");
       expect(section, copy.path).toContain("wave_status: written");
-      // Parent found but the wave has no status comment yet: create it (A-8).
-      expect(section, copy.path).toMatch(/no status comment[^\n]*create/i);
+      // Parent found but the wave has no status comment yet: create it (A-8, EC-18).
+      expect(section, copy.path).toContain("create it from the wave table");
     }
   });
 
   // PT-16 — S-003 AC-4; FR-23
   it("checklist rules unchanged", () => {
     for (const copy of trees) {
-      const section = duringImplementation(copy);
+      const section = sectionOf(copy, "During Implementation");
       expect(section, copy.path).toContain("Mark it `[x]` in the GitHub Issue checklist.");
       expect(section, copy.path).toContain(
         "keep the local task list and the GitHub Issue checklist aligned at all times",
@@ -545,6 +661,15 @@ describe("developer", () => {
       ).toBeDefined();
       // The pointer names implement's section, so a reader can find the procedure.
       expect(pointer!, copy.path).toContain("Status Comment");
+      // 6.1g / fidelity-report-S-004 DR-3: `implement` is a skill only on Claude;
+      // on Copilot it is an instruction and on Kiro a steering file, so those
+      // two copies call it "the `implement` procedure".
+      if (copy.tree === "claude") {
+        expect(pointer!, copy.path).toContain("the `implement` skill's");
+      } else {
+        expect(pointer!, copy.path).toContain("the `implement` procedure");
+        expect(pointer!, copy.path).not.toContain("`implement` skill");
+      }
       // Negative: the procedure and the template are never restated here.
       expect(copy.body, copy.path).not.toContain("gh api -X PATCH");
       expect(copy.body, copy.path).not.toContain("issues/comments/{id}");
@@ -556,6 +681,36 @@ describe("developer", () => {
   });
 });
 
+// --- Project-write guard declarations (S-006, #275) -------------------------
+
+/**
+ * The roots the guard walks: the three platform trees plus `docs/` (D-44), so
+ * the runbook cannot carry a Project write either. Nothing under a root is
+ * excluded except `docs/requirements/`: a PRD states the prohibition by
+ * quoting the command it forbids (prd-projects-tracking goal 2, AC-3), and it
+ * is requirements prose, not a procedure an agent executes.
+ */
+const GUARDED_ROOTS = [".claude", ".github", ".kiro", "docs"] as const;
+const GUARD_EXCLUDED_PREFIX = "docs/requirements/";
+
+/**
+ * Project Status is never written by an agent (D-23). The only `gh project`
+ * verbs that may appear anywhere are the runbook's setup and read verbs
+ * (`create`, `field-delete`, `view`, `field-list`); the two item writes are
+ * forbidden in every file the walk reaches. Hoisted above the activity-init
+ * block because PT-25 reuses it for the runbook's own line-scoped negative.
+ */
+const PROJECT_WRITE = /gh\s+project\s+item-(edit|add)\b/;
+
+/** Every `.md` under `root`, recursive, as a root-relative path, sorted. */
+function markdownFiles(root: string): string[] {
+  return readdirSync(resolve(ROOT, root), { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+    .map((entry) => relative(ROOT, join(entry.parentPath, entry.name)))
+    .filter((path) => !path.startsWith(GUARD_EXCLUDED_PREFIX))
+    .sort();
+}
+
 // --- activity-init (S-005, #274) ---------------------------------------------
 
 const INIT_TREES = {
@@ -566,15 +721,6 @@ const INIT_TREES = {
 
 const INIT_HEADING = "Repository Setup — GitHub Project (Recommended)";
 const RUNBOOK_PATH = "docs/runbooks/runbook-configure-github-project.md";
-
-/**
- * Project Status is never written by an agent (D-23); the only `gh project`
- * verbs that may appear anywhere in the runbook are setup verbs (`create`,
- * `field-delete`, `view`, `field-list`). S-006's guard extends this walk to
- * the three trees and `docs/` (D-44); PT-25 carries the negative for the
- * runbook file in wave 1.
- */
-const FORBIDDEN_PROJECT_WRITE = /gh\s+project\s+item-(edit|add)\b/;
 
 /** PRD AC-5: no step changes a default automation. */
 const AUTOMATION_TOGGLE =
@@ -608,6 +754,10 @@ describe("activity-init", () => {
       expect(terminators.length, `${copy.path}: subsection is empty`).toBeGreaterThan(0);
       // No numbered step: the 54-step pin in skill-parity-init stays (A-1).
       expect(text, copy.path).not.toMatch(/^[0-9]+\. /m);
+      // 6.1j / D-46, D-47: the subsection names no template and no reopened
+      // workflow, since either template is accepted and no such default exists.
+      expect(text, copy.path).not.toContain("Board template");
+      expect(text, copy.path).not.toContain("Item reopened");
     }
   });
 
@@ -627,35 +777,51 @@ describe("activity-init", () => {
     expect(content).toMatch(/^last_verified: \d{4}-\d{2}-\d{2}$/m);
     expect(content).toMatch(/^related: \["docs\/requirements\/prd-projects-tracking\.md"\]$/m);
 
+    // 6.1h — D-45 to D-48, read from the Project 5 exercise on 2026-10-21:
+    // either template is accepted and both Status sets are named (D-46); the
+    // seven shipped workflows are listed and "Item reopened" is not one of
+    // them (D-47); the Team planning template's extra fields are kept, so
+    // the field cleanup is an optional note, never a required step (D-48).
     const steps = section("Steps");
     for (const marker of [
       "gh auth refresh -s project",
       "Board",
+      "Team planning",
+      "Todo, In Progress, Done",
+      "Backlog, Ready, In progress, In review, Done",
       "is:issue",
-      "Priority",
-      "Size",
-      "Estimate",
-      "Start date",
-      "Target date",
-      "Item added",
+      "Auto-add to project",
+      "Auto-add sub-issues to project",
+      "Auto-close issue",
+      "Item added to project",
       "Item closed",
-      "Item reopened",
       "Pull request linked to issue",
+      "Pull request merged",
       "Parent issue",
       'label:"status: blocked"',
       "level:",
     ]) {
       expect(steps, `Steps lacks "${marker}"`).toContain(marker);
     }
-    // Verification uses the two read verbs (D-10).
+    expect(content).not.toContain("Item reopened");
+    expect(steps).toMatch(/optional/i);
+    expect(steps).not.toMatch(/^\d+\. Delete/m);
+    // Verification uses the two read verbs (D-10) and records the exercise.
     const verification = section("Verification");
     expect(verification).toContain("gh project view");
     expect(verification).toContain("gh project field-list");
+    expect(verification).toContain("Project 5");
+    expect(verification).toContain("2026-10-21");
+    expect(verification).toContain("is:issue");
+    expect(verification).toMatch(/seven/i);
+    expect(content).toMatch(/^last_verified: 2026-10-21$/m);
 
-    // A-5 / D-43: Auto-close issue is off by default and left alone; the
+    // D-45: Auto-close issue ships enabled and is left as shipped; since no
+    // agent writes Status it can only fire on a human's Status change. The
     // exercise records the exact names shown on the Workflows page.
     expect(content).toContain("Auto-close issue");
-    expect(content).toMatch(/off by\s+default/);
+    expect(content).toMatch(/ships enabled/);
+    expect(content).not.toMatch(/off by\s+default/);
     expect(content).toMatch(/Workflows page/);
 
     // Edge cases: the repository setting that enables Projects (EC-26) and
@@ -668,14 +834,118 @@ describe("activity-init", () => {
     // Negatives: no Project write anywhere (D-23, D-44); no step toggles a
     // default automation (PRD AC-5).
     for (const [index, line] of content.split("\n").entries()) {
-      expect(line, `${RUNBOOK_PATH}:${index + 1} writes a Project item`).not.toMatch(
-        FORBIDDEN_PROJECT_WRITE,
-      );
+      expect(line, `${RUNBOOK_PATH}:${index + 1} writes a Project item`).not.toMatch(PROJECT_WRITE);
     }
     for (const [index, line] of steps.split("\n").entries()) {
       expect(line, `${RUNBOOK_PATH} Steps line ${index + 1} toggles an automation`).not.toMatch(
         AUTOMATION_TOGGLE,
       );
     }
+  });
+});
+
+// --- no Project writes (S-006, #275) -----------------------------------------
+
+describe("no Project writes", () => {
+  // PT-29 / RT-1 — S-006 AC-1: the enumerated matcher table. Deterministic by
+  // construction; every `gh`, whitespace, `project`, whitespace, `item-edit`
+  // or `item-add` string matches, and every `gh project <read verb>` does not.
+  it("matcher self-check", () => {
+    const mustMatch = [
+      "gh project item-edit --id X",
+      "`gh project item-add`",
+      "run gh  project item-edit",
+      "gh project item-edit\n",
+      "gh project item-add --owner llipe --url https://github.com/llipe/dev-tasks/issues/1",
+    ];
+    const mustNotMatch = [
+      "gh project view",
+      "gh project field-list",
+      "gh project item-list",
+      "gh project list",
+      "Item added to project",
+      "gh project create",
+    ];
+    for (const fixture of mustMatch) {
+      expect(fixture, `matcher misses "${fixture}"`).toMatch(PROJECT_WRITE);
+    }
+    for (const fixture of mustNotMatch) {
+      expect(fixture, `matcher wrongly catches "${fixture}"`).not.toMatch(PROJECT_WRITE);
+    }
+  });
+
+  // PT-28 — S-006 AC-1; PRD AC-3a; FR-6; D-23, D-44. Line-scoped so the failure
+  // names the file and line; a code fence quoting the command fails too (EC-34).
+  it("no gh project writes in any tree", () => {
+    for (const root of GUARDED_ROOTS) {
+      const files = markdownFiles(root);
+      expect(files.length, `${root}: walk found no markdown files`).toBeGreaterThan(0);
+      for (const file of files) {
+        const lines = readFileSync(resolve(ROOT, file), "utf-8").split("\n");
+        for (const [index, line] of lines.entries()) {
+          expect(line, `${file}:${index + 1} writes a Project item`).not.toMatch(PROJECT_WRITE);
+        }
+      }
+    }
+  });
+
+  // PT-28b — PRD goal 5; D-23, D-24: no agent needs the Project's identity or
+  // the `project` token scope, and setup verbs live only in the runbook under
+  // `docs/`, never in a prompt tree (EC-38 widens the negative now so wave 3
+  // must consciously relax it with a decision).
+  it("no project scope or project id in any tree", () => {
+    const setupVerb = /gh\s+project\s+(edit|create|delete|field-create|item-delete|item-archive)\b/;
+    for (const root of GUARDED_ROOTS.filter((r) => r !== "docs")) {
+      for (const file of markdownFiles(root)) {
+        const content = readFileSync(resolve(ROOT, file), "utf-8");
+        expect(content, `${file} asks for the project token scope`).not.toContain(
+          "gh auth refresh -s project",
+        );
+        expect(content, `${file} carries a Project setup verb`).not.toMatch(setupVerb);
+      }
+    }
+  });
+});
+
+// --- TESTING.md dogfood table (S-006, #275) ----------------------------------
+
+describe("TESTING.md", () => {
+  // PT-30 / CT-12 — S-006 AC-2, AC-3; D-39, D-42; A-12, A-16. Behavioural
+  // criteria are verified by dogfood and recorded here with the satisfying
+  // issue number, `n/a (pre-rule)` for the two stories that ran before
+  // S-003's rule existed, or `pending` until the event happens.
+  it("dogfood table", () => {
+    const content = readFileSync(resolve(ROOT, "TESTING.md"), "utf-8");
+    expect(content).toMatch(/^version: 1\.1$/m);
+    const sections = splitIntoSections(stripFrontmatter(content));
+    const dogfood = sections.find((s) => /Dogfood checks/.test(s.heading));
+    expect(dogfood, "TESTING.md: no Dogfood checks section").toBeDefined();
+    const rows = dogfood!.text.split("\n").filter((line) => line.startsWith("|"));
+    expect(squashSpaces(rows[0] ?? "")).toMatch(/^\| Criterion \|.* Issue \|.* Status \|$/);
+    const table = rows.join("\n");
+    expect(table).toMatch(/^\|[^\n]*PRD AC-1[^\n]*pending/m);
+    for (const [story, evidence] of [
+      ["S-001", "#270"],
+      ["S-002", "#271"],
+      ["S-003", "#272"],
+      ["S-004", "#273"],
+      ["S-005", "#274"],
+      ["S-006", "#275"],
+    ]) {
+      const row = rows.find((line) => line.includes("PRD AC-3") && line.includes(story));
+      expect(row, `TESTING.md: no PRD AC-3 row for ${story}`).toBeDefined();
+      expect(row!, story).toContain(evidence);
+      if (story === "S-001" || story === "S-002") {
+        expect(row!, story).toContain("n/a (pre-rule)");
+      } else {
+        expect(row!, story).toMatch(/observed/);
+      }
+    }
+    expect(table).toMatch(/^\|[^\n]*FR-24[^\n]*pending/m);
+    expect(table).toMatch(/^\|[^\n]*D-36[^\n]*pending/m);
+    expect(table).toMatch(/^\|[^\n]*DF-4[^\n]*Project 5[^\n]*D-48/m);
+    const changelog = sections.find((s) => s.heading === "Changelog");
+    expect(changelog, "TESTING.md: no Changelog section").toBeDefined();
+    expect(changelog!.text).toMatch(/^\| 1\.1 +\| \d{4}-\d{2}-\d{2} +\|[^\n]*Dogfood/m);
   });
 });

@@ -62,7 +62,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
 3. **Task synchronization:** Whenever a sub-task is completed, you **MUST** immediately mark `[x]` in:
    - The local task file in `/workstream/`
    - The GitHub Issue checklist
-   - The story's status comment on the GitHub Issue, kept current per the `implement` skill's `### Status Comment` procedure — the procedure and the `github-ops` § Status comment template are referenced by name and never restated here; report each outcome as `status_comment:` and `wave_status:` in the closeout payload
+   - The story's status comment on the GitHub Issue, kept current per the `implement` procedure's `### Status Comment` section — the procedure and the `github-ops` § Status comment template are referenced by name and never restated here; report each outcome as `status_comment:` and `wave_status:` in the closeout payload
 4. **Branch + PR discipline (before coding):** You **MUST** follow `github-ops` conventions:
    - Create branch per `github-ops` branch naming rules (e.g., `issue/42-short-description`, `story/S-003-short-description`)
    - Open a Draft PR against the default branch unless a base branch override is provided. A PR requires at least one commit, so open it immediately after the first commit on the branch — never before. You **MUST NOT** continue past that first commit without the Draft PR open.
