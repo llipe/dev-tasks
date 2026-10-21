@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                      | Author                    |
 | ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.1 | 2026-10-21 | Recorded intended deviations from the audits: S-004 AC-1 `wave_status` has four values (adds `failed(<reason>)`, S-003 DR-1); S-005 AC-3 accepts either template, keeps Auto-close as shipped (enabled) and makes field cleanup optional (D-45 to D-48); S-006 gained 6.1b to 6.1j from the audits and the Project 5 exercise. | product-engineer |
 | 1.0     | 2026-10-20 | Initial story set from `workstream/specification-projects-tracking-phase-1.md` v1.0. Six stories; the PRD's seven candidates collapsed to six. | @llipe / product-engineer |
 
 Source: `docs/requirements/prd-projects-tracking.md` v1.3 (wave 1: FR-1 to FR-10, FR-23, FR-24) · Specification v1.0 · Decisions `workstream/decisions-projects-tracking.md` D-01 to D-39.
