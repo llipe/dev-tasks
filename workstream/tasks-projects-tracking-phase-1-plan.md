@@ -102,7 +102,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 5.10 Verify Acceptance Criterion: runbook exercised; Project number recorded (Project 5, 2026-10-21)
   - [x] 5.11 Run Tests: `pnpm run lint`, `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 6.0 Implement Story S-006: Cross-tree guard against Project writes and the dogfood rows in TESTING.md (#275)
+- [x] 6.0 Implement Story S-006: Cross-tree guard against Project writes and the dogfood rows in TESTING.md (#275)
 
   - [x] 6.1 Add a `describe("no Project writes")` block that walks every `.md` under `.claude/`, `.github/` and `.kiro/` recursively and asserts none contains `gh project item-edit` or `gh project item-add`, with a self-check that the matcher catches a fixture string containing the forbidden command; confirm the self-check is red before the matcher exists (D-23)
   - [x] 6.1a Extend the guard walk to `docs/` as well as the three trees, so the runbook cannot carry the two forbidden verbs either (Design Mode A-11, D-44)
@@ -122,7 +122,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 6.4 Verify Acceptance Criterion: guard passes on all three trees and fails on the fixture string
   - [x] 6.5 Verify Acceptance Criterion: Dogfood checks table and changelog row present
   - [x] 6.6 Verify Acceptance Criterion: S-001 to S-005 rows filled
-  - [ ] 6.7 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [x] 6.7 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 ## Decisions Consumed
 
