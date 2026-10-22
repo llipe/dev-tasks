@@ -1542,6 +1542,7 @@ describe("planner", () => {
   // PT-43 / CT-19 — S-011 AC-2; D-55, D-58, D-61, D-66; A-24, A-36 (EC-74), A-41, A-46
   it("phase 6 steps", () => {
     const sections: string[] = [];
+    const branchStates: string[] = [];
     for (const copy of trees) {
       const headings = copy.sections.map((s) => s.heading);
       const phase5At = headings.indexOf("Phase 5 - Consolidated Pull Request");
@@ -1565,7 +1566,7 @@ describe("planner", () => {
         "4. **Read the story PRs.**",
         "5. **Read the Project Status (read only).**",
         "6. **Create the close-out branch.**",
-        "7. **Roadmap row `Done`.**",
+        "7. **Roadmap row.**",
         "8. **Archive the state file.**",
         "9. **Record the Done observation.**",
         "10. **Status comments.**",
@@ -1633,9 +1634,56 @@ describe("planner", () => {
       }
       // EC-74: an issue still open after the merge is reported, never closed by hand.
       expect(step(3), copy.path).toMatch(/still open after the merge[^\n]*reported/);
+      // Verifier S-011 DR-3: `Done` only when every story merged and the wave issue closed;
+      // otherwise `In progress`, the unmerged stories named, and the PR body says so (FR-14).
+      inOrder(
+        step(7),
+        [
+          "every story in the state table reads `✅ Merged`",
+          "the wave issue, when there is one, reads closed",
+          "set `Status` to `Done` and `What's missing` to `—`",
+          "Otherwise",
+          "keep `Status` at `In progress`",
+          "list the unmerged stories in `What's missing`",
+          "say so in the close-out PR body",
+        ],
+        copy.path,
+      );
+      expect(step(7), copy.path).not.toMatch(/^7\. [^\n]*`Status` to `Done`;/);
+      // Verifier S-011 DR-8: comment edits are API writes, not branch writes.
+      expect(intro, copy.path).toContain(
+        "step 10 edits GitHub comments through the API, which touches no branch",
+      );
+      expect(intro, copy.path).not.toContain("steps 6 to 11 write");
+      expect(step(6), copy.path).toContain("every file change in steps 7 to 9");
+      expect(step(6), copy.path).not.toContain("steps 7 to 11");
+      // qa EC-86: Phase 0.5 and Phase 6 archive to the same path.
+      expect(step(8), copy.path).toContain("the same path Phase 0.5 uses");
+      const resume = copy.sections.find((s) => s.heading.includes("Resume Detection"));
+      expect(lineWith(resume!.text, "If declined", copy.path), copy.path).toContain(
+        "workstream/archive/planner-state-<plan-id>-archived.md",
+      );
+      expect(resume!.text, copy.path).not.toContain("rename with `-archived` suffix");
+      // Verifier S-011 DR-4: the integration-branch end state holds at the Phase 5 handoff only.
+      const branchState = lineWith(
+        sectionOf(copy, "Invariants"),
+        "final user-facing local branch state",
+        copy.path,
+      );
+      for (const marker of [
+        "At the Phase 5 handoff",
+        "integration branch for the current run",
+        "After Phase 6",
+        "`main`",
+        "close-out branch until its PR is open",
+      ]) {
+        expect(branchState, `${copy.path}: branch invariant lacks ${marker}`).toContain(marker);
+      }
+      branchStates.push(branchState);
       sections.push(section);
     }
     expect(new Set(sections).size, "Phase 6 section differs across trees").toBe(1);
+    expect(new Set(branchStates).size, "branch invariant differs across trees").toBe(1);
   });
 
   // PT-44 — S-011 AC-3; D-61; A-33, A-41, A-42
