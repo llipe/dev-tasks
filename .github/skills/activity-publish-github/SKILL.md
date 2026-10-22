@@ -30,7 +30,8 @@ This activity assumes the following documents exist:
 4. **Map Stories to Issues:** You **MUST** create one GitHub Issue per user story, labeled `level: story` plus its `type:` and `priority:` labels.
 5. **Publish to GitHub:** You **MUST** delegate issue creation and metadata application to `github-ops` whenever possible. After each story issue is created, you **MUST** attach it as a sub-issue of the wave issue (see Sub-issue Hierarchy).
 6. **Attach and Verify the Hierarchy:** After all stories are created, attach the wave under the PRD issue if not already attached, read both `sub_issues` lists back, and record the `hierarchy:` result in the publication report.
-7. **Save Output.**
+7. **Write the PRD Status Comment:** After the hierarchy is verified, create or edit the PRD issue's status comment in the shape of github-ops § Status comment's PRD table, found by its marker and written with implement § Status Comment's find-by-marker, create and PATCH procedure: the published wave's row reads `published`, with its wave issue number. An existing row for this wave is edited in place, never added a second time, and every other wave's row is kept as it is. The PRD issue is the one step 3 resolved, as the report's `PRD issue` line records it; when there is none, run step 3's `level: prd` search again, and with no PRD issue, skip the write. Record `prd_status: written | failed(<reason>) | skipped(no PRD issue)` in the publication report; a refused write is `failed(<reason>)`, and a failed write never stops the publication.
+8. **Save Output.**
 
 Execution method rules:
 
@@ -143,6 +144,7 @@ You **MUST** create a publication report:
 - PRD issue: #<number> (reused | created)
 - Wave issue: #<number> (reused | created)
 - Hierarchy: verified(<n> of <n>) | failed(<reason>)
+- prd_status: written | failed(<reason>) | skipped(no PRD issue)
 
 ## Created Issues
 
@@ -173,5 +175,6 @@ You **MUST** create a publication report:
 3. You **MUST** find or create the PRD and wave tracking issues before publishing any story; more than one match stops the run.
 4. You **MUST** publish each story as a GitHub Issue by delegating to `github-ops` whenever possible, and attach it as a sub-issue of the wave issue.
 5. You **MUST** attach the wave under the PRD issue, verify the hierarchy, and record the `hierarchy:` result.
-6. You **MUST** save the publication report with the tracking issue numbers and issue links.
-7. You **MUST** inform the user that GitHub is now the source of truth for execution tracking.
+6. You **MUST** create or edit the PRD issue's status comment so the wave's row reads `published`, and record `prd_status` in the publication report.
+7. You **MUST** save the publication report with the tracking issue numbers and issue links.
+8. You **MUST** inform the user that GitHub is now the source of truth for execution tracking.
