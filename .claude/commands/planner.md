@@ -163,6 +163,7 @@ Before parsing stories, check for an existing checkpoint state file.
 2. If a state file exists:
    - Read it and display the story status table.
    - Identify the next pending story from the `Current Position` section.
+   - If every story reads `✅ Merged` and the user reports the consolidated PR merged, do not ask to resume: run Phase 6 with the PR number the user names.
    - Ask: **"Resume from story [next-story-id]? (y/n)"**
    - If confirmed: skip Phases 1-3, load the integration branch and execution plan from the state file, and resume Phase 4 from the next pending story.
    - On resume, read the wave issue from Run Info's `Wave issue` line and reuse it; do not resolve it again. A state file written before that line existed has none: resolve the wave issue as Phase 0's **Wave Issue Resolution** does and add the line.
@@ -480,7 +481,7 @@ Write it at these events, in this order across a run:
 6. **Block** — whenever a story is marked blocked: the story reads `blocked`, with the reason in the update line.
 7. **Rollup** — Phase 5 step 3: the rollup audit's human-readable summary goes in this comment.
 8. **Consolidated PR open** — Phase 5 step 7: the update line names the consolidated PR.
-9. **Close-out** — Phase 5 step 9, when the user reports the consolidated PR merged: the update line says the wave shipped.
+9. **Close-out** — Phase 6's **Status comments** step, once the merge is verified: the update line says the wave shipped.
 
 When Run Info reads `Wave issue: none`, every write is skipped and reports `wave_status: skipped(no wave issue)`. A refused create or PATCH (permissions, a locked issue, a network error) reports `wave_status: failed(<reason>)`; two comments carrying the marker are handled as implement § Status Comment says, editing the oldest and reporting `failed(duplicate marker)`. Every skipped or failed value goes to the state file's Decisions Log and to the run summary. A wave status comment write never blocks a merge gate, a story, or the consolidated PR handoff.
 
@@ -537,7 +538,7 @@ After all stories are merged into integration:
    - **Closes lines.** Generate them from the state table and write them under the PR body's `## Why`, as github-ops's PR template names it: `Closes #N` for every story whose state-table row is `✅ Merged`; `Refs #N` with the reason for every story that is not merged (blocked or skipped), never `Closes`; `Closes #<wave>` for the wave issue only when every story in the state table merged, otherwise `Refs #<wave>` naming the unmerged stories. When Run Info reads `Wave issue: none` there is no `Closes #<wave>` line, and the body says no wave issue was found. Write one keyword per issue, each on its own line: a comma list such as `Closes #1, #2` closes only the first issue. Every other reference (the PRD issue, related issues) is `Refs #N`.
    - **Project Status observation (read only).** Once the PR is open, read one merged story's Project Status with `gh issue view <n> --json projectItems --jq '.projectItems[].status.name'`; the same read tells whether a Project tracks the issue, so no Project number and no extra token scope is needed, and nothing is ever written to the Project. An empty result means no Project: `not observed(no project)`. `In progress` records `observed`. Any other value (`Backlog` while GitHub's automation catches up) is re-read once after a short wait and then recorded as `not observed(automation pending at <time>)`; a refused read records `not observed(<reason>)` and never asks for more access. Record the result as `project_observation: observed | not observed(<reason>)` for "In progress at consolidated PR open" in the PR body and in `TESTING.md`'s DF-5 row, committed on the integration branch so the open PR picks it up.
 8. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
-9. Wait for the user to approve and merge the PR into `main`. When the user reports the merge, edit the wave status comment for close-out.
+9. Wait for the user to approve and merge the PR into `main`, then run Phase 6 when the user reports the merge; the run is not complete until Phase 6 has run.
 10. **Post-integration deploy handoff (conditional).** When the merged scope includes deployable changes and the repository declares environments in `infra/environments.yaml`, planner **MUST** hand the deploy off to `infra-engineer` rather than running any platform write or deploy command itself. This handoff is conditional — it applies only when infrastructure/deploy scope is present; a docs- or test-only integration triggers no deploy. Planner names `infra-engineer` as the owner of the post-integration deploy (dev on merge to `main`, production behind the protected-environment reviewer on the release tag via the `deploy-ops` workflow templates) and never invokes `deploy.sh`, `release.sh`, `flyctl`, `aws`, or `supabase` directly.
 11. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
 
@@ -549,7 +550,7 @@ After all stories are merged into integration:
 - consolidated PR URL
 - current CI/check status
 - exact required user actions: review, approve, and merge
-- a post-merge follow-up action (for example, delete integration branch or run a verification command)
+- a post-merge follow-up action: report the merge to the planner, in this session or a fresh one on `main`, naming the consolidated PR number and the plan id, so it runs Phase 6
 
 Consolidated PR should include:
 
@@ -593,9 +594,9 @@ Run this phase when the user reports that the consolidated PR merged into `main`
 `docs/roadmap.md` is the one-page overview of every PRD's phases or waves: what is done, what is in progress, and what is missing. It is an index over the PRDs, GitHub issues, and merged PRs — when they disagree, they win and the roadmap is corrected.
 
 - **Read** it in Phase 0 (see **Roadmap Read**).
-- **Update** the run's row(s) in Phase 5 step 5, in the consolidated PR. Never leave the roadmap claiming `In progress` for a phase this run finished, or `Done` for one it did not.
+- **Update** the run's row(s) twice, each time from `gh` output, never from memory: to `In progress` in Phase 5 step 5, in the consolidated PR, and to `Done` in Phase 6, in the `chore(roadmap)` PR, once the merge is verified. Never leave the roadmap claiming `In progress` for a phase whose consolidated PR merged, or `Done` for one whose consolidated PR has not.
 - Change only the rows this run touched; rows for other PRDs belong to `product-engineer` and to the planner runs that deliver them.
-- The `verifier` rollup audit (Phase 5 step 3) compares the roadmap against merged work and reports a mismatch as an advisory finding.
+- The `verifier` rollup audit (Phase 5 step 3) compares the roadmap with the delivered work, as its Roadmap-Mismatch Finding describes, and reports a mismatch as an advisory finding.
 
 ---
 
@@ -635,6 +636,7 @@ Run this phase when the user reports that the consolidated PR merged into `main`
 - All GitHub outputs are in English.
 - Final user-facing local branch state **MUST** be the integration branch for the current run, or planner **MUST** explicitly report verification failure and provide the exact checkout command.
 - Planner **MUST** end a successful run with explicit PR directives for the user (review/approve/merge) and **MUST NOT** mark the run complete before that handoff is emitted.
+- The run is complete only after Phase 6 - Close-out: the merge is verified, the roadmap row reads `Done`, the state file is archived, the `chore(roadmap)` PR is open and the integration branch is deleted.
 - Planner **MUST** invoke `qa-engineer` and `verifier` (Audit Mode) directly, scoped to each story's diff/branch/PR, before merging that story's PR into the integration branch (merge gates 5 and 6) — a story's self-reported `coverage_gate`/`verifier_audit` fields are supporting context only, never sufficient evidence on their own, and `not-run(no-delegation)`/`SKIPPED(no-delegation)` are valid, expected self-reports from the `developer` subagent, not red flags. Planner **MUST** also invoke `verifier` in `audit` mode for a PRD-level rollup audit before/alongside the consolidated PR. All these triggers are mandatory and non-skippable, and none of their drift findings block the corresponding merge/handoff.
 
 ---
@@ -654,4 +656,5 @@ For each run, return:
 - Consolidated PR link or blocker
 - Current test status
 - PR Directives (User Action Required)
+- Close-out (Phase 6): each step's result, any issue still open, `project_observation` and the `chore(roadmap)` PR link; the run is complete only after Phase 6
 - Next exact action awaiting approval or execution
