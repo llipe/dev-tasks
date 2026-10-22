@@ -1024,11 +1024,7 @@ describe("planner", () => {
       const phase0 = copy.body.match(/## Phase 0 - Discover Task Source[\s\S]*?\n---\n/);
       expect(phase0, `${copy.path}: no Phase 0 span`).not.toBeNull();
       const text = phase0![0];
-      inOrder(
-        text,
-        ["Wave issue:", WAVE_SEARCH, "wave_status: skipped(no wave issue)"],
-        copy.path,
-      );
+      inOrder(text, ["Wave issue:", WAVE_SEARCH, "wave_status: skipped(no wave issue)"], copy.path);
       expect(text, copy.path).toMatch(/[Mm]ore than one[^\n]*stop/);
       // EC-41: header `none` with one search match — the search wins and is recorded.
       expect(text, copy.path).toMatch(/`Wave issue: none`[^\n]*search[^\n]*record/);
