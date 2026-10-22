@@ -1856,3 +1856,77 @@ describe("TESTING.md", () => {
     expect(layers!.text).not.toMatch(/^\| [\d.]+ +\| \d{4}-\d{2}-\d{2} +\|/m);
   });
 });
+
+// --- verifier (S-012, #295) ---------------------------------------------------
+//
+// The Roadmap-Mismatch Finding compares the roadmap row with the wave tracking
+// issue and its sub-issues when one exists, and with the merged story PRs
+// otherwise (FR-16, D-57). Section byte-identity across trees is LT-11
+// (`roadmap-parity.test.ts`); these checks pin the content.
+
+const VERIFIER_TREES = {
+  claude: ".claude/agents/verifier.md",
+  github: ".github/agents/verifier.agent.md",
+  kiro: ".kiro/agents/verifier.md",
+};
+
+/** The numbered trigger line starting `${n}. ` inside the finding section. */
+function triggerLine(section: string, n: number, label: string): string {
+  const lines = section.split("\n").filter((line) => line.startsWith(`${n}. `));
+  expect(lines.length, `${label}: expected exactly one trigger line "${n}. "`).toBe(1);
+  return lines[0];
+}
+
+describe("verifier", () => {
+  const trees = loadTrees(VERIFIER_TREES);
+
+  // PT-51 (S-012 AC-1, D-57).
+  it("sub-issue comparison", () => {
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Roadmap-Mismatch Finding");
+      const one = triggerLine(section, 1, copy.path);
+      expect(one, copy.path).toContain("sub-issue");
+      expect(one, copy.path).toContain("`state`");
+      expect(triggerLine(section, 4, copy.path), copy.path).toContain("sub-issue numbers");
+      expect(section, copy.path).toContain("GET /repos/{o}/{r}/issues/{wave}/sub_issues");
+      expect(section, copy.path).toContain(
+        "gh api --paginate repos/{o}/{r}/issues/{wave}/sub_issues --jq '.[] | {number,state}'",
+      );
+      // D-36 search: `level: wave` label, title prefix, client-side `startswith`.
+      expect(section, copy.path).toContain('--label "level: wave"');
+      expect(section, copy.path).toContain('startswith("[PRD-<name>] Wave <id>:")');
+      expect(section, copy.path).toContain("D-36");
+    }
+  });
+
+  // PT-52 (S-012 AC-1): merged PRs stay the fallback.
+  it("fallback", () => {
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Roadmap-Mismatch Finding");
+      expect(section, copy.path).toMatch(/without a wave issue[^.\n]*merged/i);
+      expect(section, copy.path).toContain("gh pr list --base <integration branch> --state merged");
+    }
+  });
+
+  // 5.2a (A-36, EC-87, EC-88): one sentence per edge case.
+  it("edge cases", () => {
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Roadmap-Mismatch Finding");
+      const two = lineWith(section, "more than one wave issue", copy.path);
+      expect(two, copy.path).toContain("compare with neither");
+      const zero = lineWith(section, "zero sub-issues", copy.path);
+      expect(zero, copy.path).toContain("fall back to the merged story PRs");
+      expect(zero, copy.path).toContain("note");
+    }
+  });
+
+  // PT-53 (S-012 AC-2): advisory and routing unchanged.
+  it("advisory unchanged", () => {
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Roadmap-Mismatch Finding");
+      expect(section, copy.path).toContain("non-blocking to PR readiness and to issue completion");
+      expect(section, copy.path).toContain("Never hold a PR on it");
+      expect(section, copy.path).toContain("activity-drift-reconciliation");
+    }
+  });
+});
