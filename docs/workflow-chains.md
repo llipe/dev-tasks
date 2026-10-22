@@ -69,6 +69,8 @@ planner: orchestrate → developer: implement (per story, sequential)
 > `plan` captures the feature's `decision_log_path` (typically `workstream/decisions-<feature>.md`). `planner` passes it unconditionally in every story's `developer` handoff; each developer reads the log before starting work on their story.
 >
 > `developer: implement` maintains a status comment on the story issue (found and edited by marker `<!-- dev-tasks:status -->`), recording task progress and workflow gate completions at each stage. `planner` owns the wave status comment separately; a main-thread `developer` may update it after PR open.
+>
+> The PRD tracking issue carries one status comment too, one row per wave: `publish-github` writes the wave's row as `published`, and `planner` edits it to `in progress` at run start, `consolidated PR #n open` when the consolidated PR opens, and `shipped` at close-out. `plan` links the task list from the wave issue body's `Task plan:` line, and `planner` fills its `Integration branch:` and `Fidelity report:` lines.
 
 ## Quick Fix (Clear Issue, Task List Exists)
 
@@ -183,4 +185,16 @@ planner: orchestrate stories → developer: implement (per story)
          verifier (audit mode): PRD-level fidelity audit
               ↓
          PR: integration → main (user approval required)
+              ↓
+    ═══════════════ [User reports merge to main] ═══════════════
+              ↓
+    planner Phase 6 - Close-out:
+      ├─ Verify consolidated PR merged
+      ├─ Confirm story issues and wave issue closed
+      ├─ Confirm Project status Done
+      ├─ Set roadmap row: Done when every story in the state table reads ✅ Merged
+      │  and the wave issue, when there is one, reads closed; otherwise keep In progress
+      │  and list the unmerged stories in What's missing
+      ├─ Archive state file
+      └─ Open chore(roadmap) PR, delete integration branch
 ```

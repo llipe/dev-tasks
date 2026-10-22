@@ -172,9 +172,9 @@ Last merged PR: #<pr> or none
 Integration HEAD: `<sha>`
 Gates: <pass, fail or not run>
 
-| Story                 | State                                                | PR            | Sub-task          |
-| --------------------- | ---------------------------------------------------- | ------------- | ----------------- |
-| <story id> (#<issue>) | <pending, in progress, in review, merged or blocked> | #<pr> or none | <done> of <total> |
+| Story                 | State                                                                                 | PR            | Sub-task          |
+| --------------------- | ------------------------------------------------------------------------------------- | ------------- | ----------------- |
+| <story id> (#<issue>) | <pending, in progress (sub-task n of m), PR open, merged into integration or blocked> | #<pr> or none | <done> of <total> |
 ```
 
 PRD issue:
@@ -183,10 +183,12 @@ PRD issue:
 <!-- dev-tasks:status -->
 🔄 Update: <one-line summary> — Refs #<issue>
 
-| Wave | State                              | Wave issue |
-| ---- | ---------------------------------- | ---------- |
-| <id> | <not started, in progress or done> | #<issue>   |
+| Wave | State                                                        | Wave issue |
+| ---- | ------------------------------------------------------------ | ---------- |
+| <id> | <published, in progress, consolidated PR #n open or shipped> | #<issue>   |
 ```
+
+The PRD table has one row per wave, in wave order. `activity-publish-github` writes a wave's row at publish and the planner edits it at run start, consolidated PR open and close-out; an existing row is edited in place, never added a second time, and every other wave's row is kept as it is.
 
 ### Issue Closure Attribution
 
@@ -266,6 +268,7 @@ Rules:
 - The attribution line **MUST** be present when creating a PR.
 - The attribution value **MUST** identify the assisting system and version when available (for example, `GitHub Copilot v1`, `Claude Code v3`).
 - The `## Why` section **MUST** reference the appropriate issue (`Closes #<number>` or `Refs #<number>`). If no issue exists, it **MUST** reference the motivating commit (`Refs <sha>`).
+- A consolidated PR from an integration branch to the default branch **MUST** carry `Closes #<number>` for every story issue it delivers, and for the wave tracking issue when it delivers every story of the wave, one keyword per issue on its own line; `Refs` is for everything else.
 
 ### Change-Record PR Shape (infra-engineer)
 
