@@ -1111,7 +1111,8 @@ describe("TESTING.md", () => {
     const rows = dogfood!.text.split("\n").filter((line) => line.startsWith("|"));
     expect(squashSpaces(rows[0] ?? "")).toMatch(/^\| Criterion \|.* Issue \|.* Status \|$/);
     const table = rows.join("\n");
-    expect(table).toMatch(/^\|[^\n]*PRD AC-1[^\n]*pending/m);
+    // PT-54 (A-38): the PRD AC-1 row reads `pending` until the wave 2 publish is recorded, then `observed`.
+    expect(table).toMatch(/^\|[^\n]*PRD AC-1[^\n]*(pending|observed)/m);
     for (const [story, evidence] of [
       ["S-001", "#270"],
       ["S-002", "#271"],
@@ -1135,5 +1136,11 @@ describe("TESTING.md", () => {
     const changelog = sections.find((s) => s.heading === "Changelog");
     expect(changelog, "TESTING.md: no Changelog section").toBeDefined();
     expect(changelog!.text).toMatch(/^\| 1\.1 +\| \d{4}-\d{2}-\d{2} +\|[^\n]*Dogfood/m);
+    // A-38 (S-008 task 1.10a): changelog rows live under `## Changelog`, never in the Test Layers table.
+    expect(changelog!.text).toMatch(/^\| 1\.2 +\| \d{4}-\d{2}-\d{2} +\|/m);
+    expect(changelog!.text).toMatch(/^\| 1\.3 +\| \d{4}-\d{2}-\d{2} +\|/m);
+    const layers = sections.find((s) => s.heading === "Test Layers");
+    expect(layers, "TESTING.md: no Test Layers section").toBeDefined();
+    expect(layers!.text).not.toMatch(/^\| [\d.]+ +\| \d{4}-\d{2}-\d{2} +\|/m);
   });
 });
