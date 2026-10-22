@@ -569,6 +569,25 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 
 ---
 
+## Phase 6 - Close-out
+
+Run this phase when the user reports that the consolidated PR merged into `main`. It may start in any session, including a fresh one on `main`, which is recommended so the merged planner prompt drives it: the user names the merged consolidated PR number `<n>` and the plan id, and the planner reads `workstream/planner-state-<plan-id>.md`, which the checkpoint commits carried into `main`. Steps 1 to 5 only read; steps 6 to 11 write, on the close-out branch only; step 12 deletes the integration branch last. Phase 6 never merges anything and never pushes to `main`.
+
+1. **Verify the merge.** Run `gh pr view <n> --json state,mergedAt` and require `state` to be `MERGED` and `mergedAt` to be non-null. Anything else (`OPEN`, `CLOSED` without a merge, an error) means stop: report the exact output, write nothing, and wait for the user.
+2. **Pull main.** Check out `main` and pull it, so every read below and the close-out branch start from the merged state.
+3. **Confirm the issues closed.** Read the wave issue's story issues and their states with `gh api repos/{o}/{r}/issues/{wave}/sub_issues --jq '.[] | {number,state}'` and the wave issue's own state with `gh issue view <wave> --json state`; when Run Info reads `Wave issue: none`, read each story issue in the state table with `gh issue view <n> --json state`. Confirm that every story issue and the wave issue reads closed: GitHub closed them through the consolidated PR's `Closes` lines, and the wave issue stays open by design when the PR carried `Refs #<wave>` because a story did not merge. A story issue still open after the merge is reported in the run summary with its number and left for the user; Phase 6 never closes it by hand.
+4. **Read the story PRs.** Read the story PRs merged into the integration branch with `gh pr list --base <integration branch> --state merged --json number` now, while the integration branch still exists.
+5. **Read the Project Status (read only).** For every story issue and the wave issue, read `gh issue view <n> --json projectItems --jq '.projectItems[].status.name'` and confirm `Done`. An empty result means no Project tracks the issues and records `not observed(no project)`; any other value is re-read once after a short wait and then recorded as `not observed(automation pending at <time>)`; a refused read records `not observed(<reason>)` and never asks for more access. The Project is read, never written. Record the result as `project_observation: observed | not observed(<reason>)` for "Done at consolidated PR merge".
+6. **Create the close-out branch.** From the pulled `main`, create `chore/<plan-id>-closeout`; every write in steps 7 to 11 is committed on this branch, never on `main`.
+7. **Roadmap row `Done`.** In `docs/roadmap.md`, set the run's row: `Status` to `Done`; `Issues/PRs` to the wave issue and the story issues from step 3, the story PRs from step 4 and the consolidated PR `#<n>`; `What's missing` to `—`; and the `Last updated` date. Every value comes from steps 1 to 4, never from memory. When the row is absent, leave `docs/roadmap.md` unchanged, report it, and ask the user to have `product-engineer` add the row; never invent one.
+8. **Archive the state file.** Move `workstream/planner-state-<plan-id>.md` to `workstream/archive/planner-state-<plan-id>-archived.md` with `git mv`, so the next run starts fresh; it is the same `-archived` suffix Phase 0.5 uses for a declined resume.
+9. **Record the Done observation.** Write step 5's `project_observation` for "Done at consolidated PR merge" in `TESTING.md`'s DF-5 row.
+10. **Status comments.** Edit the PRD issue's status comment so the wave's row reads `shipped`, found by its marker and edited in place per implement § Status Comment; then edit the wave status comment so its update line says the wave shipped (see **Wave Status Comment**). A failed write is reported in the run summary and never blocks the close-out PR.
+11. **Open one `chore(roadmap)` PR to `main`.** Commit steps 7 to 9 on `chore/<plan-id>-closeout` with the message `chore(roadmap): close out <plan-id>`, push the branch, and open one PR to `main` with the same title, its body written to a file per github-ops's PR template, with `Refs #<wave>` under `## Why`. The planner never merges it: the user reviews and merges it.
+12. **Delete the integration branch, last.** Delete the integration branch locally and remotely only after the close-out PR is open: `git branch -d <integration branch>` and `git push origin --delete <integration branch>`. Then report the run summary: each step's result, any issue still open, `project_observation`, and the close-out PR URL. The run is complete only after this step.
+
+---
+
 ## Roadmap Maintenance
 
 `docs/roadmap.md` is the one-page overview of every PRD's phases or waves: what is done, what is in progress, and what is missing. It is an index over the PRDs, GitHub issues, and merged PRs — when they disagree, they win and the roadmap is corrected.
