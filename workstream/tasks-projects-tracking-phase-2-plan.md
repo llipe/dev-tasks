@@ -96,7 +96,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
 - [ ] 6.0 Implement Story S-018: The PRD issue carries one status comment updated at wave events (#296)
 
-  - [ ] 6.1 Extend the `activity-publish-github`, `planner` and `plan` blocks: PRD status comment at publish with `prd_status` values, planner edits at run start, PR open and close-out, Artifacts `Task plan:` set by plan and fidelity report set by the planner; confirm red
+  - [x] 6.1 Extend the `activity-publish-github`, `planner` and `plan` blocks: PRD status comment at publish with `prd_status` values, planner edits at run start, PR open and close-out, Artifacts `Task plan:` set by plan and fidelity report set by the planner; confirm red
   - [ ] 6.2 In the three publish copies, after hierarchy verification, create or edit the PRD issue's status comment per github-ops's PRD table with the wave row `published`, reporting `prd_status: written | failed(<reason>) | skipped(no PRD issue)` in the publication report; PRD issue number from the report's line, else the D-36 `level: prd` search (FR-25)
   - [ ] 6.2a Widen github-ops's PRD status table states in all three copies to published, in progress, consolidated PR #n open, shipped; an existing wave row is edited, never duplicated (A-21, A-36, D-63)
   - [ ] 6.3 In the three planner copies, edit the PRD status comment at run start (`in progress`), at consolidated PR open (`consolidated PR #n open`) and in Phase 6 (`shipped`), recording `prd_status` in the state file; and set the wave issue body's Artifacts fidelity-report line at Phase 5 (FR-25, D-61)
