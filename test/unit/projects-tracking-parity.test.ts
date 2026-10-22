@@ -1510,7 +1510,7 @@ describe("planner", () => {
     for (const copy of trees) {
       const all = copy.body.match(/^\d+\. \*\*Roadmap update \(mandatory\)\.\*\*.*$/gm) ?? [];
       expect(all, `${copy.path}: expected one roadmap step line`).toHaveLength(1);
-      const step = all[0];
+      const step = all[0]!;
       for (const marker of [
         ROADMAP_SUB_ISSUES,
         ROADMAP_ISSUE_SEARCH,
