@@ -249,12 +249,17 @@ new category. Never hold a PR on it.
 
 `docs/roadmap.md` is the one-page index of every PRD's phases or waves and their status. It goes stale silently unless something compares it with what actually merged, so that comparison lives here as a finding.
 
+**Comparison target** (FR-16, D-57). When the wave has a tracking issue, compare the row with that wave issue and its sub-issues, the authoritative story list. Use the wave issue the caller names (the planner passes Run Info's `Wave issue: #N`); otherwise find it by its `level: wave` label and `[PRD-<name>] Wave <id>:` title prefix, filtered client-side with `startswith` (D-36): `gh issue list --label "level: wave" --search "[PRD-<name>] Wave <id>: in:title" --state all --json number,title,state --jq 'map(select(.title | startswith("[PRD-<name>] Wave <id>:")))'`. Read the sub-issue numbers and states from `GET /repos/{o}/{r}/issues/{wave}/sub_issues`, paginated: `gh api --paginate repos/{o}/{r}/issues/{wave}/sub_issues --jq '.[] | {number,state}'`. Without a wave issue, the existing comparison stands: compare the row with the merged story PRs, read with `gh pr list --base <integration branch> --state merged --json number`. Name in the finding, or in its "no finding" line, the wave issue and the sub-issue states you read, or that you used the fallback.
+
+- When the search returns more than one wave issue, report the matching issue numbers in the finding and compare with neither; never pick one silently.
+- When the wave issue has zero sub-issues, fall back to the merged story PRs and note in the finding that the wave issue had no sub-issues.
+
 **Trigger** (PRD-level rollup audits, and story audits whose story completes a phase or wave). Report the finding when any of these hold:
 
-1. The audited work completes a PRD phase or wave, and its roadmap row is not `Done` in the delivered tree.
-2. A roadmap row is `Done`, but the audited scope shows that phase's stories unmerged or its acceptance criteria unmet.
+1. The audited work completes a PRD phase or wave, and its roadmap row is not `Done` in the delivered tree. With a wave issue, the wave is complete when every sub-issue's `state` reads `closed`; without one, when every story PR has merged.
+2. A roadmap row is `Done`, but the audited scope shows that phase's stories unmerged (with a wave issue, a sub-issue still `open`) or its acceptance criteria unmet.
 3. The audited PRD defines a phase or wave with no roadmap row, or `docs/roadmap.md` is missing while `docs/requirements/` holds a PRD.
-4. A row's `Issues/PRs` or `What's missing` contradicts the audited issues and PRs.
+4. A row's `Issues/PRs` or `What's missing` contradicts the audited issues and PRs: with a wave issue, the sub-issue numbers and states read above (a sub-issue missing from `Issues/PRs`, or a closed one still named in `What's missing`); without one, the merged story PRs.
 
 **Not a finding:** rows for PRDs outside the audited scope; a row left `In progress` while some of its stories are still open.
 
