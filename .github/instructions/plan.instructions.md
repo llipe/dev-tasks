@@ -28,6 +28,7 @@ This activity adapts to the input — it works with a user stories file (from th
    - **Plan header:** The header carries `Source:` (the source document) and, on the next line, `Wave issue: #N`, its own line with no bold or backticks so the planner can read it at Phase 0. In Stories Mode, take the number from the publication report's `Wave issue` line (`workstream/github-publication-<prd-name>.md`, written by `activity-publish-github`). When the report predates the tracking hierarchy or has no `Wave issue` line, or in Issue Mode, write `Wave issue: none` and add a `> Note:` line under it saying the planner will search for the wave issue at Phase 0.
 5. **Publish to GitHub:** You **MUST** update the corresponding GitHub Issue(s) with the task checklist by delegating to `github-ops` whenever possible.
 6. **Save Output.**
+7. **Set the Task Plan Line:** When the plan header reads `Wave issue: #N`, set the wave issue body's `Task plan:` line under `## Artifacts` to a root-relative link to the saved task list, after the file is saved: read the body with `gh issue view <N> --json body --jq .body` into a file, change only that line, and write it back with `gh issue edit <N> --body-file <path>`. With `Wave issue: none` there is no wave issue body to edit, and the line stays `pending` until a later plan names the wave issue.
 
 ## Package Manager and Command Standards
 
@@ -187,4 +188,5 @@ If this is a **greenfield project** or a **new component**, you **MUST** include
 8. For schema/data-model changes, you **MUST** include migration lifecycle tasks and an explicit user-confirmation gate before applying migrations unless an opt-out rationale is documented.
 9. You **MUST** update the corresponding GitHub Issue(s) with the task checklist by delegating to `github-ops` whenever possible. If no issue exists, you **MUST** ask the user whether to create one first.
 10. You **MUST** save the task list file.
+    10a. When the wave issue is known, you **MUST** set its body's `Task plan:` Artifacts line to the saved task list (Process step 7).
 11. You **MUST** inform the user they can now use the **implement** activity to start coding.
