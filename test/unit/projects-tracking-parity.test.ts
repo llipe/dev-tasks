@@ -121,6 +121,41 @@ function squashSpaces(text: string): string {
   return text.replace(/[ \t]+/g, " ");
 }
 
+/**
+ * The one line of `text` containing `marker`; fails on zero or several
+ * matches so a marker sentence cannot drift into two places (RT-5, PT-47).
+ */
+function lineWith(text: string, marker: string, label = "text"): string {
+  const lines = text.split("\n").filter((line) => line.includes(marker));
+  expect(lines.length, `${label}: expected exactly one line containing "${marker}"`).toBe(1);
+  return lines[0];
+}
+
+/** Assert each marker's first index in `text` is greater than the previous one's (RT-5). */
+function inOrder(text: string, markers: string[], label = "text"): void {
+  let previous = -1;
+  for (const marker of markers) {
+    const at = text.indexOf(marker);
+    expect(at, `${label}: "${marker}" missing`).toBeGreaterThanOrEqual(0);
+    expect(at, `${label}: "${marker}" is out of order`).toBeGreaterThan(previous);
+    previous = at;
+  }
+}
+
+/**
+ * The sentence of `text` that contains `marker`: from the previous `. ` (or
+ * the start) to the next period followed by whitespace or the end. Lets the
+ * planner's step 13 lines differ per tree while an added sentence stays
+ * identical (D-60, EC-50).
+ */
+function sentenceWith(text: string, marker: string, label = "text"): string {
+  const at = text.indexOf(marker);
+  expect(at, `${label}: "${marker}" missing`).toBeGreaterThanOrEqual(0);
+  const start = text.lastIndexOf(". ", at);
+  const end = text.slice(at).search(/\.(\s|$)/);
+  return text.slice(start < 0 ? 0 : start + 2, end < 0 ? text.length : at + end + 1);
+}
+
 // --- helpers -----------------------------------------------------------------
 
 describe("helpers", () => {
@@ -178,6 +213,26 @@ describe("helpers", () => {
     expect(child).toContain("grandchild text");
     expect(child).not.toContain("intro");
     expect(child).not.toContain("after");
+  });
+
+  // RT-5 — wave 2 helper self-checks on deterministic fixtures.
+  it("inOrder passes in order and fails when two markers are swapped", () => {
+    const text = "alpha then beta then gamma";
+    expect(() => inOrder(text, ["alpha", "beta", "gamma"])).not.toThrow();
+    expect(() => inOrder(text, ["beta", "alpha"])).toThrow();
+    expect(() => inOrder(text, ["alpha", "delta"])).toThrow();
+  });
+
+  it("lineWith fails on zero and on two matches", () => {
+    const text = ["one marker", "two", "three marker"].join("\n");
+    expect(() => lineWith(text, "absent")).toThrow();
+    expect(() => lineWith(text, "marker")).toThrow();
+    expect(lineWith(text, "two")).toBe("two");
+  });
+
+  it("sentenceWith returns only the sentence holding the marker", () => {
+    const text = "First sentence. Then `git add -f file.md` and push. Last one.";
+    expect(sentenceWith(text, "git add -f")).toBe("Then `git add -f file.md` and push.");
   });
 });
 
@@ -907,6 +962,133 @@ describe("no Project writes", () => {
   });
 });
 
+// --- plan (S-008, #291) ------------------------------------------------------
+
+const PLAN_TREES = {
+  claude: ".claude/skills/plan/SKILL.md",
+  github: ".github/instructions/plan.instructions.md",
+  kiro: ".kiro/steering/plan.md",
+};
+
+describe("plan", () => {
+  const trees = loadTrees(PLAN_TREES);
+
+  // PT-31 / CT-14 — S-008 AC-1; D-59, D-62 (A-19)
+  it("wave issue header", () => {
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Output Format");
+      const fence = section.match(/```markdown\n([\s\S]*?)\n```/);
+      expect(fence, `${copy.path}: no Output Format template fence`).not.toBeNull();
+      const lines = fence![1].split("\n");
+      const source = lines.findIndex((line) => line.startsWith("Source:"));
+      expect(source, `${copy.path}: template has no Source: line`).toBeGreaterThanOrEqual(0);
+      expect(lines[source + 1], `${copy.path}: Wave issue must follow Source:`).toBe(
+        "Wave issue: #N",
+      );
+      expect(copy.body, copy.path).toContain("Wave issue: none");
+      expect(copy.body, copy.path).toMatch(/planner[^\n]*search/);
+      expect(copy.body, copy.path).toMatch(/publication report's `Wave issue` line/);
+      // Bold would break CT-14's `^Wave issue: (#\d+|none)$`.
+      expect(copy.body, copy.path).not.toContain("**Wave issue");
+    }
+  });
+});
+
+// --- planner (S-008, #291) ---------------------------------------------------
+
+const PLANNER_TREES = {
+  claude: ".claude/commands/planner.md", // a command on Claude, an agent elsewhere
+  github: ".github/agents/planner.agent.md",
+  kiro: ".kiro/agents/planner.md",
+};
+
+/** CT-22: the D-36 wave search, byte-identical to activity-publish-github's. */
+const WAVE_SEARCH =
+  'gh issue list --label "level: wave" --search "[PRD-<name>] Wave <id>: in:title" --state open --json number,title --jq \'map(select(.title | startswith("[PRD-<name>] Wave <id>:")))\'';
+
+/** Step 13 of the merge rule: one line (LT-9), from `13. ` to the line end. */
+function step13(copy: TreeCopy): string {
+  const section = sectionOf(copy, "Merge management rule");
+  const match = section.match(/^13\. .*$/m);
+  expect(match, `${copy.path}: merge rule has no step 13`).not.toBeNull();
+  return match![0];
+}
+
+describe("planner", () => {
+  const trees = loadTrees(PLANNER_TREES);
+
+  // PT-33 / CT-22 — S-008 AC-2; D-36, D-59; A-36 (EC-41, EC-42)
+  it("wave issue discovery", () => {
+    for (const copy of trees) {
+      // LT-11 reads Phase 0 up to its first `---`; the resolution must sit inside that span.
+      const phase0 = copy.body.match(/## Phase 0 - Discover Task Source[\s\S]*?\n---\n/);
+      expect(phase0, `${copy.path}: no Phase 0 span`).not.toBeNull();
+      const text = phase0![0];
+      inOrder(text, ["Wave issue:", WAVE_SEARCH, "wave_status: skipped(no wave issue)"], copy.path);
+      expect(text, copy.path).toMatch(/[Mm]ore than one[^\n]*stop/);
+      // EC-41: header `none` with one search match — the search wins and is recorded.
+      expect(text, copy.path).toMatch(/`Wave issue: none`[^\n]*search[^\n]*record/);
+      expect(lineWith(copy.body, "wave_status: skipped(no wave issue)", copy.path)).toBe(
+        lineWith(trees[0].body, "wave_status: skipped(no wave issue)", trees[0].path),
+      );
+    }
+    // The planner's literal is publish's literal (CT-22).
+    for (const copy of loadTrees(PUBLISH_TREES)) {
+      expect(copy.body, copy.path).toContain(WAVE_SEARCH);
+    }
+  });
+
+  // PT-34 / CT-13 — S-008 AC-3; FR-11, D-59
+  it("state file and handoff carry the wave issue", () => {
+    const handoffLines: string[] = [];
+    for (const copy of trees) {
+      const format = sectionOf(copy, "State File Format");
+      const lines = format.split("\n");
+      const repository = lines.indexOf("- Repository: <owner/repo>");
+      expect(repository, `${copy.path}: no Repository line in Run Info`).toBeGreaterThanOrEqual(0);
+      expect(lines[repository + 1], copy.path).toBe("- Wave issue: #N | none");
+      expect(lines[repository + 2], copy.path).toMatch(/^- Started:/);
+      // The resume steps themselves, not the State File Format child section.
+      const resume = copy.sections.find((s) => s.heading.includes("Resume Detection"));
+      expect(resume, `${copy.path}: no Resume Detection section`).toBeDefined();
+      expect(resume!.text, copy.path).toContain("`Wave issue`");
+      const handoff = copy.body.match(/Handoff template:\s*\n+````markdown\n([\s\S]*?)\n````/);
+      expect(handoff, `${copy.path}: no handoff template`).not.toBeNull();
+      const waveLines = handoff![1].split("\n").filter((line) => line.startsWith("Wave issue:"));
+      expect(waveLines, copy.path).toHaveLength(1);
+      handoffLines.push(waveLines[0]);
+    }
+    expect(new Set(handoffLines).size, "handoff Wave issue line differs across trees").toBe(1);
+  });
+
+  // PT-35 / CT-21 — S-008 AC-4; FR-11, D-52; A-36 (EC-45); EC-50
+  it("checkpoint commit", () => {
+    const sentences: string[] = [];
+    for (const copy of trees) {
+      const step = step13(copy);
+      for (const marker of [
+        "git add -f workstream/planner-state-<plan-id>.md",
+        "chore(planner): checkpoint after <story> merge",
+        "push",
+        "integration branch",
+      ]) {
+        expect(step, `${copy.path}: step 13 lacks ${marker}`).toContain(marker);
+      }
+      // Commit only after the merge is verified; `.github`'s step 13 has no verification (EC-50).
+      if (copy.tree !== "github") {
+        inOrder(step, ["gh pr view", "git add -f"], copy.path);
+      }
+      // EC-45: push rejected → report, retry once, then blocked.
+      expect(step, copy.path).toMatch(/push is rejected[^\n]*retry[^\n]*once[^\n]*blocked/);
+      // A-45: S-009 removes the per-merge comment sentence, not S-008.
+      expect(step, copy.path).toContain("post a GitHub Issue comment on the plan/milestone issue");
+      expect(lineWith(copy.body, "git add -f", copy.path)).toBe(step);
+      sentences.push(sentenceWith(step, "git add -f", copy.path));
+    }
+    expect(new Set(sentences).size, "checkpoint sentence differs across trees").toBe(1);
+  });
+});
+
 // --- TESTING.md dogfood table (S-006, #275) ----------------------------------
 
 describe("TESTING.md", () => {
@@ -925,7 +1107,8 @@ describe("TESTING.md", () => {
     const rows = dogfood!.text.split("\n").filter((line) => line.startsWith("|"));
     expect(squashSpaces(rows[0] ?? "")).toMatch(/^\| Criterion \|.* Issue \|.* Status \|$/);
     const table = rows.join("\n");
-    expect(table).toMatch(/^\|[^\n]*PRD AC-1[^\n]*pending/m);
+    // PT-54 (A-38): the PRD AC-1 row reads `pending` until the wave 2 publish is recorded, then `observed`.
+    expect(table).toMatch(/^\|[^\n]*PRD AC-1[^\n]*(pending|observed)/m);
     for (const [story, evidence] of [
       ["S-001", "#270"],
       ["S-002", "#271"],
@@ -949,5 +1132,11 @@ describe("TESTING.md", () => {
     const changelog = sections.find((s) => s.heading === "Changelog");
     expect(changelog, "TESTING.md: no Changelog section").toBeDefined();
     expect(changelog!.text).toMatch(/^\| 1\.1 +\| \d{4}-\d{2}-\d{2} +\|[^\n]*Dogfood/m);
+    // A-38 (S-008 task 1.10a): changelog rows live under `## Changelog`, never in the Test Layers table.
+    expect(changelog!.text).toMatch(/^\| 1\.2 +\| \d{4}-\d{2}-\d{2} +\|/m);
+    expect(changelog!.text).toMatch(/^\| 1\.3 +\| \d{4}-\d{2}-\d{2} +\|/m);
+    const layers = sections.find((s) => s.heading === "Test Layers");
+    expect(layers, "TESTING.md: no Test Layers section").toBeDefined();
+    expect(layers!.text).not.toMatch(/^\| [\d.]+ +\| \d{4}-\d{2}-\d{2} +\|/m);
   });
 });

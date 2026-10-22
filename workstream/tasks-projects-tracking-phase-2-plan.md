@@ -22,22 +22,22 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
 ## Tasks
 
-- [ ] 1.0 Implement Story S-008: The planner knows its wave issue and commits its checkpoint after every merge (#291)
+- [x] 1.0 Implement Story S-008: The planner knows its wave issue and commits its checkpoint after every merge (#291)
 
-  - [ ] 1.1 Add `describe("plan")` and `describe("planner")` to `test/unit/projects-tracking-parity.test.ts`, with `loadTrees` taking explicit paths for the plan files (skill, instruction, steering) and the planner files (command, two agents); assert the `Wave issue:` header line, the Phase 0 discovery order with the `level: wave` search and `startswith` filter, the `skipped(no wave issue)` value, the Run Info `Wave issue` line, the handoff `Wave issue` line, and the `git add -f` checkpoint commit with its message; run `pnpm run test:unit`, confirm red (D-34)
-  - [ ] 1.2 In the three plan copies, add `Wave issue: #N` to the Output Format header after `Source:` and the Process step that reads it from the publication report's `Wave issue` line, writing `Wave issue: none` with a note when absent (D-59)
-  - [ ] 1.2a Add a `Source:` line to the plan Output Format header in all three plan copies so `Wave issue:` has its anchor (Design Mode A-19, D-62)
-  - [ ] 1.3 In `.claude/commands/planner.md` Phase 0, add the wave issue resolution: plan header line; else the D-36 search with the `[PRD-<name>] Wave <id>:` prefix and client-side `startswith` filter, one match reused, more than one stops; else `wave_status: skipped(no wave issue)` (D-59)
-  - [ ] 1.4 Add `Wave issue: #N | none` to the State File Format's Run Info after `Repository`, make Phase 0.5 resume read it, and add `Wave issue: #N | none` to the Phase 4 handoff template (FR-11, D-59)
-  - [ ] 1.5 Rewrite merge rule step 13's checkpoint sentence: write the state file, `git add -f` it, commit on the integration branch with `chore(planner): checkpoint after <story> merge`, push (FR-11, D-52)
-  - [ ] 1.5a State the edge cases: plan header says none but the search finds one (use it and record it); two search matches (stop and ask); push rejected (report, retry once, then blocked) (A-36)
-  - [ ] 1.6 Apply the same edits to `.github/agents/planner.agent.md` and `.kiro/agents/planner.md`, leaving their merge-gate wording as it is (D-60)
-  - [ ] 1.7 Verify Acceptance Criterion: plan header line in all three plan copies
-  - [ ] 1.8 Verify Acceptance Criterion: Phase 0 discovery order and skip value in all three planner copies
-  - [ ] 1.9 Verify Acceptance Criterion: state file and handoff carry the wave issue
-  - [ ] 1.10 Verify Acceptance Criterion: checkpoint commit sentence with `git add -f` and the message
-  - [ ] 1.10a Fix `TESTING.md`: move the changelog rows 1.2 and 1.3 out of the Test Layers table into `## Changelog`, and relax PT-30 so the PRD AC-1 row may read observed (A-38)
-  - [ ] 1.11 Run Tests: `pnpm run test:unit`, `pnpm run validate`; dogfood note in the PR body: this wave's own run will show the state file on the integration branch after the first merge
+  - [x] 1.1 Add `describe("plan")` and `describe("planner")` to `test/unit/projects-tracking-parity.test.ts`, with `loadTrees` taking explicit paths for the plan files (skill, instruction, steering) and the planner files (command, two agents); assert the `Wave issue:` header line, the Phase 0 discovery order with the `level: wave` search and `startswith` filter, the `skipped(no wave issue)` value, the Run Info `Wave issue` line, the handoff `Wave issue` line, and the `git add -f` checkpoint commit with its message; run `pnpm run test:unit`, confirm red (D-34)
+  - [x] 1.2 In the three plan copies, add `Wave issue: #N` to the Output Format header after `Source:` and the Process step that reads it from the publication report's `Wave issue` line, writing `Wave issue: none` with a note when absent (D-59)
+  - [x] 1.2a Add a `Source:` line to the plan Output Format header in all three plan copies so `Wave issue:` has its anchor (Design Mode A-19, D-62)
+  - [x] 1.3 In `.claude/commands/planner.md` Phase 0, add the wave issue resolution: plan header line; else the D-36 search with the `[PRD-<name>] Wave <id>:` prefix and client-side `startswith` filter, one match reused, more than one stops; else `wave_status: skipped(no wave issue)` (D-59)
+  - [x] 1.4 Add `Wave issue: #N | none` to the State File Format's Run Info after `Repository`, make Phase 0.5 resume read it, and add `Wave issue: #N | none` to the Phase 4 handoff template (FR-11, D-59)
+  - [x] 1.5 Rewrite merge rule step 13's checkpoint sentence: write the state file, `git add -f` it, commit on the integration branch with `chore(planner): checkpoint after <story> merge`, push (FR-11, D-52)
+  - [x] 1.5a State the edge cases: plan header says none but the search finds one (use it and record it); two search matches (stop and ask); push rejected (report, retry once, then blocked) (A-36)
+  - [x] 1.6 Apply the same edits to `.github/agents/planner.agent.md` and `.kiro/agents/planner.md`, leaving their merge-gate wording as it is (D-60)
+  - [x] 1.7 Verify Acceptance Criterion: plan header line in all three plan copies
+  - [x] 1.8 Verify Acceptance Criterion: Phase 0 discovery order and skip value in all three planner copies
+  - [x] 1.9 Verify Acceptance Criterion: state file and handoff carry the wave issue
+  - [x] 1.10 Verify Acceptance Criterion: checkpoint commit sentence with `git add -f` and the message
+  - [x] 1.10a Fix `TESTING.md`: move the changelog rows 1.2 and 1.3 out of the Test Layers table into `## Changelog`, and relax PT-30 so the PRD AC-1 row may read observed (A-38)
+  - [x] 1.11 Run Tests: `pnpm run test:unit`, `pnpm run validate`; dogfood note in the PR body: this wave's own run will show the state file on the integration branch after the first merge
 
 - [ ] 2.0 Implement Story S-009: The planner keeps the wave issue's status comment current and stops posting per-merge comments (#292)
 

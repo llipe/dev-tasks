@@ -169,6 +169,16 @@ Map milestone issues into the same internal story model used by Option A.
 
 Read `docs/roadmap.md` (the roadmap overview — see **Roadmap Maintenance** below). Identify the PRD and the phase/wave row this run delivers, and state it when confirming the source. If the file is missing, or no row matches this run's scope, say so and ask `product-engineer` (or the user) to add the row before Phase 4; do not invent a row's scope yourself.
 
+### Wave Issue Resolution
+
+Resolve the wave tracking issue once per run, after the roadmap read, and record it in the state file's Run Info as `Wave issue: #N | none`; every later story reads it from there (D-59). Resolve in this order:
+
+1. **Plan header.** Read the task plan's `Wave issue:` line, the line after `Source:` that `plan` writes. `Wave issue: #N` resolves the wave issue.
+2. **Search.** When the header line is absent or reads `Wave issue: none`, find the wave issue by its `level: wave` label and its `[PRD-<name>] Wave <id>:` title prefix, filtered client-side with `startswith` (D-36), taking `<name>` and `<id>` from the roadmap row: `gh issue list --label "level: wave" --search "[PRD-<name>] Wave <id>: in:title" --state open --json number,title --jq 'map(select(.title | startswith("[PRD-<name>] Wave <id>:")))'`.
+   - Exactly one match: reuse that issue number. When the header said `Wave issue: none`, the search result wins: record it in Run Info and note in the Decisions Log that the search, not the header, resolved it.
+   - More than one match: stop, list the matching issue numbers, and ask the user which one is the wave issue; never pick one silently.
+3. **Skip.** When neither the header nor the search yields one, record `Wave issue: none` and report `wave_status: skipped(no wave issue)` in the run summary; the run continues without a wave issue.
+
 Confirm source and story count before Phase 0.5.
 
 ---
@@ -183,6 +193,7 @@ Before parsing stories, check for an existing checkpoint state file.
    - Identify the next pending story from the `Current Position` section.
    - Ask: **"Resume from story [next-story-id]? (y/n)"**
    - If confirmed: skip Phases 1-3, load the integration branch and execution plan from the state file, and resume Phase 4 from the next pending story.
+   - On resume, read the wave issue from Run Info's `Wave issue` line and reuse it; do not resolve it again. A state file written before that line existed has none: resolve the wave issue as Phase 0's **Wave Issue Resolution** does and add the line.
    - If declined: archive the old state file (rename with `-archived` suffix) and proceed with a fresh run from Phase 1.
 3. If no state file exists, proceed to Phase 1 normally.
 
@@ -198,6 +209,7 @@ Path: `/workstream/planner-state-<plan-id>.md`
 - Task source: <path or milestone>
 - Integration branch: <branch-name>
 - Repository: <owner/repo>
+- Wave issue: #N | none
 - Started: <timestamp>
 - Last updated: <timestamp>
 
@@ -394,6 +406,7 @@ GitHub Issue: #{{ story.issue_number }}
 Task list path: {{ story.task_file }}
 Execution mode: pre-approved autonomous sequential
 Integration target branch: {{ integration_branch }}
+Wave issue: {{ wave_issue }} (`#N` or `none`, from the state file's Run Info; under the planner the wave status comment is the planner's, so report `wave_status: owned-by-planner`)
 Test-first: YES — write/update tests before implementation for each behavioral sub-task
 Test plan: {{ test_plan_path | default: "none — derive tests from acceptance criteria" }}
 Decision log: {{ decision_log_path }}
@@ -493,7 +506,7 @@ For each completed story PR:
 10. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test and quality-gate results) and approve it.
 11. Merge PR into integration branch using one consistent strategy (default: `merge`, a merge commit with source-branch deletion; never squash or rebase unless the user explicitly asks for it).
 12. Confirm integration branch is green after merge before moving to next story.
-13. **Verify the merge actually happened, then write checkpoint.** Before writing `✅ Merged` to the state file, confirm observed GitHub state — run `gh pr view <n> --json state,mergedAt` and require `state` to be `MERGED` and `mergedAt` to be non-null. If the check fails or errors, do **not** write `✅ Merged`; mark the story blocked, report the exact `gh pr view` output, and stop rather than guessing at the outcome. Only once this is confirmed: update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table.
+13. **Verify the merge actually happened, then write checkpoint.** Before writing `✅ Merged` to the state file, confirm observed GitHub state — run `gh pr view <n> --json state,mergedAt` and require `state` to be `MERGED` and `mergedAt` to be non-null. If the check fails or errors, do **not** write `✅ Merged`; mark the story blocked, report the exact `gh pr view` output, and stop rather than guessing at the outcome. Only once this is confirmed: update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table. Then commit the checkpoint in the same step: `git add -f workstream/planner-state-<plan-id>.md` (forced, so a repository that ignores `workstream/` still commits it), commit it on the integration branch with the message `chore(planner): checkpoint after <story> merge`, and push the integration branch. If the push is rejected, report the rejection verbatim, retry the push once, and mark the story blocked if it is rejected again; a push blocked by a hook is a decision and is never retried.
 
 If any merge gate fails, stop and report exact blocker and PR link.
 

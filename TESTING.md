@@ -1,5 +1,5 @@
 ---
-version: 1.3
+version: 1.4
 name: Testing Standard
 description: Canonical testing contract for dev-tasks — declares test layers, runners, commands, fixtures, and coverage policy.
 status: filled
@@ -8,16 +8,14 @@ owner: qa-engineer
 
 ## Test Layers
 
-| Layer | Name                      | Scope                                                                                                                                                                                      | Status           |
-| ----- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
-| 1.3   | 2026-10-21                | DF-1 rows observed on the wave 2 publish (#289, #290, #291 to #296); DF-1b reuse path still pending.                                                                                       | product-engineer |
-| 1.2   | 2026-10-21                | DF-5 row observed: Project Status reached Done for #270 to #275 through GitHub's own automation when PR #282 merged (D-50); the row's Criterion cell, overwritten on 2026-10-21, restored. | planner          |
-| 1     | Deterministic foundations | Unit tests and schema/contract assertions with no network, database, or wall-clock dependency.                                                                                             | configured       |
-| 2     | Constrained model/tool    | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs.                                                          | configured       |
-| 2.5   | Integration               | Real database, migrations, RLS, and schema contracts without a mocked data layer.                                                                                                          | not configured   |
-| E2E   | End-to-end                | Playwright full-stack browser scenarios.                                                                                                                                                   | not configured   |
-| 3     | Product evaluation        | Semantic or groundedness evaluation for LLM features.                                                                                                                                      | not applicable   |
-| 4     | Human evaluation          | Human review and safeguard gates.                                                                                                                                                          | manual only      |
+| Layer | Name                      | Scope                                                                                                                             | Status         |
+| ----- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| 1     | Deterministic foundations | Unit tests and schema/contract assertions with no network, database, or wall-clock dependency.                                    | configured     |
+| 2     | Constrained model/tool    | CLI, filesystem, subprocess, distribution, and fixture tests with external providers replaced by deterministic fixtures or stubs. | configured     |
+| 2.5   | Integration               | Real database, migrations, RLS, and schema contracts without a mocked data layer.                                                 | not configured |
+| E2E   | End-to-end                | Playwright full-stack browser scenarios.                                                                                          | not configured |
+| 3     | Product evaluation        | Semantic or groundedness evaluation for LLM features.                                                                             | not applicable |
+| 4     | Human evaluation          | Human review and safeguard gates.                                                                                                 | manual only    |
 
 ### Layer boundaries
 
@@ -168,7 +166,10 @@ Behavioural acceptance criteria of the projects-tracking PRD cannot run inside V
 
 ## Changelog
 
-| Version | Date       | Change                                                                                                                                                                                 | Author             |
-| ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| 1.1     | 2026-10-21 | Dogfood checks table added for the projects-tracking wave 1 behavioural criteria (D-39, D-42): PRD AC-1 pending wave 2's publish, PRD AC-3 rows per story, FR-24 and D-36 paths, DF-4. | @llipe / developer |
-| 1.0     | 2026-08-18 | Initial testing standard.                                                                                                                                                              | qa-engineer        |
+| Version | Date       | Change                                                                                                                                                                                     | Author             |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
+| 1.4     | 2026-10-22 | Changelog rows 1.2 and 1.3 moved out of the Test Layers table into this section (A-38); no content change.                                                                                 | developer          |
+| 1.3     | 2026-10-21 | DF-1 rows observed on the wave 2 publish (#289, #290, #291 to #296); DF-1b reuse path still pending.                                                                                       | product-engineer   |
+| 1.2     | 2026-10-21 | DF-5 row observed: Project Status reached Done for #270 to #275 through GitHub's own automation when PR #282 merged (D-50); the row's Criterion cell, overwritten on 2026-10-21, restored. | planner            |
+| 1.1     | 2026-10-21 | Dogfood checks table added for the projects-tracking wave 1 behavioural criteria (D-39, D-42): PRD AC-1 pending wave 2's publish, PRD AC-3 rows per story, FR-24 and D-36 paths, DF-4.     | @llipe / developer |
+| 1.0     | 2026-08-18 | Initial testing standard.                                                                                                                                                                  | qa-engineer        |
