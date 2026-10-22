@@ -54,22 +54,22 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 2.8 Verify Acceptance Criterion: report values and never-blocks rule
   - [x] 2.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 3.0 Implement Story S-010: Nobody closes a story; the consolidated PR closes every story and the wave at ship (#293)
+- [x] 3.0 Implement Story S-010: Nobody closes a story; the consolidated PR closes every story and the wave at ship (#293)
 
-  - [ ] 3.1 Extend the `planner`, `github-ops` and `implement` blocks: the never-closes sentence, the `Closes #N` per story and `Closes #<wave>` requirement in Phase 5 step 7 and the include list, the `project_observation` DF-5 line, the github-ops `## Why` consolidated-PR sentence, and negatives on "Then close issue" and the old implement rules 12 and 13 wording; confirm red
-  - [ ] 3.2 In the three planner copies, add under the merge rule: the planner never closes a story issue; it closes when the consolidated PR merges to main (FR-13, D-54)
-  - [ ] 3.3 In Phase 5 step 7 and the "Consolidated PR should include" list, require `Closes #N` for every story in the state table and `Closes #<wave issue>` when a wave issue exists, generated from the state table, `Refs` for everything else; a blocked, unmerged story gets `Refs` with the reason (FR-15, D-56)
-  - [ ] 3.3a `Closes #N` only for stories whose state-table row is merged, `Refs #N` with the reason for unmerged ones, `Closes #<wave>` only when every story merged, all under the PR body's `## Why` (A-34, A-35, A-47, D-67)
-  - [ ] 3.4 After the PR opens, when a Project is configured (number from the runbook's exercise record or `docs/roadmap.md`), read one story's Status with `gh project item-list` and record `project_observation: observed | not observed(<reason>)` for "In progress at consolidated PR open" in the PR body and in `TESTING.md`'s DF-5 row (#285, D-50)
-  - [ ] 3.4a Detect a Project and read Status with `gh issue view <n> --json projectItems`; empty means no Project; never a write verb or a scope request (A-37, D-68)
-  - [ ] 3.5 In the three github-ops copies, extend the `## Why` rule with the consolidated-PR `Closes` sentence (D-56)
-  - [ ] 3.6 In the three implement copies, rewrite rules 12 and 13, the lifecycle row "Then close issue" and Final Instruction 5: nobody closes the issue; it closes when a PR against the default branch carrying `Closes #N` merges, the consolidated PR under the planner or the story PR in a main-thread run (D-54)
-  - [ ] 3.7 Verify Acceptance Criterion: never-closes sentence in all three planner copies
-  - [ ] 3.8 Verify Acceptance Criterion: `Closes` lines required and generated from the state table
-  - [ ] 3.9 Verify Acceptance Criterion: DF-5 observation step present
-  - [ ] 3.10 Verify Acceptance Criterion: github-ops `## Why` sentence in all three
-  - [ ] 3.11 Verify Acceptance Criterion: implement close rules rewritten in all three, old wording absent
-  - [ ] 3.12 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [x] 3.1 Extend the `planner`, `github-ops` and `implement` blocks: the never-closes sentence, the `Closes #N` per story and `Closes #<wave>` requirement in Phase 5 step 7 and the include list, the `project_observation` DF-5 line, the github-ops `## Why` consolidated-PR sentence, and negatives on "Then close issue" and the old implement rules 12 and 13 wording; confirm red
+  - [x] 3.2 In the three planner copies, add under the merge rule: the planner never closes a story issue; it closes when the consolidated PR merges to main (FR-13, D-54)
+  - [x] 3.3 In Phase 5 step 7 and the "Consolidated PR should include" list, require `Closes #N` for every story in the state table and `Closes #<wave issue>` when a wave issue exists, generated from the state table, `Refs` for everything else; a blocked, unmerged story gets `Refs` with the reason (FR-15, D-56)
+  - [x] 3.3a `Closes #N` only for stories whose state-table row is merged, `Refs #N` with the reason for unmerged ones, `Closes #<wave>` only when every story merged, all under the PR body's `## Why` (A-34, A-35, A-47, D-67)
+  - [x] 3.4 After the PR opens, when a Project is configured (number from the runbook's exercise record or `docs/roadmap.md`), read one story's Status (superseded by 3.4a: `projectItems`, no Project number) and record `project_observation: observed | not observed(<reason>)` for "In progress at consolidated PR open" in the PR body and in `TESTING.md`'s DF-5 row (#285, D-50)
+  - [x] 3.4a Detect a Project and read Status with `gh issue view <n> --json projectItems`; empty means no Project; never a write verb or a scope request (A-37, D-68)
+  - [x] 3.5 In the three github-ops copies, extend the `## Why` rule with the consolidated-PR `Closes` sentence (D-56)
+  - [x] 3.6 In the three implement copies, rewrite rules 12 and 13, the lifecycle row "Then close issue" and Final Instruction 5: nobody closes the issue; it closes when a PR against the default branch carrying `Closes #N` merges, the consolidated PR under the planner or the story PR in a main-thread run (D-54)
+  - [x] 3.7 Verify Acceptance Criterion: never-closes sentence in all three planner copies
+  - [x] 3.8 Verify Acceptance Criterion: `Closes` lines required and generated from the state table
+  - [x] 3.9 Verify Acceptance Criterion: DF-5 observation step present
+  - [x] 3.10 Verify Acceptance Criterion: github-ops `## Why` sentence in all three
+  - [x] 3.11 Verify Acceptance Criterion: implement close rules rewritten in all three, old wording absent
+  - [x] 3.12 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 4.0 Implement Story S-011: The planner derives the roadmap row from gh and closes out the run when the user reports the merge (#294)
 
