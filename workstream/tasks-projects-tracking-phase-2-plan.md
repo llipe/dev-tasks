@@ -71,18 +71,18 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 3.11 Verify Acceptance Criterion: implement close rules rewritten in all three, old wording absent
   - [x] 3.12 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 4.0 Implement Story S-011: The planner derives the roadmap row from gh and closes out the run when the user reports the merge (#294)
+- [x] 4.0 Implement Story S-011: The planner derives the roadmap row from gh and closes out the run when the user reports the merge (#294)
 
-  - [ ] 4.1 Extend `describe("planner")`: the two roadmap commands, `## Phase 6`, the `MERGED` check, the archive path `workstream/archive/planner-state-<plan-id>-archived.md`, the `chore(roadmap)` PR, and the completion invariant; confirm red
-  - [ ] 4.2 In the three planner copies, rewrite Phase 5 step 5: `Status` `In progress`; `Issues/PRs` from `gh issue list --search "[PRD-<name>] in:title" --state all --json number,state` and `gh pr list --base <integration branch> --state merged --json number`; `What's missing` names the consolidated PR; both commands cited verbatim in the PR body's Roadmap section (FR-14, D-55)
-  - [ ] 4.2a Take story numbers and states from `gh api repos/{o}/{r}/issues/{wave}/sub_issues`, the title search only as the no-wave-issue fallback, and write `What's missing` as "consolidated PR to `main`" (A-22, A-23, D-64, D-65)
-  - [ ] 4.3 Add `## Phase 6 - Close-out` after Phase 5 in the three copies with the ordered steps: `gh pr view <n> --json state,mergedAt` must show `MERGED` else stop; pull main; delete the integration branch locally and remotely; confirm every story issue and the wave issue closed; when a Project is configured read the items and confirm Done, else `not observed(no project)`; roadmap row `Done` with `Issues/PRs` naming stories, story PRs and the consolidated PR and `What's missing` `—`; move the state file to the archive path; record the DF-5 Done observation in `TESTING.md`; edit the PRD status comment to shipped; open one `chore(roadmap)` PR to main (D-55, D-58, D-61)
-  - [ ] 4.3a Order Phase 6 as: read PR state, sub-issues, story PRs and Project items first; create `chore/<plan-id>-closeout`; write and open the PR there; delete the integration branch last; Phase 6 may start in any session from the merged PR number and the plan id; a story issue still open after merge is reported, not closed (A-24, A-36, A-41, A-46, D-66)
-  - [ ] 4.4 Change Phase 5 step 9 to "then run Phase 6" and state in the Output Contract and Invariants that the run is complete only after Phase 6 (D-61)
-  - [ ] 4.5 Verify Acceptance Criterion: step 5 commands and citation rule in all three
-  - [ ] 4.6 Verify Acceptance Criterion: Phase 6 steps in order in all three
-  - [ ] 4.7 Verify Acceptance Criterion: completion invariant
-  - [ ] 4.8 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [x] 4.1 Extend `describe("planner")`: the two roadmap commands, `## Phase 6`, the `MERGED` check, the archive path `workstream/archive/planner-state-<plan-id>-archived.md`, the `chore(roadmap)` PR, and the completion invariant; confirm red
+  - [x] 4.2 In the three planner copies, rewrite Phase 5 step 5: `Status` `In progress`; `Issues/PRs` from `gh issue list --search "[PRD-<name>] in:title" --state all --json number,state` and `gh pr list --base <integration branch> --state merged --json number`; `What's missing` names the consolidated PR; both commands cited verbatim in the PR body's Roadmap section (FR-14, D-55)
+  - [x] 4.2a Take story numbers and states from `gh api repos/{o}/{r}/issues/{wave}/sub_issues`, the title search only as the no-wave-issue fallback, and write `What's missing` as "consolidated PR to `main`" (A-22, A-23, D-64, D-65)
+  - [x] 4.3 Add `## Phase 6 - Close-out` after Phase 5 in the three copies with the ordered steps: `gh pr view <n> --json state,mergedAt` must show `MERGED` else stop; pull main; delete the integration branch locally and remotely; confirm every story issue and the wave issue closed; when a Project is configured read the items and confirm Done, else `not observed(no project)`; roadmap row `Done` with `Issues/PRs` naming stories, story PRs and the consolidated PR and `What's missing` `—`; move the state file to the archive path; record the DF-5 Done observation in `TESTING.md`; edit the PRD status comment to shipped; open one `chore(roadmap)` PR to main (D-55, D-58, D-61)
+  - [x] 4.3a Order Phase 6 as: read PR state, sub-issues, story PRs and Project items first; create `chore/<plan-id>-closeout`; write and open the PR there; delete the integration branch last; Phase 6 may start in any session from the merged PR number and the plan id; a story issue still open after merge is reported, not closed (A-24, A-36, A-41, A-46, D-66)
+  - [x] 4.4 Change Phase 5 step 9 to "then run Phase 6" and state in the Output Contract and Invariants that the run is complete only after Phase 6 (D-61)
+  - [x] 4.5 Verify Acceptance Criterion: step 5 commands and citation rule in all three
+  - [x] 4.6 Verify Acceptance Criterion: Phase 6 steps in order in all three
+  - [x] 4.7 Verify Acceptance Criterion: completion invariant
+  - [x] 4.8 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 5.0 Implement Story S-012: The verifier's rollup compares the roadmap row with the wave issue and its sub-issues (#295)
 
