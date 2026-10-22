@@ -255,6 +255,7 @@ Rules:
 - The attribution line **MUST** be present when creating a PR.
 - The attribution value **MUST** identify the assisting system and version when available (for example, `GitHub Copilot v1`, `Claude Code v3`).
 - The `## Why` section **MUST** reference the appropriate issue (`Closes #<number>` or `Refs #<number>`). If no issue exists, it **MUST** reference the motivating commit (`Refs <sha>`).
+- A consolidated PR from an integration branch to the default branch **MUST** carry `Closes #<number>` for every story issue it delivers, and for the wave tracking issue when it delivers every story of the wave, one keyword per issue on its own line; `Refs` is for everything else.
 
 ### Change-Record PR Shape (infra-engineer)
 

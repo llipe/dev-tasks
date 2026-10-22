@@ -1379,7 +1379,7 @@ describe("planner", () => {
       // The step 7 sub-bullet keeps the numbering that PT-36, PT-44 and roadmap-parity read (A-33).
       inOrder(phase5, ["7. Open one consolidated PR", "**Closes lines.**", "8. **Do NOT merge.**"]);
       const include = phase5.slice(phase5.indexOf("Consolidated PR should include"));
-      expect(include, `${copy.path}: include list lacks Closes`).toMatch(/^- [^\n]*`Closes`/m);
+      expect(include, `${copy.path}: include list lacks Closes`).toMatch(/^- [^\n]*`Closes #N`/m);
       rules.push(rule);
     }
     expect(new Set(rules).size, "Closes rule differs across trees").toBe(1);
