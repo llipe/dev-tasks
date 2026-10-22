@@ -101,6 +101,60 @@ describe("roadmap prompt text is identical across platforms", () => {
   });
 });
 
+// Rollup RD-2 (S-011 DR-3 residual; D-61, D-66): Phase 6 step 7 sets the row
+// `Done` only when every story merged and the wave issue closed, otherwise it
+// keeps `In progress`. Every other place that states the Phase 6 roadmap result
+// must name the same conditional, and none may say the row always ends `Done`.
+describe("the Phase 6 roadmap result is conditional everywhere it is stated", () => {
+  const ALWAYS_DONE = [
+    /roadmap row reads `Done`/,
+    /to `Done` in Phase 6/,
+    /Never leave the roadmap claiming `In progress` for a phase whose consolidated PR merged/,
+    /Update roadmap row to Done/,
+  ];
+  const CONDITIONAL = [
+    "`Done` when every story in the state table reads `✅ Merged` and the wave issue, when there is one, reads closed",
+    "otherwise keep `In progress` and list the unmerged stories in `What's missing`",
+  ];
+  const invariant = (f: string): string =>
+    read(f).match(/^- The run is complete only after Phase 6 - Close-out:.*$/m)?.[0] ?? "";
+  const maintenance = (f: string): string =>
+    read(f).match(/## Roadmap Maintenance[\s\S]*?\n---\n/)?.[0] ?? "";
+
+  it.each(PLANNER)("%s Invariant and Roadmap Maintenance name the conditional", (f) => {
+    for (const [name, text] of [
+      ["Invariant", invariant(f)],
+      ["Roadmap Maintenance", maintenance(f)],
+    ] as const) {
+      expect(text, `${f}: ${name} not found`).not.toBe("");
+      for (const c of CONDITIONAL) expect(text, `${f}: ${name} lacks ${c}`).toContain(c);
+      for (const bad of ALWAYS_DONE)
+        expect(text, `${f}: ${name} says always Done`).not.toMatch(bad);
+    }
+  });
+
+  it("the Invariant and Roadmap Maintenance text is identical across planner copies", () => {
+    const inv = PLANNER.map(invariant);
+    const rm = PLANNER.map(maintenance);
+    for (const x of inv) expect(x).toBe(inv[0]);
+    for (const x of rm) expect(x).toBe(rm[0]);
+  });
+
+  it("docs/workflow-chains.md Phase 6 block names the conditional", () => {
+    // The diagram wraps a step across `│` continuation lines; read it as one line.
+    const block = (
+      read("docs/workflow-chains.md").match(/planner Phase 6 - Close-out:[\s\S]*?```/)?.[0] ?? ""
+    )
+      .replace(/\n\s*│\s*/g, " ")
+      .replace(/[ \t]+/g, " ");
+    expect(block, "Phase 6 block not found").not.toBe("");
+    expect(block).toMatch(/Done when every story in the state table reads ✅ Merged/);
+    expect(block).toMatch(/and the wave issue, when there is one, reads closed/);
+    expect(block).toMatch(/otherwise keep In progress and list the unmerged stories/);
+    for (const bad of ALWAYS_DONE) expect(block).not.toMatch(bad);
+  });
+});
+
 describe("verifier reports roadmap drift as advisory", () => {
   it.each(VERIFIER)("%s carries the roadmap-mismatch finding and never blocks on it", (f) => {
     const content = read(f);

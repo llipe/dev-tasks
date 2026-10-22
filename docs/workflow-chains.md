@@ -192,7 +192,9 @@ planner: orchestrate stories → developer: implement (per story)
       ├─ Verify consolidated PR merged
       ├─ Confirm story issues and wave issue closed
       ├─ Confirm Project status Done
-      ├─ Update roadmap row to Done
+      ├─ Set roadmap row: Done when every story in the state table reads ✅ Merged
+      │  and the wave issue, when there is one, reads closed; otherwise keep In progress
+      │  and list the unmerged stories in What's missing
       ├─ Archive state file
       └─ Open chore(roadmap) PR, delete integration branch
 ```
