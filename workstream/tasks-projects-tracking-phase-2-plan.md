@@ -13,10 +13,11 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
 - `.claude/skills/plan/SKILL.md`, `.github/instructions/plan.instructions.md`, `.kiro/steering/plan.md` - `Wave issue:` header line; Artifacts `Task plan:` update (S-008, S-018)
 - `.claude/commands/planner.md`, `.github/agents/planner.agent.md`, `.kiro/agents/planner.md` - Wave issue discovery, state file, handoff, checkpoint commit, wave and PRD status comments, never-close sentence, `Closes` lines, DF-5 observation, roadmap commands, Phase 6 close-out, Artifacts fidelity-report line (S-008 to S-011, S-018)
-- `.claude/agents/github-ops.md`, `.github/agents/github-ops.agent.md`, `.kiro/agents/github-ops.md` - wave status table states widened (S-009); `## Why` consolidated-PR `Closes` rule (S-010)
+- `.claude/agents/github-ops.md`, `.github/agents/github-ops.agent.md`, `.kiro/agents/github-ops.md` - wave status table states widened (S-009); `## Why` consolidated-PR `Closes` rule (S-010); PRD status table states widened and one-row-per-wave rule (S-018)
 - `.claude/skills/implement/SKILL.md`, `.github/instructions/implement.instructions.md`, `.kiro/steering/implement.md` - Rules 12 and 13, lifecycle row, Final Instruction 5: nobody closes (S-010)
 - `.claude/agents/verifier.md`, `.github/agents/verifier.agent.md`, `.kiro/agents/verifier.md` - Roadmap-Mismatch Finding compares with the wave issue and its sub-issues (S-012)
 - `.claude/skills/activity-publish-github/SKILL.md`, `.github/skills/activity-publish-github/SKILL.md`, `.kiro/skills/activity-publish-github/SKILL.md` - PRD status comment at publish (S-018)
+- `docs/workflow-chains.md` - PRD status comment and wave body Artifacts lines in the multi-story chain note (S-018)
 - `TESTING.md` - DF-5 In progress observation written by the planner at consolidated PR open (S-010, dogfood)
 - `test/unit/projects-tracking-parity.test.ts` - `describe("plan")`, `describe("planner")`, `describe("verifier")`; extensions to the github-ops, implement and publish blocks (all)
 
@@ -94,7 +95,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 5.5 Verify Acceptance Criterion: finding still advisory, routing unchanged
   - [x] 5.6 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 6.0 Implement Story S-018: The PRD issue carries one status comment updated at wave events (#296)
+- [x] 6.0 Implement Story S-018: The PRD issue carries one status comment updated at wave events (#296)
 
   - [x] 6.1 Extend the `activity-publish-github`, `planner` and `plan` blocks: PRD status comment at publish with `prd_status` values, planner edits at run start, PR open and close-out, Artifacts `Task plan:` set by plan and fidelity report set by the planner; confirm red
   - [x] 6.2 In the three publish copies, after hierarchy verification, create or edit the PRD issue's status comment per github-ops's PRD table with the wave row `published`, reporting `prd_status: written | failed(<reason>) | skipped(no PRD issue)` in the publication report; PRD issue number from the report's line, else the D-36 `level: prd` search (FR-25)
@@ -102,10 +103,11 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 6.3 In the three planner copies, edit the PRD status comment at run start (`in progress`), at consolidated PR open (`consolidated PR #n open`) and in Phase 6 (`shipped`), recording `prd_status` in the state file; and set the wave issue body's Artifacts fidelity-report line at Phase 5 (FR-25, D-61)
   - [x] 6.3a Read the PRD issue as the wave issue's parent (`GET issues/{wave}/parent`); set the wave body's `Integration branch:` at pre-flight and add a `Fidelity report:` Artifacts line at Phase 5 (A-29, A-39, D-69)
   - [x] 6.4 In the three plan copies, set the wave issue body's `Task plan:` Artifacts line to the plan path when the wave issue is known (FR-25)
-  - [ ] 6.5 Verify Acceptance Criterion: publish-time comment and `prd_status` values in all three publish copies
-  - [ ] 6.6 Verify Acceptance Criterion: planner events in all three
-  - [ ] 6.7 Verify Acceptance Criterion: Artifacts updates by plan and planner
-  - [ ] 6.8 Run Tests: `pnpm run test:unit`, `pnpm run validate`; dogfood: post the first PRD status comment on #289 for wave 2 as `in progress` from this story's own branch, per the new rule, and report it
+  - [x] 6.5 Verify Acceptance Criterion: publish-time comment and `prd_status` values in all three publish copies
+  - [x] 6.6 Verify Acceptance Criterion: planner events in all three
+  - [x] 6.7 Verify Acceptance Criterion: Artifacts updates by plan and planner
+  - [x] 6.8 Run Tests: `pnpm run test:unit`, `pnpm run validate`; dogfood: post the first PRD status comment on #289 for wave 2 as `in progress` from this story's own branch, per the new rule, and report it
+    - Dogfood note: not posted by the developer. The planner owns #289's and #290's comments during this run (handoff instruction). Read-only check on 2026-10-22: #289 already carries exactly one marker comment, and `gh api repos/llipe/dev-tasks/issues/290/parent --jq .number` returns `289`, so the D-69 source resolves on live data.
 
 ## Decisions Consumed
 
