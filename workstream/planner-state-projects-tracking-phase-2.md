@@ -10,7 +10,7 @@
 - Roadmap row: projects-tracking, wave 2
 - Test plan: workstream/test-plan-projects-tracking-phase-2.md
 - Started: 2026-10-22T00:00:00Z
-- Last updated: 2026-10-22T22:30:00Z
+- Last updated: 2026-10-22T23:10:00Z
 
 ## Story Status
 
@@ -41,3 +41,4 @@
 - S-012 merged 0c06c3d. Gates: validate PASS (2361 tests); qa coverage_gate PASS (7/13 probes, the rest pinned before merge); verifier High, DR-1 (trigger 1 now requires the wave issue closed) and DR-3 (`--state all` reason and pin) fixed before merge in f81583a, verified by the planner. memo_intent written(1f63538d…), memo_outcome written(c476f4bb…). Open for the rollup: verifier DR-2 (story issue left open after merge would raise trigger 2), DR-4 (planner Phase 5 step 3 does not pass `Wave issue` to the verifier; search fallback covers it), A-26 timing.
 - No answer from the user on the test-hardening question; proceeding with the recommendation: S-018 makes one final hardening pass and the rollup records the regex-test limit in TESTING.md.
 - S-018 merged 680d808. Gates: validate PASS (2370 tests); qa coverage_gate SKIPPED(no coverage provider; markdown prompts, static pins only), final hardening caught every S-011 survivor, 8 synonym/qualifier probes remain (the residual limit); verifier High, 6 Minor. memo_intent written(8c99f21e…), memo_outcome written(f329672c…). prd_status: written (PRD comment on #289 corrected to the D-63 states; unpublished wave 3 row removed, verifier DR-5). Phase 5 started.
+- Phase 5: integration validate PASS; qa PRD-level coverage_gate PASS (structural); verifier rollup High, 1 Major (RD-1: wave comment never edited at a story's PR-ready closeout — planner run conduct, recorded) and 17 Minor; RD-2 partial-wave wording fixed before consolidation in PR #304 (verifier High, no drift); RD-3 PRD runbook sentence fixed (PRD v1.8). Roadmap row from `gh api repos/llipe/dev-tasks/issues/290/sub_issues` and `gh pr list --base integration/projects-tracking-phase-2 --state merged`. TESTING.md v1.5: known limitation of regex parity tests recorded; wave 2 dogfood rows added. Follow-ups F-1 to F-7 to be opened as issues.

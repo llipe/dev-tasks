@@ -432,3 +432,8 @@ Per story, in execution order. Test-first: each `describe` addition is written a
 - 7 PRD FRs (FR-11 to FR-16, FR-25): all mapped.
 - 4 #285 criteria: two review checks met now (RV-1, RV-2), two static + dogfood (DF-11, DF-12, DF-13).
 - 30 findings (A-19 to A-48): 6 Major Unintended needing a decision before their story (A-19 to A-24), 2 Major Undetermined about dogfood meaning (A-25, A-26), 6 untestable-as-written edge cases bundled in A-36, the rest advisory.
+
+## Post-run corrections (2026-10-22)
+
+- CT-20: the planner's state file records only exception values of `wave_status` (`skipped(<reason>)`, `failed(<reason>)`); `written` is the default and is not logged (planner decision at the S-009 gate).
+- CT-22: the verifier's wave search uses `--state all`, unlike publish and planner Phase 0 (`--state open`), because an audit runs after ship and must find a closed wave issue (S-012 DR-3, pinned in PT-51).
