@@ -238,6 +238,18 @@ describe("helpers", () => {
 
 // --- github-ops (S-001, #270) -------------------------------------------------
 
+/** The `State` cell of github-ops's wave status template row (A-20, D-63). */
+function waveStateCell(copy: TreeCopy): string {
+  const section = sectionOf(copy, "Status comment");
+  const fence = (section.match(/```text\n[\s\S]*?```/g) ?? []).find((f) =>
+    f.includes("Integration HEAD"),
+  );
+  expect(fence, `${copy.path}: no wave status template`).toBeDefined();
+  const row = fence!.split("\n").find((line) => line.startsWith("| <story id>"));
+  expect(row, `${copy.path}: no wave template row`).toBeDefined();
+  return row!.split("|")[2].trim();
+}
+
 const GITHUB_OPS_TREES = {
   claude: ".claude/agents/github-ops.md",
   github: ".github/agents/github-ops.agent.md",
@@ -359,6 +371,16 @@ describe("github-ops", () => {
       }
       // A-10: "progress comment" is a forbidden synonym of "status comment".
       expect(copy.body, copy.path).not.toMatch(/progress comments?/i);
+    }
+  });
+
+  // PT-4 extension — S-009 2.2a; A-20, D-63: one state vocabulary with the planner.
+  it("wave table states", () => {
+    const cells = trees.map(waveStateCell);
+    for (const cell of cells) {
+      expect(cell).toBe(
+        "<pending, in progress (sub-task n of m), PR open, merged into integration or blocked>",
+      );
     }
   });
 
@@ -1024,12 +1046,32 @@ describe("planner", () => {
       const phase0 = copy.body.match(/## Phase 0 - Discover Task Source[\s\S]*?\n---\n/);
       expect(phase0, `${copy.path}: no Phase 0 span`).not.toBeNull();
       const text = phase0![0];
-      inOrder(text, ["Wave issue:", WAVE_SEARCH, "wave_status: skipped(no wave issue)"], copy.path);
+      // S-008 qa gate G1: anchor on the step markers inside the resolution list, not on
+      // the intro sentence's own `Wave issue:` mention, so swapping steps 1 and 2 fails.
+      const order = text.indexOf("Resolve in this order:");
+      expect(order, `${copy.path}: no "Resolve in this order:" list`).toBeGreaterThanOrEqual(0);
+      const steps = text.slice(order);
+      inOrder(
+        steps,
+        [
+          "1. **Plan header.**",
+          "`Wave issue:`",
+          "2. **Search.**",
+          WAVE_SEARCH,
+          "3. **Skip.**",
+          "wave_status: skipped(no wave issue)",
+        ],
+        copy.path,
+      );
       expect(text, copy.path).toMatch(/[Mm]ore than one[^\n]*stop/);
       // EC-41: header `none` with one search match — the search wins and is recorded.
       expect(text, copy.path).toMatch(/`Wave issue: none`[^\n]*search[^\n]*record/);
-      expect(lineWith(copy.body, "wave_status: skipped(no wave issue)", copy.path)).toBe(
-        lineWith(trees[0].body, "wave_status: skipped(no wave issue)", trees[0].path),
+      // S-008 qa gate G2: scoped to the Phase 0 span; S-009 uses the same value in the
+      // Wave Status Comment section and the Decisions Log template.
+      const phase0Of = (c: TreeCopy): string =>
+        c.body.match(/## Phase 0 - Discover Task Source[\s\S]*?\n---\n/)![0];
+      expect(lineWith(text, "wave_status: skipped(no wave issue)", copy.path)).toBe(
+        lineWith(phase0Of(trees[0]), "wave_status: skipped(no wave issue)", trees[0].path),
       );
     }
     // The planner's literal is publish's literal (CT-22).
@@ -1080,12 +1122,119 @@ describe("planner", () => {
       }
       // EC-45: push rejected → report, retry once, then blocked.
       expect(step, copy.path).toMatch(/push is rejected[^\n]*retry[^\n]*once[^\n]*blocked/);
-      // A-45: S-009 removes the per-merge comment sentence, not S-008.
-      expect(step, copy.path).toContain("post a GitHub Issue comment on the plan/milestone issue");
       expect(lineWith(copy.body, "git add -f", copy.path)).toBe(step);
       sentences.push(sentenceWith(step, "git add -f", copy.path));
     }
     expect(new Set(sentences).size, "checkpoint sentence differs across trees").toBe(1);
+  });
+
+  // PT-36 / CT-15 — S-009 AC-1; FR-12, D-25, D-26, D-33, D-53, D-70 (A-30, A-40)
+  it("wave status comment events", () => {
+    const waveSections: string[] = [];
+    const cell = waveStateCell(loadTrees(GITHUB_OPS_TREES)[0]);
+    for (const copy of trees) {
+      // D-33: referenced by name, never restated.
+      expect(copy.body, copy.path).toContain("implement § Status Comment");
+      expect(copy.body, copy.path).toContain("github-ops § Status comment");
+      expect(squashSpaces(copy.body), copy.path).not.toContain("| Story | State | PR | Sub-task |");
+      const section = sectionOf(copy, "Wave Status Comment");
+      inOrder(
+        section,
+        [
+          "**Run start**",
+          "**Resume**",
+          "**Story start**",
+          "**Developer closeout**",
+          "**Merge**",
+          "**Block**",
+          "**Rollup**",
+          "**Consolidated PR open**",
+          "**Close-out**",
+        ],
+        copy.path,
+      );
+      // CT-15 / A-20: every state the planner writes is in github-ops's wave table cell.
+      for (const state of [
+        "pending",
+        "in progress (sub-task n of m)",
+        "PR open",
+        "merged into integration",
+        "blocked",
+      ]) {
+        expect(section, `${copy.path}: planner does not write "${state}"`).toContain(
+          `\`${state}\``,
+        );
+        expect(cell, `github-ops wave table lacks "${state}"`).toContain(state);
+      }
+      waveSections.push(section);
+      // A-30 / D-70: run start is after pre-flight, not at the end of Phase 0.
+      const phase3 = copy.body.match(/## Phase 3 - Pre-flight[\s\S]*?\n---\n/);
+      expect(phase3, `${copy.path}: no Phase 3 span`).not.toBeNull();
+      expect(phase3![0], copy.path).toMatch(/create the wave status comment/);
+      const phase0 = copy.body.match(/## Phase 0 - Discover Task Source[\s\S]*?\n---\n/)![0];
+      expect(phase0, copy.path).not.toContain("wave status comment");
+      // Resume edits, never creates.
+      const resume = copy.sections.find((s) => s.heading.includes("Resume Detection"));
+      expect(resume!.text, copy.path).toMatch(/edit the wave status comment[^\n]*never create/);
+      const handoff = sectionOf(copy, "Per-story handoff");
+      expect(handoff, copy.path).toMatch(/wave status comment[^\n]*story start[^\n]*closeout/);
+      expect(step13(copy), copy.path).toContain("edit the wave status comment");
+      const blocked = sectionOf(copy, "Error Handling")
+        .split("\n")
+        .find((line) => line.startsWith("| Story returns blocked"));
+      expect(blocked, `${copy.path}: no "Story returns blocked" row`).toBeDefined();
+      expect(blocked!, copy.path).toContain("wave status comment");
+      // A-40: PR open and close-out edit the same comment.
+      const phase5 = sectionOf(copy, "Phase 5 - Consolidated Pull Request");
+      const step = (n: number): string => phase5.match(new RegExp(`^${n}\\. .*$`, "m"))![0];
+      expect(step(7), copy.path).toContain("wave status comment");
+      expect(step(9), copy.path).toContain("wave status comment");
+    }
+    expect(new Set(waveSections).size, "Wave Status Comment section differs across trees").toBe(1);
+  });
+
+  // PT-37 — S-009 AC-2; D-53 (A-31, A-32, A-45)
+  it("no per-merge comment", () => {
+    const invariants: string[] = [];
+    for (const copy of trees) {
+      expect(copy.body, copy.path).not.toContain(
+        "post a GitHub Issue comment on the plan/milestone issue",
+      );
+      // A-31: Phase 5 step 3's rollup summary no longer goes to that issue either.
+      expect(copy.body, copy.path).not.toContain("plan/milestone issue");
+      const phase5 = sectionOf(copy, "Phase 5 - Consolidated Pull Request");
+      expect(phase5.match(/^3\. .*$/m)![0], copy.path).toContain("wave status comment");
+      const section = sectionOf(copy, "Invariants");
+      expect(section, copy.path).not.toContain("post a GitHub comment with status");
+      const line = lineWith(section, "edit the wave status comment", copy.path);
+      // A-32: one rewrite covers both halves.
+      expect(line, copy.path).toContain("commit the state file");
+      invariants.push(line);
+    }
+    expect(new Set(invariants).size, "Invariant line differs across trees").toBe(1);
+  });
+
+  // PT-38 — S-009 AC-3; D-53, spec §9
+  it("wave_status report values", () => {
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Wave Status Comment");
+      for (const marker of [
+        "wave_status: skipped(no wave issue)",
+        "wave_status: failed(<reason>)",
+        "failed(duplicate marker)",
+        "Decisions Log",
+        "run summary",
+      ]) {
+        expect(section, `${copy.path}: Wave Status Comment lacks ${marker}`).toContain(marker);
+      }
+      expect(section, copy.path).toMatch(/never blocks?[^\n]*merge/);
+      const decisions = sectionOf(copy, "State File Format").match(
+        /## Decisions Log\n\n([\s\S]*?)\n```/,
+      );
+      expect(decisions, `${copy.path}: no Decisions Log in the state template`).not.toBeNull();
+      expect(decisions![1], copy.path).toContain("wave_status:");
+      expect(sectionOf(copy, "Output Contract"), copy.path).toContain("`wave_status`");
+    }
   });
 });
 

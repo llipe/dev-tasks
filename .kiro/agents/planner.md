@@ -194,6 +194,7 @@ Before parsing stories, check for an existing checkpoint state file.
    - Ask: **"Resume from story [next-story-id]? (y/n)"**
    - If confirmed: skip Phases 1-3, load the integration branch and execution plan from the state file, and resume Phase 4 from the next pending story.
    - On resume, read the wave issue from Run Info's `Wave issue` line and reuse it; do not resolve it again. A state file written before that line existed has none: resolve the wave issue as Phase 0's **Wave Issue Resolution** does and add the line.
+   - On resume, edit the wave status comment in place (see **Wave Status Comment** in Phase 4); never create a second one.
    - If declined: archive the old state file (rename with `-archived` suffix) and proceed with a fresh run from Phase 1.
 3. If no state file exists, proceed to Phase 1 normally.
 
@@ -230,6 +231,7 @@ Path: `/workstream/planner-state-<plan-id>.md`
 ## Decisions Log
 
 - <any decisions made during the run>
+- wave_status: skipped(no wave issue) | failed(<reason>) at <event>
 ```
 
 ---
@@ -360,6 +362,8 @@ integration/<plan-id>-<short-description>
 
 Per-story branches and PRs are created by `developer` following `github-ops` conventions.
 
+Run start: once the integration branch is pushed, create the wave status comment (see **Wave Status Comment** in Phase 4) with every story `pending`. Not earlier: a plan declined at Phase 2 leaves no comment behind, and `Integration HEAD` already has a value (D-70).
+
 ---
 
 ## Phase 4 - Delegate to developer
@@ -383,6 +387,8 @@ For each story invoke `developer` in **Execute Mode** with:
 - Test-first directive: developer **MUST** follow test-first design (write tests before implementation)
 - Test plan reference (if available): path to `/workstream/test-plan-*.md` for this story
 - Decision log (`decision_log_path`): `workstream/decisions-<feature>.md`, passed unconditionally for every story — every feature has exactly one decision log, whether or not this story's spec section cited a decision
+
+Edit the wave status comment at story start, before each handoff, and at developer closeout, once the closeout payload validates (see **Wave Status Comment**).
 
 ### Verifier Design Mode (Pre-Implementation)
 
@@ -488,6 +494,24 @@ If the payload is missing or incomplete:
 1. Retry once with a narrow follow-up asking the developer to return only the missing closeout payload.
 2. If the retry still omits the payload, mark the story incomplete, write the checkpoint as blocked on missing closeout payload, and ask the user whether to continue.
 
+### Wave Status Comment
+
+The wave issue's status comment belongs to the planner. It is one comment, found by its marker and created or edited in place with implement § Status Comment's find-by-marker, create and PATCH procedure, in the shape of github-ops § Status comment's wave table; the table, its summary lines and its states are defined there and not restated here (D-33). It replaces the comment the planner once posted after every merge (D-53). Each write rebuilds the comment from the state file, with one row per story in sequence order.
+
+Write it at these events, in this order across a run:
+
+1. **Run start** — Phase 3, once the integration branch is pushed: create it when no comment carries the marker; every story reads `pending`.
+2. **Resume** — Phase 0.5: find it by the marker and edit it; never create a second one.
+3. **Story start** — before each developer handoff: `Current story` names the story, which reads `in progress (sub-task n of m)`, with `n` the sub-tasks already checked in the task list and `m` their total.
+4. **Developer closeout** — once the closeout payload validates: the story reads `PR open` with its story PR, and `Gates` carries the payload's quality gates.
+5. **Merge** — merge rule step 13, after the checkpoint push: the story reads `merged into integration`; `Last merged PR` and `Integration HEAD` come from the pushed integration branch.
+6. **Block** — whenever a story is marked blocked: the story reads `blocked`, with the reason in the update line.
+7. **Rollup** — Phase 5 step 3: the rollup audit's human-readable summary goes in this comment.
+8. **Consolidated PR open** — Phase 5 step 7: the update line names the consolidated PR.
+9. **Close-out** — Phase 5 step 9, when the user reports the consolidated PR merged: the update line says the wave shipped.
+
+When Run Info reads `Wave issue: none`, every write is skipped and reports `wave_status: skipped(no wave issue)`. A refused create or PATCH (permissions, a locked issue, a network error) reports `wave_status: failed(<reason>)`; two comments carrying the marker are handled as implement § Status Comment says, editing the oldest and reporting `failed(duplicate marker)`. Every skipped or failed value goes to the state file's Decisions Log and to the run summary. A wave status comment write never blocks a merge gate, a story, or the consolidated PR handoff.
+
 ### Merge management rule (planner-owned)
 
 Planner **MUST** manage merges for every completed story in sequence before delegating the next story.
@@ -506,7 +530,7 @@ For each completed story PR:
 10. **Review the PR** — planner **MUST** review the story PR (verify scope, files, test and quality-gate results) and approve it.
 11. Merge PR into integration branch using one consistent strategy (default: `merge`, a merge commit with source-branch deletion; never squash or rebase unless the user explicitly asks for it).
 12. Confirm integration branch is green after merge before moving to next story.
-13. **Verify the merge actually happened, then write checkpoint.** Before writing `✅ Merged` to the state file, confirm observed GitHub state — run `gh pr view <n> --json state,mergedAt` and require `state` to be `MERGED` and `mergedAt` to be non-null. If the check fails or errors, do **not** write `✅ Merged`; mark the story blocked, report the exact `gh pr view` output, and stop rather than guessing at the outcome. Only once this is confirmed: update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp, and post a GitHub Issue comment on the plan/milestone issue with the current story status table. Then commit the checkpoint in the same step: `git add -f workstream/planner-state-<plan-id>.md` (forced, so a repository that ignores `workstream/` still commits it), commit it on the integration branch with the message `chore(planner): checkpoint after <story> merge`, and push the integration branch. If the push is rejected, report the rejection verbatim, retry the push once, and mark the story blocked if it is rejected again; a push blocked by a hook is a decision and is never retried.
+13. **Verify the merge actually happened, then write checkpoint.** Before writing `✅ Merged` to the state file, confirm observed GitHub state — run `gh pr view <n> --json state,mergedAt` and require `state` to be `MERGED` and `mergedAt` to be non-null. If the check fails or errors, do **not** write `✅ Merged`; mark the story blocked, report the exact `gh pr view` output, and stop rather than guessing at the outcome. Only once this is confirmed: update the planner state file (see Phase 0.5 State File Format), mark the completed story as `✅ Merged` with its PR link and branch name, update `Current Position` to the next pending story, update the `Last updated` timestamp. Then commit the checkpoint in the same step: `git add -f workstream/planner-state-<plan-id>.md` (forced, so a repository that ignores `workstream/` still commits it), commit it on the integration branch with the message `chore(planner): checkpoint after <story> merge`, and push the integration branch. If the push is rejected, report the rejection verbatim, retry the push once, and mark the story blocked if it is rejected again; a push blocked by a hook is a decision and is never retried. After the push, edit the wave status comment (see **Wave Status Comment**): this story reads `merged into integration`, with `Last merged PR` and `Integration HEAD` taken from the pushed integration branch.
 
 If any merge gate fails, stop and report exact blocker and PR link.
 
@@ -531,13 +555,13 @@ After all stories are merged into integration:
 
 1. Run full integration test suite on integration branch.
 2. Invoke `qa-engineer` at **PRD scope** (all packages affected by the merged stories, all layers) for a coverage and gap rollup. Report a PRD-level `coverage_gate` that aggregates per-story gates. Scope to packages affected by the merged stories, not the entire workspace.
-3. Invoke `verifier` in `audit` mode for a **PRD-level rollup audit** against the full integrated scope (all merged stories on the integration branch, cross-checked against the source PRD/spec/milestone). This is mandatory and non-skippable — it runs whether or not any story-level drift was previously reported. Post the resulting human-readable summary to the plan/milestone issue via `github-ops` comment conventions. Rollup drift findings **MUST NOT** block the consolidated PR handoff; Unintended/Intended drift routes to `product-engineer`'s `activity-drift-reconciliation` flow.
+3. Invoke `verifier` in `audit` mode for a **PRD-level rollup audit** against the full integrated scope (all merged stories on the integration branch, cross-checked against the source PRD/spec/milestone). This is mandatory and non-skippable — it runs whether or not any story-level drift was previously reported. Record the resulting human-readable summary in the wave status comment, edited in place (see **Wave Status Comment**), never as a new comment; with no wave issue, carry it in the consolidated PR body. Rollup drift findings **MUST NOT** block the consolidated PR handoff; Unintended/Intended drift routes to `product-engineer`'s `activity-drift-reconciliation` flow.
 4. Invoke `technical-writer` for a planner-level drift/stale-doc validation pass against integrated changes; unresolved drift **MUST** block handoff.
 5. **Roadmap update (mandatory).** Update the run's row(s) in `docs/roadmap.md` on the integration branch, so the change ships in the consolidated PR itself: set `Status` (`Done` when every story in the phase/wave merged, otherwise `In progress`), fill `Issues/PRs` with the story issues and the consolidated PR, rewrite `What's missing` to the remaining scope (`—` when none), and set the `Last updated` date. A consolidated PR without this roadmap change is incomplete. See **Roadmap Maintenance** below.
 6. **memo run outcome.** Write the per-run outcome entry described in **memo-cli Integration → Responsibilities** and record `memo_run_outcome`.
-7. Open one consolidated PR from integration branch to `main`.
+7. Open one consolidated PR from integration branch to `main`. Then edit the wave status comment so its update line names the consolidated PR.
 8. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
-9. Wait for the user to approve and merge the PR into `main`.
+9. Wait for the user to approve and merge the PR into `main`. When the user reports the merge, edit the wave status comment for close-out.
 10. **Post-integration deploy handoff (conditional).** When the merged scope includes deployable changes and the repository declares environments in `infra/environments.yaml`, planner **MUST** hand the deploy off to `infra-engineer` rather than running any platform write or deploy command itself. This handoff is conditional — it applies only when infrastructure/deploy scope is present; a docs- or test-only integration triggers no deploy. Planner names `infra-engineer` as the owner of the post-integration deploy (dev on merge to `main`, production behind the protected-environment reviewer on the release tag via the `deploy-ops` workflow templates) and never invokes `deploy.sh`, `release.sh`, `flyctl`, `aws`, or `supabase` directly.
 11. Before final handoff, **MUST** ensure the local working branch is the integration branch used for this run:
 
@@ -580,20 +604,20 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 
 ## Error Handling
 
-| Situation                          | Action                                                                                     |
-| ---------------------------------- | ------------------------------------------------------------------------------------------ |
-| No `/workstream` task file         | Ask for file path or milestone                                                             |
-| Multiple task files                | Ask user to choose                                                                         |
-| Milestone has no issues            | Report and stop                                                                            |
-| Circular dependencies              | Report cycle and stop                                                                      |
-| Story returns blocked              | Mark blocked and ask whether to continue                                                   |
-| Story PR targets wrong base        | Require retargeting to integration branch before merge                                     |
-| Required checks pending/failing    | Do not merge; report failing checks                                                        |
-| Story PR behind integration branch | Require update/rebase before merge                                                         |
-| Merge conflict                     | Invoke `git-ops` skill to resolve; if resolution fails, report conflicting files and pause |
-| Integration tests fail             | Report failures and ask whether to proceed or fix first                                    |
-| Consolidated PR creation fails     | Return generated title/body and ask to retry                                               |
-| Story payload base mismatch        | Mark story blocked; require retargeting PR base to integration branch before merge         |
+| Situation                          | Action                                                                                                               |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| No `/workstream` task file         | Ask for file path or milestone                                                                                       |
+| Multiple task files                | Ask user to choose                                                                                                   |
+| Milestone has no issues            | Report and stop                                                                                                      |
+| Circular dependencies              | Report cycle and stop                                                                                                |
+| Story returns blocked              | Mark blocked, edit the wave status comment so the story reads `blocked` with the reason, and ask whether to continue |
+| Story PR targets wrong base        | Require retargeting to integration branch before merge                                                               |
+| Required checks pending/failing    | Do not merge; report failing checks                                                                                  |
+| Story PR behind integration branch | Require update/rebase before merge                                                                                   |
+| Merge conflict                     | Invoke `git-ops` skill to resolve; if resolution fails, report conflicting files and pause                           |
+| Integration tests fail             | Report failures and ask whether to proceed or fix first                                                              |
+| Consolidated PR creation fails     | Return generated title/body and ask to retry                                                                         |
+| Story payload base mismatch        | Mark story blocked; require retargeting PR base to integration branch before merge                                   |
 
 ---
 
@@ -608,7 +632,7 @@ Planner **MUST NOT** merge the consolidated PR. Only the user may approve and me
 - Execution is strictly sequential, one story at a time.
 - Planner owns story PR merges into integration and enforces merge gates.
 - `developer` runs in Execute Mode for each story.
-- Planner **MUST** write a checkpoint state file after every story merge and post a GitHub comment with status.
+- Planner **MUST**, after every story merge, write the checkpoint state file, commit the state file (force-added and pushed to the integration branch) and edit the wave status comment.
 - On restart, planner **MUST** check for existing state files and offer to resume (Phase 0.5).
 - All GitHub outputs are in English.
 - Final user-facing local branch state **MUST** be the integration branch for the current run, or planner **MUST** explicitly report verification failure and provide the exact checkout command.
@@ -628,6 +652,7 @@ For each run, return:
 - Integration branch
 - Final local branch state (checked out branch name or explicit verification result)
 - Story PR links/status
+- Wave status comment outcome (`wave_status` values recorded in the Decisions Log)
 - Consolidated PR link or blocker
 - Current test status
 - PR Directives (User Action Required)
