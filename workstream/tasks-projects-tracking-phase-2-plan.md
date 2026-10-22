@@ -13,7 +13,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
 - `.claude/skills/plan/SKILL.md`, `.github/instructions/plan.instructions.md`, `.kiro/steering/plan.md` - `Wave issue:` header line; Artifacts `Task plan:` update (S-008, S-018)
 - `.claude/commands/planner.md`, `.github/agents/planner.agent.md`, `.kiro/agents/planner.md` - Wave issue discovery, state file, handoff, checkpoint commit, wave and PRD status comments, never-close sentence, `Closes` lines, DF-5 observation, roadmap commands, Phase 6 close-out, Artifacts fidelity-report line (S-008 to S-011, S-018)
-- `.claude/agents/github-ops.md`, `.github/agents/github-ops.agent.md`, `.kiro/agents/github-ops.md` - `## Why` consolidated-PR `Closes` rule (S-010)
+- `.claude/agents/github-ops.md`, `.github/agents/github-ops.agent.md`, `.kiro/agents/github-ops.md` - wave status table states widened (S-009); `## Why` consolidated-PR `Closes` rule (S-010)
 - `.claude/skills/implement/SKILL.md`, `.github/instructions/implement.instructions.md`, `.kiro/steering/implement.md` - Rules 12 and 13, lifecycle row, Final Instruction 5: nobody closes (S-010)
 - `.claude/agents/verifier.md`, `.github/agents/verifier.agent.md`, `.kiro/agents/verifier.md` - Roadmap-Mismatch Finding compares with the wave issue and its sub-issues (S-012)
 - `.claude/skills/activity-publish-github/SKILL.md`, `.github/skills/activity-publish-github/SKILL.md`, `.kiro/skills/activity-publish-github/SKILL.md` - PRD status comment at publish (S-018)
@@ -39,20 +39,20 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 1.10a Fix `TESTING.md`: move the changelog rows 1.2 and 1.3 out of the Test Layers table into `## Changelog`, and relax PT-30 so the PRD AC-1 row may read observed (A-38)
   - [x] 1.11 Run Tests: `pnpm run test:unit`, `pnpm run validate`; dogfood note in the PR body: this wave's own run will show the state file on the integration branch after the first merge
 
-- [ ] 2.0 Implement Story S-009: The planner keeps the wave issue's status comment current and stops posting per-merge comments (#292)
+- [x] 2.0 Implement Story S-009: The planner keeps the wave issue's status comment current and stops posting per-merge comments (#292)
 
-  - [ ] 2.1 Extend `describe("planner")` with assertions for the wave status comment events (run start, story start, closeout, merge, block), the reference to implement § Status Comment and github-ops's wave table by name, the `wave_status` values `skipped(no wave issue)` and `failed(<reason>)`, and a negative on "post a GitHub Issue comment on the plan/milestone issue"; confirm red
-  - [ ] 2.2 In `.claude/commands/planner.md`, add the wave status comment creation at the end of Phase 0 (or on resume) and its in-place edits at story start, developer closeout, step 13 merge, and block, using the implement procedure and the github-ops wave table with the story-state vocabulary `pending`, `in progress (sub-task n of m)`, `PR open`, `merged into integration`, `blocked` (FR-12, D-53)
-  - [ ] 2.2a Widen github-ops's wave status table states in all three copies to pending, in progress (sub-task n of m), PR open, merged into integration, blocked (A-20, D-63)
-  - [ ] 2.2b Post the run-start wave comment after Phase 3 pre-flight, and edit the same comment at consolidated PR open and at close-out (A-30, A-40, D-70)
-  - [ ] 2.3 Remove the per-merge comment sentence from step 13 and change the Invariants line to "edit the wave status comment" (D-53)
-  - [ ] 2.3a Redirect Phase 5 step 3's rollup summary from the plan/milestone issue to the wave status comment, and make the Invariant read "commit the state file and edit the wave status comment" (A-31, A-32, D-70)
-  - [ ] 2.4 Add the report rule: `wave_status: skipped(no wave issue)` or `failed(<reason>)` goes to the state file's Decisions Log and the run summary and never blocks a merge gate (D-53)
-  - [ ] 2.5 Apply the same edits to the `.github/` and `.kiro/` planner copies
-  - [ ] 2.6 Verify Acceptance Criterion: comment events and table reference in all three
-  - [ ] 2.7 Verify Acceptance Criterion: per-merge comment sentence gone, Invariants reworded
-  - [ ] 2.8 Verify Acceptance Criterion: report values and never-blocks rule
-  - [ ] 2.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [x] 2.1 Extend `describe("planner")` with assertions for the wave status comment events (run start, story start, closeout, merge, block), the reference to implement § Status Comment and github-ops's wave table by name, the `wave_status` values `skipped(no wave issue)` and `failed(<reason>)`, and a negative on "post a GitHub Issue comment on the plan/milestone issue"; confirm red
+  - [x] 2.2 In `.claude/commands/planner.md`, add the wave status comment creation at the end of Phase 0 (or on resume) and its in-place edits at story start, developer closeout, step 13 merge, and block, using the implement procedure and the github-ops wave table with the story-state vocabulary `pending`, `in progress (sub-task n of m)`, `PR open`, `merged into integration`, `blocked` (FR-12, D-53)
+  - [x] 2.2a Widen github-ops's wave status table states in all three copies to pending, in progress (sub-task n of m), PR open, merged into integration, blocked (A-20, D-63)
+  - [x] 2.2b Post the run-start wave comment after Phase 3 pre-flight, and edit the same comment at consolidated PR open and at close-out (A-30, A-40, D-70)
+  - [x] 2.3 Remove the per-merge comment sentence from step 13 and change the Invariants line to "edit the wave status comment" (D-53)
+  - [x] 2.3a Redirect Phase 5 step 3's rollup summary from the plan/milestone issue to the wave status comment, and make the Invariant read "commit the state file and edit the wave status comment" (A-31, A-32, D-70)
+  - [x] 2.4 Add the report rule: `wave_status: skipped(no wave issue)` or `failed(<reason>)` goes to the state file's Decisions Log and the run summary and never blocks a merge gate (D-53)
+  - [x] 2.5 Apply the same edits to the `.github/` and `.kiro/` planner copies
+  - [x] 2.6 Verify Acceptance Criterion: comment events and table reference in all three
+  - [x] 2.7 Verify Acceptance Criterion: per-merge comment sentence gone, Invariants reworded
+  - [x] 2.8 Verify Acceptance Criterion: report values and never-blocks rule
+  - [x] 2.9 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 3.0 Implement Story S-010: Nobody closes a story; the consolidated PR closes every story and the wave at ship (#293)
 
