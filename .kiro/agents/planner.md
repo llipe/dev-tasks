@@ -650,7 +650,7 @@ Run this phase when the user reports that the consolidated PR merged into `main`
 `docs/roadmap.md` is the one-page overview of every PRD's phases or waves: what is done, what is in progress, and what is missing. It is an index over the PRDs, GitHub issues, and merged PRs — when they disagree, they win and the roadmap is corrected.
 
 - **Read** it in Phase 0 (see **Roadmap Read**).
-- **Update** the run's row(s) twice, each time from `gh` output, never from memory: to `In progress` in Phase 5 step 5, in the consolidated PR, and to `Done` in Phase 6, in the `chore(roadmap)` PR, once the merge is verified. Never leave the roadmap claiming `In progress` for a phase whose consolidated PR merged, or `Done` for one whose consolidated PR has not.
+- **Update** the run's row(s) twice, each time from `gh` output, never from memory: to `In progress` in Phase 5 step 5, in the consolidated PR, and again in Phase 6 step 7, in the `chore(roadmap)` PR, once the merge is verified: `Done` when every story in the state table reads `✅ Merged` and the wave issue, when there is one, reads closed; otherwise keep `In progress` and list the unmerged stories in `What's missing`. Never leave the roadmap claiming `Done` for a phase whose consolidated PR has not merged or whose stories did not all merge.
 - Change only the rows this run touched; rows for other PRDs belong to `product-engineer` and to the planner runs that deliver them.
 - The `verifier` rollup audit (Phase 5 step 3) compares the roadmap with the delivered work, as its Roadmap-Mismatch Finding describes, and reports a mismatch as an advisory finding.
 
@@ -691,7 +691,7 @@ Run this phase when the user reports that the consolidated PR merged into `main`
 - All GitHub outputs are in English.
 - At the Phase 5 handoff, the final user-facing local branch state **MUST** be the integration branch for the current run, or planner **MUST** explicitly report verification failure and provide the exact checkout command. After Phase 6 deletes the integration branch, the final local branch is `main`, or the close-out branch until its PR is open.
 - Planner **MUST** end a successful run with explicit PR directives for the user (review/approve/merge) and **MUST NOT** mark the run complete before that handoff is emitted.
-- The run is complete only after Phase 6 - Close-out: the merge is verified, the roadmap row reads `Done`, the state file is archived, the `chore(roadmap)` PR is open and the integration branch is deleted.
+- The run is complete only after Phase 6 - Close-out: the merge is verified, the roadmap row is set as Phase 6 step 7 says (`Done` when every story in the state table reads `✅ Merged` and the wave issue, when there is one, reads closed; otherwise keep `In progress` and list the unmerged stories in `What's missing`), the state file is archived, the `chore(roadmap)` PR is open and the integration branch is deleted.
 - Planner **MUST** verify `verifier_audit: run` in every story's closeout payload before merging that story's PR into the integration branch, and **MUST** invoke `verifier` in `audit` mode for a PRD-level rollup audit before/alongside the consolidated PR — both triggers are mandatory and non-skippable, and neither trigger's drift findings block the corresponding merge/handoff.
 
 ---
