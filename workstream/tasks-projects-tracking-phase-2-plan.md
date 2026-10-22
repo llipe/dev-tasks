@@ -22,7 +22,7 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
 
 ## Tasks
 
-- [ ] 1.0 Implement Story S-008: The planner knows its wave issue and commits its checkpoint after every merge (#291)
+- [x] 1.0 Implement Story S-008: The planner knows its wave issue and commits its checkpoint after every merge (#291)
 
   - [x] 1.1 Add `describe("plan")` and `describe("planner")` to `test/unit/projects-tracking-parity.test.ts`, with `loadTrees` taking explicit paths for the plan files (skill, instruction, steering) and the planner files (command, two agents); assert the `Wave issue:` header line, the Phase 0 discovery order with the `level: wave` search and `startswith` filter, the `skipped(no wave issue)` value, the Run Info `Wave issue` line, the handoff `Wave issue` line, and the `git add -f` checkpoint commit with its message; run `pnpm run test:unit`, confirm red (D-34)
   - [x] 1.2 In the three plan copies, add `Wave issue: #N` to the Output Format header after `Source:` and the Process step that reads it from the publication report's `Wave issue` line, writing `Wave issue: none` with a note when absent (D-59)
