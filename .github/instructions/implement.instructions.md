@@ -167,19 +167,19 @@ When `workstream/decisions-<feature>.md` exists and was read per step 2 above:
     - PRs targeting **`main`**: the **user** reviews and approves.
 
 11. The PR **MUST** be merged by the authorized party (planner for integration branches, user for `main`).
-12. You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.
-13. You **MUST NOT** close the issue while the PR is still in draft or pending review.
+12. Nobody closes the GitHub Issue: not the implementing agent, not the `planner`. It closes when a PR against the default branch carrying `Closes #N` merges: under the `planner` that is the consolidated PR, and in a main-thread run with no planner (the interactive `/developer` command) it is the story PR itself. A story PR into an integration branch closes nothing, because GitHub ignores closing keywords on a PR whose base is not the default branch.
+13. You **MUST NOT** close the issue by hand at any point, before or after the merge; if it is still open after the closing PR merged, report that instead of closing it.
 14. You **MUST** notify the user when the PR is ready for review — explicitly inform them so they can review and merge.
 
 ---
 
 ## GitHub Execution Rules Summary
 
-| Phase              | Rule                                                                                                                                                                                                                                                                                               |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Before coding**  | Confirm issue open → Create branch (`github-ops`) → First commit → Open draft PR (`github-ops`) → Sync checklists                                                                                                                                                                                  |
-| **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Update the status comment (`github-ops` § Status comment) → Wait for approval                                                                                                                                                               |
-| **Before closing** | All ACs verified → Quality gates pass (test/lint/format/typecheck/audit) → migration confirmation/apply/verify (when applicable) → docs drift check clear → coverage_gate recorded → verifier audit run + summary posted (non-blocking on drift) → PR ready → Approved → Merged → Then close issue |
+| Phase              | Rule                                                                                                                                                                                                                                                                                                                                           |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Before coding**  | Confirm issue open → Create branch (`github-ops`) → First commit → Open draft PR (`github-ops`) → Sync checklists                                                                                                                                                                                                                              |
+| **During coding**  | One sub-task at a time → Mark `[x]` locally + GitHub → Update the status comment (`github-ops` § Status comment) → Wait for approval                                                                                                                                                                                                           |
+| **Before closing** | All ACs verified → Quality gates pass (test/lint/format/typecheck/audit) → migration confirmation/apply/verify (when applicable) → docs drift check clear → coverage_gate recorded → verifier audit run + summary posted (non-blocking on drift) → PR ready → Approved → Merged → GitHub closes the issue (`Closes #N` on a default-branch PR) |
 
 ---
 
@@ -195,4 +195,4 @@ When `workstream/decisions-<feature>.md` exists and was read per step 2 above:
 2. You **MUST** keep the GitHub Issue updated with its checklist and its status comment.
 3. You **MUST** ensure branch, PR, and issue naming follow `github-ops` conventions.
 4. You **MUST** stop after each sub-task and request user approval.
-5. You **MUST NOT** close a GitHub Issue without confirming the PR has been reviewed, approved, and merged.
+5. You **MUST NOT** close a GitHub Issue by hand: nobody closes it; it closes when a PR against the default branch carrying `Closes #N` merges.
