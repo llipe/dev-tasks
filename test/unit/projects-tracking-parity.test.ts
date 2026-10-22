@@ -165,27 +165,50 @@ function sentenceWith(text: string, marker: string, label = "text"): string {
  * Clauses of `text` in which an agent closes an issue or story. Code spans are
  * dropped first (`Closes #N` is the PR keyword, `gh issue close` has its own
  * negative), bold markers are dropped, and each line is split into clauses at
- * `. `, `; `, `: ` and ` — `. A clause is allowed when it says nobody, never,
- * neither or **MUST NOT** closes, that GitHub closes the issue, or how the
- * keyword behaves (a comma list "closes only the first", a story PR "closes
- * nothing"); the
- * confirmation that an issue reads `closed` never matches, because `closed` is
- * not the word `close`.
+ * `. `, `; `, `: ` and ` — `. A clause is allowed when nobody, never, neither
+ * or **MUST NOT** directly governs the closing verb ("never closes", not a
+ * "never" elsewhere in the clause), when GitHub closes the issue, or when it
+ * says how the keyword behaves (a comma list "closes only the first", a story
+ * PR "closes nothing"); the confirmation that an issue reads `closed` never
+ * matches, because `closed` is not the word `close`. With `pronouns`, a
+ * pronoun object ("closes it", "close them") counts as closing too, for the
+ * sections where "it" can only be an issue (Phase 6).
  */
 const AGENT_CLOSES = /\b(close|closes)\b[^\n]*\b(issue|story)\b/i;
+const PRONOUN_CLOSES = /\b(close|closes)\s+(it|them)\b/i;
 const CLOSE_ALLOWED =
-  /\b(nobody|never|neither)\b|\bMUST NOT\b|\bGitHub closes\b|\bcloses (only the first|nothing)\b/i;
+  /\b(nobody|never|neither|MUST NOT)\s+(close|closes)\b|\bGitHub closes\b|\bcloses (only the first|nothing)\b/i;
 
-function agentClosingClauses(text: string): string[] {
+function agentClosingClauses(text: string, pronouns = false): string[] {
   const found: string[] = [];
   for (const line of text.split("\n")) {
     const plain = line.replace(/`[^`]*`/g, "").replace(/\*\*/g, "");
     for (const clause of plain.split(/[.;:]\s+|\s—\s/)) {
-      if (AGENT_CLOSES.test(clause) && !CLOSE_ALLOWED.test(clause)) found.push(clause.trim());
+      const closes = AGENT_CLOSES.test(clause) || (pronouns && PRONOUN_CLOSES.test(clause));
+      if (closes && !CLOSE_ALLOWED.test(clause)) found.push(clause.trim());
     }
   }
   return found;
 }
+
+/**
+ * Clauses of `text` that write to `main`: a push, commit, merge or write verb
+ * aimed `to`, `on` or `into` `main` within one clause (split at `. `, `; `,
+ * `, `, `: ` and ` — `). Opening a PR to `main` is not a write (S-011 qa gate).
+ */
+const MAIN_WRITE =
+  /\b(push|pushes|pushed|commit|commits|committed|merge|merges|merged|write|writes|written)\b[^\n]*\b(to|on|into)\s+`?main\b/i;
+
+function mainWriteClauses(text: string): string[] {
+  return text
+    .split(/[.;,:]\s+|\s—\s/)
+    .filter((clause) => MAIN_WRITE.test(clause))
+    .map((clause) => clause.trim());
+}
+
+/** Deleting the integration branch in any wording or command (S-011 qa gate). */
+const DELETES_INTEGRATION =
+  /\b(delete|deletes|deleting|deleted|remove|removes|removing)\b[^\n]*\bintegration branch\b|git branch -[dD]\b|git push origin --delete\b/i;
 
 /** The wave closes only when every story merged; no wording widens that (S-010 qa gate). */
 const WAVE_CLOSES_ANYWAY = /Closes #<wave>[^\n]*(even|regardless|always)/;
@@ -306,6 +329,16 @@ function waveStateCell(copy: TreeCopy): string {
   expect(fence, `${copy.path}: no wave status template`).toBeDefined();
   const row = fence!.split("\n").find((line) => line.startsWith("| <story id>"));
   expect(row, `${copy.path}: no wave template row`).toBeDefined();
+  return row!.split("|")[2].trim();
+}
+
+/** The `State` cell of github-ops's PRD status template row (A-21, D-63). */
+function prdStateCell(copy: TreeCopy): string {
+  const section = sectionOf(copy, "Status comment");
+  const fence = (section.match(/```text\n[\s\S]*?```/g) ?? []).find((f) => f.includes("| Wave "));
+  expect(fence, `${copy.path}: no PRD status template`).toBeDefined();
+  const row = fence!.split("\n").find((line) => line.startsWith("| <id>"));
+  expect(row, `${copy.path}: no PRD template row`).toBeDefined();
   return row!.split("|")[2].trim();
 }
 
@@ -441,6 +474,22 @@ describe("github-ops", () => {
         "<pending, in progress (sub-task n of m), PR open, merged into integration or blocked>",
       );
     }
+  });
+
+  // CT-16 / PT-4 extension — S-018 6.2a; A-21, A-36 (EC-93), D-63: the PRD table
+  // carries every state publish and the planner write, and one row per wave.
+  it("PRD table states", () => {
+    const rules: string[] = [];
+    for (const copy of trees) {
+      expect(prdStateCell(copy), copy.path).toBe(
+        "<published, in progress, consolidated PR #n open or shipped>",
+      );
+      const section = sectionOf(copy, "Status comment");
+      const rule = lineWith(section, "one row per wave", copy.path);
+      expect(rule, copy.path).toMatch(/edited in place[^\n]*never[^\n]*second/);
+      rules.push(rule);
+    }
+    expect(new Set(rules).size, "PRD row rule differs across trees").toBe(1);
   });
 
   // PT-5 — S-001 AC-4; D-16, D-41
@@ -628,6 +677,64 @@ describe("activity-publish-github", () => {
       const final = sectionOf(copy, "Final Instructions");
       expect(final, copy.path).toContain("hierarchy");
     }
+  });
+});
+
+// --- activity-publish-github extension (S-018, #296) ------------------------
+
+const PRD_STATUS_VALUES = "prd_status: written | failed(<reason>) | skipped(no PRD issue)";
+
+describe("activity-publish-github PRD status comment", () => {
+  const trees = loadTrees(PUBLISH_TREES);
+
+  // PT-50 / CT-16 — S-018 AC-1; FR-25, D-25, D-26, D-33; A-36 (EC-92, EC-93)
+  it("PRD status comment", () => {
+    const steps: string[] = [];
+    const cell = prdStateCell(loadTrees(GITHUB_OPS_TREES)[0]);
+    expect(cell, "github-ops PRD table lacks published").toContain("published");
+    for (const copy of trees) {
+      const process = sectionOf(copy, "Process");
+      inOrder(
+        process,
+        [
+          "**Attach and Verify the Hierarchy:**",
+          "**Write the PRD Status Comment:**",
+          "**Save Output.**",
+        ],
+        copy.path,
+      );
+      const step = lineWith(process, "**Write the PRD Status Comment:**", copy.path);
+      for (const marker of [
+        "After the hierarchy is verified",
+        "github-ops § Status comment",
+        "PRD table",
+        "implement § Status Comment",
+        "create or edit",
+        "`published`",
+        "never added a second time",
+        "`PRD issue` line",
+        "`level: prd` search",
+        "skip the write",
+        PRD_STATUS_VALUES,
+        "never stops the publication",
+      ]) {
+        expect(step, `${copy.path}: PRD status step lacks ${marker}`).toContain(marker);
+      }
+      // D-33: the table is referenced, never restated.
+      expect(squashSpaces(copy.body), copy.path).not.toContain("| Wave | State | Wave issue |");
+      const report = sectionOf(copy, "Output Structure");
+      const tracking = report.slice(
+        report.indexOf("## Tracking Issues"),
+        report.indexOf("## Created Issues"),
+      );
+      expect(tracking, copy.path).toContain(`- ${PRD_STATUS_VALUES}`);
+      const final = sectionOf(copy, "Final Instructions");
+      expect(final, copy.path).toMatch(
+        /PRD issue's status comment[^\n]*`published`[^\n]*prd_status/,
+      );
+      steps.push(step);
+    }
+    expect(new Set(steps).size, "PRD status step differs across trees").toBe(1);
   });
 });
 
@@ -1152,6 +1259,34 @@ describe("plan", () => {
       expect(copy.body, copy.path).not.toContain("**Wave issue");
     }
   });
+
+  // PT-32 — S-018 AC-3 (`plan` half); FR-25; EC-94
+  it("artifacts task plan line", () => {
+    const steps: string[] = [];
+    for (const copy of trees) {
+      const process = sectionOf(copy, "Process");
+      inOrder(process, ["**Save Output.**", "**Set the Task Plan Line:**"], copy.path);
+      const step = lineWith(process, "**Set the Task Plan Line:**", copy.path);
+      for (const marker of [
+        "When the plan header reads `Wave issue: #N`",
+        "wave issue body",
+        "`Task plan:`",
+        "`## Artifacts`",
+        "gh issue view <N> --json body --jq .body",
+        "gh issue edit <N> --body-file <path>",
+        "`Wave issue: none`",
+        "`pending`",
+      ]) {
+        expect(step, `${copy.path}: Task plan step lacks ${marker}`).toContain(marker);
+      }
+      expect(copy.body, copy.path).not.toContain('--body "');
+      expect(sectionOf(copy, "Final Instructions"), copy.path).toMatch(
+        /wave issue[^\n]*`Task plan:`/,
+      );
+      steps.push(step);
+    }
+    expect(new Set(steps).size, "Task plan step differs across trees").toBe(1);
+  });
 });
 
 // --- planner (S-008, #291) ---------------------------------------------------
@@ -1177,6 +1312,19 @@ const PER_MERGE_COMMENT = /\bpost\b[^\n]*\bcomment\b/i;
 /** CT-22: the D-36 wave search, byte-identical to activity-publish-github's. */
 const WAVE_SEARCH =
   'gh issue list --label "level: wave" --search "[PRD-<name>] Wave <id>: in:title" --state open --json number,title --jq \'map(select(.title | startswith("[PRD-<name>] Wave <id>:")))\'';
+
+/** A-29 / D-69: the PRD issue is the wave issue's parent. */
+const PRD_PARENT = "gh api repos/{o}/{r}/issues/{wave}/parent --jq .number";
+/** D-36: the PRD search, byte-identical to activity-publish-github's. */
+const PRD_SEARCH =
+  'gh issue list --label "level: prd" --search "[PRD-<name>] in:title" --state open --json number,title --jq \'map(select(.title | startswith("[PRD-<name>]")))\'';
+
+/** The Phase 3 span, from its heading to the first `---` (LT-11). */
+function phase3Of(copy: TreeCopy): string {
+  const match = copy.body.match(/## Phase 3 - Pre-flight[\s\S]*?\n---\n/);
+  expect(match, `${copy.path}: no Phase 3 span`).not.toBeNull();
+  return match![0];
+}
 
 /** Step 13 of the merge rule: one line (LT-9), from `13. ` to the line end. */
 function step13(copy: TreeCopy): string {
@@ -1719,6 +1867,256 @@ describe("planner", () => {
     expect(new Set(invariants).size, "completion invariant differs across trees").toBe(1);
   });
 
+  // PT-45 extension — S-018 6.3a; A-29, D-69: the PRD issue is the wave issue's parent.
+  it("PRD issue resolution", () => {
+    const sections: string[] = [];
+    for (const copy of trees) {
+      const phase0 = copy.body.match(/## Phase 0 - Discover Task Source[\s\S]*?\n---\n/)![0];
+      inOrder(
+        phase0,
+        ["### Wave Issue Resolution", "### PRD Issue Resolution", "Confirm source and story count"],
+        copy.path,
+      );
+      const section = sectionOf(copy, "PRD Issue Resolution");
+      inOrder(section, [PRD_PARENT, "`404`", PRD_SEARCH, "`PRD issue: none`"], copy.path);
+      for (const marker of ["`PRD issue: #N | none`", "Run Info", "more than one", "stop"]) {
+        expect(section, `${copy.path}: PRD Issue Resolution lacks ${marker}`).toContain(marker);
+      }
+      const format = sectionOf(copy, "State File Format");
+      expect(format.split("\n"), copy.path).toContain("- PRD issue: #N | none");
+      const resume = copy.sections.find((s) => s.heading.includes("Resume Detection"));
+      expect(lineWith(resume!.text, "`PRD issue`", copy.path), copy.path).toContain(
+        "PRD Issue Resolution",
+      );
+      sections.push(section);
+    }
+    // The planner's fallback is publish's search, byte for byte (CT-22).
+    for (const copy of loadTrees(PUBLISH_TREES)) {
+      expect(copy.body, copy.path).toContain(PRD_SEARCH);
+    }
+    expect(new Set(sections).size, "PRD Issue Resolution differs across trees").toBe(1);
+  });
+
+  // PT-45 / CT-16 — S-018 AC-2; FR-25, D-25, D-26, D-33, D-61, D-70; EC-92, EC-93
+  it("PRD status comment events", () => {
+    const sections: string[] = [];
+    const lines: string[] = [];
+    const cell = prdStateCell(loadTrees(GITHUB_OPS_TREES)[0]);
+    for (const copy of trees) {
+      // D-33: the PRD table is referenced, never restated.
+      expect(squashSpaces(copy.body), copy.path).not.toContain("| Wave | State | Wave issue |");
+      const section = sectionOf(copy, "PRD Status Comment");
+      for (const marker of [
+        "github-ops § Status comment",
+        "PRD table",
+        "implement § Status Comment",
+        PRD_STATUS_VALUES,
+        "failed(duplicate marker)",
+        "Decisions Log",
+        "run summary",
+        "never adding a second",
+        "`published`",
+      ]) {
+        expect(section, `${copy.path}: PRD Status Comment lacks ${marker}`).toContain(marker);
+      }
+      // Tight event order: each event names its phase, then its state.
+      inOrder(
+        section,
+        [
+          "1. **Run start**",
+          "Phase 3",
+          "`in progress`",
+          "2. **Consolidated PR open**",
+          "Phase 5 step 7",
+          "`consolidated PR #n open`",
+          "3. **Close-out**",
+          "Phase 6",
+          "`shipped`",
+        ],
+        copy.path,
+      );
+      for (const state of ["in progress", "consolidated PR #n open", "shipped"]) {
+        expect(cell, `github-ops PRD table lacks "${state}"`).toContain(state);
+      }
+      expect(lineWith(section, "never blocks", copy.path), copy.path).toContain(
+        "A PRD status comment write never blocks a merge gate, a story, the consolidated PR handoff or the close-out PR.",
+      );
+      // Each event lands in its phase.
+      const run = lineWith(phase3Of(copy), "PRD status comment", copy.path);
+      expect(run, copy.path).toContain("this wave's row reads `in progress`");
+      const phase5 = sectionOf(copy, "Phase 5 - Consolidated Pull Request");
+      const open = lineWith(phase5, "7. Open one consolidated PR", copy.path);
+      inOrder(
+        open,
+        ["wave status comment", "PRD status comment", "row reads `consolidated PR #n open`"],
+        copy.path,
+      );
+      const step10 = lineWith(sectionOf(copy, "Phase 6 - Close-out"), "10. **Status comments.**");
+      inOrder(
+        step10,
+        [
+          "PRD issue's status comment",
+          "row reads `shipped`",
+          "prd_status",
+          "edit the wave status comment",
+        ],
+        copy.path,
+      );
+      // Across the body: run start, then PR open, then close-out.
+      inOrder(
+        copy.body,
+        [
+          "## Phase 3 - Pre-flight",
+          "this wave's row reads `in progress`",
+          "## Phase 5 - Consolidated Pull Request",
+          "row reads `consolidated PR #n open`",
+          "## Phase 6 - Close-out",
+          "row reads `shipped`",
+        ],
+        copy.path,
+      );
+      // The state file records every value; the Output Contract reports it.
+      const decisions = sectionOf(copy, "State File Format").match(
+        /## Decisions Log\n\n([\s\S]*?)\n```/,
+      );
+      expect(decisions![1], copy.path).toContain("- prd_status: written | failed(<reason>)");
+      expect(sectionOf(copy, "Output Contract"), copy.path).toContain("`prd_status`");
+      sections.push(section);
+      lines.push(run, open, step10);
+    }
+    expect(new Set(sections).size, "PRD Status Comment differs across trees").toBe(1);
+    expect(new Set(lines).size, "PRD event lines differ across trees").toBe(3);
+  });
+
+  // PT-46 — S-018 AC-3 (planner half); FR-25, D-69; A-39 (EC-94, EC-99)
+  it("artifacts fidelity report line", () => {
+    const lines: string[] = [];
+    for (const copy of trees) {
+      const phase5 = sectionOf(copy, "Phase 5 - Consolidated Pull Request");
+      inOrder(
+        phase5,
+        ["3. Invoke `verifier`", "**Fidelity report line.**", "4. Invoke `technical-writer`"],
+        copy.path,
+      );
+      const line = lineWith(phase5, "**Fidelity report line.**", copy.path);
+      for (const marker of [
+        "`Fidelity report:`",
+        "`## Artifacts`",
+        "fidelity report",
+        "wave issue body",
+        "gh issue view <wave> --json body --jq .body",
+        "gh issue edit <wave> --body-file <path>",
+        "after `Task plan:`",
+        "`Wave issue: none`",
+        "`pending`",
+      ]) {
+        expect(line, `${copy.path}: fidelity report line lacks ${marker}`).toContain(marker);
+      }
+      const branch = lineWith(phase3Of(copy), "`Integration branch:`", copy.path);
+      for (const marker of [
+        "wave issue body",
+        "gh issue edit <wave> --body-file <path>",
+        "`Wave issue: none`",
+      ]) {
+        expect(branch, `${copy.path}: Integration branch line lacks ${marker}`).toContain(marker);
+      }
+      expect(copy.body, copy.path).not.toContain('--body "');
+      lines.push(line, branch);
+    }
+    expect(new Set(lines).size, "Artifacts lines differ across trees").toBe(2);
+  });
+
+  // S-011 qa gate, final hardening round: Phase 6 writes nothing to `main` and deletes the
+  // integration branch only in step 12, from `main`.
+  it("phase 6 write targets", () => {
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Phase 6 - Close-out");
+      const first = section.indexOf("1. **Verify the merge.**");
+      const last = section.indexOf("12. **Delete the integration branch, last.**");
+      expect(first, copy.path).toBeGreaterThanOrEqual(0);
+      expect(last, copy.path).toBeGreaterThan(first);
+      const steps = section.slice(first, last);
+      for (const line of steps.split("\n")) {
+        expect(mainWriteClauses(line), `${copy.path}: Phase 6 writes to main: ${line}`).toEqual([]);
+        expect(line, `${copy.path}: deletes the integration branch before step 12`).not.toMatch(
+          DELETES_INTEGRATION,
+        );
+      }
+      const step12 = lineWith(section, "12. **Delete the integration branch, last.**", copy.path);
+      inOrder(
+        step12,
+        [
+          "after the close-out PR is open",
+          "check out `main`",
+          "git branch -d <integration branch>",
+          "git push origin --delete <integration branch>",
+        ],
+        copy.path,
+      );
+    }
+  });
+
+  // S-011 qa gate, final hardening round: only Phase 6 sets `Done`.
+  it("phase 5 never sets Done", () => {
+    const sentence = "only Phase 6 sets `Done`";
+    for (const copy of trees) {
+      const phase5 = sectionOf(copy, "Phase 5 - Consolidated Pull Request");
+      expect(phase5.split(sentence).length - 1, `${copy.path}: "${sentence}" count`).toBe(1);
+      expect(phase5.replace(sentence, ""), `${copy.path}: Phase 5 names Done`).not.toMatch(
+        /\bDone\b/,
+      );
+    }
+  });
+
+  // S-011 qa gate, final hardening round: wording pins and three-tree identity.
+  it("close-out wording pins", () => {
+    const thenRun: string[] = [];
+    const offers: string[] = [];
+    const outputs: string[] = [];
+    for (const copy of trees) {
+      const phase5 = sectionOf(copy, "Phase 5 - Consolidated Pull Request");
+      const phase6 = sectionOf(copy, "Phase 6 - Close-out");
+      expect(lineWith(phase6, "7. **Roadmap row.**", copy.path), copy.path).toContain(
+        "never invent one",
+      );
+      expect(lineWith(sectionOf(copy, "Wave Status Comment"), "never blocks", copy.path)).toContain(
+        "A wave status comment write never blocks a merge gate, a story, or the consolidated PR handoff.",
+      );
+      expect(lineWith(phase6, "10. **Status comments.**", copy.path), copy.path).toContain(
+        "never blocks the close-out PR",
+      );
+      // The completion sentence, in each place that states it.
+      expect(
+        lineWith(sectionOf(copy, "Invariants"), "complete only after Phase 6", copy.path),
+      ).toMatch(/^- The run is complete only after Phase 6 - Close-out:/);
+      const output = lineWith(sectionOf(copy, "Output Contract"), "Phase 6", copy.path);
+      expect(output, copy.path).toContain("the run is complete only after Phase 6");
+      expect(lineWith(phase6, "12. **Delete", copy.path), copy.path).toContain(
+        "The run is complete only after this step.",
+      );
+      const run = lineWith(phase5, "then run Phase 6", copy.path);
+      expect(run, copy.path).toContain("the run is not complete until Phase 6 has run");
+      // Phase 0.5 offers Phase 6, not a resume, when every story merged; before the resume question.
+      const resume = copy.sections.find((s) => s.heading.includes("Resume Detection"))!.text;
+      const offer = lineWith(resume, "do not ask to resume", copy.path);
+      for (const marker of [
+        "every story reads `✅ Merged`",
+        "the user reports the consolidated PR merged",
+        "run Phase 6",
+        "PR number",
+      ]) {
+        expect(offer, `${copy.path}: Phase 6 offer lacks ${marker}`).toContain(marker);
+      }
+      inOrder(resume, ["do not ask to resume", 'Ask: **"Resume from story'], copy.path);
+      thenRun.push(run);
+      offers.push(offer);
+      outputs.push(output);
+    }
+    expect(new Set(thenRun).size, "Phase 5 then-run-Phase-6 line differs across trees").toBe(1);
+    expect(new Set(offers).size, "Phase 0.5 Phase 6 offer differs across trees").toBe(1);
+    expect(new Set(outputs).size, "Output Contract Phase 6 line differs across trees").toBe(1);
+  });
+
   // S-010 qa gate, carried into S-011: harmful sentences added identically to all three trees.
   it("whole-body negatives", () => {
     for (const copy of trees) {
@@ -1730,6 +2128,8 @@ describe("planner", () => {
       }
       const phase5 = sectionOf(copy, "Phase 5 - Consolidated Pull Request");
       const phase6 = sectionOf(copy, "Phase 6 - Close-out");
+      // Final hardening round: in Phase 6, "closes it" is an agent closing an issue.
+      expect(agentClosingClauses(phase6, true), `${copy.path}: Phase 6 closes it`).toEqual([]);
       for (const line of [
         lineWith(phase5, "**Project Status observation (read only).**", copy.path),
         lineWith(phase6, "**Read the Project Status (read only).**", copy.path),
@@ -1755,9 +2155,45 @@ describe("planner", () => {
       "Close the wave issue by hand once the PR merged.",
       "Then the developer closes the story.",
       "When the PR merges, close every open issue; GitHub may lag.",
+      // Final hardening round: "never" must govern the closing verb itself.
+      "The planner closes each story issue and never asks the user.",
+      "Close the wave issue by hand, never waiting for GitHub.",
     ]) {
       expect(agentClosingClauses(harmful), `misses "${harmful}"`).not.toEqual([]);
     }
+    for (const harmful of [
+      "A story still open is reported, and the planner closes it by hand.",
+      "Close them once the PR merged.",
+    ]) {
+      expect(agentClosingClauses(harmful, true), `misses "${harmful}"`).not.toEqual([]);
+      expect(agentClosingClauses(harmful), `pronoun flagged outside Phase 6: "${harmful}"`).toEqual(
+        [],
+      );
+    }
+    expect(agentClosingClauses("Phase 6 never closes it by hand.", true)).toEqual([]);
+    for (const harmful of [
+      "commit the roadmap row on `main`",
+      "push the archive to main",
+      "then merge it into `main` yourself",
+    ]) {
+      expect(mainWriteClauses(harmful), `misses "${harmful}"`).not.toEqual([]);
+    }
+    for (const allowed of [
+      "open one PR to `main` with the same title",
+      "Check out `main` and pull it",
+      "is committed on this branch, never on `main`",
+    ]) {
+      expect(mainWriteClauses(allowed), `wrongly flags "${allowed}"`).toEqual([]);
+    }
+    for (const harmful of [
+      "delete the integration branch now",
+      "run git branch -D <integration branch>",
+      "git push origin --delete <integration branch>",
+      "remove the remote integration branch",
+    ]) {
+      expect(harmful, `misses "${harmful}"`).toMatch(DELETES_INTEGRATION);
+    }
+    expect("while the integration branch still exists").not.toMatch(DELETES_INTEGRATION);
     for (const allowed of [
       "The planner never closes a story issue or the wave issue, and neither does any agent it delegates to.",
       "12. Nobody closes the GitHub Issue: not the implementing agent, not the `planner`.",
