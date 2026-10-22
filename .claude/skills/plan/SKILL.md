@@ -26,6 +26,7 @@ This activity adapts to the input — it works with a user stories file (from th
 2. **Review Available Work:** You **MUST** read the source and list available stories or the issue scope.
 3. **Select Scope:** In Stories Mode, you **MUST** ask which stories to include. In Issue Mode, the scope is the single issue.
 4. **Generate Task List:** You **MUST** produce a `tasks-*.md` file in the required format.
+   - **Plan header:** The header carries `Source:` (the source document) and, on the next line, `Wave issue: #N`, its own line with no bold or backticks so the planner can read it at Phase 0. In Stories Mode, take the number from the publication report's `Wave issue` line (`workstream/github-publication-<prd-name>.md`, written by `activity-publish-github`). When the report predates the tracking hierarchy or has no `Wave issue` line, or in Issue Mode, write `Wave issue: none` and add a `> Note:` line under it saying the planner will search for the wave issue at Phase 0.
 5. **Publish to GitHub:** You **MUST** update the corresponding GitHub Issue(s) with the task checklist by delegating to `github-ops` whenever possible.
 6. **Save Output.**
 
@@ -55,6 +56,9 @@ The task list **MUST** follow this structure:
 
 ```markdown
 # Implementation Plan - [Name]
+
+Source: `[path to the user stories file or refined issue]`
+Wave issue: #N
 
 ## Relevant Files
 
