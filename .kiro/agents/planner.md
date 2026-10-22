@@ -179,6 +179,14 @@ Resolve the wave tracking issue once per run, after the roadmap read, and record
    - More than one match: stop, list the matching issue numbers, and ask the user which one is the wave issue; never pick one silently.
 3. **Skip.** When neither the header nor the search yields one, record `Wave issue: none` and report `wave_status: skipped(no wave issue)` in the run summary; the run continues without a wave issue.
 
+### PRD Issue Resolution
+
+Resolve the PRD tracking issue right after the wave issue, and record it in the state file's Run Info as `PRD issue: #N | none`; the PRD status comment (see **PRD Status Comment** in Phase 4) reads it from there (D-69). Resolve in this order:
+
+1. **Wave parent.** When a wave issue is known, read its parent: `gh api repos/{o}/{r}/issues/{wave}/parent --jq .number`. The number returned is the PRD issue.
+2. **Search.** When Run Info reads `Wave issue: none`, or the parent read returns `404` because the wave issue has no parent, find the PRD issue by its `level: prd` label and its `[PRD-<name>]` title prefix, filtered client-side with `startswith` as `activity-publish-github` does, taking `<name>` from the roadmap row: `gh issue list --label "level: prd" --search "[PRD-<name>] in:title" --state open --json number,title --jq 'map(select(.title | startswith("[PRD-<name>]")))'`. Exactly one match: reuse it; more than one: stop, list the matching issue numbers, and ask the user which one is the PRD issue.
+3. **Skip.** When neither yields one, record `PRD issue: none`; every PRD status comment write then reports `prd_status: skipped(no PRD issue)`, and the run continues.
+
 Confirm source and story count before Phase 0.5.
 
 ---
@@ -195,6 +203,7 @@ Before parsing stories, check for an existing checkpoint state file.
    - Ask: **"Resume from story [next-story-id]? (y/n)"**
    - If confirmed: skip Phases 1-3, load the integration branch and execution plan from the state file, and resume Phase 4 from the next pending story.
    - On resume, read the wave issue from Run Info's `Wave issue` line and reuse it; do not resolve it again. A state file written before that line existed has none: resolve the wave issue as Phase 0's **Wave Issue Resolution** does and add the line.
+   - On resume, read the PRD issue from Run Info's `PRD issue` line the same way; a state file without that line resolves it as Phase 0's **PRD Issue Resolution** does and gains the line.
    - On resume, edit the wave status comment in place (see **Wave Status Comment** in Phase 4); never create a second one.
    - If declined: move the old state file to `workstream/archive/planner-state-<plan-id>-archived.md`, the same path Phase 6 uses (`git mv` when the file is tracked, `mv` when it is not), and proceed with a fresh run from Phase 1.
 3. If no state file exists, proceed to Phase 1 normally.
@@ -214,6 +223,7 @@ Path: `/workstream/planner-state-<plan-id>.md`
 - Wave issue: #N | none
 - Started: <timestamp>
 - Last updated: <timestamp>
+- PRD issue: #N | none
 
 ## Story Status
 
@@ -367,6 +377,8 @@ Per-story branches and PRs are created by `developer` following `github-ops` con
 Run start: once the integration branch is pushed, create the wave status comment (see **Wave Status Comment** in Phase 4) with every story `pending`. Not earlier: a plan declined at Phase 2 leaves no comment behind, and `Integration HEAD` already has a value (D-70).
 
 In the same step, edit the PRD status comment so this wave's row reads `in progress` (see **PRD Status Comment** in Phase 4), creating it when no comment carries the marker.
+
+Then set the wave issue body's `Integration branch:` line to the pushed branch name: read the body with `gh issue view <wave> --json body --jq .body` into a file, change only that line, and write it back with `gh issue edit <wave> --body-file <path>`. With `Wave issue: none` there is no body to edit.
 
 ---
 
