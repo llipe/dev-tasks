@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                               | Author                    |
 | ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.1 | 2026-10-22 | Design Mode resolutions A-19 to A-48 confirmed by @llipe: §16a added, D-62 to D-70. | product-engineer |
 | 1.0     | 2026-10-21 | Initial specification for wave 2 (FR-11 to FR-16, FR-25; #285) after the HOW-phase interview (D-52 to D-61, 2 asked, 8 self-resolved). | @llipe / product-engineer |
 
 ## 1. Executive Summary
@@ -197,6 +198,19 @@ Prompt text ships with the package; consumers receive it on update. Rollback is 
 - A Project read at close-out is optional and skipped when no Project is configured; the DF-5 observation then reads `not observed(no project)`.
 - `plan` and `implement` are instruction and steering files on Copilot and Kiro; the test file reads them by explicit path.
 
+## 16a. Design Mode resolutions (v1.1)
+
+The Design Mode findings A-19 to A-48 (`workstream/test-plan-projects-tracking-phase-2.md`) were resolved by the user on 2026-10-22. Where this section and an earlier one differ, this section wins.
+
+- Plan template gains `Source:`; `Wave issue:` follows it (D-62).
+- github-ops's wave and PRD status tables are widened to the states S-009 and S-018 write (D-63).
+- Roadmap story numbers and states come from the wave issue's `sub_issues`; the title search is the fallback (D-64). `What's missing` reads "consolidated PR to `main`" (D-65).
+- Phase 6 reads first, writes on `chore/<plan-id>-closeout`, deletes the integration branch last, and may start in a fresh session (D-66).
+- `Closes` for merged stories, `Refs` for unmerged, `Closes #<wave>` only when all merged, all under `## Why` (D-67). §8.2's `## What` is superseded.
+- Project presence and Status come from `gh issue view --json projectItems` (D-68).
+- PRD issue is the wave issue's parent; the planner fills the wave body's `Integration branch:` and `Fidelity report:` (D-69).
+- Run-start comments after pre-flight; rollup summary and PR-open and close-out updates edit the wave status comment (D-70).
+
 ## 17. Open Questions
 
 None.
@@ -215,6 +229,7 @@ None.
 | D-59 | Wave issue from the plan header, then search, then skip.                    |
 | D-60 | Planner tree divergence left as is; only added sentences pinned.            |
 | D-61 | Phase 6 Close-out, triggered by the user's merge notice.                    |
+| D-62 to D-70 | Design Mode resolutions, §16a.                                   |
 
 WHAT-phase decisions consumed: D-11, D-12, D-13, D-22, D-25, D-26, D-36, D-50.
 
