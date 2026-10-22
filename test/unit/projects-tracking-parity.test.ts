@@ -1887,6 +1887,12 @@ describe("verifier", () => {
       const one = triggerLine(section, 1, copy.path);
       expect(one, copy.path).toContain("sub-issue");
       expect(one, copy.path).toContain("`state`");
+      // DR-1: complete only when every sub-issue and the wave issue itself read closed (planner Phase 6 step 7).
+      expect(one, copy.path).toContain("every sub-issue's `state` reads `closed`");
+      expect(one, copy.path).toContain("the wave issue itself reads `closed`");
+      expect(one, copy.path).not.toMatch(/\bany sub-issue/);
+      // qa gate: trigger 2 names an open sub-issue.
+      expect(triggerLine(section, 2, copy.path), copy.path).toContain("a sub-issue still `open`");
       expect(triggerLine(section, 4, copy.path), copy.path).toContain("sub-issue numbers");
       expect(section, copy.path).toContain("GET /repos/{o}/{r}/issues/{wave}/sub_issues");
       expect(section, copy.path).toContain(
@@ -1896,6 +1902,18 @@ describe("verifier", () => {
       expect(section, copy.path).toContain('--label "level: wave"');
       expect(section, copy.path).toContain('startswith("[PRD-<name>] Wave <id>:")');
       expect(section, copy.path).toContain("D-36");
+      // DR-3: the verifier searches every state, with the reason stated, so an edit back to `open` fails.
+      expect(section, copy.path).toContain(
+        'gh issue list --label "level: wave" --search "[PRD-<name>] Wave <id>: in:title" --state all',
+      );
+      expect(section, copy.path).not.toContain('Wave <id>: in:title" --state open');
+      expect(lineWith(section, "uses `--state all` because", copy.path), copy.path).toMatch(
+        /after the wave ships[^\n]*closed wave issue[^\n]*`--state open`[^\n]*active wave/,
+      );
+      // qa gate: the report names what it read.
+      expect(section, copy.path).toContain(
+        'Name in the finding, or in its "no finding" line, the wave issue and the sub-issue states you read, or that you used the fallback.',
+      );
     }
   });
 
@@ -1914,6 +1932,7 @@ describe("verifier", () => {
       const section = sectionOf(copy, "Roadmap-Mismatch Finding");
       const two = lineWith(section, "more than one wave issue", copy.path);
       expect(two, copy.path).toContain("compare with neither");
+      expect(two, copy.path).toContain("never pick one silently");
       const zero = lineWith(section, "zero sub-issues", copy.path);
       expect(zero, copy.path).toContain("fall back to the merged story PRs");
       expect(zero, copy.path).toContain("note");
@@ -1927,6 +1946,12 @@ describe("verifier", () => {
       expect(section, copy.path).toContain("non-blocking to PR readiness and to issue completion");
       expect(section, copy.path).toContain("Never hold a PR on it");
       expect(section, copy.path).toContain("activity-drift-reconciliation");
+      expect(section, copy.path).toContain(
+        "**Not a finding:** rows for PRDs outside the audited scope; a row left `In progress` while some of its stories are still open.",
+      );
+      // qa gate: no blocking or holding wording beyond the two advisory phrases.
+      const rest = section.replace(/non-blocking/g, "").replace(/Never hold/g, "");
+      expect(rest, copy.path).not.toMatch(/\b(block|hold)/i);
     }
   });
 });
