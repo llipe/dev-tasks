@@ -183,4 +183,14 @@ planner: orchestrate stories → developer: implement (per story)
          verifier (audit mode): PRD-level fidelity audit
               ↓
          PR: integration → main (user approval required)
+              ↓
+    ═══════════════ [User reports merge to main] ═══════════════
+              ↓
+    planner Phase 6 - Close-out:
+      ├─ Verify consolidated PR merged
+      ├─ Confirm story issues and wave issue closed
+      ├─ Confirm Project status Done
+      ├─ Update roadmap row to Done
+      ├─ Archive state file
+      └─ Open chore(roadmap) PR, delete integration branch
 ```
