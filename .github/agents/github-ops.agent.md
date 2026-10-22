@@ -158,9 +158,9 @@ Last merged PR: #<pr> or none
 Integration HEAD: `<sha>`
 Gates: <pass, fail or not run>
 
-| Story                 | State                                                | PR            | Sub-task          |
-| --------------------- | ---------------------------------------------------- | ------------- | ----------------- |
-| <story id> (#<issue>) | <pending, in progress, in review, merged or blocked> | #<pr> or none | <done> of <total> |
+| Story                 | State                                                                                 | PR            | Sub-task          |
+| --------------------- | ------------------------------------------------------------------------------------- | ------------- | ----------------- |
+| <story id> (#<issue>) | <pending, in progress (sub-task n of m), PR open, merged into integration or blocked> | #<pr> or none | <done> of <total> |
 ```
 
 PRD issue:
