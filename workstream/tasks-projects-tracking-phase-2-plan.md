@@ -84,15 +84,15 @@ Order: 1.0 → 2.0 → 3.0 → 4.0 → 5.0 → 6.0. One shared parity test file;
   - [x] 4.7 Verify Acceptance Criterion: completion invariant
   - [x] 4.8 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
-- [ ] 5.0 Implement Story S-012: The verifier's rollup compares the roadmap row with the wave issue and its sub-issues (#295)
+- [x] 5.0 Implement Story S-012: The verifier's rollup compares the roadmap row with the wave issue and its sub-issues (#295)
 
-  - [ ] 5.1 Add `describe("verifier")` asserting the sub-issue comparison with the `sub_issues` read, the D-36 search, the merged-PR fallback sentence, and the advisory sentence, in all three verifier copies; confirm red
-  - [ ] 5.2 In `.claude/agents/verifier.md`, rewrite Roadmap-Mismatch Finding triggers 1 and 4 to compare with the wave tracking issue and its sub-issues when one exists (D-36 search, `GET /repos/{o}/{r}/issues/{wave}/sub_issues`), keeping the merged-PR comparison as the fallback and the finding advisory (FR-16, D-57)
-  - [ ] 5.2a State the edge cases: two wave issues match (report, compare with neither); wave issue with zero sub-issues (fall back to merged PRs, note it) (A-36)
-  - [ ] 5.3 Apply the same edit to the `.github/` and `.kiro/` verifier copies
-  - [ ] 5.4 Verify Acceptance Criterion: sub-issue comparison and fallback in all three
-  - [ ] 5.5 Verify Acceptance Criterion: finding still advisory, routing unchanged
-  - [ ] 5.6 Run Tests: `pnpm run test:unit`, `pnpm run validate`
+  - [x] 5.1 Add `describe("verifier")` asserting the sub-issue comparison with the `sub_issues` read, the D-36 search, the merged-PR fallback sentence, and the advisory sentence, in all three verifier copies; confirm red
+  - [x] 5.2 In `.claude/agents/verifier.md`, rewrite Roadmap-Mismatch Finding triggers 1 and 4 to compare with the wave tracking issue and its sub-issues when one exists (D-36 search, `GET /repos/{o}/{r}/issues/{wave}/sub_issues`), keeping the merged-PR comparison as the fallback and the finding advisory (FR-16, D-57)
+  - [x] 5.2a State the edge cases: two wave issues match (report, compare with neither); wave issue with zero sub-issues (fall back to merged PRs, note it) (A-36)
+  - [x] 5.3 Apply the same edit to the `.github/` and `.kiro/` verifier copies
+  - [x] 5.4 Verify Acceptance Criterion: sub-issue comparison and fallback in all three
+  - [x] 5.5 Verify Acceptance Criterion: finding still advisory, routing unchanged
+  - [x] 5.6 Run Tests: `pnpm run test:unit`, `pnpm run validate`
 
 - [ ] 6.0 Implement Story S-018: The PRD issue carries one status comment updated at wave events (#296)
 
