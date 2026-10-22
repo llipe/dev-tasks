@@ -172,10 +172,12 @@ PRD issue:
 <!-- dev-tasks:status -->
 🔄 Update: <one-line summary> — Refs #<issue>
 
-| Wave | State                              | Wave issue |
-| ---- | ---------------------------------- | ---------- |
-| <id> | <not started, in progress or done> | #<issue>   |
+| Wave | State                                                        | Wave issue |
+| ---- | ------------------------------------------------------------ | ---------- |
+| <id> | <published, in progress, consolidated PR #n open or shipped> | #<issue>   |
 ```
+
+The PRD table has one row per wave, in wave order. `activity-publish-github` writes a wave's row at publish and the planner edits it at run start, consolidated PR open and close-out; an existing row is edited in place, never added a second time, and every other wave's row is kept as it is.
 
 ### Issue Closure Attribution
 
