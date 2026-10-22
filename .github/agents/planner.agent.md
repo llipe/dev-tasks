@@ -196,6 +196,7 @@ Path: `/workstream/planner-state-<plan-id>.md`
 
 - <any decisions made during the run>
 - wave_status: skipped(no wave issue) | failed(<reason>) at <event>
+- prd_status: written | failed(<reason>) | skipped(no PRD issue) at <event>
 ```
 
 ---
@@ -327,6 +328,8 @@ integration/<plan-id>-<short-description>
 Per-story branches and PRs are created by `developer` following `github-ops` conventions.
 
 Run start: once the integration branch is pushed, create the wave status comment (see **Wave Status Comment** in Phase 4) with every story `pending`. Not earlier: a plan declined at Phase 2 leaves no comment behind, and `Integration HEAD` already has a value (D-70).
+
+In the same step, edit the PRD status comment so this wave's row reads `in progress` (see **PRD Status Comment** in Phase 4), creating it when no comment carries the marker.
 
 ---
 
@@ -476,6 +479,18 @@ Write it at these events, in this order across a run:
 
 When Run Info reads `Wave issue: none`, every write is skipped and reports `wave_status: skipped(no wave issue)`. A refused create or PATCH (permissions, a locked issue, a network error) reports `wave_status: failed(<reason>)`; two comments carrying the marker are handled as implement § Status Comment says, editing the oldest and reporting `failed(duplicate marker)`. Every skipped or failed value goes to the state file's Decisions Log and to the run summary. A wave status comment write never blocks a merge gate, a story, or the consolidated PR handoff.
 
+### PRD Status Comment
+
+The PRD issue's status comment is the PRD-level summary: one row per wave, with its state and its wave issue, in the shape of github-ops § Status comment's PRD table; the table and its states are defined there and not restated here (D-33). The wave status comment carries the detail. It is found by its marker and created or edited in place with implement § Status Comment's find-by-marker, create and PATCH procedure. `activity-publish-github` writes the wave's row at publish as `published`; the planner edits only this run's wave row, keeps every other row as it is, and edits an existing row in place, never adding a second one. The PRD issue comes from Run Info's `PRD issue` line (see **PRD Issue Resolution** in Phase 0); when a state file written before that line existed has none, resolve it as that section does.
+
+Write it at these events, in this order across a run:
+
+1. **Run start** — Phase 3, once the integration branch is pushed, beside the wave status comment: this run's wave reads `in progress`; the comment is created when no comment carries the marker.
+2. **Consolidated PR open** — Phase 5 step 7, once the PR is open: the wave reads `consolidated PR #n open`, with `n` the consolidated PR's number.
+3. **Close-out** — Phase 6's **Status comments** step, once the merge is verified: the wave reads `shipped`.
+
+Each write reports `prd_status: written | failed(<reason>) | skipped(no PRD issue)`: `skipped(no PRD issue)` when Run Info reads `PRD issue: none`, `failed(<reason>)` for a refused create or PATCH, and `failed(duplicate marker)` when two comments carry the marker, handled as implement § Status Comment says. Every value, `written` included, goes to the state file's Decisions Log with its event and to the run summary; at close-out the state file is already archived, so the value goes to the run summary and the close-out PR body. A PRD status comment write never blocks a merge gate, a story, the consolidated PR handoff or the close-out PR.
+
 ### Merge management rule (planner-owned)
 
 Planner **MUST** manage merges for every completed story in sequence before delegating the next story.
@@ -522,10 +537,11 @@ After all stories are merged into integration:
 1. Run full integration test suite on integration branch.
 2. Invoke `qa-engineer` at **PRD scope** (all packages affected by the merged stories, all layers) for a coverage and gap rollup. Report a PRD-level `coverage_gate` that aggregates per-story gates. Scope to packages affected by the merged stories, not the entire workspace.
 3. Invoke `verifier` in `audit` mode for a **PRD-level rollup audit** against the full integrated scope (all merged stories on the integration branch, cross-checked against the source PRD/spec/milestone). This is mandatory and non-skippable — it runs whether or not any story-level drift was previously reported. Record the resulting human-readable summary in the wave status comment, edited in place (see **Wave Status Comment**), never as a new comment; with no wave issue, carry it in the consolidated PR body. Rollup drift findings **MUST NOT** block the consolidated PR handoff; Unintended/Intended drift routes to `product-engineer`'s `activity-drift-reconciliation` flow.
+   - **Fidelity report line.** Once the rollup audit has written its fidelity report, set the wave issue body's `Fidelity report:` line under `## Artifacts` to a root-relative link to that report, adding the line after `Task plan:` when the body has none: read the body with `gh issue view <wave> --json body --jq .body` into a file, change only that line, and write it back with `gh issue edit <wave> --body-file <path>`. With `Wave issue: none` there is no body to edit, and when no report file exists the line stays `pending`.
 4. Invoke `technical-writer` for a planner-level drift/stale-doc validation pass against integrated changes; unresolved drift **MUST** block handoff.
 5. **Roadmap update (mandatory).** Update the run's row(s) in `docs/roadmap.md` on the integration branch, so the change ships in the consolidated PR itself, deriving every cell from `gh` output, never from memory: set `Status` to `In progress`, because only Phase 6 sets `Done`, after the merge; build `Issues/PRs` from the wave issue, its story issues and their states, read with `gh api repos/{o}/{r}/issues/{wave}/sub_issues --jq '.[] | {number,state}'` (when Run Info reads `Wave issue: none`, fall back to `gh issue list --search "[PRD-<name>] in:title" --state all --json number,state` and keep only the issues in the state table, since the title search also returns the PRD issue and other waves' stories), and the story PRs, read with `gh pr list --base <integration branch> --state merged --json number`; write `What's missing` as "consolidated PR to `main`", followed by any story that did not merge; and set the `Last updated` date. Quote every command you ran verbatim in the consolidated PR body's Roadmap section, so a reviewer can re-run it. A consolidated PR without this roadmap change is incomplete. See **Roadmap Maintenance** below.
 6. **memo run outcome.** Write the per-run outcome entry described in **memo-cli Integration → Responsibilities** and record `memo_run_outcome`.
-7. Open one consolidated PR from integration branch to `main`. Then edit the wave status comment so its update line names the consolidated PR.
+7. Open one consolidated PR from integration branch to `main`. Then edit the wave status comment so its update line names the consolidated PR, and edit the PRD status comment so this wave's row reads `consolidated PR #n open` (see **PRD Status Comment**).
    - **Closes lines.** Generate them from the state table and write them under the PR body's `## Why`, as github-ops's PR template names it: `Closes #N` for every story whose state-table row is `✅ Merged`; `Refs #N` with the reason for every story that is not merged (blocked or skipped), never `Closes`; `Closes #<wave>` for the wave issue only when every story in the state table merged, otherwise `Refs #<wave>` naming the unmerged stories. When Run Info reads `Wave issue: none` there is no `Closes #<wave>` line, and the body says no wave issue was found. Write one keyword per issue, each on its own line: a comma list such as `Closes #1, #2` closes only the first issue. Every other reference (the PRD issue, related issues) is `Refs #N`.
    - **Project Status observation (read only).** Once the PR is open, read one merged story's Project Status with `gh issue view <n> --json projectItems --jq '.projectItems[].status.name'`; the same read tells whether a Project tracks the issue, so no Project number and no extra token scope is needed, and nothing is ever written to the Project. An empty result means no Project: `not observed(no project)`. `In progress` records `observed`. Any other value (`Backlog` while GitHub's automation catches up) is re-read once after a short wait and then recorded as `not observed(automation pending at <time>)`; a refused read records `not observed(<reason>)` and never asks for more access. Record the result as `project_observation: observed | not observed(<reason>)` for "In progress at consolidated PR open" in the PR body and in `TESTING.md`'s DF-5 row, committed on the integration branch so the open PR picks it up.
 8. **Do NOT merge.** Notify the user that the consolidated PR is ready for their review.
@@ -574,7 +590,7 @@ Run this phase when the user reports that the consolidated PR merged into `main`
 7. **Roadmap row.** In `docs/roadmap.md`, set the run's row from what steps 1 to 4 observed, never from memory. When every story in the state table reads `✅ Merged` and the wave issue, when there is one, reads closed, set `Status` to `Done` and `What's missing` to `—`. Otherwise keep `Status` at `In progress`, list the unmerged stories in `What's missing`, and say so in the close-out PR body. In both cases set `Issues/PRs` to the wave issue and the story issues from step 3, the story PRs from step 4 and the consolidated PR `#<n>`, and set the `Last updated` date. When the row is absent, leave `docs/roadmap.md` unchanged, report it, and ask the user to have `product-engineer` add the row; never invent one.
 8. **Archive the state file.** Move `workstream/planner-state-<plan-id>.md` to `workstream/archive/planner-state-<plan-id>-archived.md` with `git mv`, so the next run starts fresh; it is the same path Phase 0.5 uses for a declined resume.
 9. **Record the Done observation.** Write step 5's `project_observation` for "Done at consolidated PR merge" in `TESTING.md`'s DF-5 row.
-10. **Status comments.** Edit the PRD issue's status comment so the wave's row reads `shipped`, found by its marker and edited in place per implement § Status Comment; then edit the wave status comment so its update line says the wave shipped (see **Wave Status Comment**). A failed write is reported in the run summary and never blocks the close-out PR.
+10. **Status comments.** Edit the PRD issue's status comment so the wave's row reads `shipped`, found by its marker and edited in place per implement § Status Comment (see **PRD Status Comment**), and record the resulting `prd_status` in the run summary and the close-out PR body, since step 8 already archived the state file; then edit the wave status comment so its update line says the wave shipped (see **Wave Status Comment**). A failed write is reported in the run summary and never blocks the close-out PR.
 11. **Open one `chore(roadmap)` PR to `main`.** Commit steps 7 to 9 on `chore/<plan-id>-closeout` with the message `chore(roadmap): close out <plan-id>`, push the branch, and open one PR to `main` with the same title, its body written to a file per github-ops's PR template, with `Refs #<wave>` under `## Why`. The planner never merges it: the user reviews and merges it.
 12. **Delete the integration branch, last.** Delete the integration branch locally and remotely only after the close-out PR is open: check out `main`, then `git branch -d <integration branch>` and `git push origin --delete <integration branch>`. Then report the run summary: each step's result, any issue still open, `project_observation`, and the close-out PR URL. The run is complete only after this step.
 
@@ -643,6 +659,7 @@ For each run, return:
 - Final local branch state (checked out branch name or explicit verification result)
 - Story PR links/status
 - Wave status comment outcome (`wave_status` values recorded in the Decisions Log)
+- PRD status comment outcome (`prd_status` values recorded in the Decisions Log)
 - Consolidated PR link or blocker
 - Current test status
 - PR Directives (User Action Required)
