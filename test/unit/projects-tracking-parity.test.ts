@@ -399,6 +399,30 @@ describe("github-ops", () => {
       expect(copy.body, copy.path).not.toMatch(/required path whenever MCP/);
     }
   });
+
+  // PT-48 / CT-23 — S-010 AC-4; D-56, D-67
+  it("consolidated PR Why rule", () => {
+    const lines: string[] = [];
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Pull Request Conventions");
+      expect(section, copy.path).toContain(
+        "The `## Why` section **MUST** reference the appropriate issue",
+      );
+      const line = lineWith(section, "A consolidated PR", copy.path);
+      for (const marker of [
+        "consolidated PR",
+        "default branch",
+        "Closes #<number>",
+        "every story issue",
+        "wave tracking issue",
+        "`Refs` is for everything else",
+      ]) {
+        expect(line, `${copy.path}: Why rule lacks ${marker}`).toContain(marker);
+      }
+      lines.push(line);
+    }
+    expect(new Set(lines).size, "consolidated PR Why rule differs across trees").toBe(1);
+  });
 });
 
 // --- activity-publish-github (S-002, #271) -----------------------------------
@@ -654,6 +678,47 @@ describe("implement", () => {
         "| **Before coding** | Confirm issue open → Create branch (`github-ops`) → First commit → Open draft PR (`github-ops`) → Sync checklists",
       );
     }
+  });
+
+  // PT-49 — S-010 AC-5; D-22, D-50, D-54; A-43; EC-69, EC-71
+  it("nobody closes", () => {
+    const sentences: string[] = [];
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Before Closing");
+      const rule = lineWith(section, "Nobody closes the GitHub Issue", copy.path);
+      for (const marker of [
+        "`Closes #N`",
+        "default branch",
+        "consolidated PR",
+        "story PR itself",
+      ]) {
+        expect(rule, `${copy.path}: nobody-closes rule lacks ${marker}`).toContain(marker);
+      }
+      expect(rule, copy.path).toContain("main-thread run");
+      const lifecycle = sectionOf(copy, "GitHub Execution Rules Summary")
+        .split("\n")
+        .find((line) => line.startsWith("| **Before closing**"));
+      expect(lifecycle, `${copy.path}: no Before closing row`).toBeDefined();
+      expect(lifecycle!, copy.path).not.toContain("Then close issue");
+      expect(lifecycle!, copy.path).toContain("GitHub closes the issue");
+      expect(sectionOf(copy, "Final Instructions"), copy.path).toMatch(
+        /^5\. .*(nobody|never)[^\n]*close/m,
+      );
+      for (const old of [
+        "You **MUST NOT** close the GitHub Issue until the PR is approved **AND** merged.",
+        "You **MUST NOT** close the issue while the PR is still in draft or pending review.",
+        "You **MUST NOT** close a GitHub Issue without confirming the PR has been reviewed, approved, and merged.",
+        "Then close issue",
+      ]) {
+        expect(copy.body, `${copy.path}: old close wording "${old}"`).not.toContain(old);
+      }
+      // EC-71: story PRs still carry `Closes #N`; GitHub ignores it on a non-default base.
+      expect(copy.body, copy.path).toContain(
+        "PR description **MUST** include `Closes #<issue-number>`",
+      );
+      sentences.push(rule);
+    }
+    expect(new Set(sentences).size, "nobody-closes rule differs across trees").toBe(1);
   });
 });
 
@@ -1235,6 +1300,118 @@ describe("planner", () => {
       expect(decisions![1], copy.path).toContain("wave_status:");
       expect(sectionOf(copy, "Output Contract"), copy.path).toContain("`wave_status`");
     }
+  });
+
+  // S-009 gate hardening (qa M4, M8, M10, M11, M12, M17; verifier DR-3), carried into S-010.
+  it("wave status comment timing and wording pins", () => {
+    const blockedRows: string[] = [];
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Wave Status Comment");
+      // M12: run start is in Phase 3 (D-70).
+      expect(lineWith(section, "**Run start**", copy.path), copy.path).toContain("Phase 3");
+      // M10 / M11: the timing phrases are pinned, not only the event names.
+      expect(lineWith(section, "**Story start**", copy.path), copy.path).toContain(
+        "before each developer handoff",
+      );
+      expect(lineWith(section, "**Merge**", copy.path), copy.path).toContain(
+        "after the checkpoint push",
+      );
+      // M17: the closeout event keeps the gates cell.
+      expect(lineWith(section, "**Developer closeout**", copy.path), copy.path).toContain(
+        "`Gates` carries the payload's quality gates",
+      );
+      // M4: a reworded per-merge comment is rejected too, not only the old sentence.
+      const perMergeComment = /\bpost\b[^\n]*\bcomment\b/;
+      for (const line of sectionOf(copy, "Invariants").split("\n")) {
+        expect(line, `${copy.path}: Invariants posts a comment`).not.toMatch(perMergeComment);
+      }
+      expect(step13(copy), `${copy.path}: step 13 posts a comment`).not.toMatch(perMergeComment);
+      // DR-3: the list in step 13 reads "…, and update the `Last updated` timestamp".
+      expect(step13(copy), copy.path).toContain(
+        "update `Current Position` to the next pending story, and update the `Last updated` timestamp.",
+      );
+      // M8: the blocked row is the same text in every tree (padding aside).
+      const blocked = sectionOf(copy, "Error Handling")
+        .split("\n")
+        .find((line) => line.startsWith("| Story returns blocked"));
+      expect(blocked, `${copy.path}: no "Story returns blocked" row`).toBeDefined();
+      blockedRows.push(squashSpaces(blocked!).trim());
+    }
+    expect(new Set(blockedRows).size, "Story returns blocked row differs across trees").toBe(1);
+  });
+
+  // PT-39 — S-010 AC-1; FR-13, D-22, D-54
+  it("never closes", () => {
+    const sentences: string[] = [];
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Merge management rule");
+      expect(section, copy.path).toContain("never closes a story issue");
+      expect(section, copy.path).toContain("consolidated PR merges to main");
+      for (const [index, line] of copy.body.split("\n").entries()) {
+        expect(line, `${copy.path}:${index + 1} closes an issue`).not.toMatch(/gh issue close/);
+      }
+      sentences.push(lineWith(section, "never closes a story issue", copy.path));
+    }
+    expect(new Set(sentences).size, "never-closes line differs across trees").toBe(1);
+  });
+
+  // PT-40 / CT-17 — S-010 AC-2; FR-15, D-56, D-67; A-34, A-35, A-47; EC-62, EC-63, EC-64
+  it("consolidated PR Closes lines", () => {
+    const rules: string[] = [];
+    for (const copy of trees) {
+      const phase5 = sectionOf(copy, "Phase 5 - Consolidated Pull Request");
+      for (const marker of ["Closes #N", "Closes #<wave>", "state table", "✅ Merged", "Refs #N"]) {
+        expect(phase5, `${copy.path}: Phase 5 lacks ${marker}`).toContain(marker);
+      }
+      const rule = lineWith(phase5, "**Closes lines.**", copy.path);
+      // A-35: under `## Why`, as github-ops's template names it.
+      expect(rule, copy.path).toContain("`## Why`");
+      // A-34: the wave closes only when every story merged.
+      expect(rule, copy.path).toMatch(/`Closes #<wave>`[^\n]*only when every story[^\n]*merged/);
+      // EC-63: an unmerged story gets `Refs` with the reason.
+      expect(rule, copy.path).toMatch(/`Refs #N` with the reason[^\n]*not merged/);
+      // EC-62: the no-wave case.
+      expect(rule, copy.path).toContain("`Wave issue: none`");
+      expect(rule, copy.path).toContain("no `Closes #<wave>` line");
+      // EC-64: one keyword per issue.
+      expect(rule, copy.path).toContain("one keyword per issue");
+      expect(rule, copy.path).toContain("closes only the first");
+      // The step 7 sub-bullet keeps the numbering that PT-36, PT-44 and roadmap-parity read (A-33).
+      inOrder(phase5, ["7. Open one consolidated PR", "**Closes lines.**", "8. **Do NOT merge.**"]);
+      const include = phase5.slice(phase5.indexOf("Consolidated PR should include"));
+      expect(include, `${copy.path}: include list lacks Closes`).toMatch(/^- [^\n]*`Closes`/m);
+      rules.push(rule);
+    }
+    expect(new Set(rules).size, "Closes rule differs across trees").toBe(1);
+  });
+
+  // PT-41 — S-010 AC-3; #285-AC3, D-50, D-68; A-37; EC-65, EC-66, EC-67
+  it("DF-5 observation", () => {
+    const rules: string[] = [];
+    for (const copy of trees) {
+      const phase5 = sectionOf(copy, "Phase 5 - Consolidated Pull Request");
+      const rule = lineWith(phase5, "**Project Status observation (read only).**", copy.path);
+      for (const marker of [
+        "project_observation: observed | not observed(<reason>)",
+        "not observed(no project)",
+        "In progress at consolidated PR open",
+        "TESTING.md",
+        "read only",
+        "gh issue view <n> --json projectItems",
+        "automation pending at <time>",
+      ]) {
+        expect(rule, `${copy.path}: observation lacks ${marker}`).toContain(marker);
+      }
+      // D-68: no Project number, no write, no scope request.
+      expect(rule, copy.path).not.toMatch(PROJECT_WRITE);
+      expect(rule, copy.path).not.toContain("gh project item-list");
+      expect(rule, copy.path).not.toContain("gh auth refresh");
+      inOrder(phase5, ["**Closes lines.**", "**Project Status observation (read only).**"]);
+      const include = phase5.slice(phase5.indexOf("Consolidated PR should include"));
+      expect(include, copy.path).toContain("project_observation");
+      rules.push(rule);
+    }
+    expect(new Set(rules).size, "observation rule differs across trees").toBe(1);
   });
 });
 
