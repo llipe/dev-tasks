@@ -289,6 +289,7 @@ memo write \
   --tags "auth,jwt,stateless" \
   --entry-type decision \
   --source agent \
+  --on-duplicate create-new \
   --json
 ```
 

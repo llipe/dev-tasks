@@ -163,12 +163,13 @@ memo write \
   --entry-type decision \
   --story "<issue-or-feature-id-if-known>" \
   --files "workstream/decisions-<feature>.md" \
-  --on-duplicate consolidate \
+  --on-duplicate create-new \
   --json
 ```
 
 - `--manual` is correct here: the decision was made by the user in conversation, so it has no episodic provenance, and memo-cli rejects an agent-sourced semantic entry without one.
-- A row that supersedes an earlier decision is written as a new entry naming the superseded ID in its rationale; `--on-duplicate consolidate` merges near-duplicates.
+- A row that supersedes an earlier decision is written as a new entry naming the superseded ID in its rationale.
+- Each distinct decision row is written with `--on-duplicate create-new`, one entry per row, so memo-cli never merges two decisions into one record; pass `consolidate` only when restating or updating the same decision (D-78: on 2026-10-20 `consolidate` merged 26 distinct decisions into one `kb` record).
 - **Write results are recorded, never swallowed.** Report the written ids (or `skipped(<reason>)`) in the phase's completion summary. On failure, fix the command if the error names a flag or value you supplied and retry once; then report `failed(<error>)`. A failed write never blocks the phase.
 
 `technical-writer` still owns ADR and doc-change entries, and `developer` owns per-story intent/outcome entries.

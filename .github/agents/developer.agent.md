@@ -70,7 +70,7 @@ If the user provides a feature description or asks to create a PRD/spec/stories 
    - Use the `github-ops` PR description template (What / Why / How / Testing / Checklist)
    - Include `Closes #<issue-number>` in the PR description
 5. **Stop-gate rule:** If mode is `step-gated`, you **MUST** stop after each sub-task and request user approval.
-6. **Do not close the issue:** You **MUST NOT** close the issue; GitHub closes it when the consolidated PR merges to main. The story PR links the issue with `Closes #<issue-number>`; merged means merged to main, not to an integration branch.
+6. **Do not close the issue:** You **MUST NOT** close the issue; GitHub closes it when the consolidated PR merges to main under the `planner`, and when the story PR itself merges to the default branch in single-issue work without a planner. Either way the closing PR targets the default branch and carries `Closes #<issue-number>`, and nobody closes it by hand. A story PR into an integration branch closes nothing, because GitHub ignores closing keywords on a PR whose base is not the default branch.
 7. **Keep scope tight:** You **MUST** work only on the selected issue/stories unless the user explicitly expands scope.
 8. **Update Relevant Files:** You **MUST** keep the task file's Relevant Files section accurate.
 9. **English-only outputs:** You **MUST** produce English-only output for docs, comments, and generated content.
@@ -302,7 +302,7 @@ Before marking a Story/Issue done:
 9. `/workstream` **SHOULD** be cleaned (active artifacts retained, obsolete artifacts archived/removed).
 10. The memo intent and outcome writes **MUST** have been attempted when memo-cli is available (`memo write --kind episodic --session ISSUE-<n> --bank developer-memory …`, before PR conversion), and `memo_intent` / `memo_outcome` **MUST** be recorded as `written(<id>)`, `failed(<reason>)`, or `skipped(<reason>)`. A `failed` or `skipped` value does not block completion; an omitted field does.
 11. PR **MUST** be ready, approved, and merged.
-12. You **MUST NOT** close the GitHub Issue; GitHub closes it when the consolidated PR merges to main (rule 6).
+12. You **MUST NOT** close the GitHub Issue; nobody closes it by hand. It closes when a PR against the default branch carrying `Closes #N` merges: under the `planner` that is the consolidated PR, and in single-issue work without a planner it is the story PR itself (rule 6).
 13. For multi-story implementations, you **MUST** run a checklist cross-check between GitHub Issue tasks and `/workstream/tasks-*.md` and report any mismatch resolution.
 
 ---

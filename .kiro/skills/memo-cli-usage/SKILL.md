@@ -118,6 +118,7 @@ memo write \
   --entry-type decision \
   --source agent \
   --provenance "<csv of episodic entry ids this consolidates, if any>" \
+  --on-duplicate create-new \
   --json
 ```
 
@@ -166,7 +167,8 @@ A `semantic` entry with `--source agent` **MUST** carry `--provenance <csv>` unl
 ## Agent Mode Rules
 
 - Always pass `--json` for parseable output
-- Always pass `--on-duplicate consolidate` for writes
+- Always pass `--on-duplicate` for writes; in `--json` mode memo-cli fails on a duplicate without it
+- Pass `create-new` for distinct decisions, one entry per decision row (a feature's decision write-back); pass `consolidate` only when restating or updating the same decision, such as re-writing an entry after an amendment on the same story and commit to correct its rationale (D-78)
 - Never log API keys or secrets
 - Bulk delete is blocked in `--json` mode (safety guard)
 

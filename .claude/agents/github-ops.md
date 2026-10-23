@@ -35,24 +35,24 @@ If this fails, **STOP** and ask the user to run `gh auth login` — do not attem
 
 Use this table to translate each convention in this file into a `gh` invocation. When MCP is used instead, the equivalent MCP tool is listed for reference.
 
-| Operation                                              | `gh` CLI                                                                                                                                              | MCP equivalent                                 |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Create issue                                           | `gh issue create --title "<title>" --body "<body>" --label "<label>" --milestone "<milestone>"`                                                       | `create_issue`                                 |
-| Update issue                                           | `gh issue edit <number> --title "<title>" --body "<body>" --add-label "<label>" --milestone "<milestone>"`                                            | `update_issue`                                 |
-| Comment on issue                                       | `gh issue comment <number> --body "<comment>"`                                                                                                        | `add_issue_comment`                            |
-| Close issue with attribution                           | `gh issue close <number> --comment "<closing summary + Assisted-by line>"`                                                                            | `update_issue` (state=closed) + comment        |
-| List/audit issues                                      | `gh issue list --state all --json number,title,labels,milestone,body,url --limit 500`                                                                 | `list_issues`                                  |
-| Search issues                                          | `gh search issues "<query>" --repo <owner/repo>`                                                                                                      | `search_issues`                                |
-| Create PR                                              | `gh pr create --title "<title>" --body "<body>" --base <target-branch> --head <source-branch>`                                                        | `create_pull_request`                          |
-| Update PR                                              | `gh pr edit <number> --title "<title>" --body "<body>"`                                                                                               | `update_pull_request`                          |
-| Comment on PR                                          | `gh pr comment <number> --body "<comment>"`                                                                                                           | `add_issue_comment` (PRs share issue comments) |
-| Review a PR                                            | `gh pr review <number> --approve\|--request-changes\|--comment --body "<comment>"`                                                                    | `create_pull_request_review`                   |
-| Merge PR (integration branch only, planner-authorized) | `gh pr merge <number> --merge --delete-branch`                                                                                                        | `merge_pull_request`                           |
-| List/audit PRs                                         | `gh pr list --state all --json number,title,body,baseRefName,headRefName,labels --limit 500`                                                          | `list_pull_requests`                           |
-| Create/list labels                                     | `gh label create "<name>" --color "<hex>" --description "<desc>"` / `gh label list`                                                                   | `create_label` / `list_labels`                 |
-| Create/list milestones                                 | `gh api repos/<owner>/<repo>/milestones -f title="<title>" -f description="<desc>" -f due_on="<ISO date>"` / `gh api repos/<owner>/<repo>/milestones` | (no dedicated MCP tool; use REST)              |
-| Assign milestone to issue                              | `gh issue edit <number> --milestone "<milestone>"`                                                                                                    | `update_issue`                                 |
-| Create branch                                          | `git checkout -b <branch>` (name per [Branch Naming](#branch-naming))                                                                                 | n/a (local git operation)                      |
+| Operation                                                  | `gh` CLI                                                                                                                                              | MCP equivalent                                 |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Create issue                                               | `gh issue create --title "<title>" --body-file <path> --label "<label>" --milestone "<milestone>"`                                                    | `create_issue`                                 |
+| Update issue                                               | `gh issue edit <number> --title "<title>" --body-file <path> --add-label "<label>" --milestone "<milestone>"`                                         | `update_issue`                                 |
+| Comment on issue                                           | `gh issue comment <number> --body-file <path>`                                                                                                        | `add_issue_comment`                            |
+| Close issue with attribution (never a story or wave issue) | `gh issue comment <number> --body-file <path>` (closing summary + Assisted-by line), then `gh issue close <number>`                                   | `update_issue` (state=closed) + comment        |
+| List/audit issues                                          | `gh issue list --state all --json number,title,labels,milestone,body,url --limit 500`                                                                 | `list_issues`                                  |
+| Search issues                                              | `gh search issues "<query>" --repo <owner/repo>`                                                                                                      | `search_issues`                                |
+| Create PR                                                  | `gh pr create --title "<title>" --body-file <path> --base <target-branch> --head <source-branch>`                                                     | `create_pull_request`                          |
+| Update PR                                                  | `gh pr edit <number> --title "<title>" --body-file <path>`                                                                                            | `update_pull_request`                          |
+| Comment on PR                                              | `gh pr comment <number> --body-file <path>`                                                                                                           | `add_issue_comment` (PRs share issue comments) |
+| Review a PR                                                | `gh pr review <number> --approve\|--request-changes\|--comment --body-file <path>`                                                                    | `create_pull_request_review`                   |
+| Merge PR (integration branch only, planner-authorized)     | `gh pr merge <number> --merge --delete-branch`                                                                                                        | `merge_pull_request`                           |
+| List/audit PRs                                             | `gh pr list --state all --json number,title,body,baseRefName,headRefName,labels --limit 500`                                                          | `list_pull_requests`                           |
+| Create/list labels                                         | `gh label create "<name>" --color "<hex>" --description "<desc>"` / `gh label list`                                                                   | `create_label` / `list_labels`                 |
+| Create/list milestones                                     | `gh api repos/<owner>/<repo>/milestones -f title="<title>" -f description="<desc>" -f due_on="<ISO date>"` / `gh api repos/<owner>/<repo>/milestones` | (no dedicated MCP tool; use REST)              |
+| Assign milestone to issue                                  | `gh issue edit <number> --milestone "<milestone>"`                                                                                                    | `update_issue`                                 |
+| Create branch                                              | `git checkout -b <branch>` (name per [Branch Naming](#branch-naming))                                                                                 | n/a (local git operation)                      |
 
 Notes:
 
@@ -158,7 +158,7 @@ Wave issue:
 
 Current story: <story id> (#<issue>) or none
 Last merged PR: #<pr> or none
-Integration HEAD: `<sha>`
+Integration HEAD: `<sha>` or none
 Gates: <pass, fail or not run>
 
 | Story                 | State                                                                                 | PR            | Sub-task          |
@@ -172,14 +172,18 @@ PRD issue:
 <!-- dev-tasks:status -->
 🔄 Update: <one-line summary> — Refs #<issue>
 
-| Wave | State                                                        | Wave issue |
-| ---- | ------------------------------------------------------------ | ---------- |
-| <id> | <published, in progress, consolidated PR #n open or shipped> | #<issue>   |
+| Wave | State                                                        | Wave issue    |
+| ---- | ------------------------------------------------------------ | ------------- |
+| <id> | <published, in progress, consolidated PR #n open or shipped> | #<issue> or — |
 ```
 
 The PRD table has one row per wave, in wave order. `activity-publish-github` writes a wave's row at publish and the planner edits it at run start, consolidated PR open and close-out; an existing row is edited in place, never added a second time, and every other wave's row is kept as it is.
 
+A wave that predates the PRD and wave tracking-issue hierarchy (published before it, so it has no wave issue) still gets a row, with `—` in the `Wave issue` column and its state read from its `docs/roadmap.md` row, for example `shipped` (D-73, RD-12).
+
 ### Issue Closure Attribution
+
+A story or wave tracking issue is never closed by an agent, `github-ops` included: it closes only through a `Closes` line on a PR whose base is the default branch (D-22, D-54, D-76). The attribution rule below applies to every other issue.
 
 When closing an issue, `github-ops` **MUST** add a final closing comment that includes:
 
@@ -274,13 +278,22 @@ When `infra-engineer` delegates its change-record draft PR (S-001 AC-11), the PR
 
 ### Multi-Line Body Formatting
 
-When passing multi-line content via `--body` (PRs, issues, or comments), agents **MUST** ensure actual newlines are preserved in the output. Approaches, in order of preference:
+Collapsed/mangled PR and issue bodies (headings, checklists, and paragraphs all flattened into one line) are a recurring failure mode. To prevent this, the following is **mandatory**, not a preference order:
 
-1. **`--body-file`** — write the body to a temp file and pass `--body-file <path>`. This avoids all shell-escaping issues.
-2. **`$'...'` quoting** — use ANSI-C quoting so `\n` is interpreted as a real newline: `--body $'## What\n\nSummary here.\n\n## Why\n\nCloses #42'`
-3. **`printf` piping** — `printf '## What\n\nSummary\n' | gh pr create --body-file -`
+1. **`gh --body-file` only.** Agents **MUST** write the body content to a temp file using the file-write tool (not `echo`, `printf`, or a heredoc assigned to a shell variable) and pass it with `--body-file <path>`. Building the body as a shell variable and interpolating it — quoted or not — **MUST NOT** be used, because unquoted expansion word-splits on newlines/spaces and quoted expansion is still vulnerable to how the variable was assembled upstream (e.g. `tr`, `printf` without `-v`, command substitution stripping trailing newlines).
+2. **MCP, when used instead of `gh`.** Agents **MUST** pass the body as a native multi-line string parameter to the MCP tool (`create_pull_request`, `update_pull_request`, `add_issue_comment`, `create_issue`, `update_issue`). This never touches a shell, so newlines cannot be lost or word-split.
+3. Agents **MUST NOT** pass markdown with literal `\n` text inside double-quoted strings (e.g., `--body "## What\n\nSummary"`) — the shell does not expand `\n` in double quotes, causing the entire body to render as a single paragraph.
+4. Inline `--body` **MUST NOT** be used for any body, a short single-line comment included; `--body-file` is the only method. On Claude Code and Kiro, `git-guard.sh` blocks an inline `--body` on `gh issue|pr create|edit|comment|review`.
 
-Agents **MUST NOT** pass markdown with literal `\n` text inside double-quoted strings (e.g., `--body "## What\n\nSummary"`) — the shell does not expand `\n` in double quotes, causing the entire body to render as a single paragraph.
+#### Mandatory Verification After Write
+
+After every `create`/`update` operation that sets a multi-section body (PR description, issue body, structured comment), the agent **MUST** immediately read the body back (`gh pr view <number> --json body -q .body`, `gh issue view <number> --json body -q .body`, or the MCP equivalent read) and confirm:
+
+- Each `## <Section>` heading appears at the start of its own line (not mid-paragraph).
+- Checklist items render as `- [ ]` / `- [x]` on their own lines, not inline with surrounding prose.
+- Sections are separated by blank lines.
+
+If the read-back body is flattened or malformed, the agent **MUST** immediately re-edit it via `--body-file` (or the MCP update tool) before proceeding — it **MUST NOT** leave a malformed body in place and move on.
 
 ### PR Comments
 
@@ -298,11 +311,12 @@ Branch names **MUST** follow this pattern:
 <type>/<issue-number>-<short-description>
 ```
 
-| Type          | When                             | Example                               |
-| ------------- | -------------------------------- | ------------------------------------- |
-| `issue`       | Single GitHub Issue              | `issue/42-rate-limiting`              |
-| `story`       | PRD-driven user story            | `story/S-003-password-reset`          |
-| `integration` | Multi-story consolidation branch | `integration/prd-auth-password-reset` |
+| Type          | When                                               | Example                               |
+| ------------- | -------------------------------------------------- | ------------------------------------- |
+| `issue`       | Single GitHub Issue                                | `issue/42-rate-limiting`              |
+| `story`       | PRD-driven user story                              | `story/S-003-password-reset`          |
+| `integration` | Multi-story consolidation branch                   | `integration/prd-auth-password-reset` |
+| `chore`       | Maintenance, tooling or docs work tied to an issue | `chore/306-github-ops-carve-outs`     |
 
 Rules:
 
@@ -310,11 +324,13 @@ Rules:
 - Short description **MUST** be 2–5 words, hyphen-separated.
 - Branches of type `issue` and `story` **MUST** include the issue or story number.
 - Branches of type `integration` **MUST** identify the plan, PRD, or milestone being consolidated.
+- Branches of type `chore` **MUST** follow the normal pattern, `chore/<issue-number>-<short-description>`. The one exception is planner Phase 6's close-out branch, `chore/<plan-id>-closeout`, keyed on the plan id (the planner state file's id) because the close-out has no issue of its own (D-76).
 
 ## Branch-Type Merge Rules
 
 - Issue and story PRs **MUST** merge by merge commit with source-branch deletion (`--merge --delete-branch`), so the per-task commits are preserved. Squash and rebase merges are **NOT** used unless the user explicitly asks for one on a specific PR. The planner merges them into an integration branch; the user merges them into `main`.
 - Integration PRs **MUST** merge into `main` by merge commit, and only the user may merge them.
+- Chore PRs **MUST** target the default branch and merge by merge commit, and only the user may merge them.
 
 ---
 
@@ -489,6 +505,7 @@ Rules:
 5. **Idempotent operations:** Running `github-ops` on an already-compliant artifact **MUST** produce no changes.
 6. **No destructive actions without confirmation:** Renaming issues, deleting labels, or closing milestones **MUST** require explicit user approval.
 7. **No merging into `main` without user approval:** PRs targeting `main` **MUST NOT** be merged by any agent. Only the user may approve and merge.
+8. **No shell-interpolated multi-line bodies:** Every PR/issue body or structured comment **MUST** be created via `gh --body-file` (or, when an MCP server is used instead, its native body parameter), and **MUST** be read back and verified to render with intact headings/line breaks before the operation is considered complete (see [Multi-Line Body Formatting](#multi-line-body-formatting)).
 
 ---
 
