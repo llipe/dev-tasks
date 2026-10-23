@@ -1071,6 +1071,19 @@ function trackedFiles(): string[] {
     .sort();
 }
 
+/** Extensions that are binary by nature; PT-28e and PT-28f treat only these as expected binaries. */
+const BINARY_EXTENSIONS = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".ico",
+  ".webp",
+  ".pdf",
+  ".woff",
+  ".woff2",
+] as const;
+
 /** A file is treated as binary when its first 8 KiB holds a NUL byte. */
 function isBinary(buffer: Buffer): boolean {
   return buffer.subarray(0, 8192).includes(0);
@@ -1084,13 +1097,6 @@ function guardedFiles(): string[] {
   return trackedFiles()
     .filter(isGuardedPath)
     .filter((path) => !isBinary(readFileSync(resolve(ROOT, path))));
-}
-
-/** Every tracked `.md` under `root`, as a repo-relative path, sorted. */
-function markdownFiles(root: string): string[] {
-  return trackedFiles()
-    .filter((path) => path.startsWith(`${root}/`) && path.endsWith(".md"))
-    .filter((path) => !path.startsWith(GUARD_EXCLUDED_PREFIX));
 }
 
 // --- activity-init (S-005, #274) ---------------------------------------------
@@ -1263,7 +1269,9 @@ describe("no Project writes", () => {
     const walked = [
       ".claude/hooks/git-guard.sh",
       ".github/workflows/ci.yml",
-      ".kiro/hooks/git-guard.yaml",
+      ".kiro/hooks/git-guard.json",
+      // Hypothetical path: no `.yaml` is tracked under the four roots today.
+      ".github/workflows/example.yaml",
       ".claude/settings.json",
       "docs/runbooks/runbook-configure-github-project.md",
       "templates/scripts/deploy.sh",
@@ -1302,6 +1310,36 @@ describe("no Project writes", () => {
     expect(yamlLine, "matcher misses a .yml line").toMatch(PROJECT_WRITE);
   });
 
+  // PT-28e — PR #314 audit DR-3: picking files by extension must not silently
+  // drop a tracked file. Every tracked file under a guarded root (outside
+  // docs/requirements/) has a guarded extension, so a new extensionless hook or
+  // an upper-case `.YML` fails here until the walk is widened on purpose.
+  it("walk leaves no tracked file under a guarded root unread", () => {
+    const unread = trackedFiles().filter(
+      (path) =>
+        GUARDED_ROOTS.some((root) => path.startsWith(`${root}/`)) &&
+        !path.startsWith(GUARD_EXCLUDED_PREFIX) &&
+        !isGuardedPath(path) &&
+        !BINARY_EXTENSIONS.some((ext) => path.toLowerCase().endsWith(ext)),
+    );
+    expect(unread, "tracked files the guard never reads").toEqual([]);
+  });
+
+  // PT-28f — PR #314 audit DR-4: the binary check. A NUL byte marks binary;
+  // plain text and UTF-8 do not. UTF-16 text also holds NUL bytes, so no file
+  // with a text extension may be dropped as binary: that would hide it.
+  it("binary check drops only binary files", () => {
+    expect(isBinary(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x1a]))).toBe(true);
+    expect(isBinary(Buffer.from("gh project item-edit --id 1\n", "utf-8"))).toBe(false);
+    expect(isBinary(Buffer.from("café — naïve\n", "utf-8"))).toBe(false);
+    expect(isBinary(Buffer.from("text", "utf16le"))).toBe(true);
+    const dropped = trackedFiles()
+      .filter(isGuardedPath)
+      .filter((path) => isBinary(readFileSync(resolve(ROOT, path))))
+      .filter((path) => !BINARY_EXTENSIONS.some((ext) => path.toLowerCase().endsWith(ext)));
+    expect(dropped, "text files dropped as binary").toEqual([]);
+  });
+
   // PT-28 — S-006 AC-1; PRD AC-3a; FR-6; D-23, D-44, D-49, D-77. Line-scoped so
   // the failure names the file and line; a code fence quoting the command fails
   // too (EC-34). D-77 widens the walk from `.md` only to `.sh`, `.yml`, `.yaml`
@@ -1328,10 +1366,15 @@ describe("no Project writes", () => {
   // the `project` token scope, and setup verbs live only in the runbook under
   // `docs/`, never in a prompt tree (EC-38 widens the negative now so wave 3
   // must consciously relax it with a decision).
+  // D-77 extends it to the widened walk: every guarded file under the prompt
+  // trees and templates/, not only `.md` (PR #314 audit DR-2, DR-6).
   it("no project scope or project id in any tree", () => {
     const setupVerb = /gh\s+project\s+(edit|create|delete|field-create|item-delete|item-archive)\b/;
-    for (const root of GUARDED_ROOTS.filter((r) => r !== "docs")) {
-      for (const file of markdownFiles(root)) {
+    const files = guardedFiles();
+    for (const root of [...GUARDED_ROOTS.filter((r) => r !== "docs"), "templates"]) {
+      const inRoot = files.filter((f) => f.startsWith(`${root}/`));
+      expect(inRoot.length, `${root}: walk found no files`).toBeGreaterThan(0);
+      for (const file of inRoot) {
         const content = readFileSync(resolve(ROOT, file), "utf-8");
         expect(content, `${file} asks for the project token scope`).not.toContain(
           "gh auth refresh -s project",
