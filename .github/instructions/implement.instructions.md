@@ -135,6 +135,7 @@ When `workstream/decisions-<feature>.md` exists and was read per step 2 above:
 - Under the `planner`, the wave's status comment belongs to the planner: report `wave_status: owned-by-planner` and do nothing further.
 - In the main thread with no planner (the interactive `/developer` command), after PR open and at PR ready you **MUST** look up the story's parent: `gh api repos/{o}/{r}/issues/{n}/parent`.
   - `200` → edit this story's row (state, PR, sub-task count) in the wave issue's status comment, found and edited by the same marker procedure above, and report `wave_status: written`. If the wave issue has no status comment yet, create it from the wave table in `github-ops` § Status comment and report `wave_status: written`.
+  - Header lines on this path, which has no integration branch (D-75, RD-17): `Current story` names this story; `Last merged PR` and `Integration HEAD` keep the existing comment's values when editing it and read `none` when creating the comment; `Gates` carries this story's gates.
   - `404` → the story has no parent (published before the hierarchy convention); report `wave_status: skipped(no parent)`. This is expected, not an error.
   - A refused read or write → `wave_status: failed(<reason>)`; it never blocks the sub-task.
 
