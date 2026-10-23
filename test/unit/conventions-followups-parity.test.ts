@@ -424,3 +424,117 @@ describe("memo duplicate policy", () => {
     expectIdentical(rules, "agent mode duplicate rule");
   });
 });
+
+// --- PR #315 audit follow-ups (F-1, F-2, F-4, F-5, F-6) ----------------------
+
+const TECHNICAL_WRITER_TREES = {
+  claude: ".claude/agents/technical-writer.md",
+  github: ".github/agents/technical-writer.agent.md",
+  kiro: ".kiro/agents/technical-writer.md",
+};
+
+const MEMO_REFERENCE_TREES = {
+  claude: ".claude/skills/memo-cli-usage/REFERENCE.md",
+  github: ".github/skills/memo-cli-usage/REFERENCE.md",
+  kiro: ".kiro/skills/memo-cli-usage/REFERENCE.md",
+};
+
+/** The first ```bash fence in `text`. */
+function firstBashFence(text: string, label: string): string {
+  const fence = text.match(/```bash\n[\s\S]*?```/)?.[0];
+  expect(fence, `${label}: no bash fence`).toBeDefined();
+  return fence!;
+}
+
+describe("audit follow-ups", () => {
+  // F-1 — the Command Map offers no inline body form git-guard would block.
+  it("github-ops command map uses --body-file, never inline --body or --comment", () => {
+    const tables: string[] = [];
+    for (const copy of loadTrees(GITHUB_OPS_TREES)) {
+      const section = sectionOf(copy, "Command Map");
+      const table = section
+        .split("\n")
+        .filter((line) => line.startsWith("|"))
+        .join("\n");
+      expect(table, copy.path).not.toContain('--body "');
+      expect(table, copy.path).not.toContain('--comment "');
+      for (const op of [
+        "| Create issue ",
+        "| Update issue ",
+        "| Comment on issue ",
+        "| Create PR ",
+        "| Update PR ",
+        "| Comment on PR ",
+        "| Review a PR ",
+      ]) {
+        expect(lineWith(table, op, copy.path), `${copy.path}: ${op}`).toContain(
+          "--body-file <path>",
+        );
+      }
+      const close = lineWith(table, "| Close issue with attribution", copy.path);
+      expect(close, copy.path).toContain("never a story or wave issue");
+      expect(close, copy.path).toContain("`gh issue comment <number> --body-file <path>`");
+      expect(close, copy.path).toContain("`gh issue close <number>`");
+      tables.push(squashSpaces(table));
+    }
+    expectIdentical(tables, "Command Map table");
+  });
+
+  // F-5 — chore PRs have a merge rule of their own.
+  it("github-ops branch-type merge rules cover chore", () => {
+    const rules: string[] = [];
+    for (const copy of loadTrees(GITHUB_OPS_TREES)) {
+      const section = sectionOf(copy, "Branch-Type Merge Rules");
+      const rule = lineWith(section, "- Chore PRs", copy.path);
+      for (const marker of ["default branch", "merge commit", "only the user may merge them"]) {
+        expect(rule, `${copy.path}: chore merge rule lacks ${marker}`).toContain(marker);
+      }
+      rules.push(rule);
+    }
+    expectIdentical(rules, "chore merge rule");
+  });
+
+  // F-2 / D-78 — each ADR is a distinct decision.
+  it("technical-writer ADR write uses create-new", () => {
+    const lines: string[] = [];
+    for (const copy of loadTrees(TECHNICAL_WRITER_TREES)) {
+      const fence = firstBashFence(sectionOf(copy, "Write Template"), copy.path);
+      expect(fence, copy.path).not.toContain("--on-duplicate consolidate");
+      lines.push(lineWith(fence, "--on-duplicate", copy.path).trim());
+    }
+    expectIdentical(lines, "technical-writer --on-duplicate line");
+    expect(lines[0]).toBe("--on-duplicate create-new \\");
+  });
+
+  // F-4 / D-78 — the decision examples pass create-new; the rule's consolidate
+  // example is an amendment of the same decision.
+  it("memo-cli-usage decision examples and rule", () => {
+    const rules: string[] = [];
+    for (const copy of loadTrees(MEMO_SKILL_TREES)) {
+      const fence = firstBashFence(sectionOf(copy, "Decision/ADR Entry"), copy.path);
+      expect(fence, copy.path).toContain("--on-duplicate create-new");
+      const rule = lineWith(sectionOf(copy, "Agent Mode Rules"), "D-78", copy.path);
+      expect(rule, copy.path).not.toContain("intent and outcome entries");
+      for (const marker of ["amendment", "same story and commit", "correct"]) {
+        expect(rule, `${copy.path}: rule lacks ${marker}`).toContain(marker);
+      }
+      rules.push(rule);
+    }
+    expectIdentical(rules, "memo-cli-usage D-78 rule");
+    for (const copy of loadTrees(MEMO_REFERENCE_TREES)) {
+      const fence = firstBashFence(sectionOf(copy, "Record a Decision"), copy.path);
+      expect(fence, copy.path).toContain("--on-duplicate create-new");
+    }
+  });
+
+  // F-6 / D-75 — the header-fill bullet is nested under the `200` bullet.
+  it("implement header-fill bullet nests under 200", () => {
+    for (const copy of loadTrees(IMPLEMENT_TREES)) {
+      const lines = sectionOf(copy, "Wave Status Update (Main Thread Only)").split("\n");
+      const at = lines.findIndex((line) => line.includes("D-75"));
+      expect(at, copy.path).toBeGreaterThan(0);
+      expect(lines[at], copy.path).toMatch(/^ {4}- Header lines on this path/);
+      expect(lines[at - 1], copy.path).toMatch(/^ {2}- `200` → /);
+    }
+  });
+});

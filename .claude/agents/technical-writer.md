@@ -383,7 +383,7 @@ memo write \
 	--commit "$(git rev-parse HEAD)" \
 	--story "<issue-or-story-id-if-known>" \
 	--files "<path/to/doc.md>,<path/to/adr.md>" \
-	--on-duplicate consolidate \
+	--on-duplicate create-new \
 	--json
 ```
 
