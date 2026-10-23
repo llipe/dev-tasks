@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                         | Author                    |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.1     | 2026-10-22 | Rollup RD-4 (#308): S-008, S-009 and S-010 annotated where spec §16a and D-71 supersede their ACs; no AC text rewritten. | product-engineer |
 | 1.0     | 2026-10-21 | Initial story set from `workstream/specification-projects-tracking-phase-2.md` v1.0. Six stories, PRD ids kept. | @llipe / product-engineer |
 
 Source: `docs/requirements/prd-projects-tracking.md` v1.6 (wave 2: FR-11 to FR-16, FR-25; #285) · Specification v1.0 · Decisions `workstream/decisions-projects-tracking.md` D-01 to D-61.
@@ -29,6 +30,8 @@ So that the run's position is readable from the branch and every later write kno
 Wave 1's checkpoint reached GitHub only because the planner force-added it by hand each time (D-52); riel's checkpoint never reached GitHub at all. The wave issue number is the key every other wave 2 story needs (D-59).
 
 #### Acceptance Criteria
+
+> **Annotated v1.1 (RD-4).** AC-3's resume also backfills: a state file written before the `Wave issue` line existed has the wave issue resolved again by Phase 0's order and the line added (EC-48, S-008 DR-1). This overlaps FR-21 only for planner state files; wave 3's migration still covers issues and docs. The story's Migration Requirements line "Existing state files gain the line in wave 3" is superseded by that resume step.
 
 - [ ] AC-1: The `plan` skill's Output Format header in all three trees carries `Wave issue: #N` after `Source:`, read from the publication report's `Wave issue` line, or `Wave issue: none` with a note that the planner will search when the report has none (D-59).
 - [ ] AC-2: The planner's Phase 0 in all three copies resolves the wave issue in this order: the plan header line; else `gh issue list --label "level: wave"` with the `[PRD-<name>] Wave <id>:` title prefix and a client-side `startswith` filter, reusing a single match; else `wave_status: skipped(no wave issue)` (D-59, D-36).
@@ -102,6 +105,8 @@ Wave 1 posted six status-table comments on six different story issues because no
 
 #### Acceptance Criteria
 
+> **Annotated v1.1 (RD-4).** AC-1's timing is superseded by spec §16a (D-70): the comment is created at run start after Phase 3 pre-flight, not at the end of Phase 0, and the rollup summary, the consolidated-PR open and the close-out also edit it, nine events in all. The developer-closeout edit is made before the merge gates and checked by merge gate 10 (D-71).
+
 - [ ] AC-1: In all three planner copies, the wave status comment is created at the end of Phase 0 (or Phase 0.5 on resume) when a wave issue exists, and edited in place at every story start, every developer closeout, every merge (step 13) and on block, using implement § Status Comment's find-by-marker, create and PATCH procedure and github-ops's wave table: `Story | State | PR | Sub-task`, plus `Current story`, `Last merged PR`, `Integration HEAD`, `Gates` (FR-12, D-53).
 - [ ] AC-2: The sentence in step 13 that posts "a GitHub Issue comment on the plan/milestone issue with the current story status table" is gone from all three copies; the Invariants line "post a GitHub comment with status" reads "edit the wave status comment" (D-53).
 - [ ] AC-3: When no wave issue exists, every comment write reports `wave_status: skipped(no wave issue)` in the state file's Decisions Log and the run summary; a refused PATCH reports `wave_status: failed(<reason>)` and never blocks the merge (D-53).
@@ -171,6 +176,8 @@ So that Done means on main and GitHub's own automations move Status with no agen
 GitHub links a PR to an issue only when the PR's base is the default branch (D-50, #285). Under the planner the consolidated PR is therefore the one PR that moves Status and closes issues. Wave 1's consolidated PR #282 did this by hand; this story makes it the rule and removes the last agent-side closing text (D-54, D-56).
 
 #### Acceptance Criteria
+
+> **Annotated v1.1 (RD-4).** Spec §16a supersedes three ACs. AC-2 and AC-4: `Closes #N` only for merged stories, `Refs #N` with the reason for unmerged ones, `Closes #<wave>` only when every story merged, all under `## Why` rather than `## What` (D-67). AC-3: "when a Project is configured" means `gh issue view <n> --json projectItems` returns an item, and the Status comes from that read (D-68).
 
 - [ ] AC-1: All three planner copies state under the merge rule that the planner never closes a story issue; it closes when the consolidated PR merges to main (FR-13, D-54).
 - [ ] AC-2: Phase 5's consolidated-PR step and the "Consolidated PR should include" list require `Closes #N` for every story in the state table and `Closes #<wave issue>` when a wave issue exists, generated from the state table, with `Refs` for everything else (FR-15, D-56).

@@ -1299,12 +1299,13 @@ const PLANNER_TREES = {
 
 /** CT-18 / D-64: the wave's story issues and their states, the roadmap's primary source. */
 const ROADMAP_SUB_ISSUES =
-  "gh api repos/{o}/{r}/issues/{wave}/sub_issues --jq '.[] | {number,state}'";
+  "gh api --paginate repos/{o}/{r}/issues/{wave}/sub_issues --jq '.[] | {number,state}'";
 /** CT-18 / D-55: the title search, kept as the no-wave-issue fallback (D-64). */
 const ROADMAP_ISSUE_SEARCH =
-  'gh issue list --search "[PRD-<name>] in:title" --state all --json number,state';
+  'gh issue list --search "[PRD-<name>] in:title" --state all --limit 500 --json number,state';
 /** CT-18 / D-55: the story PRs merged into the integration branch. */
-const ROADMAP_STORY_PRS = "gh pr list --base <integration branch> --state merged --json number";
+const ROADMAP_STORY_PRS =
+  "gh pr list --base <integration branch> --state merged --limit 500 --json number";
 
 /** S-009 qa M4: a per-merge comment in any wording or case. */
 const PER_MERGE_COMMENT = /\bpost\b[^\n]*\bcomment\b/i;
@@ -1782,17 +1783,18 @@ describe("planner", () => {
       }
       // EC-74: an issue still open after the merge is reported, never closed by hand.
       expect(step(3), copy.path).toMatch(/still open after the merge[^\n]*reported/);
-      // Verifier S-011 DR-3: `Done` only when every story merged and the wave issue closed;
-      // otherwise `In progress`, the unmerged stories named, and the PR body says so (FR-14).
+      // Verifier S-011 DR-3, D-72: `Done` only when every story merged, every story issue and
+      // the wave issue closed; otherwise `In progress`, the unmerged stories named, and the PR body says so (FR-14).
       inOrder(
         step(7),
         [
           "every story in the state table reads `✅ Merged`",
+          "every story issue from step 3 reads closed",
           "the wave issue, when there is one, reads closed",
           "set `Status` to `Done` and `What's missing` to `—`",
           "Otherwise",
           "keep `Status` at `In progress`",
-          "list the unmerged stories in `What's missing`",
+          "list the unmerged stories and every story issue still open in `What's missing`",
           "say so in the close-out PR body",
         ],
         copy.path,
@@ -2080,7 +2082,7 @@ describe("planner", () => {
         "never invent one",
       );
       expect(lineWith(sectionOf(copy, "Wave Status Comment"), "never blocks", copy.path)).toContain(
-        "A wave status comment write never blocks a merge gate, a story, or the consolidated PR handoff.",
+        "A wave status comment write never blocks a merge gate, a story, or the consolidated PR handoff, with one exception: merge gate 10 holds the merge until the developer-closeout edit has been made",
       );
       expect(lineWith(phase6, "10. **Status comments.**", copy.path), copy.path).toContain(
         "never blocks the close-out PR",

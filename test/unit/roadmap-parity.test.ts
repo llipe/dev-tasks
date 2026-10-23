@@ -113,8 +113,8 @@ describe("the Phase 6 roadmap result is conditional everywhere it is stated", ()
     /Update roadmap row to Done/,
   ];
   const CONDITIONAL = [
-    "`Done` when every story in the state table reads `✅ Merged` and the wave issue, when there is one, reads closed",
-    "otherwise keep `In progress` and list the unmerged stories in `What's missing`",
+    "`Done` when every story in the state table reads `✅ Merged`, every story issue reads closed and the wave issue, when there is one, reads closed",
+    "otherwise keep `In progress` and list the unmerged stories and the open story issues in `What's missing`",
   ];
   const invariant = (f: string): string =>
     read(f).match(/^- The run is complete only after Phase 6 - Close-out:.*$/m)?.[0] ?? "";
@@ -149,7 +149,9 @@ describe("the Phase 6 roadmap result is conditional everywhere it is stated", ()
       .replace(/[ \t]+/g, " ");
     expect(block, "Phase 6 block not found").not.toBe("");
     expect(block).toMatch(/Done when every story in the state table reads ✅ Merged/);
-    expect(block).toMatch(/and the wave issue, when there is one, reads closed/);
+    expect(block).toMatch(
+      /and every story issue and the wave issue, when there is one, read closed/,
+    );
     expect(block).toMatch(/otherwise keep In progress and list the unmerged stories/);
     for (const bad of ALWAYS_DONE) expect(block).not.toMatch(bad);
   });
