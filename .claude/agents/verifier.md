@@ -258,7 +258,7 @@ new category. Never hold a PR on it.
 
 **Trigger** (PRD-level rollup audits, and story audits whose story completes a phase or wave). Report the finding when any of these is true:
 
-1. The audited work completes a PRD phase or wave, and its roadmap row is not `Done` in the delivered tree. With a wave issue, the wave is complete only when every sub-issue's `state` reads `closed` and the wave issue itself reads `closed`, as the planner's Phase 6 requires before it sets `Done`; without one, when every story PR has merged.
+1. The audited work completes a PRD phase or wave, and its roadmap row is not `Done` in the delivered tree. With a wave issue, the wave is complete only when every sub-issue's `state` reads `closed` and the wave issue itself reads `closed`, as the planner's Phase 6 requires before it sets `Done`; without one, when every story PR has merged and every story issue reads `closed` (planner D-72).
 2. A roadmap row is `Done`, but the audited scope shows that phase's stories unmerged (with a wave issue, a sub-issue still `open`) or its acceptance criteria unmet.
 3. The audited PRD defines a phase or wave with no roadmap row, or `docs/roadmap.md` is missing while `docs/requirements/` contains a PRD.
 4. A row's `Issues/PRs` or `What's missing` contradicts the audited issues and PRs: with a wave issue, the sub-issue numbers and states read above (a sub-issue missing from `Issues/PRs`, or a closed one still named in `What's missing`); without one, the merged story PRs.

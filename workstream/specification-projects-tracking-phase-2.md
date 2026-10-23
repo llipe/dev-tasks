@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                               | Author                    |
 | ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.2 | 2026-10-22 | Rollup RD-4 (#308): §8.2 and §8.5 annotated with the §16a supersessions and the follow-up decisions D-71, D-72, D-74. | product-engineer |
 | 1.1 | 2026-10-22 | Design Mode resolutions A-19 to A-48 confirmed by @llipe: §16a added, D-62 to D-70. | product-engineer |
 | 1.0     | 2026-10-21 | Initial specification for wave 2 (FR-11 to FR-16, FR-25; #285) after the HOW-phase interview (D-52 to D-61, 2 asked, 8 self-resolved). | @llipe / product-engineer |
 
@@ -119,6 +120,8 @@ The Output Format's header gains `Wave issue: #N` after `Source:`. The Process r
 
 ### 8.2 planner, three copies (FR-11 to FR-15, D-52 to D-56, D-58 to D-61)
 
+> **Annotated v1.2 (RD-4).** §16a supersedes parts of this section: run-start comments after pre-flight (D-70), `Closes` lines under `## Why` and only for merged stories (D-67, replacing the `## What` bullet below), Project presence from `projectItems` (D-68), and Phase 6's order, reads first and the branch delete last (D-66, replacing the step order below). The rollup follow-ups add D-71 (closeout edit before merge, gate 10), D-72 (`Done` needs every story issue closed) and D-74 (resolved follow-ups get `Closes`).
+
 - **Phase 0, Discover Task Source:** after the roadmap read, resolve the wave issue: the plan header line; else the D-36 search; else `wave_status: skipped(no wave issue)`, recorded in the state file's Run Info. Record `Wave issue: #N | none` there.
 - **Phase 0.5, State File Format:** Run Info gains the `Wave issue` line. Resume reads it.
 - **Phase 4, handoff template:** gains `Wave issue: #N | none` so the developer's `wave_status` reads `owned-by-planner` (implement § Wave Status Update).
@@ -139,6 +142,8 @@ After the hierarchy is verified, the PRD tracking issue's status comment is crea
 The Roadmap-Mismatch Finding's triggers compare the row with the wave tracking issue and its sub-issues when the wave has one (found by the D-36 search): trigger 1 uses the sub-issues' states and the wave issue's state instead of "the delivered tree" alone; trigger 4 compares `Issues/PRs` with the sub-issue numbers. Without a wave issue the current comparison against merged PRs stands. The finding remains advisory.
 
 ### 8.5 github-ops, three copies (D-56)
+
+> **Annotated v1.2 (RD-4).** Superseded in part by §16a (D-67): `Closes` applies to every story the consolidated PR delivered as merged and to the wave issue only when every story merged; an unmerged story gets `Refs` with the reason.
 
 The `## Why` rule gains: "A consolidated PR from an integration branch to the default branch MUST carry `Closes #<number>` for every story issue it delivers and for the wave tracking issue; `Refs` is for everything else."
 
