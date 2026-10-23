@@ -10,8 +10,9 @@
  * this file has no cross-test import.
  */
 
-import { readdirSync, readFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
@@ -1016,6 +1017,19 @@ const GUARDED_ROOTS = [".claude", ".github", ".kiro", "docs"] as const;
 const GUARD_EXCLUDED_PREFIX = "docs/requirements/";
 
 /**
+ * Extensions the guard reads under `GUARDED_ROOTS` (D-77, amending D-44 and
+ * D-49): hooks (`.sh`), workflows (`.yml`, `.yaml`) and settings (`.json`)
+ * can carry a `gh project item-edit` as easily as a prompt can.
+ */
+const GUARDED_EXTENSIONS = [".md", ".sh", ".yml", ".yaml", ".json"] as const;
+
+/**
+ * `templates/` ships to consumers verbatim, so every file under it is walked,
+ * whatever its extension (D-77); binaries are skipped by content, not name.
+ */
+const GUARDED_ALL_FILES_ROOT = "templates/";
+
+/**
  * Project Status is never written by an agent (D-23). The only `gh project`
  * verbs that may appear anywhere are the runbook's setup and read verbs
  * (`create`, `field-delete`, `view`, `field-list`); the two item writes are
@@ -1024,13 +1038,59 @@ const GUARD_EXCLUDED_PREFIX = "docs/requirements/";
  */
 const PROJECT_WRITE = /gh\s+project\s+item-(edit|add)\b/;
 
-/** Every `.md` under `root`, recursive, as a root-relative path, sorted. */
-function markdownFiles(root: string): string[] {
-  return readdirSync(resolve(ROOT, root), { recursive: true, withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-    .map((entry) => relative(ROOT, join(entry.parentPath, entry.name)))
-    .filter((path) => !path.startsWith(GUARD_EXCLUDED_PREFIX))
+/**
+ * Files that legitimately carry a Project write string, each with the reason.
+ * Empty on purpose: when the widened walk (D-77) first ran it found no hit.
+ * An entry here is a reviewed exception (a guard that blocks the command, a
+ * test fixture), never a way to silence a real Project write in a shipped
+ * prompt or template: that is a bug to fix, not to allowlist.
+ */
+const PROJECT_WRITE_ALLOWLIST: ReadonlyMap<string, string> = new Map<string, string>([]);
+
+/**
+ * True when the guard reads `path` (repo-relative, forward slashes): any file
+ * under `templates/`, or a guarded extension under a guarded root outside
+ * `docs/requirements/` (D-44, D-49, D-77).
+ */
+function isGuardedPath(path: string): boolean {
+  if (path.startsWith(GUARDED_ALL_FILES_ROOT)) return true;
+  if (path.startsWith(GUARD_EXCLUDED_PREFIX)) return false;
+  if (!GUARDED_ROOTS.some((root) => path.startsWith(`${root}/`))) return false;
+  return GUARDED_EXTENSIONS.some((ext) => path.endsWith(ext));
+}
+
+/**
+ * Every tracked file in the repository, from `git ls-files`, so untracked
+ * noise (`node_modules/`, `.git/`, `.claude/worktrees/`, anything gitignored)
+ * never enters the walk (D-77).
+ */
+function trackedFiles(): string[] {
+  return execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf-8" })
+    .split("\0")
+    .filter((path) => path.length > 0)
     .sort();
+}
+
+/** A file is treated as binary when its first 8 KiB holds a NUL byte. */
+function isBinary(buffer: Buffer): boolean {
+  return buffer.subarray(0, 8192).includes(0);
+}
+
+/**
+ * The guard walk (D-77): every tracked file the guard reads, as a
+ * repo-relative path, sorted. Binary files are dropped.
+ */
+function guardedFiles(): string[] {
+  return trackedFiles()
+    .filter(isGuardedPath)
+    .filter((path) => !isBinary(readFileSync(resolve(ROOT, path))));
+}
+
+/** Every tracked `.md` under `root`, as a repo-relative path, sorted. */
+function markdownFiles(root: string): string[] {
+  return trackedFiles()
+    .filter((path) => path.startsWith(`${root}/`) && path.endsWith(".md"))
+    .filter((path) => !path.startsWith(GUARD_EXCLUDED_PREFIX));
 }
 
 // --- activity-init (S-005, #274) ---------------------------------------------
@@ -1196,17 +1256,70 @@ describe("no Project writes", () => {
     }
   });
 
-  // PT-28 — S-006 AC-1; PRD AC-3a; FR-6; D-23, D-44. Line-scoped so the failure
-  // names the file and line; a code fence quoting the command fails too (EC-34).
+  // PT-28c — #284; D-77. The widened walk reaches a hook, a workflow, a
+  // settings file and every templates/ file, and still skips docs/requirements/
+  // and files outside the guarded roots.
+  it("walk scope covers every guarded extension and templates/", () => {
+    const walked = [
+      ".claude/hooks/git-guard.sh",
+      ".github/workflows/ci.yml",
+      ".kiro/hooks/git-guard.yaml",
+      ".claude/settings.json",
+      "docs/runbooks/runbook-configure-github-project.md",
+      "templates/scripts/deploy.sh",
+      "templates/workflows/deploy-dev.yml",
+      "templates/infra/redaction-patterns.txt",
+    ];
+    const skipped = [
+      "docs/requirements/prd-projects-tracking.md",
+      "docs/requirements/notes.sh",
+      "workstream/decisions-projects-tracking.md",
+      "test/unit/projects-tracking-parity.test.ts",
+      ".claude/agents/logo.png",
+      "README.md",
+    ];
+    for (const path of walked) expect(isGuardedPath(path), `walk skips ${path}`).toBe(true);
+    for (const path of skipped) expect(isGuardedPath(path), `walk reads ${path}`).toBe(false);
+    const files = guardedFiles();
+    // No `.yaml` is tracked under the four roots today (only templates/infra/
+    // environments.yaml), so presence is asserted for the four that are.
+    for (const ext of [".md", ".sh", ".yml", ".json"]) {
+      expect(
+        files.some((f) => !f.startsWith(GUARDED_ALL_FILES_ROOT) && f.endsWith(ext)),
+        `walk found no ${ext} file`,
+      ).toBe(true);
+    }
+    expect(files.some((f) => f.startsWith(GUARDED_ALL_FILES_ROOT))).toBe(true);
+    expect(files.some((f) => f.startsWith(GUARD_EXCLUDED_PREFIX))).toBe(false);
+  });
+
+  // PT-28d — #284; D-77. A Project write on a shell or a YAML line is caught.
+  it("matcher catches a .sh and a .yml line", () => {
+    const shellLine = 'gh project item-edit --id "$ITEM" --field-id "$FIELD" --project-id "$PID"';
+    const yamlLine =
+      "        run: gh project item-add 5 --owner llipe --url ${{ github.event.issue.html_url }}";
+    expect(shellLine, "matcher misses a .sh line").toMatch(PROJECT_WRITE);
+    expect(yamlLine, "matcher misses a .yml line").toMatch(PROJECT_WRITE);
+  });
+
+  // PT-28 — S-006 AC-1; PRD AC-3a; FR-6; D-23, D-44, D-49, D-77. Line-scoped so
+  // the failure names the file and line; a code fence quoting the command fails
+  // too (EC-34). D-77 widens the walk from `.md` only to `.sh`, `.yml`, `.yaml`
+  // and `.json` under the four roots plus every file under `templates/`;
+  // `docs/requirements/` stays excluded (D-49).
   it("no gh project writes in any tree", () => {
-    for (const root of GUARDED_ROOTS) {
-      const files = markdownFiles(root);
-      expect(files.length, `${root}: walk found no markdown files`).toBeGreaterThan(0);
-      for (const file of files) {
-        const lines = readFileSync(resolve(ROOT, file), "utf-8").split("\n");
-        for (const [index, line] of lines.entries()) {
-          expect(line, `${file}:${index + 1} writes a Project item`).not.toMatch(PROJECT_WRITE);
-        }
+    const files = guardedFiles();
+    for (const root of [...GUARDED_ROOTS, "templates"]) {
+      expect(
+        files.some((f) => f.startsWith(`${root}/`)),
+        `${root}: walk found no files`,
+      ).toBe(true);
+    }
+    for (const file of files) {
+      if (PROJECT_WRITE_ALLOWLIST.has(file)) continue;
+      const lines = readFileSync(resolve(ROOT, file), "utf-8").split("\n");
+      for (const [index, line] of lines.entries()) {
+        expect(line, `${file}:${index + 1} writes a Project item`).not.toMatch(PROJECT_WRITE);
       }
     }
   });
