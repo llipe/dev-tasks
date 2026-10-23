@@ -193,7 +193,8 @@ describe("github-ops", () => {
     expectIdentical(rows, "Close issue row");
   });
 
-  // #306 / D-76 — `chore/<plan-id>-closeout` branch type.
+  // #306 / D-76 — `chore` is a general issue-keyed type; planner Phase 6's
+  // close-out branch `chore/<plan-id>-closeout` is the one exception.
   it("chore branch type", () => {
     const rows: string[] = [];
     const rules: string[] = [];
@@ -201,14 +202,22 @@ describe("github-ops", () => {
       const section = sectionOf(copy, "Branch Naming");
       const row = section.split("\n").find((line) => /^\| `chore`\s+\|/.test(line));
       expect(row, `${copy.path}: no chore row`).toBeDefined();
-      expect(row!, copy.path).toContain("`chore/<plan-id>-closeout`");
-      expect(row!, copy.path).toContain("Phase 6");
+      expect(row!, copy.path).toContain("tied to an issue");
+      expect(row!, copy.path).toContain("`chore/306-github-ops-carve-outs`");
       rows.push(squashSpaces(row!));
       const rule = lineWith(section, "Branches of type `chore`", copy.path);
-      for (const marker of ["`chore/<plan-id>-closeout`", "Phase 6", "close-out PR", "D-76"]) {
+      for (const marker of [
+        "`chore/<issue-number>-<short-description>`",
+        "`chore/<plan-id>-closeout`",
+        "Phase 6",
+        "close-out",
+        "no issue of its own",
+        "D-76",
+      ]) {
         expect(rule, `${copy.path}: chore rule lacks ${marker}`).toContain(marker);
       }
-      expect(rule, copy.path).toMatch(/plan id instead of an issue number/);
+      // The general form carries no planner-only restriction.
+      expect(rule, copy.path).not.toMatch(/Only the planner creates/);
       rules.push(rule);
     }
     expectIdentical(rows, "chore row");

@@ -308,12 +308,12 @@ Branch names **MUST** follow this pattern:
 <type>/<issue-number>-<short-description>
 ```
 
-| Type          | When                                                           | Example                                    |
-| ------------- | -------------------------------------------------------------- | ------------------------------------------ |
-| `issue`       | Single GitHub Issue                                            | `issue/42-rate-limiting`                   |
-| `story`       | PRD-driven user story                                          | `story/S-003-password-reset`               |
-| `integration` | Multi-story consolidation branch                               | `integration/prd-auth-password-reset`      |
-| `chore`       | Planner Phase 6 close-out PR only (`chore/<plan-id>-closeout`) | `chore/projects-tracking-phase-2-closeout` |
+| Type          | When                                               | Example                               |
+| ------------- | -------------------------------------------------- | ------------------------------------- |
+| `issue`       | Single GitHub Issue                                | `issue/42-rate-limiting`              |
+| `story`       | PRD-driven user story                              | `story/S-003-password-reset`          |
+| `integration` | Multi-story consolidation branch                   | `integration/prd-auth-password-reset` |
+| `chore`       | Maintenance, tooling or docs work tied to an issue | `chore/306-github-ops-carve-outs`     |
 
 Rules:
 
@@ -321,7 +321,7 @@ Rules:
 - Short description **MUST** be 2–5 words, hyphen-separated.
 - Branches of type `issue` and `story` **MUST** include the issue or story number.
 - Branches of type `integration` **MUST** identify the plan, PRD, or milestone being consolidated.
-- Branches of type `chore` **MUST** be named `chore/<plan-id>-closeout`, where `<plan-id>` is the planner state file's id. Only the planner creates one, from `main` in Phase 6, for the close-out PR; it is the one branch type keyed on a plan id instead of an issue number (D-76).
+- Branches of type `chore` **MUST** follow the normal pattern, `chore/<issue-number>-<short-description>`. The one exception is planner Phase 6's close-out branch, `chore/<plan-id>-closeout`, keyed on the plan id (the planner state file's id) because the close-out has no issue of its own (D-76).
 
 ## Branch-Type Merge Rules
 
