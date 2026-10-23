@@ -54,7 +54,7 @@ describe("D-71 (#310): the developer-closeout wave edit is made and checked befo
     pinned(
       (b, f) => lineWith(section(b, "Wave Status Comment", f), "4. **Developer closeout**", f),
       [
-        "before any merge gate runs",
+        "before merge gate 1",
         "`PR open`",
         "never folded into the merge edit",
         "merge gate 10",
@@ -100,7 +100,7 @@ describe("D-72 (#305, RD-8): Done needs every story issue closed, as verifier tr
         "every story issue from step 3 reads closed",
         "completeness rule of the verifier's Roadmap-Mismatch trigger 1",
         "`#N open (missed Closes keyword)`",
-        "`product-engineer` sets the row to `Done` during drift reconciliation",
+        "`product-engineer` sets the row to `Done` at its session-start roadmap read",
         "D-72",
       ],
     );
@@ -139,7 +139,7 @@ describe("D-74 (#311): a follow-up issue the run resolves closes through the con
       (b, f) =>
         lineWith(section(b, "Phase 5 - Consolidated Pull Request", f), "**Closes lines.**", f),
       [
-        "A follow-up issue that the task plan names as resolved by this run gets `Closes #N`",
+        "A follow-up issue listed on the task plan's `Resolves:` header line gets `Closes #N`",
         "GitHub closes it at the merge",
         "D-74",
       ],
@@ -236,5 +236,91 @@ describe("#308 (RD-6): the Project read names its scope without asking for it", 
         ),
       ["`read:project` scope", "RD-6"],
     );
+  });
+});
+
+// PR #316 audit findings 1 to 6 and 10: the follow-up rules close their own gaps.
+describe("PR #316 audit: gate 10, push, Done trigger, Resolves line", () => {
+  it("event 4 runs before merge gate 1, and Phase 4 names gate 10", () => {
+    pinned(
+      (b, f) => lineWith(section(b, "Wave Status Comment", f), "4. **Developer closeout**", f),
+      ["passes the Story completion rule's validation, before merge gate 1"],
+    );
+    pinned(
+      (b, f) => lineWith(b, "Edit the wave status comment at story start, before each handoff", f),
+      ["merge gate 10 checks that the closeout edit was made before the story merges (D-71)"],
+    );
+  });
+
+  it("a refused re-read at gate 10 never stops the run", () => {
+    pinned(
+      (b, f) =>
+        lineWith(
+          section(b, "Merge management rule (planner-owned)", f),
+          "10. **Review the PR**",
+          f,
+        ),
+      ["`wave_status: failed(<reason>) at merge gate 10`", "a read error never stops the run"],
+    );
+  });
+
+  it("the checkpoint push runs whether or not a commit was made", () => {
+    for (const f of PLANNER) {
+      const step = lineWith(
+        section(read(f), "Merge management rule (planner-owned)", f),
+        "13. **",
+        f,
+      );
+      expect(step, f).toContain("Push the integration branch in either case");
+    }
+  });
+
+  it("an open missed-keyword issue becomes a product-engineer follow-up, and product-engineer sets Done", () => {
+    pinned(
+      (b, f) => lineWith(section(b, "Phase 6 - Close-out", f), "7. **Roadmap row.**", f),
+      [
+        "names each such issue as a `product-engineer` follow-up",
+        "at its session-start roadmap read (D-72)",
+      ],
+    );
+    const pe = [
+      ".claude/commands/product-engineer.md",
+      ".github/agents/product-engineer.agent.md",
+      ".kiro/agents/product-engineer.md",
+    ].map((f) => lineWith(read(f), "Never mark a row `Done` yourself", f));
+    for (const line of pe) expect(line).toContain("`#N open (missed Closes keyword)`");
+    expect(new Set(pe).size, "product-engineer Done exception differs across trees").toBe(1);
+  });
+
+  it("verifier trigger 1's no-wave fallback also needs story issues closed", () => {
+    for (const f of [
+      ".claude/agents/verifier.md",
+      ".github/agents/verifier.agent.md",
+      ".kiro/agents/verifier.md",
+    ]) {
+      expect(read(f), f).toContain(
+        "when every story PR has merged and every story issue reads `closed` (planner D-72)",
+      );
+    }
+  });
+
+  it("the task plan's Resolves line is the source of follow-up Closes lines", () => {
+    pinned(
+      (b, f) =>
+        lineWith(section(b, "Phase 5 - Consolidated Pull Request", f), "**Closes lines.**", f),
+      ["listed on the task plan's `Resolves:` header line"],
+    );
+    pinned(
+      (b, f) =>
+        lineWith(section(b, "Phase 6 - Close-out", f), "3. **Confirm the issues closed.**", f),
+      ["A story or follow-up issue still open after the merge is reported"],
+    );
+    const plan = [
+      ".claude/skills/plan/SKILL.md",
+      ".github/instructions/plan.instructions.md",
+      ".kiro/steering/plan.md",
+    ].map((f) => lineWith(read(f), "**Plan header:**", f));
+    for (const line of plan)
+      expect(line).toContain("add a `Resolves: #N, #M` line after `Wave issue:`");
   });
 });

@@ -80,7 +80,7 @@ If any required input is missing, you **MUST** ask concise clarifying questions.
 - **Add rows when a PRD is created or changed** (`activity-refine`): one row per delivery phase or wave the PRD defines, or a single `All` row when it defines none, each `Not started`. A PRD changelog that adds, removes, or re-scopes a phase updates its rows in the same change.
 - **Fill `Issues/PRs` when stories are published** (`activity-publish-github`), and set the row to `In progress` once its first story is being implemented.
 - **Correct it during drift reconciliation** (`activity-drift-reconciliation`) when a `verifier` roadmap-mismatch finding is confirmed.
-- Never mark a row `Done` yourself on the strength of a plan; `Done` requires merged work, and `planner` sets it in the consolidated PR that delivers it.
+- Never mark a row `Done` yourself on the strength of a plan; `Done` requires merged work, and `planner` sets it in the consolidated PR that delivers it. The one exception is a row the planner's close-out left `In progress` with `#N open (missed Closes keyword)` in `What's missing`: at the session-start read, check each issue it names, and once every one reads closed, set the row to `Done` and `What's missing` to `—`, since the merge was already verified (planner D-72).
 
 Shape (one table, one row per PRD phase or wave, newest PRD first):
 
