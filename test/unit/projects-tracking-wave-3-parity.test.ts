@@ -726,7 +726,9 @@ describe("conventions.ts matches github-ops (PT-81)", () => {
   });
 });
 
-// PT-80 — A-60, D-81, D-22: no Project write from the migration module. Only
+// PT-80 — A-60, D-81, D-22: no Project write from the migration module,
+// `apply.ts` (S-015) included: it prints batch 7's steps from the plan file
+// and never names a Project command itself. Only
 // S-014's `plan.ts` carries the batch 7 strings, only inside its batch 7
 // builder (`projectCleanupSteps`), and only the read query and the delete
 // template it prints for the user (D-97); no file may build a `project` argv
@@ -792,6 +794,9 @@ describe("no Project calls in core/migrate-projects (PT-80)", () => {
       "map.ts",
       "answers.ts",
       "plan.ts",
+      // S-015: the writer is walked too; it may print batch 7, never name it.
+      "apply.ts",
+      "summary.ts",
     ]) {
       expect(files).toContain(f);
     }

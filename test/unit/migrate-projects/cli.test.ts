@@ -3,13 +3,15 @@
  * runner, and a fake `gh` placed alone (with a `node` symlink) on a
  * purpose-built `PATH`, with the clock injected through `DEV_TASKS_NOW`
  * (spec §16a A-63, A-64, A-85, A-88). MC-1 to MC-10, EC-101, EC-116.
+ * S-015 AC-8 and the `--apply` CLI (MC-11 to MC-17, E2E-20 to E2E-24).
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { spawnSync } from "node:child_process";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { spawn, spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   symlinkSync,
@@ -17,11 +19,58 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { readSnapshot } from "#core/migrate-projects/snapshot.js";
-import { emptyMigrationPlanBatches, renderMigrationPlan } from "#core/migrate-projects/planfile.js";
-import { loadModel, respond, type FakeOptions, type RepoModel } from "./helpers/fake-github.js";
+import { runMigrationApply } from "#core/migrate-projects/index.js";
+import {
+  emptyMigrationPlanBatches,
+  parseMigrationPlan,
+  renderMigrationPlan,
+} from "#core/migrate-projects/planfile.js";
+import {
+  cloneModel,
+  loadModel,
+  respond,
+  type FakeOptions,
+  type GhResultLike,
+  type RepoModel,
+} from "./helpers/fake-github.js";
+import { applyRunner, normalizeArgv } from "./helpers/fake-github-writes.js";
+import { approve, memoryLock } from "./helpers/apply-run.js";
 import { isWrite } from "./helpers/is-write.js";
+import { memoryStore, planModel } from "./helpers/plan-run.js";
 import { modelReader } from "./helpers/recording-runner.js";
+
+// Every case spawns the real binary through tsx, a second or more each on a
+// loaded machine: the 5-second default is too tight for this file. A spawn
+// itself is capped by SPAWN_TIMEOUT (5.26): `spawnSync` blocks the event
+// loop, so vitest's own timeout cannot fire while a child hangs.
+vi.setConfig({ testTimeout: 180_000 });
+const SPAWN_TIMEOUT = 60_000;
+/**
+ * The binary in one process, tsx as a loader (5.25). The tsx CLI runs the
+ * script in a child and, on a signal, waits 30 ms for it to answer before
+ * killing it with SIGKILL and exiting 128+signal: on a loaded machine that
+ * reported 130/143 for a run that handled the signal. The shipped binary is
+ * plain `node dist/bin/dev-tasks.js`, one process, like this.
+ */
+const singleProcess = () => [
+  "--import",
+  pathToFileURL(resolve(ROOT, "node_modules/tsx/dist/loader.mjs")).href,
+  BIN,
+];
+
+/** A spawnSync result, failing loudly when the child was killed for hanging. */
+function finished<T extends { error?: Error; signal: NodeJS.Signals | null }>(
+  r: T,
+  what: string,
+): T {
+  if (r.error !== undefined || r.signal === "SIGKILL")
+    throw new Error(
+      `${what}: the binary did not finish within ${SPAWN_TIMEOUT / 1000} s (${r.error?.message ?? r.signal})`,
+    );
+  return r;
+}
 
 const ROOT = resolve(import.meta.dirname, "../../..");
 const TSX_CLI = resolve(ROOT, "node_modules/tsx/dist/cli.mjs");
@@ -40,6 +89,12 @@ beforeEach(() => {
   pathDir = join(tmp, "bin");
   mkdirSync(cwd);
   mkdirSync(pathDir);
+  // The binary's own TMPDIR, so a test sees what `--apply` leaves there; tsx's
+  // compile cache is linked in, or every spawn would recompile.
+  mkdirSync(join(tmp, "systmp"));
+  const tsxCache = join(tmpdir(), `tsx-${process.getuid?.() ?? 0}`);
+  mkdirSync(tsxCache, { recursive: true });
+  symlinkSync(tsxCache, join(tmp, "systmp", `tsx-${process.getuid?.() ?? 0}`));
   symlinkSync(process.execPath, join(pathDir, "node"));
 });
 
@@ -67,21 +122,41 @@ async function setup(
   if (options.noGh !== true) symlinkSync(FAKE_GH, join(pathDir, "gh"));
 }
 
-function run(args: string[]): { stdout: string; stderr: string; exitCode: number } {
-  const r = spawnSync(process.execPath, [TSX_CLI, BIN, ...args], {
+/**
+ * Run the binary without blocking the worker's event loop (5.26): a
+ * `spawnSync` here starved vitest's worker RPC under load ("Timeout calling
+ * onTaskUpdate"), and kept vitest's own timeout from firing on a hung
+ * child. A child still running after SPAWN_TIMEOUT is killed and fails the test.
+ */
+async function run(args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const child = spawn(process.execPath, [TSX_CLI, BIN, ...args], {
     cwd,
-    encoding: "utf-8",
     env: {
       PATH: pathDir,
       HOME: process.env.HOME ?? tmp,
-      TMPDIR: process.env.TMPDIR ?? tmpdir(),
+      TMPDIR: join(tmp, "systmp"),
       TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
       DEV_TASKS_NOW: NOW,
       FAKE_GH_SCENARIO: join(tmp, "scenario.json"),
       FAKE_GH_LOG: join(tmp, "gh.log"),
     },
   });
-  return { stdout: r.stdout, stderr: r.stderr, exitCode: r.status ?? -1 };
+  let stdout = "";
+  let stderr = "";
+  child.stdout.setEncoding("utf-8").on("data", (d: string) => (stdout += d));
+  child.stderr.setEncoding("utf-8").on("data", (d: string) => (stderr += d));
+  let hung = false;
+  const timer = setTimeout(() => {
+    hung = true;
+    child.kill("SIGKILL");
+  }, SPAWN_TIMEOUT);
+  const exitCode = await new Promise<number>((done) =>
+    child.on("close", (code) => done(code ?? -1)),
+  );
+  clearTimeout(timer);
+  if (hung)
+    throw new Error(`dev-tasks ${args.join(" ")}: did not finish within ${SPAWN_TIMEOUT / 1000} s`);
+  return { stdout, stderr, exitCode };
 }
 
 function ghLog(): string[][] {
@@ -99,7 +174,7 @@ describe("migrate projects --plan (AC-1)", () => {
   // MC-1, E2E-16
   it("exit 0, the default plan file, one line per batch and list, the next action", async () => {
     await setup(loadModel("survey"));
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.stderr).toBe("");
     expect(r.exitCode).toBe(0);
     const text = readFileSync(planAt(DEFAULT_PLAN), "utf-8");
@@ -125,10 +200,12 @@ describe("migrate projects --plan (AC-1)", () => {
   // MC-2, MC-3, A-52
   it("--repo equal to the working tree is accepted; another repository exits 2", async () => {
     await setup(loadModel("survey"));
-    expect(run(["migrate", "projects", "--plan", "--repo", "acme/widgets"]).exitCode).toBe(0);
+    expect((await run(["migrate", "projects", "--plan", "--repo", "acme/widgets"])).exitCode).toBe(
+      0,
+    );
     expect(ghLog().some((a) => a[0] === "repo" && a[1] === "view")).toBe(true);
     rmSync(planAt(DEFAULT_PLAN));
-    const r = run(["migrate", "projects", "--plan", "--repo=other/repo"]);
+    const r = await run(["migrate", "projects", "--plan", "--repo=other/repo"]);
     expect(r.exitCode).toBe(2);
     expect(r.stderr).toMatch(/other\/repo/);
     expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
@@ -139,7 +216,12 @@ describe("migrate projects --plan (AC-1)", () => {
     "%s writes there and leaves the default path alone",
     async (...flag) => {
       await setup(loadModel("survey"));
-      const r = run(["migrate", "projects", "--plan", ...flag.filter((f) => f !== undefined)]);
+      const r = await run([
+        "migrate",
+        "projects",
+        "--plan",
+        ...flag.filter((f) => f !== undefined),
+      ]);
       expect(r.exitCode).toBe(0);
       expect(existsSync(planAt("x/y.md"))).toBe(true);
       expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
@@ -149,7 +231,7 @@ describe("migrate projects --plan (AC-1)", () => {
   // MC-5, CT-35, A-64
   it("--json prints only the A-64 JSON on stdout", async () => {
     await setup(loadModel("survey"));
-    const r = run(["migrate", "projects", "--plan", "--json"]);
+    const r = await run(["migrate", "projects", "--plan", "--json"]);
     expect(r.exitCode).toBe(0);
     const json = JSON.parse(r.stdout) as Record<string, unknown>;
     expect(json).toMatchObject({
@@ -238,7 +320,7 @@ describe("migrate projects --plan (AC-1)", () => {
     });
     mkdirSync(join(cwd, "workstream"), { recursive: true });
     writeFileSync(planAt(DEFAULT_PLAN), applied);
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.exitCode).toBe(14);
     expect(r.stderr).toMatch(/--out/);
     expect(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).toBe(applied);
@@ -249,7 +331,7 @@ describe("auth first (AC-2, D-96)", () => {
   // MC-6, E2E-18
   it("unauthenticated: exit 11, the `gh auth login` hint, one gh call, no file", async () => {
     await setup(loadModel("survey"), { authFails: true });
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.exitCode).toBe(11);
     expect(r.stderr).toContain("gh auth login");
     expect(ghLog()).toEqual([["auth", "status", "--hostname", "github.com"]]);
@@ -259,7 +341,7 @@ describe("auth first (AC-2, D-96)", () => {
   // MC-7, EC-101
   it("no gh on PATH: exit 11 with the hint, no file, no stack trace", async () => {
     await setup(loadModel("survey"), { noGh: true });
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.exitCode).toBe(11);
     expect(r.stderr).toContain("gh auth login");
     expect(r.stderr).not.toMatch(/\n\s+at /);
@@ -268,7 +350,7 @@ describe("auth first (AC-2, D-96)", () => {
 
   it("a failing `gh repo view`: exit 11 (A-64)", async () => {
     await setup(loadModel("survey"), { repoViewFails: true });
-    expect(run(["migrate", "projects", "--plan"]).exitCode).toBe(11);
+    expect((await run(["migrate", "projects", "--plan"])).exitCode).toBe(11);
   });
 });
 
@@ -287,7 +369,7 @@ describe("canonical roadmap first (S-014 AC-2, D-86)", () => {
       const model = loadModel("survey");
       edit(model);
       await setup(model);
-      const r = run(["migrate", "projects", "--plan"]);
+      const r = await run(["migrate", "projects", "--plan"]);
       expect(r.exitCode).toBe(2);
       expect(r.stderr).toMatch(/docs\/roadmap\.md (has no canonical table|is missing)/);
       expect(r.stderr).toContain("product-engineer's roadmap conversion");
@@ -304,7 +386,7 @@ describe("canonical roadmap first (S-014 AC-2, D-86)", () => {
     const model = loadModel("survey");
     model.files["docs/roadmap.md"] = "# Roadmap\n";
     await setup(model);
-    const r = run(["migrate", "projects", "--plan", "--json"]);
+    const r = await run(["migrate", "projects", "--plan", "--json"]);
     expect(r.exitCode).toBe(2);
     expect(JSON.parse(r.stdout)).toMatchObject({
       exitCode: 2,
@@ -322,7 +404,7 @@ describe("read failures (3.18, EC-157)", () => {
     const key = Object.keys(scenario.responses).find((k) => k.includes("/labels"))!;
     scenario.responses[key] = { stdout: "", stderr: "gh: Server Error (HTTP 500)\n", exitCode: 1 };
     writeFileSync(join(tmp, "scenario.json"), JSON.stringify(scenario));
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.exitCode).toBe(1);
     expect(r.stderr).toContain("labels");
     expect(r.stderr).toContain("HTTP 500");
@@ -344,17 +426,22 @@ describe("flags (A-63)", () => {
     [["migrate", "projects", "--plan", "--repo", "not-a-repo"]],
   ])("%j exits 2 and touches nothing", async (args) => {
     await setup(loadModel("survey"));
-    const r = run(args);
+    const r = await run(args);
     expect(r.exitCode).toBe(2);
     expect(r.stderr).toMatch(/migrate projects/);
     expect(ghLog()).toEqual([]);
   });
 
-  it("--apply is not available yet and exits 2 before any gh call", async () => {
+  it.each([
+    [["migrate", "projects", "--apply", "--repo", "acme/widgets"]],
+    [["migrate", "projects", "--apply", "--out", "x.md"]],
+    [["migrate", "projects", "--apply", "--plan-file"]],
+    [["migrate", "projects", "--apply", "--force"]],
+  ])("%j exits 2 before any gh call", async (args) => {
     await setup(loadModel("survey"));
-    const r = run(["migrate", "projects", "--apply"]);
+    const r = await run(args);
     expect(r.exitCode).toBe(2);
-    expect(r.stderr).toMatch(/--apply/);
+    expect(r.stderr).toMatch(/migrate projects/);
     expect(ghLog()).toEqual([]);
   });
 
@@ -363,6 +450,8 @@ describe("flags (A-63)", () => {
     const r = spawnSync(process.execPath, [TSX_CLI, BIN, "migrate", "projects", "--plan"], {
       cwd,
       encoding: "utf-8",
+      timeout: SPAWN_TIMEOUT,
+      killSignal: "SIGKILL",
       env: {
         PATH: pathDir,
         HOME: process.env.HOME ?? tmp,
@@ -372,16 +461,22 @@ describe("flags (A-63)", () => {
         FAKE_GH_LOG: join(tmp, "gh.log"),
       },
     });
+    finished(r, "dev-tasks migrate projects --plan");
     expect(r.status).toBe(2);
   });
 });
 
 describe("help (AC-1, MC-10)", () => {
   it("lists `migrate projects` right after the `migrate docs` entry", () => {
-    const r = spawnSync(process.execPath, [TSX_CLI, BIN, "--help"], {
-      cwd: ROOT,
-      encoding: "utf-8",
-    });
+    const r = finished(
+      spawnSync(process.execPath, [TSX_CLI, BIN, "--help"], {
+        cwd: ROOT,
+        encoding: "utf-8",
+        timeout: SPAWN_TIMEOUT,
+        killSignal: "SIGKILL",
+      }),
+      "dev-tasks --help",
+    );
     const lines = (r.stdout + r.stderr).split("\n");
     const docs = lines.findIndex((l) => /^\s+migrate docs\b/.test(l));
     const projects = lines.findIndex((l) => /^\s+migrate projects --plan\b/.test(l));
@@ -397,3 +492,303 @@ describe("help (AC-1, MC-10)", () => {
     );
   });
 });
+
+// --- migrate projects --apply (S-015 AC-8, MC-11 to MC-17, E2E-20 to E2E-24) ------
+
+interface ApplySetup {
+  /** The plan file as written to the working tree. */
+  text: string;
+}
+
+/**
+ * Write the model's files and a plan for it (approved unless told not to),
+ * then build the replay table from an in-process `--apply` over a copy of
+ * the model, so the binary's run sees the answers GitHub would give.
+ */
+async function setupApply(
+  model: RepoModel,
+  options: {
+    approved?: boolean;
+    planFile?: string;
+    /** Change the repository after the plan was generated (a stale snapshot). */
+    after?: (m: RepoModel) => void;
+    /** Replace the answer to a matching write. */
+    failWrite?: (argv: readonly string[]) => GhResultLike | undefined;
+    fake?: FakeOptions;
+    text?: string;
+  } = {},
+): Promise<ApplySetup> {
+  for (const [path, content] of Object.entries(model.files)) {
+    mkdirSync(dirname(join(cwd, path)), { recursive: true });
+    writeFileSync(join(cwd, path), content);
+  }
+  const planned = options.text ?? (await planModel(cloneModel(model))).text;
+  const text =
+    options.approved === false || options.text !== undefined ? planned : approve(planned);
+  const planFile = options.planFile ?? DEFAULT_PLAN;
+  mkdirSync(dirname(planAt(planFile)), { recursive: true });
+  writeFileSync(planAt(planFile), text);
+
+  const copy = cloneModel(model);
+  options.after?.(copy);
+  for (const [path, content] of Object.entries(copy.files)) writeFileSync(join(cwd, path), content);
+  const rec = applyRunner(copy, { ...options.fake, onWrite: (argv) => options.failWrite?.(argv) });
+  const responses: Record<string, GhResultLike> = {};
+  await runMigrationApply({
+    runner: async (args) => {
+      const r = await rec.runner(args);
+      responses[normalizeArgv(args).join("\u0001")] = r;
+      return r;
+    },
+    reader: modelReader(copy),
+    planFile,
+    store: memoryStore({ [planFile]: text }),
+    lock: memoryLock(),
+  });
+  writeFileSync(join(tmp, "scenario.json"), JSON.stringify({ responses }));
+  symlinkSync(FAKE_GH, join(pathDir, "gh"));
+  return { text };
+}
+
+const writesInLog = () => ghLog().filter((a) => isWrite(a));
+/** `--apply`'s temp directories left in the binary's TMPDIR. */
+const leftTmp = () =>
+  readdirSync(join(tmp, "systmp")).filter((f) => f.startsWith("dev-tasks-migrate-"));
+const LOCK = "workstream/.migration-projects.lock";
+
+describe(
+  "migrate projects --apply gates (S-015 AC-1, AC-2; MC-11, MC-12, MC-16, MC-17)",
+  { timeout: 30_000 },
+  () => {
+    // MC-11, E2E-20
+    it("`Approved: no`: exit 14, zero write argv, plan file byte-identical", async () => {
+      const { text } = await setupApply(loadModel("ac11"), { approved: false });
+      const r = await run(["migrate", "projects", "--apply"]);
+      expect(r.exitCode).toBe(14);
+      expect(r.stderr).toMatch(/Approved: yes/);
+      expect(writesInLog()).toEqual([]);
+      expect(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).toBe(text);
+      expect(existsSync(join(cwd, LOCK))).toBe(false);
+    });
+
+    // MC-12, E2E-21
+    it("a stale snapshot: exit 14, `regenerate the plan`, zero writes, file byte-identical", async () => {
+      const { text } = await setupApply(loadModel("ac11"), {
+        after: (m) => m.issues.find((i) => i.number === 20)!.labels.push("type: chore"),
+      });
+      const r = await run(["migrate", "projects", "--apply"]);
+      expect(r.exitCode).toBe(14);
+      expect(r.stderr).toMatch(/regenerate the plan/);
+      expect(writesInLog()).toEqual([]);
+      expect(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).toBe(text);
+    });
+
+    // MC-16
+    it("a missing or unparsable plan file: exit 2, no gh call", async () => {
+      await setup(loadModel("ac11"));
+      expect((await run(["migrate", "projects", "--apply"])).exitCode).toBe(2);
+      mkdirSync(join(cwd, "workstream"), { recursive: true });
+      writeFileSync(planAt(DEFAULT_PLAN), "# not a plan\n");
+      const r = await run(["migrate", "projects", "--apply"]);
+      expect(r.exitCode).toBe(2);
+      expect(r.stderr).toMatch(/plan file/);
+      expect(ghLog()).toEqual([]);
+    });
+
+    // MC-17
+    it("gh unauthenticated: exit 11 after the auth check alone", async () => {
+      await setupApply(loadModel("ac11"), { fake: { authFails: true } });
+      const r = await run(["migrate", "projects", "--apply"]);
+      expect(r.exitCode).toBe(11);
+      expect(r.stderr).toContain("gh auth login");
+      expect(ghLog()).toEqual([["auth", "status", "--hostname", "github.com"]]);
+    });
+
+    it("a lock file left by another run: exit 14, zero writes", async () => {
+      await setupApply(loadModel("ac11"));
+      writeFileSync(join(cwd, LOCK), "pid 1\n");
+      const r = await run(["migrate", "projects", "--apply"]);
+      expect(r.exitCode).toBe(14);
+      expect(r.stderr).toContain(LOCK);
+      expect(writesInLog()).toEqual([]);
+    });
+  },
+);
+
+describe(
+  "migrate projects --apply runs (S-015 AC-8; MC-13 to MC-15, E2E-22, E2E-24)",
+  { timeout: 30_000 },
+  () => {
+    // MC-13, E2E-22
+    it("every write succeeds: exit 0, states recorded, batch 7 printed, the lock gone", async () => {
+      await setupApply(loadModel("ac11"));
+      const r = await run(["migrate", "projects", "--apply"]);
+      expect(r.stderr).toBe("");
+      expect(r.exitCode).toBe(0);
+      const plan = parseMigrationPlan(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).plan;
+      for (const w of plan.batches.flatMap((b) => b.writes))
+        expect(w.state, w.id).toMatch(/^(done|skipped)/);
+      expect(r.stdout).toMatch(/gh project item-list/);
+      expect(r.stdout).toMatch(/you run these/i);
+      expect(r.stdout).toContain(DEFAULT_PLAN);
+      expect(existsSync(join(cwd, LOCK))).toBe(false);
+      for (const argv of ghLog()) expect(argv[0]).not.toBe("project");
+      // SG4: bin removes the run's body directory.
+      expect(leftTmp()).toEqual([]);
+    });
+
+    // MC-13, E2E-24, EC-103
+    it("one write fails: exit 1; `--json` counts equal the file", async () => {
+      await setupApply(loadModel("ac11"), {
+        failWrite: (argv) =>
+          argv[0] === "issue" && argv[1] === "create"
+            ? { stdout: "", stderr: "HTTP 422: Validation Failed\n{}", exitCode: 1 }
+            : undefined,
+      });
+      const r = await run(["migrate", "projects", "--apply", "--json"]);
+      expect(r.exitCode).toBe(1);
+      const json = JSON.parse(r.stdout) as {
+        command: string;
+        mode: string;
+        repo: string;
+        planFile: string;
+        exitCode: number;
+        review: Record<string, number>;
+        batches: { name: string; pending: number; done: number; failed: number; skipped: number }[];
+      };
+      expect(json).toMatchObject({
+        command: "migrate projects",
+        mode: "apply",
+        repo: "acme/gizmos",
+        planFile: DEFAULT_PLAN,
+        exitCode: 1,
+      });
+      expect(json.review).toMatchObject({ unmapped: 2, needsType: 2 });
+      const plan = parseMigrationPlan(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).plan;
+      const counted = plan.batches.map((b) => {
+        const rows = [...b.writes, ...b.steps];
+        const n = (p: RegExp) => rows.filter((x) => p.test(x.state)).length;
+        return {
+          name: b.name,
+          pending: n(/^pending$/),
+          done: n(/^done/),
+          failed: n(/^failed/),
+          skipped: n(/^skipped/),
+        };
+      });
+      expect(json.batches).toEqual(counted);
+      expect(json.batches[1]).toMatchObject({ name: "Tracking issues", failed: 1 });
+      expect(json.batches[2]).toMatchObject({ name: "Hierarchy", skipped: 5 });
+      expect(leftTmp()).toEqual([]);
+    });
+
+    // MC-15
+    it("--plan-file p.md reads and writes back p.md only", async () => {
+      await setupApply(loadModel("ac11"), { planFile: "p.md" });
+      const r = await run(["migrate", "projects", "--apply", "--plan-file", "p.md"]);
+      expect(r.exitCode).toBe(0);
+      expect(readFileSync(planAt("p.md"), "utf-8")).toMatch(/\| done \|/);
+      expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
+    });
+
+    // 5.25: a signal before any write, while the lock is held (the snapshot read).
+    it.each(["SIGINT", "SIGTERM"] as const)(
+      "%s before any write: exit 1, the lock and temp dir removed, zero writes, the plan untouched",
+      async (signal) => {
+        const { text } = await setupApply(loadModel("ac11"));
+        const child = spawn(
+          process.execPath,
+          [...singleProcess(), "migrate", "projects", "--apply"],
+          {
+            cwd,
+            env: {
+              PATH: pathDir,
+              HOME: process.env.HOME ?? tmp,
+              TMPDIR: join(tmp, "systmp"),
+              TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
+              FAKE_GH_SCENARIO: join(tmp, "scenario.json"),
+              FAKE_GH_LOG: join(tmp, "gh.log"),
+              FAKE_GH_DELAY_MS: "1500",
+            },
+          },
+        );
+        const exited = new Promise<number | null>((done) => child.on("exit", (code) => done(code)));
+        // `repo view` is the snapshot's first call: the lock is held by then.
+        const deadline = Date.now() + 90_000;
+        const reading = () => ghLog().some((a) => a[0] === "repo" && a[1] === "view");
+        while (!reading() && Date.now() < deadline && child.exitCode === null)
+          await new Promise((x) => setTimeout(x, 25));
+        if (!reading()) {
+          child.kill("SIGKILL");
+          expect(reading(), "the binary never reached the snapshot read within 90 s").toBe(true);
+        }
+        expect(existsSync(join(cwd, LOCK))).toBe(true);
+        child.kill(signal);
+        expect(await exited).toBe(1);
+        expect(existsSync(join(cwd, LOCK))).toBe(false);
+        expect(leftTmp()).toEqual([]);
+        expect(writesInLog()).toEqual([]);
+        expect(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).toBe(text);
+      },
+    );
+
+    // E2E-23 at Layer 2, 5.23 (SG2, CT-34): interrupted by a signal between calls, then resumed.
+    it.each(["SIGINT", "SIGTERM"] as const)(
+      "interrupted mid-run by %s: exit 1, states so far kept, lock and temp dir removed; the resume repeats no done write",
+      async (signal) => {
+        await setupApply(loadModel("ac11"));
+        const child = spawn(
+          process.execPath,
+          [...singleProcess(), "migrate", "projects", "--apply"],
+          {
+            cwd,
+            env: {
+              PATH: pathDir,
+              HOME: process.env.HOME ?? tmp,
+              TMPDIR: join(tmp, "systmp"),
+              TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
+              FAKE_GH_SCENARIO: join(tmp, "scenario.json"),
+              FAKE_GH_LOG: join(tmp, "gh.log"),
+              FAKE_GH_DELAY_MS: "150",
+            },
+          },
+        );
+        const exited = new Promise<number | null>((done) => child.on("exit", (code) => done(code)));
+        // 5.25: signal only once the run is writing (its handlers are installed
+        // before its first gh call); never signal a child still starting.
+        const deadline = Date.now() + 90_000;
+        while (writesInLog().length < 3 && Date.now() < deadline && child.exitCode === null)
+          await new Promise((x) => setTimeout(x, 50));
+        if (writesInLog().length < 3) {
+          child.kill("SIGKILL");
+          expect(
+            writesInLog().length,
+            `the binary made ${writesInLog().length} writes within 90 s; not signalled (a loaded machine, or a hang)`,
+          ).toBeGreaterThanOrEqual(3);
+        }
+        child.kill(signal);
+        const code = await exited;
+        expect(code).toBe(1);
+        expect(existsSync(join(cwd, LOCK))).toBe(false);
+        expect(leftTmp()).toEqual([]);
+        const after = parseMigrationPlan(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).plan;
+        const done = after.batches.flatMap((b) => b.writes).filter((w) => w.state !== "pending");
+        expect(done.length).toBeGreaterThan(0);
+        expect(done.length).toBeLessThan(32);
+        const firstLog = ghLog()
+          .filter((a) => isWrite(a))
+          .map((a) => a.join(" "));
+        rmSync(join(tmp, "gh.log"));
+
+        const r = await run(["migrate", "projects", "--apply"]);
+        expect(r.exitCode).toBe(0);
+        const doneArgv = new Set(firstLog.slice(0, done.length));
+        for (const a of writesInLog()) expect(doneArgv.has(a.join(" ")), a.join(" ")).toBe(false);
+        const final = parseMigrationPlan(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).plan;
+        for (const w of final.batches.flatMap((b) => b.writes))
+          expect(w.state, w.id).toMatch(/^(done|skipped)/);
+      },
+      60_000,
+    );
+  },
+);

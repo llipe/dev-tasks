@@ -8,8 +8,9 @@
  * which is what `gh api --paginate` prints for objects (and what older
  * `gh` versions print for arrays).
  *
- * Writes are not modelled here: `--plan` only reads, and `model-apply.ts`
- * applies a plan's rows to a model on the test side. Any argv this model does
+ * Writes are not modelled here: `--plan` only reads, `model-apply.ts`
+ * applies a plan's rows to a model on the test side, and `fake-github-writes.ts`
+ * answers the write argv `--apply` issues (S-015). Any argv this model does
  * not recognise answers exit 1 with `fake gh: unhandled argv`, so a new
  * read cannot pass silently.
  */
@@ -184,6 +185,29 @@ export function respond(
     const state = url.searchParams.get("state") ?? "open";
     const selected = model.issues.filter((i) => state === "all" || i.state === state);
     return emitArray(selected.map((i) => restIssue(model, i)));
+  }
+  // Single reads `--apply` makes: an issue (for its REST id) and a comment (its body).
+  const one = tail.match(/^issues\/(\d+)$/);
+  if (one) {
+    const issue = byNumber.get(Number(one[1]));
+    if (issue === undefined) return fail("gh: Not Found (HTTP 404)");
+    return ok(JSON.stringify(restIssue(model, issue)));
+  }
+  const oneComment = tail.match(/^issues\/comments\/(\d+)$/);
+  if (oneComment) {
+    for (const [n, list] of Object.entries(model.comments ?? {})) {
+      const hit = list.find((x) => x.id === Number(oneComment[1]));
+      if (hit !== undefined) {
+        return ok(
+          JSON.stringify({
+            id: hit.id,
+            body: hit.body,
+            issue_url: `https://api.github.com/repos/${model.repo}/issues/${n}`,
+          }),
+        );
+      }
+    }
+    return fail("gh: Not Found (HTTP 404)");
   }
   const c = tail.match(/^issues\/(\d+)\/comments$/);
   if (c) {

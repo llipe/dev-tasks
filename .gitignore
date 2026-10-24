@@ -24,6 +24,8 @@ Thumbs.db
 
 # Active workstream artifacts are per-feature scratch; archived copies are durable.
 /workstream/*.md
+# The lock `migrate projects --apply` holds while it runs (A-80).
+/workstream/.migration-projects.lock
 
 # /docs is deliberately NOT ignored. It previously used `/docs/*.md` plus one
 # negation per file, which silently swallowed any document nobody remembered to

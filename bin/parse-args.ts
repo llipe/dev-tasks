@@ -152,7 +152,8 @@ export type MigrateProjectsArgs =
   | { ok: false; error: string };
 
 export const MIGRATE_PROJECTS_USAGE =
-  "Usage: dev-tasks migrate projects --plan [--repo <owner/repo>] [--out <path>] [--json]";
+  "Usage: dev-tasks migrate projects --plan [--repo <owner/repo>] [--out <path>] [--json]\n" +
+  "       dev-tasks migrate projects --apply [--plan-file <path>] [--json]";
 
 const DEFAULT_PLAN_FILE = "workstream/migration-projects.md";
 const REPO_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;

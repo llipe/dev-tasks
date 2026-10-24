@@ -6,9 +6,10 @@
  * issue body (spec §12). It maps stories to waves (FR-18), batches the
  * writes the scope rules permit (FR-19, FR-20), and carries the owner's
  * answers from the previous plan file into the next (S-014). `--apply`
- * arrives with S-015.
+ * (S-015, `apply.ts`) is the only writer: it runs an approved plan's
+ * batches 1 to 6 and records each write's state in the plan file.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { ExitCode } from "../exit-codes.js";
 import { classifySnapshot, type MigrationPlanClassification } from "./classify.js";
@@ -21,10 +22,16 @@ import {
   planHasNonPendingRows,
   renderMigrationPlan,
   type MigrationPlan,
-  type MigrationPlanBatchKey,
   type MigrationPlanReview,
 } from "./planfile.js";
-import { readSnapshot, snapshotHash, SnapshotError, type MigrationSnapshot } from "./snapshot.js";
+import {
+  readSnapshot,
+  snapshotHash,
+  SnapshotError,
+  SNAPSHOT_ERROR_EXIT,
+  type MigrationSnapshot,
+} from "./snapshot.js";
+import { REVIEW_LABELS, summarizeMigrationPlan, type MigrationPlanSummary } from "./summary.js";
 import type { GhRunner } from "./gh.js";
 import type { LocalReader } from "./local-reader.js";
 
@@ -38,6 +45,8 @@ export * from "./roadmap.js";
 export * from "./map.js";
 export * from "./answers.js";
 export * from "./plan.js";
+export * from "./summary.js";
+export * from "./apply.js";
 
 export const DEFAULT_PLAN_FILE = "workstream/migration-projects.md";
 
@@ -58,8 +67,14 @@ export function createPlanFileStore(resolvePath: (p: string) => string): PlanFil
       const full = resolvePath(path);
       mkdirSync(dirname(full), { recursive: true });
       const tmp = `${full}.tmp-${process.pid}`;
-      writeFileSync(tmp, content);
-      renameSync(tmp, full);
+      // Old or new content, never a truncated file (EC-140); a failed attempt leaves no temp file.
+      try {
+        writeFileSync(tmp, content);
+        renameSync(tmp, full);
+      } catch (err) {
+        rmSync(tmp, { force: true });
+        throw err;
+      }
     },
   };
 }
@@ -74,25 +89,6 @@ export interface MigrationPlanRunOptions {
   /** The clock; `Generated:` is second precision. */
   now: () => Date;
   store: PlanFileStore;
-}
-
-export interface MigrationPlanBatchCounts {
-  key: MigrationPlanBatchKey;
-  name: string;
-  runner: "cli" | "user";
-  pending: number;
-  done: number;
-  failed: number;
-  skipped: number;
-}
-
-export type MigrationPlanReviewCounts = Record<keyof MigrationPlanReview, number>;
-
-export interface MigrationPlanSummary {
-  batches: MigrationPlanBatchCounts[];
-  review: MigrationPlanReviewCounts;
-  /** The next action for the summary's last line. */
-  next: string;
 }
 
 export interface MigrationPlanRunResult {
@@ -138,42 +134,6 @@ export function buildMigrationPlan(
   };
 }
 
-const ANSWERED_LISTS = new Set(["unmapped", "needsType", "needsBlockingLink"]);
-
-function countState(state: string): "pending" | "done" | "failed" | "skipped" {
-  if (state.startsWith("done")) return "done";
-  if (state.startsWith("failed")) return "failed";
-  if (state.startsWith("skipped")) return "skipped";
-  return "pending";
-}
-
-export function summarizeMigrationPlan(plan: MigrationPlan): MigrationPlanSummary {
-  const batches = plan.batches.map((b) => {
-    const counts = { pending: 0, done: 0, failed: 0, skipped: 0 };
-    for (const row of [...b.writes, ...b.steps]) counts[countState(row.state)]++;
-    return { key: b.key, name: b.name, runner: b.runner, ...counts };
-  });
-  // Lists with an Answer column count the rows still waiting for one.
-  const waiting = (rows: Array<{ answer?: string }>, answered: boolean) =>
-    rows.filter((r) => !answered || (r.answer ?? "") === "").length;
-  const review = Object.fromEntries(
-    Object.entries(plan.review).map(([k, v]) => [
-      k,
-      waiting(v as Array<{ answer?: string }>, ANSWERED_LISTS.has(k)),
-    ]),
-  ) as MigrationPlanReviewCounts;
-  return { batches, review, next: "review the plan" };
-}
-
-const SNAPSHOT_EXIT: Record<SnapshotError["kind"], number> = {
-  "gh-missing": ExitCode.DependencyError,
-  auth: ExitCode.DependencyError,
-  "repo-view": ExitCode.DependencyError,
-  "repo-mismatch": ExitCode.InvalidUsage,
-  roadmap: ExitCode.InvalidUsage,
-  read: ExitCode.GeneralError,
-};
-
 /** `migrate projects --plan`. Returns an exit code from `core/exit-codes.ts`; never throws for an expected failure. */
 export async function runMigrationPlan(
   options: MigrationPlanRunOptions,
@@ -189,7 +149,7 @@ export async function runMigrationPlan(
   } catch (err) {
     if (err instanceof SnapshotError) {
       return {
-        exitCode: SNAPSHOT_EXIT[err.kind],
+        exitCode: SNAPSHOT_ERROR_EXIT[err.kind],
         repo: options.repo ?? null,
         planFile,
         summary: null,
@@ -236,15 +196,6 @@ export async function runMigrationPlan(
     summary: summarizeMigrationPlan(plan),
   };
 }
-
-const REVIEW_LABELS: Record<keyof MigrationPlanReview, string> = {
-  unmapped: "Unmapped issues",
-  needsType: "Needs a type",
-  needsBlockingLink: "Needs a blocking link",
-  stateFiles: "State files",
-  roadmap: "Roadmap notes",
-  information: "Information",
-};
 
 /** The one-screen plain-text summary (spec §10). */
 export function formatMigrationPlanSummary(result: MigrationPlanRunResult): string {
