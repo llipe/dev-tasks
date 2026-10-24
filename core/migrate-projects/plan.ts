@@ -57,6 +57,7 @@ import {
   TYPE_LABEL_PREFIX,
   TYPE_SET,
   type LabelDefinition,
+  type PrdState,
 } from "./conventions.js";
 import {
   issueKind,
@@ -122,7 +123,7 @@ export function prdTitle(name: string, h1: string): string {
 }
 
 /** The github-ops PRD-table State for a roadmap row (A-67). */
-export function prdState(row: RoadmapRow, hasWaveIssue: boolean): string {
+export function prdState(row: RoadmapRow, hasWaveIssue: boolean): PrdState {
   if (row.status === "Done") return "shipped";
   if (row.status === "In progress") return "in progress";
   return hasWaveIssue ? "published" : "not started";
@@ -270,9 +271,12 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
       });
     }
   }
+  /** Every closed wave issue per wave id (D-108). */
+  const closedWaves = new Map<string, Set<number>>();
   for (const t of closedTracking) {
     if (t.kind.level === "wave" && t.kind.wave !== null) {
       const k = `${t.kind.prd} ${t.kind.wave}`;
+      closedWaves.set(k, (closedWaves.get(k) ?? new Set()).add(t.issue.number));
       if (!closedWave.has(k)) closedWave.set(k, t.issue.number);
     }
   }
@@ -369,7 +373,15 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
         why: result.reason,
         answer: typed,
       });
-    } else if (answer.kind === "invalid" || answer.kind === "wave") {
+    } else if (answer.kind === "wave") {
+      // F-3: a real wave of an omitted PRD; the answer stands for when one issue remains.
+      review.unmapped.push({
+        issue: issue.number,
+        title: issue.title,
+        why: `names wave ${waveId(answer.row)} of PRD ${answer.row.prd}, whose batches are omitted (D-87); ${result.reason}`,
+        answer: typed,
+      });
+    } else if (answer.kind === "invalid") {
       review.unmapped.push({
         issue: issue.number,
         title: issue.title,
@@ -471,9 +483,17 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
       if (existing !== null) waveRef.set(row, { number: existing });
       continue;
     }
+    // D-108: a story under a closed wave issue of its own row is never
+    // relinked, so it alone never calls for a new wave issue.
+    const closedOwn = closedWaves.get(waveId(row)) ?? new Set<number>();
+    for (const s of stories) {
+      if (s.parent != null && closedOwn.has(s.parent)) {
+        info(`#${s.number}`, `parent #${s.parent} is a closed wave issue; never relinked`);
+      }
+    }
     if (existing !== null) {
       waveRef.set(row, { number: existing });
-    } else if (stories.length > 0 || activeWaves.has(waveId(row))) {
+    } else if (stories.some((s) => (s.parent ?? null) === null) || activeWaves.has(waveId(row))) {
       needsWave.push(row);
     }
   }
@@ -547,6 +567,15 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
       );
       continue;
     }
+    const title = prdTitle(prd, h1);
+    if (title.length > TITLE_MAX) {
+      // D-109: never created over github-ops' limit, and never cut: the owner shortens the H1.
+      info(
+        `[PRD-${prd}]`,
+        `its PRD tracking issue title would be ${title.length} characters, over github-ops' ${TITLE_MAX}-character limit; shorten the H1 of \`docs/requirements/prd-${prd}.md\` (D-109)`,
+      );
+      continue;
+    }
     const closed = closedTracking.find((t) => t.kind.level === "prd" && t.kind.prd === prd);
     if (closed !== undefined)
       info(
@@ -557,7 +586,7 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
       "2",
       "create-issue",
       WRITE_TARGET_NEW,
-      `template: prd; label: ${LEVEL_LABELS.prd}; title: ${prdTitle(prd, h1)}`,
+      `template: prd; label: ${LEVEL_LABELS.prd}; title: ${title}`,
       [drafts.ifAny(labelKey(LEVEL_LABELS.prd))],
       prdKey(prd),
     );
@@ -624,7 +653,8 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
     const parent = m.issue.parent ?? null;
     if (parent !== null) {
       const same = "number" in w && parent === w.number;
-      if (!same && trackingNumbers.has(parent)) {
+      const closedOwn = closedWaves.get(waveId(m.row))?.has(parent) ?? false;
+      if (!same && !closedOwn && trackingNumbers.has(parent)) {
         info(
           `#${m.issue.number}`,
           `story maps to ${waveId(m.row)} (${refText(w)}) but its parent is #${parent}; it is never relinked`,
