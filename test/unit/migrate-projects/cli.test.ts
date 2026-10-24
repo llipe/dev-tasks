@@ -5,7 +5,7 @@
  * (spec §16a A-63, A-64, A-85, A-88). MC-1 to MC-10, EC-101, EC-116.
  * S-015 AC-8 and the `--apply` CLI (MC-11 to MC-17, E2E-20 to E2E-24).
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { spawn, spawnSync } from "node:child_process";
 import {
   existsSync,
@@ -39,6 +39,10 @@ import { approve, memoryLock } from "./helpers/apply-run.js";
 import { isWrite } from "./helpers/is-write.js";
 import { memoryStore, planModel } from "./helpers/plan-run.js";
 import { modelReader } from "./helpers/recording-runner.js";
+
+// Every case spawns the real binary through tsx, a second or more each on a
+// loaded machine: the 5-second default is too tight for this file.
+vi.setConfig({ testTimeout: 30_000 });
 
 const ROOT = resolve(import.meta.dirname, "../../..");
 const TSX_CLI = resolve(ROOT, "node_modules/tsx/dist/cli.mjs");
@@ -489,7 +493,6 @@ const leftTmp = () =>
   readdirSync(join(tmp, "systmp")).filter((f) => f.startsWith("dev-tasks-migrate-"));
 const LOCK = "workstream/.migration-projects.lock";
 
-// Each case spawns the binary two or three times: a wider timeout than the default.
 describe(
   "migrate projects --apply gates (S-015 AC-1, AC-2; MC-11, MC-12, MC-16, MC-17)",
   { timeout: 30_000 },
@@ -549,7 +552,6 @@ describe(
   },
 );
 
-// Each case spawns the binary two or three times: a wider timeout than the default.
 describe(
   "migrate projects --apply runs (S-015 AC-8; MC-13 to MC-15, E2E-22, E2E-24)",
   { timeout: 30_000 },
