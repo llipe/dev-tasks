@@ -6,7 +6,12 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { parseArgs, parseMigrateProjectsArgs, MIGRATE_PROJECTS_USAGE } from "./parse-args.js";
+import {
+  parseArgs,
+  parseMigrateProjectsArgs,
+  validateGlobalArgs,
+  MIGRATE_PROJECTS_USAGE,
+} from "./parse-args.js";
 import { ExitCode } from "#core/exit-codes.js";
 import { installFiles } from "#core/distribution/install.js";
 import { isValidProfile, VALID_PROFILES, type Profile } from "#core/distribution/profiles.js";
@@ -131,6 +136,15 @@ async function main(): Promise<void> {
 
   if (!COMMANDS.includes(args.command as (typeof COMMANDS)[number])) {
     process.stderr.write(`Unknown command: ${args.command}\n\n`);
+    printUsage();
+    process.exit(ExitCode.InvalidUsage);
+  }
+
+  // Every command refuses an unknown flag or a value flag with no value
+  // before doing anything, so a typo never changes what it does.
+  const usageError = validateGlobalArgs(args);
+  if (usageError !== null) {
+    process.stderr.write(`dev-tasks ${args.command}: ${usageError}\n\n`);
     printUsage();
     process.exit(ExitCode.InvalidUsage);
   }

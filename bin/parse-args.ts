@@ -4,7 +4,10 @@
  * the `migrate projects` flags (--plan, --apply, --repo, --out, --plan-file).
  *
  * Unknown flags are collected in `unknownFlags`, not treated as positional
- * arguments, so a command can refuse them (A-63).
+ * arguments, and value flags given without a value in `missingValues`.
+ * `validateGlobalArgs` refuses either for every command (InvalidUsage, 2),
+ * so a typo never silently changes what a command does. A value that starts
+ * with `-` is given with `=` (`--out=-x.md`).
  */
 
 export interface ParsedArgs {
@@ -71,7 +74,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
       let value = inlineValue;
       if (value === undefined) {
         const next = argv[i + 1];
-        if (next !== undefined && !next.startsWith("--")) {
+        if (next !== undefined && !next.startsWith("-")) {
           value = next;
           i++;
         }
@@ -118,6 +121,29 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const rest = positional.slice(1);
 
   return { command, positional: rest, flags, seenFlags, unknownFlags, missingValues };
+}
+
+/** Flags that belong to `migrate projects` only. */
+const MIGRATE_PROJECTS_FLAGS = ["--plan", "--apply", "--repo", "--out", "--plan-file"];
+
+/**
+ * The checks every command shares: an unknown flag, a value flag with no
+ * value, or a `migrate projects` flag without the `projects` sub-verb is an
+ * error message for `InvalidUsage` (2); `null` when the arguments are clean.
+ * `migrate projects` is left to `parseMigrateProjectsArgs`, which reports
+ * the same errors with its own usage line.
+ */
+export function validateGlobalArgs(args: ParsedArgs): string | null {
+  if (args.command === "migrate" && args.positional[0] === "projects") return null;
+  if (args.unknownFlags.length > 0) return `unknown flag ${args.unknownFlags[0]}`;
+  if (args.missingValues.length > 0) return `${args.missingValues[0]} needs a value`;
+  const foreign = args.seenFlags.find((f) => MIGRATE_PROJECTS_FLAGS.includes(f));
+  if (foreign !== undefined) {
+    return args.command === "migrate"
+      ? `${foreign} belongs to \`dev-tasks migrate projects\`; run \`dev-tasks migrate projects ${foreign === "--apply" ? "--apply" : "--plan"}\``
+      : `${foreign} does not apply to ${args.command ?? "dev-tasks"}; it belongs to \`dev-tasks migrate projects\``;
+  }
+  return null;
 }
 
 export type MigrateProjectsArgs =
