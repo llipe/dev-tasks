@@ -41,8 +41,23 @@ import { memoryStore, planModel } from "./helpers/plan-run.js";
 import { modelReader } from "./helpers/recording-runner.js";
 
 // Every case spawns the real binary through tsx, a second or more each on a
-// loaded machine: the 5-second default is too tight for this file.
-vi.setConfig({ testTimeout: 30_000 });
+// loaded machine: the 5-second default is too tight for this file. A spawn
+// itself is capped by SPAWN_TIMEOUT (5.26): `spawnSync` blocks the event
+// loop, so vitest's own timeout cannot fire while a child hangs.
+vi.setConfig({ testTimeout: 180_000 });
+const SPAWN_TIMEOUT = 60_000;
+
+/** A spawnSync result, failing loudly when the child was killed for hanging. */
+function finished<T extends { error?: Error; signal: NodeJS.Signals | null }>(
+  r: T,
+  what: string,
+): T {
+  if (r.error !== undefined || r.signal === "SIGKILL")
+    throw new Error(
+      `${what}: the binary did not finish within ${SPAWN_TIMEOUT / 1000} s (${r.error?.message ?? r.signal})`,
+    );
+  return r;
+}
 
 const ROOT = resolve(import.meta.dirname, "../../..");
 const TSX_CLI = resolve(ROOT, "node_modules/tsx/dist/cli.mjs");
@@ -98,6 +113,8 @@ function run(args: string[]): { stdout: string; stderr: string; exitCode: number
   const r = spawnSync(process.execPath, [TSX_CLI, BIN, ...args], {
     cwd,
     encoding: "utf-8",
+    timeout: SPAWN_TIMEOUT,
+    killSignal: "SIGKILL",
     env: {
       PATH: pathDir,
       HOME: process.env.HOME ?? tmp,
@@ -108,6 +125,7 @@ function run(args: string[]): { stdout: string; stderr: string; exitCode: number
       FAKE_GH_LOG: join(tmp, "gh.log"),
     },
   });
+  finished(r, `dev-tasks ${args.join(" ")}`);
   return { stdout: r.stdout, stderr: r.stderr, exitCode: r.status ?? -1 };
 }
 
@@ -395,6 +413,8 @@ describe("flags (A-63)", () => {
     const r = spawnSync(process.execPath, [TSX_CLI, BIN, "migrate", "projects", "--plan"], {
       cwd,
       encoding: "utf-8",
+      timeout: SPAWN_TIMEOUT,
+      killSignal: "SIGKILL",
       env: {
         PATH: pathDir,
         HOME: process.env.HOME ?? tmp,
@@ -404,16 +424,22 @@ describe("flags (A-63)", () => {
         FAKE_GH_LOG: join(tmp, "gh.log"),
       },
     });
+    finished(r, "dev-tasks migrate projects --plan");
     expect(r.status).toBe(2);
   });
 });
 
 describe("help (AC-1, MC-10)", () => {
   it("lists `migrate projects` right after the `migrate docs` entry", () => {
-    const r = spawnSync(process.execPath, [TSX_CLI, BIN, "--help"], {
-      cwd: ROOT,
-      encoding: "utf-8",
-    });
+    const r = finished(
+      spawnSync(process.execPath, [TSX_CLI, BIN, "--help"], {
+        cwd: ROOT,
+        encoding: "utf-8",
+        timeout: SPAWN_TIMEOUT,
+        killSignal: "SIGKILL",
+      }),
+      "dev-tasks --help",
+    );
     const lines = (r.stdout + r.stderr).split("\n");
     const docs = lines.findIndex((l) => /^\s+migrate docs\b/.test(l));
     const projects = lines.findIndex((l) => /^\s+migrate projects --plan\b/.test(l));
@@ -628,6 +654,43 @@ describe(
       expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
     });
 
+    // 5.25: a signal before any write, while the lock is held (the snapshot read).
+    it.each(["SIGINT", "SIGTERM"] as const)(
+      "%s before any write: exit 1, the lock and temp dir removed, zero writes, the plan untouched",
+      async (signal) => {
+        const { text } = await setupApply(loadModel("ac11"));
+        const child = spawn(process.execPath, [TSX_CLI, BIN, "migrate", "projects", "--apply"], {
+          cwd,
+          env: {
+            PATH: pathDir,
+            HOME: process.env.HOME ?? tmp,
+            TMPDIR: join(tmp, "systmp"),
+            TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
+            FAKE_GH_SCENARIO: join(tmp, "scenario.json"),
+            FAKE_GH_LOG: join(tmp, "gh.log"),
+            FAKE_GH_DELAY_MS: "1500",
+          },
+        });
+        const exited = new Promise<number | null>((done) => child.on("exit", (code) => done(code)));
+        // `repo view` is the snapshot's first call: the lock is held by then.
+        const deadline = Date.now() + 90_000;
+        const reading = () => ghLog().some((a) => a[0] === "repo" && a[1] === "view");
+        while (!reading() && Date.now() < deadline && child.exitCode === null)
+          await new Promise((x) => setTimeout(x, 25));
+        if (!reading()) {
+          child.kill("SIGKILL");
+          expect(reading(), "the binary never reached the snapshot read within 90 s").toBe(true);
+        }
+        expect(existsSync(join(cwd, LOCK))).toBe(true);
+        child.kill(signal);
+        expect(await exited).toBe(1);
+        expect(existsSync(join(cwd, LOCK))).toBe(false);
+        expect(leftTmp()).toEqual([]);
+        expect(writesInLog()).toEqual([]);
+        expect(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).toBe(text);
+      },
+    );
+
     // E2E-23 at Layer 2, 5.23 (SG2, CT-34): interrupted by a signal between calls, then resumed.
     it.each(["SIGINT", "SIGTERM"] as const)(
       "interrupted mid-run by %s: exit 1, states so far kept, lock and temp dir removed; the resume repeats no done write",
@@ -646,9 +709,18 @@ describe(
           },
         });
         const exited = new Promise<number | null>((done) => child.on("exit", (code) => done(code)));
-        const deadline = Date.now() + 30_000;
-        while (writesInLog().length < 3 && Date.now() < deadline)
+        // 5.25: signal only once the run is writing (its handlers are installed
+        // before its first gh call); never signal a child still starting.
+        const deadline = Date.now() + 90_000;
+        while (writesInLog().length < 3 && Date.now() < deadline && child.exitCode === null)
           await new Promise((x) => setTimeout(x, 50));
+        if (writesInLog().length < 3) {
+          child.kill("SIGKILL");
+          expect(
+            writesInLog().length,
+            `the binary made ${writesInLog().length} writes within 90 s; not signalled (a loaded machine, or a hang)`,
+          ).toBeGreaterThanOrEqual(3);
+        }
         child.kill(signal);
         const code = await exited;
         expect(code).toBe(1);

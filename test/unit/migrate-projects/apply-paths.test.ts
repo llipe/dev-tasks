@@ -7,7 +7,15 @@
  * released; and the summary and `--json` shapes when nothing was read.
  */
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+  existsSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -69,6 +77,24 @@ describe("the real lock file (A-80)", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  it.skipIf(process.getuid?.() === 0)(
+    "EACCES on the lock file is thrown, not read as `held` (apply.ts 114-115)",
+    () => {
+      const dir = mkdtempSync(join(tmpdir(), "apply-lock-"));
+      const ws = join(dir, "workstream");
+      try {
+        mkdirSync(ws);
+        chmodSync(ws, 0o500);
+        expect(() => createLockFile(join(ws, ".migration-projects.lock")).acquire()).toThrow(
+          /EACCES/,
+        );
+      } finally {
+        chmodSync(ws, 0o700);
+        rmSync(dir, { recursive: true, force: true });
+      }
+    },
+  );
 
   it("an error other than an existing lock is thrown, not read as `held`", () => {
     const dir = mkdtempSync(join(tmpdir(), "apply-lock-"));

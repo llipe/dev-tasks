@@ -543,6 +543,8 @@ async function migrateProjectsApply(
     // CT-34 and the user manual: an interrupted run exits GeneralError (1), whatever the signal.
     process.exit(ExitCode.GeneralError);
   };
+  // Installed before the first await, so before any gh call: a signal is
+  // handled only between event-loop turns, and none passes before this line (5.25).
   process.once("SIGINT", onSignal);
   process.once("SIGTERM", onSignal);
   let result;

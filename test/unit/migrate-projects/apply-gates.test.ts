@@ -153,9 +153,12 @@ describe("approval (AC-1, MU-60, MU-61, CT-25, D-80)", () => {
   // `approved: yes` is no `Approved:` line at all: the file lacks a required header.
   it("a lower-case `approved: yes` leaves no Approved line: exit 2, zero writes", async () => {
     const { model, text } = await fresh();
-    const run = await applyModel(model, text.replace(/^Approved: no$/m, "approved: yes"));
+    const mutated = text.replace(/^Approved: no$/m, "approved: yes");
+    const run = await applyModel(model, mutated);
     expect(run.result.exitCode).toBe(2);
     expect(run.calls).toEqual([]);
+    expect(run.writes()).toEqual([]);
+    expect(run.store.files[PLAN_PATH]).toBe(mutated);
   });
 
   // CT-25: an `Approved: yes` in a fence below the header is plan text, not approval.
@@ -384,6 +387,8 @@ describe("fuzzed plan files never cause an unapproved write (RT-14)", () => {
         expect(writes, ctx).toEqual([]);
         continue;
       }
+      // One write per row the observer saw, and nothing else (5.27).
+      expect(writes.length, ctx).toBe(ids.length);
       // Each write is exactly the unmutated plan's write for that row.
       ids.forEach((id, i) => expect(writes[i], `${ctx} ${id}`).toBe(byRow.get(id)));
       // Rows that parse unchanged write exactly the unmutated sequence.
