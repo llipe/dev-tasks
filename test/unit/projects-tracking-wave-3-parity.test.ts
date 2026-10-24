@@ -423,3 +423,101 @@ describe("S-019 negatives", () => {
     }
   });
 });
+
+// --- product-engineer roadmap conversion (S-016, #319) -----------------------
+
+const CONVERSION = "Roadmap Conversion (before migration)";
+const CONVERSION_STEPS = [
+  "**Draft the canonical table**",
+  "one row per PRD phase or wave",
+  "**Keep the existing narrative verbatim below the table**",
+  "**Flag every translated Status for the user:**",
+  "**Ship it as its own docs PR before migration runs:**",
+] as const;
+const PARTIAL_TABLE =
+  "A partial table, the canonical header with at least one row, already counts as canonical";
+const PAUSED = 'a narrative "paused" translates to `Not started` and is flagged';
+const TWO_SECTIONS = "Two narrative sections that describe one wave give one row citing both";
+const PLAN_REFUSES =
+  "`dev-tasks migrate projects --plan` refuses to run without the canonical table";
+const EXACT_MATCH = "maps `phase: X` only to a row whose `Phase/Wave` cell equals `X` exactly";
+const NO_STATE_FILE_EDIT = "Migration edits no `workstream/planner-state-*.md` file";
+const PLANNER_RESUME = "the planner's resume adds the missing `Wave issue:` line";
+const NEVER_DONE = "A Status without merged evidence is never upgraded to `Done` by the conversion";
+
+describe("product-engineer roadmap conversion (S-016)", () => {
+  const trees = loadTrees(PRODUCT_ENGINEER_TREES);
+  const conversion = (copy: TreeCopy): string => sectionOf(copy, CONVERSION);
+
+  // The conversion step sits inside Roadmap Maintenance (A-86), never in
+  // Drift Reconciliation, so roadmap-parity's section identity covers it.
+  it("lives under Roadmap Maintenance", () => {
+    for (const copy of trees) {
+      const at = copy.sections.findIndex((s) => s.heading === CONVERSION);
+      expect(at, `${copy.path}: no ${CONVERSION} heading`).toBeGreaterThan(-1);
+      expect(copy.sections[at].level, copy.path).toBe(3);
+      const parent = copy.sections
+        .slice(0, at)
+        .reverse()
+        .find((s) => s.level === 2);
+      expect(parent?.heading, copy.path).toBe("Roadmap Maintenance");
+    }
+  });
+
+  // PT-68 — S-016 AC-1; FR-21, D-86. Steps in order.
+  it("roadmap conversion", () => {
+    for (const copy of trees) {
+      const text = conversion(copy);
+      let last = -1;
+      for (const step of CONVERSION_STEPS) {
+        const at = text.indexOf(step);
+        expect(at, `${copy.path}: missing "${step}"`).toBeGreaterThan(-1);
+        expect(at, `${copy.path}: "${step}" out of order`).toBeGreaterThan(last);
+        last = at;
+      }
+      // Edge cases EC-161 (A-59), EC-162, EC-163.
+      for (const marker of [PARTIAL_TABLE, PAUSED, TWO_SECTIONS]) {
+        expect(text, `${copy.path}: missing "${marker}"`).toContain(marker);
+      }
+    }
+  });
+
+  // PT-69 — S-016 AC-2; D-86
+  it("migration dependency", () => {
+    for (const copy of trees) {
+      const text = conversion(copy);
+      expect(text, copy.path).toContain(PLAN_REFUSES);
+      expect(text, copy.path).toContain(EXACT_MATCH);
+    }
+  });
+
+  // PT-70 — S-016 AC-3; D-89, D-99
+  it("state files", () => {
+    for (const copy of trees) {
+      const line = lineWith(conversion(copy), NO_STATE_FILE_EDIT, copy.path);
+      expect(line, copy.path).toContain(PLANNER_RESUME);
+    }
+  });
+
+  // PT-72 — S-016 BR: no Done from narrative alone.
+  it("never upgrades a status to Done without merged evidence", () => {
+    for (const copy of trees) {
+      const text = conversion(copy);
+      expect(text, copy.path).toContain(NEVER_DONE);
+      for (const line of text.split("\n").filter((l) => l.includes("`Done`"))) {
+        expect(line, `${copy.path}: a line lets the conversion set Done`).toMatch(/never|merged/);
+      }
+    }
+  });
+
+  // PT-71 — S-016 AC-4: the whole subsection is byte-identical across trees.
+  it("is byte-identical across the three trees", () => {
+    const texts = trees.map(conversion);
+    for (const [i, text] of texts.entries()) {
+      expect(text, `${trees[i].path}: ${CONVERSION} differs`).toBe(texts[0]);
+    }
+    for (const marker of [...CONVERSION_STEPS, PLAN_REFUSES, NO_STATE_FILE_EDIT, NEVER_DONE]) {
+      expectIdenticalLine(trees, CONVERSION, marker);
+    }
+  });
+});
