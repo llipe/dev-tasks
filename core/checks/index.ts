@@ -26,3 +26,11 @@ export {
   REQUIREMENTS_DIR,
 } from "./glossary.js";
 export type { GlossaryRule, GlossaryFinding, GlossaryResult } from "./glossary.js";
+export {
+  parseRoadmapTable,
+  tableCells,
+  ROADMAP_FILE,
+  ROADMAP_HEADER,
+  ROADMAP_STATUSES,
+} from "./roadmap.js";
+export type { RoadmapRow, RoadmapStatus, RoadmapParseResult } from "./roadmap.js";

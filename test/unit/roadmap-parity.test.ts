@@ -192,7 +192,8 @@ describe("the roadmap is registered and well-formed", () => {
     expect(parsed.ok, parsed.ok ? "" : parsed.reason).toBe(true);
     if (!parsed.ok) return;
     expect(parsed.rows.length).toBeGreaterThan(0);
-    for (const row of parsed.rows) expect(STATUSES, `bad status in: ${row.line}`).toContain(row.status);
+    for (const row of parsed.rows)
+      expect(STATUSES, `bad status in: ${row.line}`).toContain(row.status);
   });
 
   it("the shared parser refuses what is not a canonical table (A-59)", () => {
@@ -204,7 +205,10 @@ describe("the roadmap is registered and well-formed", () => {
     for (const [name, text] of [
       ["narrative only", "# Roadmap\n\nWave 1 shipped.\n"],
       ["header only (not a partial table)", header],
-      ["five columns", "| PRD | Phase/Wave | Scope (one line) | Status | Issues/PRs |\n| - | - | - | - | - |\n| a | 1 | s | Done | x |\n"],
+      [
+        "five columns",
+        "| PRD | Phase/Wave | Scope (one line) | Status | Issues/PRs |\n| - | - | - | - | - |\n| a | 1 | s | Done | x |\n",
+      ],
       ["wrong header cell", header.replace("Phase/Wave", "Phase") + row],
       ["status outside the set", header + row.replace("Done", "Paused")],
       ["a row with a missing cell", header + "| [alpha](x) | 1 | Widgets | Done | #1 |\n"],
