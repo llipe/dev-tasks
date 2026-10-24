@@ -7,7 +7,7 @@
 - Repository: llipe/dev-tasks
 - Wave issue: #317
 - Started: 2026-10-24T14:45Z
-- Last updated: 2026-10-24T15:29Z
+- Last updated: 2026-10-24T15:56Z
 - PRD issue: #289
 
 ## Story Status
@@ -15,7 +15,7 @@
 | Sequence | Story ID | Issue # | Status     | PR  | Branch |
 | -------- | -------- | ------- | ---------- | --- | ------ |
 | 1 | S-019 | #318 | ✅ Merged | #326 | story/S-019-type-priority-conventions |
-| 2        | S-016    | #319    | ⏳ Pending | —   | —      |
+| 2 | S-016 | #319 | ✅ Merged | #327 | story/S-016-roadmap-conversion |
 | 3        | S-013    | #320    | ⏳ Pending | —   | —      |
 | 4        | S-014    | #321    | ⏳ Pending | —   | —      |
 | 5        | S-015    | #322    | ⏳ Pending | —   | —      |
@@ -23,9 +23,9 @@
 
 ## Current Position
 
-- Next story: S-016
-- Last merged PR: #326
-- Integration branch HEAD: 1244561
+- Next story: S-013
+- Last merged PR: #327
+- Integration branch HEAD: 528a478
 
 ## Decisions Log
 
@@ -36,3 +36,6 @@
 - wave_status: written at run start, S-019 start, S-019 closeout (PR open, before any merge gate), gate 10 confirmed `PR open #326`.
 - S-019: memo_intent written(57d2ef1d), memo_outcome written(f758fac6); coverage_gate SKIPPED(prompt-text only, presence-only pins green); verifier High, Minor, 8 findings (PR #326 comment 6385810137).
 - S-019 audit routing: findings 2, 3, 4, 8 fixed in-story (1.16 to 1.18, 1.13 wording); findings 5, 6, 7 Undetermined, resolved by @llipe as D-102 (1.19, 1.20) and D-103 (S-014 sub-task 4.4b, #321); finding 1 (PT-81) deferred to S-013 as instructed.
+- S-016: memo_intent written(7793fc4e), memo_outcome written(7f465fec); coverage_gate SKIPPED(prompt-text only; mutation probes showed presence-only pins); verifier High, Minor, 5 findings (PR #327 comment 6386177208).
+- S-016 audit routing: F1 (D-98 PRD scope) and F2 (pin hardening, probes M0 to M10 now caught) fixed in-story as 2.9, 2.10; F4 annotation synced to #319 by the planner; F3 and F5 Undetermined, resolved by @llipe as D-104 (2.11) and D-105 (PRD v1.12 FR-21, this checkpoint).
+- wave_status: written at S-016 start, closeout (PR open, before merge gates), gate 10 confirmed `PR open #327`.
