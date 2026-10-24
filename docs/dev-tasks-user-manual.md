@@ -331,6 +331,20 @@ dev-tasks migrate --json  # Machine-readable output
 
 Detects legacy `.dev-tasks/skills/` layout, maps files to native platform paths, and writes a fresh manifest.
 
+#### `dev-tasks migrate projects --plan`
+
+Reads the repository through `gh` and writes a reviewable projects-tracking migration plan. Read-only: nothing on GitHub changes.
+
+```bash
+dev-tasks migrate projects --plan [--repo <owner/repo>] [--out <path>] [--json]
+```
+
+- `--out` defaults to `workstream/migration-projects.md`. `--repo` defaults to the working tree's repository (`gh repo view`); a different value exits `2`, because the roadmap and planner state files are read from the working tree.
+- `gh auth status --hostname github.com` runs first; when it fails, or `gh` is not installed, the command exits `11` with the `gh auth login` hint and reads nothing else.
+- The plan file starts with `Format: 1`, `Generated:`, `Snapshot:` (SHA-256 of what was read), `Plan digest:` and `Approved: no`, then the review tables (unmapped issues, needs a type, needs a blocking link, state files, roadmap notes, information) and one table per batch. It holds issue numbers, titles and label names only, never issue bodies.
+- It refuses with exit `14` to overwrite a plan file with any row that is not `pending`.
+- Mapping, the write batches and `--apply` are not in this version yet; the batch tables are empty.
+
 ---
 
 ## Exit Codes
