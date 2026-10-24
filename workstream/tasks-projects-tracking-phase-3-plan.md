@@ -35,7 +35,7 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 
 ## Tasks
 
-- [ ] 1.0 Implement Story S-019: github-ops states one type per issue, a priority scale that names release blockers, and the native blocking link (#318)
+- [x] 1.0 Implement Story S-019: github-ops states one type per issue, a priority scale that names release blockers, and the native blocking link (#318)
 
   - [x] 1.1 Create `test/unit/projects-tracking-wave-3-parity.test.ts` with pins for the type set and tie-break, the priority scale, the dependency commands, the three audit checks, product-engineer's aggregation queries and activity-publish-github's one-type rule, each line byte-identical across the three copies, plus the negative that no copy lists `type: other` as a valid choice; run `pnpm run test:unit`, confirm red
   - [x] 1.2 In the three github-ops copies' Labels section, list the eight types with their definitions, the "exactly one `type:` per issue" rule, the tie-break order, and `type: other` as retired; add a `type: test` row and narrow `tech-debt`'s description (D-85)
@@ -54,8 +54,8 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 1.14 AC-to-test mapping: AC-1 → `github-ops > type set`; AC-2 → `github-ops > priority scale`; AC-3 → `github-ops > dependency commands`; AC-4 → `github-ops > audit checks`; AC-5 → `product-engineer > aggregation`; AC-6 → `activity-publish-github > one type`; AC-7 is the file
   - [x] 1.15 Run Tests: `pnpm run test:unit`, `pnpm run validate` green
   - [x] 1.16 Pin byte-identity across the three trees for the `Retired labels, in full:` line, the `priority: high … medium … low` sentence, the Command Map "List what an issue blocks" row and the `## Conventions` report-template table (finding 2). Test first.
-  - [ ] 1.17 Add `--limit 1000` to all three aggregation queries in product-engineer § Drift Reconciliation (all three trees) and update PT-64 (finding 4, A-74).
-  - [ ] 1.18 Reword the bugs-query reason from "so tracking issues never count" to "so story and tracking issues never count" (finding 8), three trees.
+  - [x] 1.17 Add `--limit 1000` to all three aggregation queries in product-engineer § Drift Reconciliation (all three trees) and update PT-64 (finding 4, A-74).
+  - [x] 1.18 Reword the bugs-query reason from "so tracking issues never count" to "so story and tracking issues never count" (finding 8), three trees.
 
 - [ ] 2.0 Implement Story S-016: product-engineer converts a narrative roadmap to the canonical table before migration (#319)
 

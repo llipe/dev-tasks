@@ -348,6 +348,19 @@ describe("product-engineer", () => {
     for (const marker of [AGG_FOLLOW_UPS, AGG_BUGS, AGG_BLOCKERS]) {
       expectIdenticalLine(trees, "Drift Reconciliation", marker);
     }
+    // Finding 4 (A-74): every query lifts gh's default 30-item cap.
+    for (const copy of trees) {
+      const section = sectionOf(copy, "Drift Reconciliation");
+      for (const marker of [AGG_FOLLOW_UPS, AGG_BUGS, AGG_BLOCKERS]) {
+        expect(lineWith(section, marker, copy.path), `${copy.path}: ${marker}`).toContain(
+          "--limit 1000",
+        );
+      }
+      // Finding 8: stories carry `level: story`, so the filter drops them too.
+      expect(lineWith(section, AGG_BUGS, copy.path), copy.path).toContain(
+        "so story and tracking issues never count",
+      );
+    }
   });
 });
 
