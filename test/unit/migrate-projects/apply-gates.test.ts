@@ -289,7 +289,8 @@ describe("fuzzed plan files never cause an unapproved write (RT-14)", () => {
       let text: string;
       const at = r.int(0, lines.length - 1);
       if (kind === "delete") text = lines.filter((_, i) => i !== at).join("\n");
-      else if (kind === "duplicate") text = [...lines.slice(0, at + 1), ...lines.slice(at)].join("\n");
+      else if (kind === "duplicate")
+        text = [...lines.slice(0, at + 1), ...lines.slice(at)].join("\n");
       else if (kind === "truncate") text = approved.slice(0, r.int(0, approved.length - 1));
       else if (kind === "space") text = lines.map((l, i) => (i === at ? `${l}  ` : l)).join("\n");
       else if (kind === "pipe") {

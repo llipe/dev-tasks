@@ -136,7 +136,13 @@ export function respondWrite(model: RepoModel, argv: readonly string[]): GhResul
       if (typeof body !== "string") return body;
       model.comments ??= {};
       const list = (model.comments[String(n)] ??= []);
-      const id = Math.max(900000, ...Object.values(model.comments).flat().map((c) => c.id)) + 1;
+      const id =
+        Math.max(
+          900000,
+          ...Object.values(model.comments)
+            .flat()
+            .map((c) => c.id),
+        ) + 1;
       list.push({ id, body });
       return ok(`https://github.com/${model.repo}/issues/${n}#issuecomment-${id}\n`);
     }
@@ -216,7 +222,9 @@ export function bodyPaths(argv: readonly string[]): string[] {
 /** The argv with body-file paths replaced, so two runs compare equal. */
 export function normalizeArgv(argv: readonly string[]): string[] {
   return argv.map((a) =>
-    a.replace(/^--body-file=.+$/, "--body-file=<file>").replace(/^--field=body=@.+$/, "--field=body=@<file>"),
+    a
+      .replace(/^--body-file=.+$/, "--body-file=<file>")
+      .replace(/^--field=body=@.+$/, "--field=body=@<file>"),
   );
 }
 

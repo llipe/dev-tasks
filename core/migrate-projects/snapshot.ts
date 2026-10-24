@@ -14,6 +14,7 @@
  * returns things in.
  */
 import { createHash } from "node:crypto";
+import { ExitCode } from "../exit-codes.js";
 import { ROADMAP_FILE, tableCells } from "../checks/roadmap.js";
 import { hasLabel, PRIORITY_CRITICAL } from "./conventions.js";
 import { issueKind } from "./classify.js";
@@ -133,6 +134,16 @@ export class SnapshotError extends Error {
 }
 
 export const AUTH_HINT = "run `gh auth login` and try again";
+
+/** The exit code for each snapshot failure, shared by `--plan` and `--apply` (A-64). */
+export const SNAPSHOT_ERROR_EXIT: Record<SnapshotErrorKind, number> = {
+  "gh-missing": ExitCode.DependencyError,
+  auth: ExitCode.DependencyError,
+  "repo-view": ExitCode.DependencyError,
+  "repo-mismatch": ExitCode.InvalidUsage,
+  roadmap: ExitCode.InvalidUsage,
+  read: ExitCode.GeneralError,
+};
 
 export interface ReadSnapshotOptions {
   runner: GhRunner;

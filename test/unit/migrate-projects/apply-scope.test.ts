@@ -27,18 +27,22 @@ const projectArgv = (argv: readonly string[]) =>
   argv.some((a) => a === "project" || /^projects?\b/.test(a) || /\/projects\b|projectV2/i.test(a));
 
 describe("no Project call, batch 7 printed (AC-5, MU-71, MU-74, D-81, D-22, D-27)", () => {
-  it.each(["ac11", "survey", "empty"])("%s: no argv names a Project; batch 7 stays the user's", async (name) => {
-    const { model, approved } = await fresh(name);
-    const steps = parseMigrationPlan(approved).plan.batches.find((b) => b.key === "7")!.steps;
-    const run = await applyModel(model, approved);
-    expect(run.result.exitCode).toBe(0);
-    for (const c of run.calls) expect(projectArgv(c.argv), c.argv.join(" ")).toBe(false);
-    for (const s of run.plan.batches.find((b) => b.key === "7")!.steps) expect(s.state).toBe("pending");
-    expect(run.result.steps).toEqual(steps.map((s) => s.step));
-    const text = formatMigrationApplySummary(run.result);
-    for (const s of steps) expect(text).toContain(s.step);
-    expect(text).toMatch(/you run these/i);
-  });
+  it.each(["ac11", "survey", "empty"])(
+    "%s: no argv names a Project; batch 7 stays the user's",
+    async (name) => {
+      const { model, approved } = await fresh(name);
+      const steps = parseMigrationPlan(approved).plan.batches.find((b) => b.key === "7")!.steps;
+      const run = await applyModel(model, approved);
+      expect(run.result.exitCode).toBe(0);
+      for (const c of run.calls) expect(projectArgv(c.argv), c.argv.join(" ")).toBe(false);
+      for (const s of run.plan.batches.find((b) => b.key === "7")!.steps)
+        expect(s.state).toBe("pending");
+      expect(run.result.steps).toEqual(steps.map((s) => s.step));
+      const text = formatMigrationApplySummary(run.result);
+      for (const s of steps) expect(text).toContain(s.step);
+      expect(text).toMatch(/you run these/i);
+    },
+  );
 
   it("a batch 7 step set back to pending or ticked done is still never run (EC-149)", async () => {
     const { model, approved } = await fresh("ac11");
@@ -82,8 +86,18 @@ describe("retired labels (AC-6, MU-72, MU-73, MU-75, D-91, A-82)", () => {
     const run = await applyModel(model, approved);
     expect(run.result.exitCode).toBe(0);
     expect(model.issues.find((i) => i.number === 5)!.labels).toContain("status: ready");
-    for (const name of before) expect(model.labels.some((l) => l.name === name), name).toBe(true);
-    for (const name of ["needs: decision", "status: ready", "type: other", "type: prd", "wave: 2"]) {
+    for (const name of before)
+      expect(
+        model.labels.some((l) => l.name === name),
+        name,
+      ).toBe(true);
+    for (const name of [
+      "needs: decision",
+      "status: ready",
+      "type: other",
+      "type: prd",
+      "wave: 2",
+    ]) {
       const d = model.labels.find((l) => l.name === name)!.description;
       expect(d.startsWith("Retired (D-91): "), name).toBe(true);
       expect(d.indexOf("Retired (", 1), name).toBe(-1);
@@ -96,7 +110,9 @@ describe("retired labels (AC-6, MU-72, MU-73, MU-75, D-91, A-82)", () => {
     const second = await applyModel(model, approve(again.text));
     expect(second.writes()).toEqual([]);
     for (const name of ["needs: decision", "status: ready"]) {
-      expect(model.labels.find((l) => l.name === name)!.description.match(/Retired \(/g)).toHaveLength(1);
+      expect(
+        model.labels.find((l) => l.name === name)!.description.match(/Retired \(/g),
+      ).toHaveLength(1);
     }
   });
 
@@ -129,9 +145,18 @@ describe("argv from the row only, values as `--flag=value` (A-51, A-93, CT-31, E
       m.labels.push({ name: "-wip", description: "", color: "EEEEEE" });
       m.issues.find((i) => i.number === 21)!.labels.push("-wip");
     });
-    const run = await applyModel(model, withRow(approved, "| W-040 | remove-label | #21 | -wip |  | pending |"));
+    const run = await applyModel(
+      model,
+      withRow(approved, "| W-040 | remove-label | #21 | -wip |  | pending |"),
+    );
     expect(run.result.exitCode).toBe(0);
-    expect(run.writes()).toContainEqual(["issue", "edit", "21", "--repo=acme/gizmos", "--remove-label=-wip"]);
+    expect(run.writes()).toContainEqual([
+      "issue",
+      "edit",
+      "21",
+      "--repo=acme/gizmos",
+      "--remove-label=-wip",
+    ]);
     expect(model.issues.find((i) => i.number === 21)!.labels).not.toContain("-wip");
   });
 

@@ -28,7 +28,14 @@ const underTmp = (p: string) => TMP.some((t) => p.startsWith(`${t}/`));
 describe("bodies through files (AC-7, MU-76, MU-77, EC-153)", () => {
   it("every create and comment uses `--body-file`, a PATCH `--field=body=@`; never `--body`", async () => {
     const { model, approved } = await fresh((m) => {
-      m.comments = { "1": [{ id: 7001, body: `${MARKER}\n🔄 Update: x — Refs #1\n\n| Wave | State | Wave issue |\n| ---- | ----- | ---------- |\n| 1 | shipped | — |` }] };
+      m.comments = {
+        "1": [
+          {
+            id: 7001,
+            body: `${MARKER}\n🔄 Update: x — Refs #1\n\n| Wave | State | Wave issue |\n| ---- | ----- | ---------- |\n| 1 | shipped | — |`,
+          },
+        ],
+      };
     });
     // A plan with a PATCH: rebuild with the comment present.
     const run = await applyModel(model, approved);
@@ -38,9 +45,14 @@ describe("bodies through files (AC-7, MU-76, MU-77, EC-153)", () => {
     expect(kinds).toContain("issue create");
     expect(kinds).toContain("api -X");
     for (const c of run.calls) {
-      expect(c.argv.some((a) => a === "--body" || a.startsWith("--body=") || a === "-b")).toBe(false);
+      expect(c.argv.some((a) => a === "--body" || a.startsWith("--body=") || a === "-b")).toBe(
+        false,
+      );
       if (c.argv[0] === "issue" && ["create", "comment"].includes(c.argv[1]))
-        expect(c.argv.filter((a) => a.startsWith("--body-file=")), c.argv.join(" ")).toHaveLength(1);
+        expect(
+          c.argv.filter((a) => a.startsWith("--body-file=")),
+          c.argv.join(" "),
+        ).toHaveLength(1);
       if (c.argv[0] === "api" && c.argv[2] === "PATCH")
         expect(c.argv.at(-1)).toMatch(/^--field=body=@/);
     }
@@ -118,7 +130,12 @@ describe("the PRD status comment by marker (AC-7, MU-78, EC-154, D-92, A-67)", (
       "Kept text after the table.",
     ].join("\n");
     const { model, approved } = await fresh((m) => {
-      m.comments = { "1": [{ id: 7001, body: "an unrelated comment" }, { id: 7002, body: existing }] };
+      m.comments = {
+        "1": [
+          { id: 7001, body: "an unrelated comment" },
+          { id: 7002, body: existing },
+        ],
+      };
     });
     expect(approved).toContain("add: 2 = in progress, W-017");
     const run = await applyModel(model, approved);

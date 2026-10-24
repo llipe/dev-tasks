@@ -53,10 +53,19 @@ describe("a full run (AC-3, E2E-22, PRD AC-12)", () => {
 
     const byNumber = (n: number) => model.issues.find((i) => i.number === n)!;
     for (const name of ["level: prd", "level: wave", "level: story", "type: test"])
-      expect(model.labels.some((l) => l.name === name), name).toBe(true);
+      expect(
+        model.labels.some((l) => l.name === name),
+        name,
+      ).toBe(true);
     for (const issue of model.issues.filter((i) => i.state === "open"))
       expect(issue.labels.filter(isRetired), `#${issue.number}`).toEqual([]);
-    for (const name of ["needs: decision", "status: ready", "type: other", "type: prd", "wave: 2"]) {
+    for (const name of [
+      "needs: decision",
+      "status: ready",
+      "type: other",
+      "type: prd",
+      "wave: 2",
+    ]) {
       const l = model.labels.find((x) => x.name === name);
       expect(l, name).toBeDefined();
       expect(l!.description.startsWith("Retired (D-91): "), name).toBe(true);
@@ -130,7 +139,11 @@ describe("failed writes (AC-3, MU-65, MU-67, E2E-24, EC-141 to EC-143)", () => {
       runner: {
         onWrite: () =>
           current === "W-008"
-            ? { stdout: "", stderr: "\nHTTP 422: Validation Failed | bad\nsecond line", exitCode: 1 }
+            ? {
+                stdout: "",
+                stderr: "\nHTTP 422: Validation Failed | bad\nsecond line",
+                exitCode: 1,
+              }
             : undefined,
       },
     });
@@ -184,7 +197,8 @@ describe("failed writes (AC-3, MU-65, MU-67, E2E-24, EC-141 to EC-143)", () => {
     });
     const s = run.states();
     expect(s["W-003"]).toBe("failed(HTTP 500)");
-    for (const id of ["W-025", "W-026", "W-027", "W-028"]) expect(s[id]).toBe("skipped(depends on W-003)");
+    for (const id of ["W-025", "W-026", "W-027", "W-028"])
+      expect(s[id]).toBe("skipped(depends on W-003)");
   });
 });
 
@@ -209,7 +223,10 @@ describe("re-runs (AC-4, D-88, MU-66, MU-68 to MU-70, EC-144, EC-145)", () => {
     const s = first.states();
     for (const id of ["W-001", "W-002", "W-003", "W-004"]) expect(s[id]).toBe("done");
     for (const id of cliIds(approved).slice(4)) expect(s[id], id).toBe("pending");
-    const firstWrites = first.writes().slice(0, 4).map((a) => a.join("\u0001"));
+    const firstWrites = first
+      .writes()
+      .slice(0, 4)
+      .map((a) => a.join("\u0001"));
 
     const ids: string[] = [];
     const second = await applyModel(model, first.text, { beforeWrite: (id) => ids.push(id) });
@@ -311,7 +328,9 @@ describe("write-back failures (EC-139, A-80)", () => {
     expect(first.lock.held).toBe(false);
     const second = await applyModel(model, first.text);
     expect(second.states()["W-003"]).toBe("skipped(already applied)");
-    expect(second.writes().some((a) => a.at(-1) === "level: story" && a[0] === "label")).toBe(false);
+    expect(second.writes().some((a) => a.at(-1) === "level: story" && a[0] === "label")).toBe(
+      false,
+    );
   });
 
   it("a created issue whose state was lost is found by its title, never created twice", async () => {
@@ -347,7 +366,7 @@ describe("random walks (RT-11, RT-12)", () => {
         model.issues.filter((i) => i.state === "open").map((i) => i.number),
       );
       let text = approve((await planModel(model, { previous: renderMigrationPlan(draft) })).text);
-      const created = new Set<string>();
+      const original = new Set(model.issues.map((i) => i.number));
       for (let run = 0; run < 6; run++) {
         const last = run === 5;
         const before = parseMigrationPlan(text).plan.batches.flatMap((b) => b.writes);
@@ -387,14 +406,19 @@ describe("random walks (RT-11, RT-12)", () => {
           if (applied.test(was)) expect(w.state, `${ctx} ${w.id}`).toBe(was);
           if (/^failed/.test(w.state)) seen.failed++;
         }
-        // No create lands twice: every tracking title is unique among open issues.
+        // No create lands twice: each issue --apply created has a title no other open issue has.
         const titles = model.issues.filter((i) => i.state === "open").map((i) => i.title);
-        for (const t of titles.filter((t) => /^\[PRD-[^\]]+\] /.test(t) && !/Story/.test(t))) {
-          expect(titles.filter((x) => x === t), `${ctx} duplicate ${t}`).toHaveLength(1);
-          created.add(t);
+        for (const i of model.issues.filter((x) => !original.has(x.number))) {
+          expect(
+            titles.filter((x) => x === i.title),
+            `${ctx} duplicate ${i.title}`,
+          ).toHaveLength(1);
         }
         for (const [n, list] of Object.entries(model.comments ?? {}))
-          expect(list.filter((c) => c.body.startsWith(MARKER)).length, `${ctx} #${n}`).toBeLessThanOrEqual(1);
+          expect(
+            list.filter((c) => c.body.startsWith(MARKER)).length,
+            `${ctx} #${n}`,
+          ).toBeLessThanOrEqual(1);
         text = result.text;
         if (last) {
           expect(result.result.exitCode, `${ctx}: ${e}`).toBe(0);
@@ -405,7 +429,10 @@ describe("random walks (RT-11, RT-12)", () => {
       // RT-12: the final state needs no further write.
       const again = await planModel(model);
       for (const b of again.plan.batches.filter((x) => x.runner === "cli"))
-        expect(b.writes.map((w) => `${w.action} ${w.target} ${w.detail}`), `${ctx} batch ${b.key}`).toEqual([]);
+        expect(
+          b.writes.map((w) => `${w.action} ${w.target} ${w.detail}`),
+          `${ctx} batch ${b.key}`,
+        ).toEqual([]);
     }
     expect(seen.interrupted).toBeGreaterThan(0);
     expect(seen.landedThenThrew).toBeGreaterThan(0);

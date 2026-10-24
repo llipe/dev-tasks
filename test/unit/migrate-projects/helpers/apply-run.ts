@@ -73,8 +73,7 @@ export async function applyModel(
   options: ApplyModelOptions = {},
 ): Promise<ApplyRun> {
   const path = options.path ?? PLAN_PATH;
-  const store =
-    options.store ?? memoryStore(planText === undefined ? {} : { [path]: planText });
+  const store = options.store ?? memoryStore(planText === undefined ? {} : { [path]: planText });
   if (options.store !== undefined && planText !== undefined) store.files[path] = planText;
   const lock = options.lock ?? memoryLock();
   const rec = applyRunner(model, options.runner);

@@ -69,7 +69,11 @@ export function randomRepo(r: Prng): RepoModel {
     if (r.bool(0.6))
       labels.push({
         name,
-        description: r.bool() ? "Old" : r.bool() ? "Retired (D-91): Old" : "x".repeat(r.int(70, 99)),
+        description: r.bool()
+          ? "Old"
+          : r.bool()
+            ? "Retired (D-91): Old"
+            : "x".repeat(r.int(70, 99)),
         color: "CCCCCC",
       });
   }
@@ -86,7 +90,11 @@ export function randomRepo(r: Prng): RepoModel {
   const issues: ModelIssue[] = [];
   const comments: RepoModel["comments"] = {};
   if (r.bool(0.7)) {
-    issues.push(issue(1, "[PRD-alpha] Alpha kit", { labels: has("type: prd") && r.bool() ? ["type: prd"] : [] }));
+    issues.push(
+      issue(1, "[PRD-alpha] Alpha kit", {
+        labels: has("type: prd") && r.bool() ? ["type: prd"] : [],
+      }),
+    );
     if (r.bool(0.4)) {
       const rows = ["| 1 | shipped | — |", "| 2 | in progress | #2 |", "| 3 | not started | — |"];
       comments["1"] = [
@@ -133,7 +141,9 @@ export function randomRepo(r: Prng): RepoModel {
         }),
       );
     } else if (kind === 2) {
-      issues.push(issue(num, `[PRD-alpha] ${r.pick(["fix: a", "chore: b", "docs c"])}`, { labels }));
+      issues.push(
+        issue(num, `[PRD-alpha] ${r.pick(["fix: a", "chore: b", "docs c"])}`, { labels }),
+      );
     } else {
       issues.push(
         issue(num, r.pick(["fix: a", "[chore] b", "docs: c", "plain d"]), {
@@ -162,5 +172,6 @@ export function randomAnswers(plan: MigrationPlan, r: Prng, openNumbers: number[
     const others = openNumbers.filter((n) => n !== b.issue);
     b.answer = others.length > 0 && r.bool() ? `#${r.pick(others)}` : "lower priority to high";
   }
-  for (const i of plan.review.information) if (/answer `yes`/.test(i.note) && r.bool()) i.answer = "yes";
+  for (const i of plan.review.information)
+    if (/answer `yes`/.test(i.note) && r.bool()) i.answer = "yes";
 }

@@ -449,7 +449,8 @@ async function setupApply(
     writeFileSync(join(cwd, path), content);
   }
   const planned = options.text ?? (await planModel(cloneModel(model))).text;
-  const text = options.approved === false || options.text !== undefined ? planned : approve(planned);
+  const text =
+    options.approved === false || options.text !== undefined ? planned : approve(planned);
   const planFile = options.planFile ?? DEFAULT_PLAN;
   mkdirSync(dirname(planAt(planFile)), { recursive: true });
   writeFileSync(planAt(planFile), text);
@@ -541,7 +542,8 @@ describe("migrate projects --apply runs (S-015 AC-8; MC-13 to MC-15, E2E-22, E2E
     expect(r.stderr).toBe("");
     expect(r.exitCode).toBe(0);
     const plan = parseMigrationPlan(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).plan;
-    for (const w of plan.batches.flatMap((b) => b.writes)) expect(w.state, w.id).toMatch(/^(done|skipped)/);
+    for (const w of plan.batches.flatMap((b) => b.writes))
+      expect(w.state, w.id).toMatch(/^(done|skipped)/);
     expect(r.stdout).toMatch(/gh project item-list/);
     expect(r.stdout).toMatch(/you run these/i);
     expect(r.stdout).toContain(DEFAULT_PLAN);
@@ -619,7 +621,8 @@ describe("migrate projects --apply runs (S-015 AC-8; MC-13 to MC-15, E2E-22, E2E
     });
     const exited = new Promise<number | null>((done) => child.on("exit", (code) => done(code)));
     const deadline = Date.now() + 30_000;
-    while (writesInLog().length < 3 && Date.now() < deadline) await new Promise((x) => setTimeout(x, 50));
+    while (writesInLog().length < 3 && Date.now() < deadline)
+      await new Promise((x) => setTimeout(x, 50));
     child.kill("SIGINT");
     const code = await exited;
     expect(code).not.toBe(0);
@@ -628,7 +631,9 @@ describe("migrate projects --apply runs (S-015 AC-8; MC-13 to MC-15, E2E-22, E2E
     const done = after.batches.flatMap((b) => b.writes).filter((w) => w.state !== "pending");
     expect(done.length).toBeGreaterThan(0);
     expect(done.length).toBeLessThan(32);
-    const firstLog = ghLog().filter((a) => isWrite(a)).map((a) => a.join(" "));
+    const firstLog = ghLog()
+      .filter((a) => isWrite(a))
+      .map((a) => a.join(" "));
     rmSync(join(tmp, "gh.log"));
 
     const r = run(["migrate", "projects", "--apply"]);
@@ -636,6 +641,7 @@ describe("migrate projects --apply runs (S-015 AC-8; MC-13 to MC-15, E2E-22, E2E
     const doneArgv = new Set(firstLog.slice(0, done.length));
     for (const a of writesInLog()) expect(doneArgv.has(a.join(" ")), a.join(" ")).toBe(false);
     const final = parseMigrationPlan(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).plan;
-    for (const w of final.batches.flatMap((b) => b.writes)) expect(w.state, w.id).toMatch(/^(done|skipped)/);
+    for (const w of final.batches.flatMap((b) => b.writes))
+      expect(w.state, w.id).toMatch(/^(done|skipped)/);
   }, 60_000);
 });
