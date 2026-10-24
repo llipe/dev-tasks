@@ -354,7 +354,15 @@ describe("random walks (RT-11, RT-12)", () => {
   it("no applied write repeats, no create lands twice, and re-planning proposes nothing", async () => {
     const seed = seedFromEnv(1761310000);
     const r = prng(seed);
-    const seen = { interrupted: 0, failed: 0, regenerated: 0, landedThenThrew: 0, resumed: 0 };
+    const seen = {
+      interrupted: 0,
+      failed: 0,
+      regenerated: 0,
+      landedThenThrew: 0,
+      resumed: 0,
+      changed: 0,
+      targetChanged: 0,
+    };
     for (let walk = 0; walk < 200; walk++) {
       const ctx = `seed ${seed} walk ${walk}`;
       const model = randomRepo(r);
@@ -367,8 +375,23 @@ describe("random walks (RT-11, RT-12)", () => {
       );
       let text = approve((await planModel(model, { previous: renderMigrationPlan(draft) })).text);
       const original = new Set(model.issues.map((i) => i.number));
+      // 5.20: in some walks someone else changes targets between runs.
+      const changing = r.bool(0.4);
+      const change = () => {
+        const open = model.issues.filter((i) => i.state === "open");
+        if (open.length === 0) return;
+        const i = r.pick(open);
+        const k = r.int(0, 2);
+        if (k === 0 && i.labels.length > 0) i.labels.splice(r.int(0, i.labels.length - 1), 1);
+        else if (k === 1 && model.labels.length > 0) {
+          const l = r.pick(model.labels).name;
+          if (!i.labels.some((x) => x.toLowerCase() === l.toLowerCase())) i.labels.push(l);
+        } else i.parent = null;
+        seen.changed++;
+      };
       for (let run = 0; run < 6; run++) {
         const last = run === 5;
+        if (changing && run > 0 && r.bool(0.5)) change();
         const before = parseMigrationPlan(text).plan.batches.flatMap((b) => b.writes);
         const startState = new Map(before.map((w) => [w.id, w.state]));
         const issued: string[] = [];
@@ -421,12 +444,18 @@ describe("random walks (RT-11, RT-12)", () => {
           ).toBeLessThanOrEqual(1);
         text = result.text;
         if (last) {
-          expect(result.result.exitCode, `${ctx}: ${e}`).toBe(0);
-          for (const w of result.plan.batches.flatMap((b) => b.writes))
-            expect(w.state, `${ctx} ${w.id} ${w.action}`).toMatch(/^(done|skipped)/);
+          const done = /^(done|skipped)/;
+          // A changed target is refused, never forced: `failed(target changed)` is its only failure.
+          const allowedEnd = changing ? /^(done|skipped|failed\(target changed\))/ : done;
+          if (!changing) expect(result.result.exitCode, `${ctx}: ${e}`).toBe(0);
+          for (const w of result.plan.batches.flatMap((b) => b.writes)) {
+            expect(w.state, `${ctx} ${w.id} ${w.action}`).toMatch(allowedEnd);
+            if (w.state === "failed(target changed)") seen.targetChanged++;
+          }
         }
       }
-      // RT-12: the final state needs no further write.
+      // RT-12: the final state needs no further write (unless someone else changed it).
+      if (changing) continue;
       const again = await planModel(model);
       for (const b of again.plan.batches.filter((x) => x.runner === "cli"))
         expect(
@@ -438,5 +467,6 @@ describe("random walks (RT-11, RT-12)", () => {
     expect(seen.landedThenThrew).toBeGreaterThan(0);
     expect(seen.failed).toBeGreaterThan(0);
     expect(seen.resumed).toBeGreaterThan(0);
+    expect(seen.changed).toBeGreaterThan(0);
   }, 120_000);
 });

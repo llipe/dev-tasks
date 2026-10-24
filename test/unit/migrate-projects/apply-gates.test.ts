@@ -37,6 +37,38 @@ function editDetail(text: string, id: string, detail: string): string {
     .join("\n");
 }
 
+// 5.19 (G2b): scenario k fails gate k and every later gate, and passes
+// every earlier one, so the code it exits with proves which gate ran first.
+describe("the gate order (5.19, A-64, D-80, D-101)", () => {
+  const GATES = [
+    ["unparsable", 2, /not a valid migration plan/],
+    ["auth", 11, /gh auth login/],
+    ["approval", 14, /not approved/],
+    ["digest", 14, /Plan digest/],
+    ["lock", 14, /\.migration-projects\.lock/],
+    ["stale while pending", 14, /regenerate the plan/],
+  ] as const;
+  it.each(GATES.map((g, k) => [g[0], k, g[1], g[2]] as const))(
+    "%s fails first: exit %#",
+    async (_, k, code, message) => {
+      const { model, approved } = await fresh();
+      let text = approved;
+      if (k <= 5) model.issues.find((i) => i.number === 20)!.labels.push("type: chore");
+      if (k <= 3) text = editDetail(text, "W-008", "description: Anything at all");
+      if (k <= 2) text = text.replace(/^Approved: yes$/m, "Approved: no");
+      if (k <= 0) text = text.replace("Format: 1", "Format: 9");
+      const run = await applyModel(model, text, {
+        lock: memoryLock(k <= 4),
+        runner: { authFails: k <= 1 },
+      });
+      expect(run.result.exitCode).toBe(code);
+      expect(run.result.error).toMatch(message);
+      expect(run.writes()).toEqual([]);
+      expect(run.store.files[PLAN_PATH]).toBe(text);
+    },
+  );
+});
+
 describe("plan file gates (A-64, EC-156)", () => {
   it("a missing plan file exits 2 before any gh call", async () => {
     const { model } = await fresh();
@@ -107,14 +139,36 @@ describe("approval (AC-1, MU-60, MU-61, CT-25, D-80)", () => {
     ["Approved: yes "],
     ["Approved: yes\nApproved: yes"],
     ["Approved: yes\nApproved: no"],
-    ["approved: yes"],
-  ])("the near miss %j is refused with zero writes", async (line) => {
+    ["Approved: no\n```\nApproved: yes\n```"],
+  ])("the near miss %j is refused with exactly 14 and zero writes", async (line) => {
     const { model, text } = await fresh();
     const mutated = text.replace(/^Approved: no$/m, line);
     const run = await applyModel(model, mutated);
-    expect([2, 14]).toContain(run.result.exitCode);
+    expect(run.result.exitCode).toBe(14);
+    expect(run.result.error).toMatch(/not approved/);
     expect(run.writes()).toEqual([]);
     expect(run.store.files[PLAN_PATH]).toBe(mutated);
+  });
+
+  // `approved: yes` is no `Approved:` line at all: the file lacks a required header.
+  it("a lower-case `approved: yes` leaves no Approved line: exit 2, zero writes", async () => {
+    const { model, text } = await fresh();
+    const run = await applyModel(model, text.replace(/^Approved: no$/m, "approved: yes"));
+    expect(run.result.exitCode).toBe(2);
+    expect(run.calls).toEqual([]);
+  });
+
+  // CT-25: an `Approved: yes` in a fence below the header is plan text, not approval.
+  it("a fenced `Approved: yes` in the plan body does not approve (14)", async () => {
+    const { model, text } = await fresh();
+    const fenced = text.replace(
+      "## Needs your answer\n",
+      "## Needs your answer\n\n```\nApproved: yes\n```\n",
+    );
+    expect(fenced).not.toBe(text);
+    const run = await applyModel(model, fenced);
+    expect(run.result.exitCode).toBe(14);
+    expect(run.writes()).toEqual([]);
   });
 
   it("exactly `Approved: yes` proceeds", async () => {
@@ -258,16 +312,25 @@ describe("answers never become writes in --apply (A-50, EC-147)", () => {
 });
 
 // RT-14: mutations of an approved plan either refuse with zero writes or
-// write only what the unmutated plan writes; never a write for an inserted
-// row, never an uncaught throw.
+// write exactly what the unmutated plan writes: the same argv for the same
+// row, and the same sequence when the rows parse unchanged; never a write
+// for an inserted row, never an uncaught throw.
 describe("fuzzed plan files never cause an unapproved write (RT-14)", () => {
   it("500 mutations", async () => {
     const seed = seedFromEnv(1761300000);
     const r = prng(seed);
     const { approved } = await fresh();
-    const baseline = await applyModel(cloneModel(loadModel("ac11")), approved);
+    const baseIds: string[] = [];
+    const baseline = await applyModel(cloneModel(loadModel("ac11")), approved, {
+      beforeWrite: (id) => baseIds.push(id),
+    });
     expect(baseline.result.exitCode).toBe(0);
-    const allowed = new Set(baseline.writes().map((a) => normalizeArgv(a).join("\u0001")));
+    const key = (a: readonly string[]) => normalizeArgv(a).join("\u0001");
+    const baseWrites = baseline.writes().map(key);
+    const byRow = new Map(baseIds.map((id, i) => [id, baseWrites[i]]));
+    const rowsOf = (t: string) =>
+      JSON.stringify(parseMigrationPlan(t).plan.batches.map((b) => [b.writes, b.steps]));
+    const unmutatedRows = rowsOf(approved);
     const states = [
       "done",
       "done(#5)",
@@ -311,21 +374,25 @@ describe("fuzzed plan files never cause an unapproved write (RT-14)", () => {
         text = [...lines.slice(0, i + 1), row, ...lines.slice(i + 1)].join("\n");
       }
       const ctx = `seed ${seed} iter ${iter} ${kind}`;
-      const run = await applyModel(cloneModel(loadModel("ac11")), text);
+      const ids: string[] = [];
+      const run = await applyModel(cloneModel(loadModel("ac11")), text, {
+        beforeWrite: (id) => ids.push(id),
+      });
       expect([0, 1, 2, 14], ctx).toContain(run.result.exitCode);
+      const writes = run.writes().map(key);
       if (run.result.exitCode === 2 || run.result.exitCode === 14) {
-        expect(run.writes(), ctx).toEqual([]);
+        expect(writes, ctx).toEqual([]);
+        continue;
       }
-      for (const argv of run.writes()) {
-        expect(allowed.has(normalizeArgv(argv).join("\u0001")), `${ctx}: ${argv.join(" ")}`).toBe(
-          true,
-        );
-      }
+      // Each write is exactly the unmutated plan's write for that row.
+      ids.forEach((id, i) => expect(writes[i], `${ctx} ${id}`).toBe(byRow.get(id)));
+      // Rows that parse unchanged write exactly the unmutated sequence.
+      if (rowsOf(text) === unmutatedRows) expect(writes, ctx).toEqual(baseWrites);
     }
     for (const k of ["delete", "duplicate", "truncate", "state", "insert", "pipe", "space"]) {
       expect(kinds.get(k) ?? 0, k).toBeGreaterThan(0);
     }
-  });
+  }, 120_000);
 });
 
 // The digest helper the gates use is the one the file was rendered with.
