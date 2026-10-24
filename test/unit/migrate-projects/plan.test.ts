@@ -15,7 +15,12 @@ import {
   TYPE_DEFINITIONS,
   TYPE_SET,
 } from "#core/migrate-projects/conventions.js";
-import { MIGRATION_PLAN_ACTIONS, MIGRATION_PLAN_BATCHES } from "#core/migrate-projects/planfile.js";
+import {
+  MIGRATION_PLAN_ACTIONS,
+  MIGRATION_PLAN_BATCHES,
+  parseMigrationPlan,
+  renderMigrationPlan,
+} from "#core/migrate-projects/planfile.js";
 import { projectCleanupSteps, retiredDescription } from "#core/migrate-projects/plan.js";
 import { cloneModel, loadModel, type ModelIssue, type RepoModel } from "./helpers/fake-github.js";
 import { applyPlanToModel } from "./helpers/model-apply.js";
@@ -542,17 +547,68 @@ describe("two tracking-issue matches (MU-53, D-87)", () => {
   });
 });
 
+/**
+ * MU-54's oracle (qa gap 2), written here from §16a A-53 rather than taken
+ * from classify.ts: standalone means no `Story S-NNN` title, no `**Story:**`
+ * line, and not a tracking title. A `[PRD-x]`-prefixed issue can be
+ * standalone, so the prefix alone never exempts it.
+ */
+function standaloneOracle(model: RepoModel): Set<string> {
+  const prdForms = new Set<string>();
+  for (const [path, text] of Object.entries(model.files)) {
+    const file = path.match(/^docs\/requirements\/prd-(.+)\.md$/);
+    const h1 = text.split("\n").find((l) => l.startsWith("# "));
+    if (!file || h1 === undefined) continue;
+    const name = file[1];
+    const full = h1.slice(2).trim();
+    const noPrd = full.replace(/^PRD:\s*/, "");
+    const noName = noPrd.startsWith(`${name} `)
+      ? noPrd.slice(name.length + 1).replace(/^[—–-]\s+/, "")
+      : noPrd;
+    for (const f of [full, noPrd, noName]) prdForms.add(`[PRD-${name}] ${f}`);
+  }
+  const container = ["level: prd", "level: wave", "type: prd", "type: wave"];
+  return new Set(
+    model.issues
+      .filter((i) => {
+        if (/\bStory S-\d+\b/.test(i.title)) return false;
+        if (/^\s*\*\*Story:\*\*/m.test(i.body ?? "")) return false;
+        if (/^\[PRD-[^\]\s]+\] Wave [^\s:]+:/.test(i.title)) return false;
+        if (prdForms.has(i.title)) return false;
+        if (/^\[PRD-/.test(i.title) && i.labels.some((l) => container.includes(l.toLowerCase())))
+          return false;
+        return true;
+      })
+      .map((i) => `#${i.number}`),
+  );
+}
+
 describe("scope guards (MU-54, AC-5, D-19, D-27, D-82)", () => {
+  it("the oracle guards a `[PRD-x]`-prefixed standalone issue (qa gap 2)", () => {
+    const m = base([
+      issue(5, "[PRD-alpha] fix: crash", { labels: ["type: bug", "phase: 2"] }),
+      STORY(10, "2"),
+      PRD_A(),
+    ]);
+    expect([...standaloneOracle(m)]).toEqual(["#5"]);
+  });
+
+  it("a `[PRD-x]`-prefixed standalone with a `phase:` label gets no level and no parent", async () => {
+    const m = base([
+      PRD_A(),
+      WAVE_A2(),
+      issue(5, "[PRD-alpha] fix: crash", { labels: ["type: bug", "phase: 2"] }),
+    ]);
+    const run = await planModel(m);
+    expect(run.writes().filter((w) => w.target === "#5" || w.detail.includes("#5"))).toEqual([]);
+  });
+
   it.each(["survey", "ac11", "empty"])(
     "%s: no title write, no hierarchy on a standalone, no Status",
     async (name) => {
       const model = loadModel(name);
       const run = await planModel(model);
-      const standalone = new Set(
-        model.issues
-          .filter((i) => !/\bStory S-\d+\b/.test(i.title) && !/^\[PRD-[^\]]+\]/.test(i.title))
-          .map((i) => `#${i.number}`),
-      );
+      const standalone = standaloneOracle(model);
       for (const w of run.writes()) {
         // `status-comment` is the PRD comment (D-92), not a Project Status.
         expect(w.action).not.toMatch(/title|project|^status$|set-status/i);
@@ -612,20 +668,23 @@ describe("batch 7 strings live in plan.ts only (A-60)", () => {
   });
 });
 
-// RT-12 and RT-13 over random repositories: every row respects the scope
-// guards, every dependency is an earlier row, and once the rows are applied
-// a second --plan proposes no batch 1 to 6 row (A-66).
+// RT-12 and RT-13 over random repositories (qa gap 3): every row respects
+// the scope guards and every dependency is an earlier row; answers are
+// filled at random and fed to a second --plan (A-50); once that plan's rows,
+// including batch 4 type rows and batch 4b blocking links and priority
+// switches, are applied, a third --plan proposes no batch 1 to 6 row (A-66).
 describe("random repositories (RT-12, RT-13)", () => {
-  it("guards hold and re-planning after the writes proposes none", async () => {
+  it("guards hold, answers apply, and re-planning after the writes proposes none", async () => {
     const seed = seedFromEnv(1761265014);
     const r = prng(seed);
     const pool = [
       "type: bug",
       "type: enhancement",
-      "type: docs",
+      "Type: Docs",
       "type: other",
       "type: prd",
       "status: ready",
+      "Status: Ready",
       "status: blocked",
       "wave: 2",
       "phase: 1",
@@ -637,89 +696,362 @@ describe("random repositories (RT-12, RT-13)", () => {
       "level: story",
       "bug",
     ];
-    for (let iter = 0; iter < 60; iter++) {
+    const seen = { typeRow: 0, blockedBy: 0, toHigh: 0, comment: 0 };
+    for (let iter = 0; iter < 200; iter++) {
+      const ctx = `seed ${seed} iter ${iter}`;
       const m = base();
       m.labels = m.labels.filter(() => r.bool(0.7));
       for (const name of ["type: other", "type: prd", "status: ready", "wave: 2", "needs: merge"]) {
-        if (r.bool())
+        if (r.bool()) {
           m.labels.push({
             name,
             description: r.bool() ? "Old" : "Retired (D-91): Old",
             color: "CCCCCC",
           });
+        }
       }
       const issues: ModelIssue[] = [];
-      let n = 1;
-      if (r.bool(0.6))
-        issues.push(issue(n++, "[PRD-alpha] Alpha kit", { labels: r.bool() ? ["type: prd"] : [] }));
-      if (r.bool(0.4))
+      if (r.bool(0.6)) {
+        issues.push(issue(1, "[PRD-alpha] Alpha kit", { labels: r.bool() ? ["type: prd"] : [] }));
+        if (r.bool(0.4)) {
+          seen.comment++;
+          const rows = [
+            "| 1 | shipped | — |",
+            "| 2 | in progress | #2 |",
+            "| 3 | not started | — |",
+          ];
+          m.comments = { "1": [comment(rows.filter(() => r.bool()))] };
+        }
+      }
+      if (r.bool(0.4)) {
         issues.push(
-          issue(n++, "[PRD-alpha] Wave 2: Alpha search", {
+          issue(2, "[PRD-alpha] Wave 2: Alpha search", {
             labels: ["level: wave"],
-            parent: r.bool() && n > 2 ? 1 : null,
+            parent: r.bool() && issues.length > 0 ? 1 : null,
             state: r.bool(0.8) ? "open" : "closed",
           }),
         );
+      }
       const count = r.int(0, 8);
       for (let k = 0; k < count; k++) {
         const num = 10 + k;
-        const kind = r.int(0, 3);
         const labels = [...new Set(Array.from({ length: r.int(0, 3) }, () => r.pick(pool)))];
-        if (kind === 0)
+        // A label GitHub would refuse twice (case-insensitive) keeps one spelling.
+        const unique = labels.filter(
+          (l, i) => labels.findIndex((x) => x.toLowerCase() === l.toLowerCase()) === i,
+        );
+        const kind = r.int(0, 4);
+        if (kind === 0) {
           issues.push(
             issue(num, `[PRD-alpha] Story S-0${num}: s`, {
-              labels,
+              labels: unique,
               body: `**Story:** workstream/user-stories-alpha-phase-${r.pick(["1", "2", "3", "9"])}.md`,
             }),
           );
-        else if (kind === 1)
+        } else if (kind === 1) {
           issues.push(
-            issue(num, `${r.bool() ? "[PRD-alpha] " : ""}Story S-0${num}: s`, { labels }),
+            issue(num, `${r.bool() ? "[PRD-alpha] " : ""}Story S-0${num}: s`, { labels: unique }),
           );
-        else
+        } else if (kind === 2) {
+          // RT-13: a prefixed standalone issue, guarded like any other.
+          issues.push(
+            issue(num, `[PRD-alpha] ${r.pick(["fix: a", "chore: b", "docs c"])}`, {
+              labels: unique,
+            }),
+          );
+        } else {
           issues.push(
             issue(num, r.pick(["fix: a", "[chore] b", "docs: c", "plain d"]), {
-              labels,
+              labels: unique,
               state: r.bool(0.9) ? "open" : "closed",
             }),
           );
+        }
       }
       m.issues = issues;
-      const files: Record<string, string> = r.bool(0.3)
-        ? { "workstream/planner-state-alpha-phase-3.md": "x" }
-        : {};
-      Object.assign(m.files, files);
-      const ctx = `seed ${seed} iter ${iter}`;
-      const first = await planModel(m);
-      const standalone = new Set(
-        first.plan.review.needsType.length >= 0
-          ? issues
-              .filter(
-                (i) =>
-                  !/\bStory S-\d+\b/.test(i.title) &&
-                  !/^\[PRD-alpha\] (Alpha kit|Wave )/.test(i.title),
-              )
-              .map((i) => `#${i.number}`)
-          : [],
-      );
-      const seen = new Set<string>();
-      for (const w of first.writes()) {
-        for (const d of w.dependsOn) expect(seen.has(d), `${ctx} ${w.id}`).toBe(true);
-        seen.add(w.id);
-        if (w.action === "link-sub-issue") {
-          expect(standalone.has(w.target), `${ctx} ${w.id}`).toBe(false);
-          expect(standalone.has(w.detail.slice("sub-issue ".length)), `${ctx} ${w.id}`).toBe(false);
+      if (r.bool(0.3)) m.files["workstream/planner-state-alpha-phase-3.md"] = "x";
+
+      const standalone = standaloneOracle(m);
+      const guard = (run: Awaited<ReturnType<typeof planModel>>) => {
+        const ids = new Set<string>();
+        for (const w of run.writes()) {
+          for (const d of w.dependsOn) expect(ids.has(d), `${ctx} ${w.id}`).toBe(true);
+          ids.add(w.id);
+          if (w.action === "link-sub-issue") {
+            expect(standalone.has(w.target), `${ctx} ${w.id}`).toBe(false);
+            expect(standalone.has(w.detail.slice("sub-issue ".length)), `${ctx} ${w.id}`).toBe(
+              false,
+            );
+          }
+          if (w.action === "add-label" && w.detail.startsWith("level: ")) {
+            expect(standalone.has(w.target), `${ctx} ${w.id}`).toBe(false);
+          }
+          if (w.action === "edit-label") {
+            expect(w.detail.length - "description: ".length, ctx).toBeLessThanOrEqual(100);
+          }
         }
-        if (w.action === "add-label" && w.detail.startsWith("level: "))
-          expect(standalone.has(w.target), `${ctx} ${w.id}`).toBe(false);
-        if (w.action === "edit-label")
-          expect(w.detail.length - "description: ".length, ctx).toBeLessThanOrEqual(100);
+      };
+
+      const first = await planModel(m);
+      guard(first);
+      // Answers, at random, the way the owner would give them.
+      const p = parseMigrationPlan(first.text).plan;
+      const openNumbers = m.issues.filter((i) => i.state === "open").map((i) => i.number);
+      for (const u of p.review.unmapped)
+        if (r.bool(0.6)) u.answer = r.pick(["alpha 2", "alpha 3", "standalone"]);
+      for (const t of p.review.needsType) if (r.bool(0.7)) t.answer = r.pick([...TYPE_SET]);
+      for (const b of p.review.needsBlockingLink) {
+        if (!r.bool(0.8)) continue;
+        const others = openNumbers.filter((n) => n !== b.issue);
+        b.answer = others.length > 0 && r.bool() ? `#${r.pick(others)}` : "lower priority to high";
       }
-      applyPlanToModel(m, first.plan);
-      const second = await planModel(m);
-      for (const b of second.plan.batches.filter((x) => x.runner === "cli")) {
+      const second = await planModel(m, { previous: renderMigrationPlan(p) });
+      guard(second);
+      expect(second.plan.approved, ctx).toBe(false);
+      for (const w of second.batch("4").writes) {
+        if (w.action === "add-label" && w.detail.startsWith("type: ")) seen.typeRow++;
+      }
+      for (const w of second.batch("4b").writes) {
+        if (w.action === "add-blocked-by") seen.blockedBy++;
+        if (w.action === "add-label" && w.detail === "priority: high") seen.toHigh++;
+      }
+      applyPlanToModel(m, second.plan);
+      const third = await planModel(m, { previous: second.text });
+      for (const b of third.plan.batches.filter((x) => x.runner === "cli")) {
         expect(b.writes.map(triple), `${ctx} batch ${b.key}`).toEqual([]);
       }
     }
+    // The generator reaches every answer kind and the existing comment.
+    expect(seen.typeRow).toBeGreaterThan(0);
+    expect(seen.blockedBy).toBeGreaterThan(0);
+    expect(seen.toHigh).toBeGreaterThan(0);
+    expect(seen.comment).toBeGreaterThan(0);
+  });
+});
+
+// 4.15 (qa gap 1, the surviving mutant): a `Done` row keeps its open wave
+// issue for the status comment, and still links no story under it.
+describe("a `Done` row with an open wave issue (4.15, A-83)", () => {
+  it("links no story, notes it, and the comment row keeps the wave issue", async () => {
+    const wave1 = issue(4, "[PRD-alpha] Wave 1: Alpha basics", {
+      labels: ["level: wave"],
+      parent: 1,
+    });
+    const run = await planModel(base([PRD_A(), wave1, STORY(10, "1", { parent: null })]));
+    expect(run.writes().filter((w) => w.action === "link-sub-issue")).toEqual([]);
+    expect(run.plan.review.information).toContainEqual(
+      expect.objectContaining({ ref: "#10", note: expect.stringMatching(/alpha 1 is `Done`/) }),
+    );
+    expect(run.batch("6").writes[0].detail).toBe(
+      "create: 1 = shipped, #4; 2 = in progress, —; 3 = not started, —",
+    );
+  });
+
+  it("an unlinked kept wave issue of a `Done` row is still linked under its PRD", async () => {
+    const wave1 = issue(4, "[PRD-alpha] Wave 1: Alpha basics", {
+      labels: ["level: wave"],
+      parent: null,
+    });
+    const run = await planModel(base([PRD_A(), wave1, STORY(10, "1", { parent: null })]));
+    expect(run.batch("3").writes.map(triple)).toEqual([["link-sub-issue", "#1", "sub-issue #4"]]);
+  });
+});
+
+// 4.18 (EC-117, D-106): GitHub matches label names case-insensitively.
+describe("label names match case-insensitively (4.18, EC-117, D-106)", () => {
+  it("an existing label in another case is reused, and its description set on its own name", async () => {
+    const m = base();
+    m.labels = m.labels.filter((l) => l.name !== "type: bug" && l.name !== "level: story");
+    m.labels.push(
+      { name: "Type: Bug", description: "Broken", color: "D93F0B" },
+      {
+        name: "Level: Story",
+        description: LEVEL_DEFINITIONS["level: story"].description,
+        color: "7986CB",
+      },
+      { name: "Status: Ready", description: "Ready", color: "0E8A16" },
+    );
+    const run = await planModel(m);
+    expect(run.batch("1").writes.map(triple)).toEqual([
+      ["edit-label", "label:Type: Bug", `description: ${TYPE_DEFINITIONS.bug}`],
+      ["edit-label", "label:Status: Ready", "description: Retired (D-91): Ready"],
+    ]);
+  });
+
+  it("issue labels in another case count: level, retired and type labels", async () => {
+    const m = base([
+      PRD_A(),
+      WAVE_A2(),
+      STORY(10, "2", { parent: 2, labels: ["Type: Enhancement", "Level: Story", "Status: Ready"] }),
+      issue(20, "[bug] x", { labels: ["TYPE: BUG", "Priority: Critical"] }),
+    ]);
+    const run = await planModel(m);
+    expect(run.batch("4").writes).toEqual([]);
+    expect(run.batch("5").writes.map(triple)).toEqual([["remove-label", "#10", "Status: Ready"]]);
+    expect(run.plan.review.needsType.map((n) => n.issue)).toEqual([]);
+    expect(run.plan.review.needsBlockingLink.map((n) => n.issue)).toEqual([20]);
+    expect(run.calls.map((c) => c.join(" "))).toContain(
+      "api --paginate repos/acme/kit/issues/20/dependencies/blocking?per_page=100",
+    );
+  });
+
+  it("a type answer removes other types by their own spelling and never re-adds one present", async () => {
+    const m = base([issue(20, "fix: x", { labels: ["Type: Bug", "type: docs"] })]);
+    const first = await planModel(m);
+    const p = parseMigrationPlan(first.text).plan;
+    p.review.needsType[0].answer = "bug";
+    const second = await planModel(m, { previous: renderMigrationPlan(p) });
+    expect(second.batch("4").writes.map(triple)).toEqual([["remove-label", "#20", "type: docs"]]);
+  });
+
+  it("a `Phase:` label in another case maps like `phase:`", async () => {
+    const run = await planModel(
+      base([
+        PRD_A(),
+        WAVE_A2(),
+        issue(10, "[PRD-alpha] Story S-010: s", { labels: ["type: enhancement", "Phase: 2"] }),
+      ]),
+    );
+    expect(run.batch("3").writes.map(triple)).toEqual([["link-sub-issue", "#2", "sub-issue #10"]]);
+  });
+});
+
+// 4.19 (qa gap 5): the remaining branches.
+describe("remaining branches (4.19)", () => {
+  it("a wave tracking issue without `Wave <id>:` is noted", async () => {
+    const run = await planModel(
+      base([PRD_A(), issue(3, "[PRD-alpha] Gadget wave", { labels: ["level: wave"] })]),
+    );
+    expect(run.plan.review.information).toContainEqual(
+      expect.objectContaining({ ref: "#3", note: expect.stringMatching(/without `Wave <id>:`/) }),
+    );
+  });
+
+  it("tracking issues naming no roadmap PRD or wave are roadmap notes", async () => {
+    const run = await planModel(
+      base([
+        PRD_A(),
+        issue(3, "[PRD-gamma] Wave 1: g", { labels: ["level: wave"] }),
+        issue(4, "[PRD-alpha] Wave 7: s", { labels: ["level: wave"] }),
+      ]),
+    );
+    expect(run.plan.review.roadmap).toEqual([
+      { row: "#3", note: "tracking issue for PRD gamma, which no roadmap row has" },
+      { row: "#4", note: "wave tracking issue for alpha 7, which no roadmap row has" },
+    ]);
+  });
+
+  it("an unmapped story whose prefix names an omitted PRD is neither listed nor targeted", async () => {
+    const run = await planModel(
+      base([
+        issue(1, "[PRD-alpha] Alpha kit"),
+        issue(3, "[PRD-alpha] Alpha kit"),
+        issue(10, "[PRD-alpha] Story S-010: s", { labels: ["status: ready"] }),
+      ]),
+    );
+    expect(run.plan.review.unmapped).toEqual([]);
+    expect(run.writes().some((w) => w.target === "#10")).toBe(false);
+  });
+
+  it("a needed PRD without an H1 and its wave get notes, never a create", async () => {
+    const m = base([STORY(10, "2", { labels: ["type: enhancement"] })]);
+    m.files["docs/requirements/prd-alpha.md"] = "no heading here\n";
+    const run = await planModel(m);
+    expect(run.batch("2").writes).toEqual([]);
+    const notes = run.plan.review.information.map((i) => i.note);
+    expect(notes).toContain(
+      "no `docs/requirements/prd-alpha.md` heading to title its PRD tracking issue; none is created",
+    );
+    expect(notes).toContain(
+      "wave alpha 2 needs a wave issue, but the PRD has no tracking issue to hold it; none is created",
+    );
+  });
+
+  it("a `Phase/Wave` cell with a space or colon cannot title a wave issue", async () => {
+    const m = base([
+      issue(9, "[PRD-beta] Beta kit", { labels: ["level: prd"] }),
+      issue(10, "[PRD-beta] Story S-010: s", {
+        labels: ["type: enhancement", "phase: Beta launch"],
+      }),
+    ]);
+    m.files["docs/roadmap.md"] =
+      ROADMAP +
+      "| [beta](requirements/prd-beta.md) | Beta launch | Launch | Not started | — | — |\n";
+    const run = await planModel(m);
+    expect(run.batch("2").writes).toEqual([]);
+    expect(run.plan.review.information).toContainEqual(
+      expect.objectContaining({ ref: "[PRD-beta]", note: expect.stringMatching(/space or colon/) }),
+    );
+  });
+
+  it("several marker comments are noted; batch 6 edits the oldest", async () => {
+    const m = base([PRD_A(), WAVE_A2(), STORY(10, "2", { parent: 2 })]);
+    m.comments = {
+      "1": [{ ...comment(["| 1 | shipped | — |"]), id: 7002 }, comment(["| 1 | shipped | — |"])],
+    };
+    const run = await planModel(m);
+    expect(run.plan.review.information).toContainEqual(
+      expect.objectContaining({
+        ref: "#1",
+        note: "2 comments carry the status marker; batch 6 edits the oldest (7001); remove the others",
+      }),
+    );
+    expect(run.batch("6").writes[0].detail).toMatch(/^add: 2 = /);
+  });
+
+  it("a blocking answer naming the issue itself is invalid", async () => {
+    const m = base([issue(30, "[bug] a", { labels: ["type: bug", "priority: critical"] })]);
+    const first = await planModel(m);
+    const p = parseMigrationPlan(first.text).plan;
+    p.review.needsBlockingLink[0].answer = "#30";
+    const second = await planModel(m, { previous: renderMigrationPlan(p) });
+    expect(second.batch("4b").writes).toEqual([]);
+    expect(second.plan.review.information).toContainEqual(
+      expect.objectContaining({
+        ref: "#30",
+        note: 'invalid answer "#30": an issue cannot block itself',
+      }),
+    );
+  });
+
+  it("a state file without -phase-N makes the PRD's `All` wave active", async () => {
+    const m = base([], {
+      "docs/requirements/prd-gamma.md": "# PRD: gamma — Gamma kit\n",
+      "workstream/planner-state-gamma.md": "x",
+    });
+    m.files["docs/roadmap.md"] =
+      ROADMAP + "| [gamma](requirements/prd-gamma.md) | All | Gamma all | In progress | — | — |\n";
+    const run = await planModel(m);
+    expect(run.batch("2").writes.map((w) => w.detail)).toEqual([
+      "template: prd; label: level: prd; title: [PRD-gamma] Gamma kit",
+      "template: wave; label: level: wave; title: [PRD-gamma] Wave All: Gamma all",
+    ]);
+  });
+
+  // EC-129: decided as A-91 reads: only open matches count.
+  it("one closed and one open PRD match: the open one is reused, nothing omitted", async () => {
+    const closed = issue(3, "[PRD-alpha] Alpha kit", { labels: ["level: prd"], state: "closed" });
+    const run = await planModel(base([PRD_A(), closed, WAVE_A2(), STORY(10, "2", { parent: 2 })]));
+    expect(run.batch("2").writes).toEqual([]);
+    expect(run.batch("6").writes.map((w) => w.target)).toEqual(["#1"]);
+    expect(run.plan.review.information.some((i) => /two PRD tracking issues/.test(i.note))).toBe(
+      false,
+    );
+  });
+
+  // EC-131
+  it("a PRD whose rows are all `Done`, with no open story, gets only the question", async () => {
+    const m = base([PRD_A(), WAVE_A2(), STORY(10, "2", { parent: 2 })], {
+      "docs/requirements/prd-gamma.md": "# PRD: gamma — Gamma kit\n",
+    });
+    m.files["docs/roadmap.md"] =
+      ROADMAP +
+      "| [gamma](requirements/prd-gamma.md) | 1 | G1 | Done | — | — |\n| [gamma](requirements/prd-gamma.md) | 2 | G2 | Done | — | — |\n";
+    const run = await planModel(m);
+    expect(run.batch("2").writes).toEqual([]);
+    expect(run.batch("6").writes.map((w) => w.target)).toEqual(["#1"]);
+    expect(run.plan.review.information).toContainEqual(
+      expect.objectContaining({ ref: "[PRD-gamma]", answer: "" }),
+    );
   });
 });
