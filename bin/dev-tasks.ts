@@ -540,7 +540,8 @@ async function migrateProjectsApply(
     process.stderr.write(
       `migrate projects: interrupted by ${signal}; the states so far are in ${planFile}: run --apply again to resume\n`,
     );
-    process.exit(signal === "SIGINT" ? 130 : 143);
+    // CT-34 and the user manual: an interrupted run exits GeneralError (1), whatever the signal.
+    process.exit(ExitCode.GeneralError);
   };
   process.once("SIGINT", onSignal);
   process.once("SIGTERM", onSignal);

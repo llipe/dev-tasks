@@ -492,10 +492,10 @@ function resolveRef(ctx: Context, ref: Ref): { number: number } | { state: strin
   const create = ctx.byId.get(ref.id)!;
   const n = createdNumber(create.state);
   if (n === null) return { state: `failed(${ref.id} has no recorded issue number)` };
+  // A hand-edited record must never redirect a write: #N must be the issue the row created (D-101).
   const issue = ctx.live.issues.get(n);
   const title = (ctx.parsed.get(ref.id) as Extract<Row, { action: "create-issue" }>).title;
-  if (issue === undefined || issue.title !== title)
-    return { state: `failed(#${n} is not the issue ${ref.id} created)` };
+  if (issue === undefined || issue.title !== title) return { state: "failed(target changed)" };
   return { number: n };
 }
 
@@ -924,7 +924,7 @@ export async function runMigrationApply(
       planFile,
       plan,
       err.writeBack
-        ? `could not record ${err.id}'s state in ${planFile} (${err.message}); the write may have landed: run --apply again, which checks it first`
+        ? `could not record ${err.id}'s state in ${planFile} (${err.message}); the write may have landed: run --apply again, which checks it first (if no state was recorded yet, it will ask you to regenerate the plan with --plan)`
         : `interrupted at ${err.id} (${err.message}); the states so far are in ${planFile}: run --apply again to resume`,
     );
   } finally {

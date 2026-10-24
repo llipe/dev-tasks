@@ -363,7 +363,7 @@ dev-tasks migrate projects --apply [--plan-file <path>] [--json]
 - Every write is built from the row's Action, Target and Detail only, each value as `--flag=value` and a label name after `--`. Issue and comment bodies go through `--body-file` (an edit through `--field=body=@<file>`) in a temporary directory, removed after each call. The PRD status comment is found by its marker: created when absent, otherwise edited in place by id with only the missing rows added.
 - It never runs batch 7, never makes a Project call, never deletes a label, issue or comment, and never writes a title or a Status. The summary prints batch 7's steps for you to run with your own session; tick each by setting its State to `done`.
 - Answers in the review tables never become writes here: run `--plan` again to turn them into rows, then approve the rebuilt plan. The summary counts the items still waiting for an answer.
-- It exits `0` when every write applied, and `1` when any write is `failed` or the run was interrupted (the states so far are kept). `--json` prints `{ command, mode: "apply", repo, planFile, batches: [{ name, pending, done, failed, skipped }], review, exitCode }`.
+- It exits `0` when every write applied, and `1` when any write is `failed` or the run was interrupted, including by `SIGINT` or `SIGTERM`, which release the lock and remove the body files first (the states so far are kept). `--json` prints `{ command, mode: "apply", repo, planFile, batches: [{ name, pending, done, failed, skipped }], review, exitCode }`.
 
 ---
 

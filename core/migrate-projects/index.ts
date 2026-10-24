@@ -9,7 +9,7 @@
  * (S-015, `apply.ts`) is the only writer: it runs an approved plan's
  * batches 1 to 6 and records each write's state in the plan file.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { ExitCode } from "../exit-codes.js";
 import { classifySnapshot, type MigrationPlanClassification } from "./classify.js";
@@ -67,8 +67,14 @@ export function createPlanFileStore(resolvePath: (p: string) => string): PlanFil
       const full = resolvePath(path);
       mkdirSync(dirname(full), { recursive: true });
       const tmp = `${full}.tmp-${process.pid}`;
-      writeFileSync(tmp, content);
-      renameSync(tmp, full);
+      // Old or new content, never a truncated file (EC-140); a failed attempt leaves no temp file.
+      try {
+        writeFileSync(tmp, content);
+        renameSync(tmp, full);
+      } catch (err) {
+        rmSync(tmp, { force: true });
+        throw err;
+      }
     },
   };
 }
