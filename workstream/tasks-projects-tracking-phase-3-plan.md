@@ -70,7 +70,7 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 2.6 Edge cases in the step's text: a partial canonical table counts as canonical; a narrative "paused" translates to `Not started` and is flagged; two narrative sections for one wave give one row citing both
   - [x] 2.7 AC-to-test mapping: AC-1 → `product-engineer > roadmap conversion`; AC-2 → `product-engineer > migration dependency`; AC-3 → `product-engineer > state files`; AC-4 is the file
   - [x] 2.8 Run Tests: `pnpm run test:unit` green
-  - [ ] 2.9 Scope the exact match to the PRD (F1, D-98, A-56): append ", among the rows of the PRD named in the story's `[PRD-<name>]` title prefix (D-98)" to the `phase: X` sentence; extend PT-69. Test first.
+  - [x] 2.9 Scope the exact match to the PRD (F1, D-98, A-56): append ", among the rows of the PRD named in the story's `[PRD-<name>]` title prefix (D-98)" to the `phase: X` sentence; extend PT-69. Test first.
   - [ ] 2.10 Harden the pins (F2): make PT-72's negative check sentence-based and case-insensitive, allowing only the never-`Done` sentence and the citation sentence; pin "never instead of it", "from the fixed set", "the user approves the draft", "never inside the migration's own PR", "never fuzzy-matched" with the unmapped listing, and "as information" for `--plan` and state files; prove the pins catch the verifier's probes M1 to M8. Test first.
 
 - [ ] 3.0 Implement Story S-013: `dev-tasks migrate projects --plan` reads the repository and writes a reviewable migration plan (#320)

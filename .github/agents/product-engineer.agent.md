@@ -95,7 +95,7 @@ Last updated: YYYY-MM-DD
 3. **Flag every translated Status for the user:** list each row whose `Status` was translated from narrative wording, with the original word, for the user to confirm or correct; for example, a narrative "paused" translates to `Not started` and is flagged. A Status without merged evidence is never upgraded to `Done` by the conversion; a `Done` row cites the merged PR or closed issue behind it.
 4. **Ship it as its own docs PR before migration runs:** the user approves the draft, and the conversion merges as its own docs PR before `dev-tasks migrate projects --plan` is run, never inside the migration's own PR.
 
-Migration depends on this step: `dev-tasks migrate projects --plan` refuses to run without the canonical table, and it maps `phase: X` only to a row whose `Phase/Wave` cell equals `X` exactly. A label that matches no row is listed as unmapped for the user, never fuzzy-matched (D-86).
+Migration depends on this step: `dev-tasks migrate projects --plan` refuses to run without the canonical table, and it maps `phase: X` only to a row whose `Phase/Wave` cell equals `X` exactly, among the rows of the PRD named in the story's `[PRD-<name>]` title prefix (D-98). A label that matches no row is listed as unmapped for the user, never fuzzy-matched (D-86).
 
 Migration edits no `workstream/planner-state-*.md` file: `--plan` lists each active state file that lacks a `Wave issue:` line as information, and the planner's resume adds the missing `Wave issue:` line (D-89; PRD AC-13 as amended by D-99).
 
