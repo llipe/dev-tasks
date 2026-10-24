@@ -19,7 +19,8 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 - `core/migrate-projects/planfile.ts` - render and parse the migration plan (S-013, S-014, S-015)
 - `core/migrate-projects/roadmap.ts` - canonical roadmap table parser (S-014)
 - `core/migrate-projects/map.ts` - FR-18 precedence (S-014)
-- `core/migrate-projects/plan.ts` - batches 1 to 7 (S-014)
+- `core/migrate-projects/plan.ts` - batches 1 to 7 and 4b, the row grammar, the batch 7 builder (S-014)
+- `core/migrate-projects/answers.ts` - previous plan answers and their grammar (S-014, task 4.7)
 - `core/migrate-projects/apply.ts` - gated, recorded, resumable writes (S-015)
 - `core/migrate-projects/index.ts` - module entry (S-013 to S-015)
 - `bin/dev-tasks.ts` - `migrate projects --plan | --apply` dispatch and help (S-013, S-015)
@@ -30,7 +31,9 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 - `test/unit/runbook-set.test.ts` - gains the new runbook (S-017, A-62)
 - `test/unit/projects-tracking-wave-3-parity.test.ts` - prompt pins (S-019, S-016, S-017)
 - `test/unit/migrate-projects/*.test.ts` - module and CLI tests (S-013 to S-015)
-- `test/unit/migrate-projects/helpers/*.ts` - fake GitHub model, recording runner, test-side write oracle, seeded PRNG (S-013)
+- `test/unit/migrate-projects/helpers/*.ts` - fake GitHub model, recording runner, test-side write oracle, seeded PRNG (S-013); issue comments, `model-apply.ts` (test-side plan replay for RT-12) and `plan-run.ts` (S-014)
+- `test/fixtures/migrate-projects/ac11/` - the AC-11 fixture and its `SOURCE.md` (S-014, RV-3)
+- `test/unit/projects-tracking-wave-3-parity.test.ts` - PT-80 narrowed to plan.ts's batch 7 builder, PT-81 pins label colours and level/priority descriptions (S-014)
 - `test/fixtures/migrate-projects/fake-gh/gh` - fake `gh` for the Layer 2 CLI tests (S-013, A-85)
 - `test/unit/roadmap-parity.test.ts` - imports the shared roadmap parser (S-013, A-59)
 - `test/unit/parse-args.test.ts`, `test/unit/cli-flags.test.ts`, `CHANGELOG.md` - flag handling for every command (S-013 task 3.16)
@@ -109,25 +112,34 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 3.20 (F-7) Make PT-81's retired-label check two-way: parse the prompt's retired list into a set and compare it with `RETIRED_LABELS` both ways, exact names (no suffix matching for `needs:`); show that removing `"needs: merge"` from `RETIRED_LABELS` now fails. Test first.
   - [x] 3.21 (F-8) Extend PT-80's line check to `/ProjectV2|projectV2|\/projects\b/` so GraphQL ProjectV2 mutations and REST `/projects` paths in `core/migrate-projects/` are caught; prove it with a scratch probe. PT-28 unchanged. Test first.
 
-- [ ] 4.0 Implement Story S-014: The plan maps stories to waves by precedence and batches only the writes the scope rules permit (#321)
+- [x] 4.0 Implement Story S-014: The plan maps stories to waves by precedence and batches only the writes the scope rules permit (#321)
 
-  - [ ] 4.1 Write the AC-11 fixture (one PRD, two waves, six stories: two by body line, two by `phase:` label, one by milestone, one unmappable; one standalone bug; a `type: prd` tracking issue; retired labels; zero- and two-`type:` issues) and failing tests `map.test.ts`, `plan.test.ts`, `answers.test.ts`, `ac11-fixture.test.ts` (D-90)
-  - [ ] 4.2 `roadmap.ts`: parse the canonical table, reusing `roadmap-parity`'s definition of it; `--plan` exits `InvalidUsage` (2) with a pointer to product-engineer's conversion when it is missing (D-86)
-  - [ ] 4.3 `map.ts`: the `**Story:**` line, then an exactly matching `phase:` label, then a milestone named by exactly one row, else unmapped with the reason; never fuzzy (FR-18, D-18, D-86)
-  - [ ] 4.3a Mapping per §16a: drop rule 3 (D-98, A-57); scope rule 2 to the title prefix's PRD (A-56); map story-file slugs to PRDs by the roadmap link text, `All` rows for single-wave PRDs (A-55); in the AC-11 fixture, replace the milestone-mapped story with one whose only link is a milestone, which stays unmapped
-  - [ ] 4.4 `plan.ts`: batches 1 to 7 in spec §8.3's order: labels; tracking issues (none for a shipped wave, FR-19); hierarchy links skipping existing ones; story and type labels; retired-label removals (D-91); PRD status comments with `—` for waves without an issue (D-92, D-73); the Project batch with runner `user`, printing the `gh project item-list` query, the `item-delete` template and the two Workflows-page steps (D-81, D-97)
-  - [ ] 4.4a Batches per §16a: batch 1 creates every missing type and `level:` label and sets descriptions (A-71); batch 4b writes blocking-link and priority answers (A-73); batch 6 creates the PRD comment only when absent, else adds missing rows (A-67); every row carries `Depends on`, and create rows show title and template (A-81, A-84); edge rules of A-83; prefix `Retired (D-91): ` under 100 characters, never doubled (A-82); answers feed a fresh `--plan` that resets `Approved: no` (A-50)
-  - [ ] 4.4b Batch 1 also sets the four `priority:` label descriptions to the D-84 and D-102 meanings (D-103)
-  - [ ] 4.5 Reused pre-`level:` tracking issues: add `level: prd` or `level: wave`, remove the experiment `type:` label; two matches omit that PRD's batches and list both (D-87)
-  - [ ] 4.6 Guard the scope: no title write, no hierarchy write on a standalone issue, no Status write (D-19, D-27, D-82)
-  - [ ] 4.7 Carry answers from the previous plan file's review tables into the next `--plan`
-  - [ ] 4.8 Verify Acceptance Criterion: AC-1 precedence; AC-2 missing table exits 2
-  - [ ] 4.9 Verify Acceptance Criterion: AC-3 batches and order; AC-4 reused tracking issues
-  - [ ] 4.10 Verify Acceptance Criterion: AC-5 scope guards; AC-6 answers carried over
-  - [ ] 4.11 Verify Acceptance Criterion: AC-7 the AC-11 fixture yields exactly the expected batches and lists (PRD AC-11)
-  - [ ] 4.12 Edge cases: a `phase:` label matching two rows (unmapped, "ambiguous"); a milestone shared by every wave; body line and label disagree (body line wins, both cited); a wave with only closed stories but an active state file (gets a wave issue); a story linked to a wrong wave (listed, never relinked)
-  - [ ] 4.13 AC-to-test mapping: AC-1 → `map.test.ts`; AC-2 → `cli.test.ts`; AC-3 to AC-5 → `plan.test.ts`; AC-6 → `answers.test.ts`; AC-7 → `ac11-fixture.test.ts`
-  - [ ] 4.14 Run Tests: `pnpm run test:unit`, `pnpm run validate` green
+  - [x] 4.1 Write the AC-11 fixture (one PRD, two waves, six stories: two by body line, two by `phase:` label, one by milestone, one unmappable; one standalone bug; a `type: prd` tracking issue; retired labels; zero- and two-`type:` issues) and failing tests `map.test.ts`, `plan.test.ts`, `answers.test.ts`, `ac11-fixture.test.ts` (D-90)
+  - [x] 4.2 `roadmap.ts`: parse the canonical table, reusing `roadmap-parity`'s definition of it; `--plan` exits `InvalidUsage` (2) with a pointer to product-engineer's conversion when it is missing (D-86)
+  - [x] 4.3 `map.ts`: the `**Story:**` line, then an exactly matching `phase:` label, then a milestone named by exactly one row, else unmapped with the reason; never fuzzy (FR-18, D-18, D-86)
+  - [x] 4.3a Mapping per §16a: drop rule 3 (D-98, A-57); scope rule 2 to the title prefix's PRD (A-56); map story-file slugs to PRDs by the roadmap link text, `All` rows for single-wave PRDs (A-55); in the AC-11 fixture, replace the milestone-mapped story with one whose only link is a milestone, which stays unmapped
+  - [x] 4.4 `plan.ts`: batches 1 to 7 in spec §8.3's order: labels; tracking issues (none for a shipped wave, FR-19); hierarchy links skipping existing ones; story and type labels; retired-label removals (D-91); PRD status comments with `—` for waves without an issue (D-92, D-73); the Project batch with runner `user`, printing the `gh project item-list` query, the `item-delete` template and the two Workflows-page steps (D-81, D-97)
+  - [x] 4.4a Batches per §16a: batch 1 creates every missing type and `level:` label and sets descriptions (A-71); batch 4b writes blocking-link and priority answers (A-73); batch 6 creates the PRD comment only when absent, else adds missing rows (A-67); every row carries `Depends on`, and create rows show title and template (A-81, A-84); edge rules of A-83; prefix `Retired (D-91): ` under 100 characters, never doubled (A-82); answers feed a fresh `--plan` that resets `Approved: no` (A-50)
+  - [x] 4.4b Batch 1 also sets the four `priority:` label descriptions to the D-84 and D-102 meanings (D-103)
+  - [x] 4.5 Reused pre-`level:` tracking issues: add `level: prd` or `level: wave`, remove the experiment `type:` label; two matches omit that PRD's batches and list both (D-87)
+  - [x] 4.6 Guard the scope: no title write, no hierarchy write on a standalone issue, no Status write (D-19, D-27, D-82)
+  - [x] 4.7 Carry answers from the previous plan file's review tables into the next `--plan`
+  - [x] 4.8 Verify Acceptance Criterion: AC-1 precedence; AC-2 missing table exits 2
+  - [x] 4.9 Verify Acceptance Criterion: AC-3 batches and order; AC-4 reused tracking issues
+  - [x] 4.10 Verify Acceptance Criterion: AC-5 scope guards; AC-6 answers carried over
+  - [x] 4.11 Verify Acceptance Criterion: AC-7 the AC-11 fixture yields exactly the expected batches and lists (PRD AC-11)
+  - [x] 4.12 Edge cases: a `phase:` label matching two rows (unmapped, "ambiguous"); a milestone shared by every wave; body line and label disagree (body line wins, both cited); a wave with only closed stories but an active state file (gets a wave issue); a story linked to a wrong wave (listed, never relinked)
+  - [x] 4.13 AC-to-test mapping: AC-1 → `map.test.ts`; AC-2 → `cli.test.ts`; AC-3 to AC-5 → `plan.test.ts`; AC-6 → `answers.test.ts`; AC-7 → `ac11-fixture.test.ts`
+  - [x] 4.14 Run Tests: `pnpm run test:unit`, `pnpm run validate` green
+  - [x] 4.15 (qa gap 1, surviving mutant) A `Done` roadmap row that already has an open wave issue, plus an open unlinked story mapped to it: assert zero `link-sub-issue` rows for that story and the Information note; also cover the kept-wave-issue branch of the `Done` row in `plan.ts`. Test first.
+  - [x] 4.16 (qa gap 2) Fix MU-54's oracle in `plan.test.ts`: build the standalone set from "no `Story S-NNN` title, no `**Story:**` line, not a tracking title", so `[PRD-x]`-prefixed standalones are guarded; make RT-13's generator produce prefixed standalones.
+  - [x] 4.17 (qa gap 3) RT-12 also replays rows produced from answers (batch 4 type rows; batch 4b `add-blocked-by` and the switch to `priority: high`) and runs 200 random repositories, including some with a pre-existing PRD status comment.
+  - [x] 4.18 (EC-117, D-106) Match label names case-insensitively everywhere in the module, as GitHub does: an existing label in a different case (e.g. `Type: Bug`) is reused, with no `create-label` row, and its description is set on the existing name; same for answers and classification. Test first.
+  - [x] 4.19 (qa gap 5) Tests for the unrun branches: wave tracking issue without `Wave <id>:`; tracking issue with no roadmap row (roadmap-mismatch notes); unmapped story whose prefix names an omitted PRD; needed PRD with no H1; wave needing an issue whose PRD has none; `Phase/Wave` with a space or colon; several marker comments; "cannot block itself"; a state file without `-phase-N`; EC-129 (one closed and one open PRD match); EC-131 (all rows `Done`).
+  - [x] 4.20 (verifier F-3) An unmapped answer naming a real wave of a PRD whose batches are omitted (two tracking-issue matches, D-87) gets its own reason, "names wave X of PRD p, whose batches are omitted (D-87)", and the typed answer is kept, not cleared. Test first.
+  - [x] 4.21 (verifier F-1, D-107) Add `not started` to github-ops' PRD State vocabulary in all three trees (the § Status comment PRD table states and the sentence after it), meaning a roadmap wave not yet published, with `—` for its wave issue; `prdState` keeps writing it; extend the wave 3 parity pins, with PT-81-style agreement if the module holds the vocabulary. Test first.
+  - [x] 4.22 (verifier F-4, D-108) When an open story's parent is a closed wave issue of its own roadmap row, create no new wave issue and no link for that wave if no other mapped story needs one; list the story in Information ("parent #N is a closed wave issue; never relinked"). A new wave issue is created only if at least one mapped story would actually be linked under it. Test first.
+  - [x] 4.23 (verifier F-6, D-109) A PRD tracking issue whose title would exceed github-ops' 80-character limit is not created: list the PRD in Information asking the owner to shorten the PRD file's H1; the rows of its waves that depend on it are omitted, with the reason. Test first.
 
 - [ ] 5.0 Implement Story S-015: `dev-tasks migrate projects --apply` runs only an approved plan and records every write (#322)
 

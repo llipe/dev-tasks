@@ -173,14 +173,14 @@ PRD issue:
 <!-- dev-tasks:status -->
 🔄 Update: <one-line summary> — Refs #<issue>
 
-| Wave | State                                                        | Wave issue    |
-| ---- | ------------------------------------------------------------ | ------------- |
-| <id> | <published, in progress, consolidated PR #n open or shipped> | #<issue> or — |
+| Wave | State                                                                     | Wave issue    |
+| ---- | ------------------------------------------------------------------------- | ------------- |
+| <id> | <not started, published, in progress, consolidated PR #n open or shipped> | #<issue> or — |
 ```
 
 The PRD table has one row per wave, in wave order. `activity-publish-github` writes a wave's row at publish and the planner edits it at run start, consolidated PR open and close-out; an existing row is edited in place, never added a second time, and every other wave's row is kept as it is.
 
-A wave that predates the PRD and wave tracking-issue hierarchy (published before it, so it has no wave issue) still gets a row, with `—` in the `Wave issue` column and its state read from its `docs/roadmap.md` row, for example `shipped` (D-73, RD-12).
+A wave that predates the PRD and wave tracking-issue hierarchy (published before it, so it has no wave issue) still gets a row, with `—` in the `Wave issue` column and its state read from its `docs/roadmap.md` row, for example `shipped` (D-73, RD-12). A roadmap wave not yet published reads `not started`, with `—` in the `Wave issue` column (D-107).
 
 ### Issue Closure Attribution
 

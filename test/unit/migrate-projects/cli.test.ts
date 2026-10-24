@@ -158,7 +158,8 @@ describe("migrate projects --plan (AC-1)", () => {
       repo: "acme/widgets",
       planFile: DEFAULT_PLAN,
       review: {
-        unmapped: 0,
+        // S-014: #10 and #11 carry `phase:` labels but no `[PRD-…]` prefix (D-98).
+        unmapped: 2,
         needsType: 6,
         needsBlockingLink: 2,
         stateFiles: 1,
@@ -184,7 +185,27 @@ describe("migrate projects --plan (AC-1)", () => {
       "Status comments",
       "Project cleanup",
     ]);
-    expect(batches[0]).toEqual({ name: "Labels", pending: 0, done: 0, failed: 0, skipped: 0 });
+    // Counts equal the file's rows (CT-35).
+    const file = readFileSync(planAt(DEFAULT_PLAN), "utf-8");
+    const labelRows = file
+      .slice(file.indexOf("### 1. Labels"), file.indexOf("### 2. Tracking issues"))
+      .split("\n")
+      .filter((l) => l.startsWith("| W-")).length;
+    expect(labelRows).toBe(18);
+    expect(batches[0]).toEqual({
+      name: "Labels",
+      pending: labelRows,
+      done: 0,
+      failed: 0,
+      skipped: 0,
+    });
+    expect(batches[7]).toEqual({
+      name: "Project cleanup",
+      pending: 4,
+      done: 0,
+      failed: 0,
+      skipped: 0,
+    });
   });
 
   // EC-116, A-65
@@ -248,6 +269,47 @@ describe("auth first (AC-2, D-96)", () => {
   it("a failing `gh repo view`: exit 11 (A-64)", async () => {
     await setup(loadModel("survey"), { repoViewFails: true });
     expect(run(["migrate", "projects", "--plan"]).exitCode).toBe(11);
+  });
+});
+
+// S-014 AC-2 (task 4.2, S-013 audit F-3): a missing canonical table is a
+// refusal, exit 2, with the pointer, not a roadmap note in a written plan.
+describe("canonical roadmap first (S-014 AC-2, D-86)", () => {
+  it.each([
+    [
+      "narrative",
+      (m: RepoModel) => (m.files["docs/roadmap.md"] = "# Roadmap\n\nWave 1 shipped.\n"),
+    ],
+    ["missing", (m: RepoModel) => delete m.files["docs/roadmap.md"]],
+  ])(
+    "%s roadmap: exit 2, the pointer on stderr, no file, no GitHub read after the check (MC-8, E2E-19)",
+    async (_name, edit) => {
+      const model = loadModel("survey");
+      edit(model);
+      await setup(model);
+      const r = run(["migrate", "projects", "--plan"]);
+      expect(r.exitCode).toBe(2);
+      expect(r.stderr).toMatch(/docs\/roadmap\.md (has no canonical table|is missing)/);
+      expect(r.stderr).toContain("product-engineer's roadmap conversion");
+      expect(r.stdout).toBe("");
+      expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
+      expect(ghLog()).toEqual([
+        ["auth", "status", "--hostname", "github.com"],
+        ["repo", "view", "--json", "nameWithOwner"],
+      ]);
+    },
+  );
+
+  it("--json still prints the summary shape with exit code 2", async () => {
+    const model = loadModel("survey");
+    model.files["docs/roadmap.md"] = "# Roadmap\n";
+    await setup(model);
+    const r = run(["migrate", "projects", "--plan", "--json"]);
+    expect(r.exitCode).toBe(2);
+    expect(JSON.parse(r.stdout)).toMatchObject({
+      exitCode: 2,
+      error: expect.stringMatching(/product-engineer/),
+    });
   });
 });
 

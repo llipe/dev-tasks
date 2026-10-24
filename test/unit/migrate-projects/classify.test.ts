@@ -285,25 +285,23 @@ describe("classifySnapshot on the survey fixture", () => {
     expect(c.information[1].note).toMatch(/several `priority:` labels/);
   });
 
-  it("a roadmap without the canonical table gets a roadmap note (D-86)", async () => {
+  // S-014 AC-2 (S-013 audit F-3): no roadmap note any more; the read refuses.
+  it("a roadmap without the canonical table is refused before classification (D-86)", async () => {
     const model = cloneModel(loadModel("survey"));
     model.files["docs/roadmap.md"] = "# Roadmap\n\nWave 1 shipped; wave 2 is next.\n";
-    const c = classifySnapshot(await snapshotOf(model));
-    expect(c.roadmap).toHaveLength(1);
-    expect(c.roadmap[0].note).toMatch(/no canonical table/);
-    expect(c.roadmap[0].note).toMatch(/product-engineer/);
+    await expect(snapshotOf(model)).rejects.toMatchObject({
+      kind: "roadmap",
+      message: expect.stringMatching(/no canonical table.*product-engineer's roadmap conversion/),
+    });
   });
 
-  it("a missing roadmap gets a roadmap note (D-86)", async () => {
+  it("a missing roadmap is refused the same way (D-86)", async () => {
     const model = cloneModel(loadModel("survey"));
     delete model.files["docs/roadmap.md"];
-    const c = classifySnapshot(await snapshotOf(model));
-    expect(c.roadmap).toEqual([
-      {
-        row: "docs/roadmap.md",
-        note: "missing; product-engineer's roadmap conversion comes first (D-86)",
-      },
-    ]);
+    await expect(snapshotOf(model)).rejects.toMatchObject({
+      kind: "roadmap",
+      message: expect.stringMatching(/^docs\/roadmap\.md is missing; .*product-engineer/),
+    });
   });
 
   it("an incomplete closed-issue search is an Information note", async () => {

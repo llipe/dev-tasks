@@ -3,16 +3,19 @@
  *
  * `--plan` reads a snapshot, classifies it, and writes the migration plan
  * file. It never writes to GitHub (FR-17, AC-6), and the file never holds an
- * issue body (spec §12). Mapping and batches arrive with S-014 and
- * `--apply` with S-015; until then the batch tables are empty and the plan
- * is the review lists.
+ * issue body (spec §12). It maps stories to waves (FR-18), batches the
+ * writes the scope rules permit (FR-19, FR-20), and carries the owner's
+ * answers from the previous plan file into the next (S-014). `--apply`
+ * arrives with S-015.
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { ExitCode } from "../exit-codes.js";
 import { classifySnapshot, type MigrationPlanClassification } from "./classify.js";
+import { emptyAnswers, readAnswers, type PreviousAnswers } from "./answers.js";
+import { planMigration } from "./plan.js";
+import { loadRoadmap } from "./roadmap.js";
 import {
-  emptyMigrationPlanBatches,
   MigrationPlanParseError,
   parseMigrationPlan,
   planHasNonPendingRows,
@@ -31,6 +34,10 @@ export * from "./conventions.js";
 export * from "./classify.js";
 export * from "./snapshot.js";
 export * from "./planfile.js";
+export * from "./roadmap.js";
+export * from "./map.js";
+export * from "./answers.js";
+export * from "./plan.js";
 
 export const DEFAULT_PLAN_FILE = "workstream/migration-projects.md";
 
@@ -102,35 +109,36 @@ export function formatGenerated(d: Date): string {
   return d.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
-/** The plan `--plan` writes for a snapshot. S-014 adds mapping and the batch rows. */
+/**
+ * The plan `--plan` writes for a snapshot: the review lists and batches 1
+ * to 7 (S-014), with the previous plan's answers applied before batching
+ * (A-50). Always `Approved: no`: the owner approves the plan as rebuilt.
+ */
 export function buildMigrationPlan(
   snapshot: MigrationSnapshot,
   classification: MigrationPlanClassification,
   now: Date,
+  answers: PreviousAnswers = emptyAnswers(),
 ): MigrationPlan {
+  const roadmap = loadRoadmap(snapshot.roadmap);
+  const { review, batches } = planMigration({
+    snapshot,
+    classification,
+    rows: roadmap.ok ? roadmap.rows : [],
+    answers,
+  });
   return {
     repo: snapshot.repo,
     generated: formatGenerated(now),
     snapshot: snapshotHash(snapshot),
     approved: false,
     extraHeaders: [],
-    review: {
-      unmapped: [],
-      needsType: classification.needsType.map((n) => ({
-        issue: n.issue,
-        title: n.title,
-        currentTypeLabels: n.currentTypeLabels,
-        suggested: n.suggested,
-        answer: "",
-      })),
-      needsBlockingLink: classification.needsBlockingLink.map((n) => ({ ...n })),
-      stateFiles: classification.stateFiles.map((s) => ({ ...s })),
-      roadmap: classification.roadmap.map((r) => ({ ...r })),
-      information: classification.information.map((n) => ({ ...n, answer: "" })),
-    },
-    batches: emptyMigrationPlanBatches(),
+    review,
+    batches,
   };
 }
+
+const ANSWERED_LISTS = new Set(["unmapped", "needsType", "needsBlockingLink"]);
 
 function countState(state: string): "pending" | "done" | "failed" | "skipped" {
   if (state.startsWith("done")) return "done";
@@ -145,8 +153,14 @@ export function summarizeMigrationPlan(plan: MigrationPlan): MigrationPlanSummar
     for (const row of [...b.writes, ...b.steps]) counts[countState(row.state)]++;
     return { key: b.key, name: b.name, runner: b.runner, ...counts };
   });
+  // Lists with an Answer column count the rows still waiting for one.
+  const waiting = (rows: Array<{ answer?: string }>, answered: boolean) =>
+    rows.filter((r) => !answered || (r.answer ?? "") === "").length;
   const review = Object.fromEntries(
-    Object.entries(plan.review).map(([k, v]) => [k, (v as unknown[]).length]),
+    Object.entries(plan.review).map(([k, v]) => [
+      k,
+      waiting(v as Array<{ answer?: string }>, ANSWERED_LISTS.has(k)),
+    ]),
   ) as MigrationPlanReviewCounts;
   return { batches, review, next: "review the plan" };
 }
@@ -156,6 +170,7 @@ const SNAPSHOT_EXIT: Record<SnapshotError["kind"], number> = {
   auth: ExitCode.DependencyError,
   "repo-view": ExitCode.DependencyError,
   "repo-mismatch": ExitCode.InvalidUsage,
+  roadmap: ExitCode.InvalidUsage,
   read: ExitCode.GeneralError,
 };
 
@@ -185,12 +200,17 @@ export async function runMigrationPlan(
   }
 
   // A-65: an applied record, or a file that is not a plan, is never overwritten.
+  // A draft's answers are read and applied before batching (A-50, task 4.7).
   const existing = options.store.read(planFile);
+  let answers = emptyAnswers();
   if (existing !== undefined) {
     let refuse: string | null = null;
     try {
-      if (planHasNonPendingRows(parseMigrationPlan(existing).plan)) {
+      const previous = parseMigrationPlan(existing).plan;
+      if (planHasNonPendingRows(previous)) {
         refuse = `${planFile} records applied writes (a row is not pending); choose another --out`;
+      } else if (previous.repo.toLowerCase() === snapshot.repo.toLowerCase()) {
+        answers = readAnswers(previous);
       }
     } catch (err) {
       if (!(err instanceof MigrationPlanParseError)) throw err;
@@ -207,7 +227,7 @@ export async function runMigrationPlan(
     }
   }
 
-  const plan = buildMigrationPlan(snapshot, classifySnapshot(snapshot), options.now());
+  const plan = buildMigrationPlan(snapshot, classifySnapshot(snapshot), options.now(), answers);
   options.store.write(planFile, renderMigrationPlan(plan));
   return {
     exitCode: ExitCode.Success,

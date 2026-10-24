@@ -120,7 +120,7 @@ dev-tasks status            # compare installed vs latest version
 | ---- | ------------------------------------------------------------------------------------------- |
 | 0    | Success                                                                                     |
 | 1    | Unexpected error                                                                            |
-| 2    | Incorrect usage                                                                             |
+| 2    | Incorrect usage, or no canonical `docs/roadmap.md` table (`migrate projects`)               |
 | 11   | Dependency check failed (`doctor`), or `gh` missing or unauthenticated (`migrate projects`) |
 | 14   | Reconciliation conflict (edited fields)                                                     |
 
@@ -200,12 +200,20 @@ name the old documents; it does not edit them, and neither does
 ### Projects-Tracking Migration Plan
 
 `dev-tasks migrate projects --plan` reads an existing repository through `gh`
-and writes a migration plan to `workstream/migration-projects.md`: what the
-projects-tracking conventions would change, and the lists that need your
-answer (issues that need a `type:`, `priority: critical` issues with no
-blocking link, planner state files without a `Wave issue:` line, roadmap
-notes). It is **read-only**: nothing on GitHub changes, and the plan file
-holds issue numbers, titles and label names, never issue bodies.
+and writes a migration plan to `workstream/migration-projects.md`: the lists
+that need your answer (stories it could not map to a wave, issues that need
+a `type:`, `priority: critical` issues with no blocking link, planner state
+files without a `Wave issue:` line, roadmap notes) and the write batches the
+projects-tracking scope rules permit, from labels to the PRD status comment,
+ending with the Project cleanup steps you run yourself. It is **read-only**:
+nothing on GitHub changes, and the plan file holds issue numbers, titles and
+label names, never issue bodies.
+
+A story maps to its wave by its `**Story:**` body line, then by a `phase:`
+label within the PRD named in its `[PRD-<name>]` title prefix; anything else
+is listed for you, never guessed. Answer in the plan's Answer columns and run
+`--plan` again: it reads your answers, rebuilds the batches and resets
+`Approved: no`.
 
 ```bash
 dev-tasks migrate projects --plan                        # Plan for the current repository
@@ -216,9 +224,10 @@ dev-tasks migrate projects --plan --json                 # Summary as JSON
 It needs `gh` authenticated to github.com with the `repo` scope, checked
 first (exit `11` with the `gh auth login` hint otherwise), and it must run
 inside a clone of the repository: `--repo` may only confirm it (exit `2`
-otherwise). It refuses with exit `14` to overwrite a plan file that already
-records applied writes. Mapping stories to waves, the write batches and
-`--apply` are not in this version yet.
+otherwise). It exits `2` when `docs/roadmap.md` has no canonical table:
+run product-engineer's roadmap conversion first. It refuses with exit `14`
+to overwrite a plan file that already records applied writes. `--apply` is
+not in this version yet.
 
 **Note the asymmetry with the bare `migrate` command.** `dev-tasks migrate`
 (no sub-verb) migrates a legacy shell-script install and applies its change

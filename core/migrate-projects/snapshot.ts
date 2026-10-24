@@ -14,9 +14,10 @@
  * returns things in.
  */
 import { createHash } from "node:crypto";
-import { ROADMAP_FILE } from "../checks/roadmap.js";
-import { PRIORITY_CRITICAL } from "./conventions.js";
+import { ROADMAP_FILE, tableCells } from "../checks/roadmap.js";
+import { hasLabel, PRIORITY_CRITICAL } from "./conventions.js";
 import { issueKind } from "./classify.js";
+import { loadRoadmap } from "./roadmap.js";
 import { firstLine, GhNotFoundError, paginatedItems, type GhRunner } from "./gh.js";
 import type { LocalReader } from "./local-reader.js";
 
@@ -42,6 +43,49 @@ export interface SnapshotIssue {
   subIssues?: number[];
   /** What this issue blocks; read for `priority: critical` issues only (A-72). */
   blocking?: number[];
+  /**
+   * The status comment found by its marker, read for open PRD tracking issues
+   * only (batch 6, A-67); `null` when no comment carries the marker. Only the
+   * table rows are kept, never the comment's text.
+   */
+  statusComment?: SnapshotStatusComment | null;
+}
+
+export interface SnapshotStatusRow {
+  wave: string;
+  state: string;
+  waveIssue: string;
+}
+
+export interface SnapshotStatusComment {
+  /** The oldest marker comment's id: the one an edit targets (github-ops § Status comment). */
+  id: number;
+  /** How many comments carry the marker; more than one is reported. */
+  markers: number;
+  rows: SnapshotStatusRow[];
+}
+
+export const STATUS_MARKER = "<!-- dev-tasks:status -->";
+
+/** The `| Wave | State | Wave issue |` rows of a PRD status comment body. */
+export function parseStatusRows(body: string): SnapshotStatusRow[] {
+  const rows: SnapshotStatusRow[] = [];
+  let inTable = false;
+  for (const raw of body.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line.startsWith("|")) {
+      inTable = false;
+      continue;
+    }
+    const cells = tableCells(line);
+    if (!inTable) {
+      inTable = cells[0] === "Wave" && cells[2] === "Wave issue";
+      continue;
+    }
+    if (cells.every((c) => /^:?-+:?$/.test(c))) continue;
+    if (cells.length >= 3) rows.push({ wave: cells[0], state: cells[1], waveIssue: cells[2] });
+  }
+  return rows;
 }
 
 export interface SnapshotPrdFile {
@@ -64,14 +108,20 @@ export interface MigrationSnapshot {
   closedTrackingIssues: SnapshotIssue[];
   /** `false` when the search hit GitHub's 1,000-result window. */
   closedSearchComplete: boolean;
-  /** `docs/roadmap.md`'s text, or `null` when absent. */
+  /** `docs/roadmap.md`'s text; a snapshot is never read without its canonical table (D-86). */
   roadmap: string | null;
   prdFiles: SnapshotPrdFile[];
   /** Active `workstream/planner-state-*.md` files; `workstream/archive/` is never read. */
   stateFiles: SnapshotStateFile[];
 }
 
-export type SnapshotErrorKind = "gh-missing" | "auth" | "repo-view" | "repo-mismatch" | "read";
+export type SnapshotErrorKind =
+  | "gh-missing"
+  | "auth"
+  | "repo-view"
+  | "repo-mismatch"
+  | "roadmap"
+  | "read";
 
 export class SnapshotError extends Error {
   readonly kind: SnapshotErrorKind;
@@ -219,6 +269,11 @@ export async function readSnapshot(options: ReadSnapshotOptions): Promise<Migrat
     .filter((f) => /^planner-state-.+\.md$/.test(f))
     .map((f) => ({ path: `workstream/${f}`, content: reader.readText(`workstream/${f}`) ?? "" }));
 
+  // D-86, S-014 AC-2: the canonical table comes first. Checked before any
+  // issue read, so a refused run reads nothing more from GitHub.
+  const loaded = loadRoadmap(roadmap);
+  if (!loaded.ok) throw new SnapshotError("roadmap", loaded.message);
+
   const labels = (await readJson(runner, ["api", "--paginate", `${r}/labels?per_page=100`])).map(
     (l) => {
       const o = l as Partial<SnapshotLabel>;
@@ -266,7 +321,17 @@ export async function readSnapshot(options: ReadSnapshotOptions): Promise<Migrat
     if (kind === "tracking" || kind === "story") {
       issue.parent = await readParent(runner, `${r}/issues/${issue.number}/parent`);
     }
-    if (issue.state === "open" && issue.labels.includes(PRIORITY_CRITICAL)) {
+    const level = issueKind(issue, prdTitles);
+    if (issue.state === "open" && level.kind === "tracking" && level.level === "prd") {
+      issue.statusComment = statusCommentOf(
+        await readJson(runner, [
+          "api",
+          "--paginate",
+          `${r}/issues/${issue.number}/comments?per_page=100`,
+        ]),
+      );
+    }
+    if (issue.state === "open" && hasLabel(issue.labels, PRIORITY_CRITICAL)) {
       issue.blocking = numbersOf(
         await readJson(runner, [
           "api",
@@ -288,6 +353,18 @@ export async function readSnapshot(options: ReadSnapshotOptions): Promise<Migrat
     prdFiles,
     stateFiles,
   };
+}
+
+function statusCommentOf(items: unknown[]): SnapshotStatusComment | null {
+  const marked = items
+    .map((c) => c as { id?: unknown; body?: unknown })
+    .filter(
+      (c): c is { id: number; body: string } =>
+        typeof c.id === "number" && typeof c.body === "string" && c.body.startsWith(STATUS_MARKER),
+    )
+    .sort((a, b) => a.id - b.id);
+  if (marked.length === 0) return null;
+  return { id: marked[0].id, markers: marked.length, rows: parseStatusRows(marked[0].body) };
 }
 
 async function readParent(runner: GhRunner, endpoint: string): Promise<number | null> {

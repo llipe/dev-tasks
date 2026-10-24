@@ -8,7 +8,8 @@
  * which is what `gh api --paginate` prints for objects (and what older
  * `gh` versions print for arrays).
  *
- * Writes are not modelled yet: S-013 only reads. Any argv this model does
+ * Writes are not modelled here: `--plan` only reads, and `model-apply.ts`
+ * applies a plan's rows to a model on the test side. Any argv this model does
  * not recognise answers exit 1 with `fake gh: unhandled argv`, so a new
  * read cannot pass silently.
  */
@@ -41,6 +42,13 @@ export interface RepoModel {
   issues: ModelIssue[];
   /** Repository-relative path to file content, served by the fake `LocalReader`. */
   files: Record<string, string>;
+  /** Issue comments by issue number; absent means none. */
+  comments?: Record<string, ModelComment[]>;
+}
+
+export interface ModelComment {
+  id: number;
+  body: string;
 }
 
 export interface GhResultLike {
@@ -176,6 +184,18 @@ export function respond(
     const state = url.searchParams.get("state") ?? "open";
     const selected = model.issues.filter((i) => state === "all" || i.state === state);
     return emitArray(selected.map((i) => restIssue(model, i)));
+  }
+  const c = tail.match(/^issues\/(\d+)\/comments$/);
+  if (c) {
+    if (!byNumber.has(Number(c[1]))) return fail("gh: Not Found (HTTP 404)");
+    return emitArray(
+      (model.comments?.[c[1]] ?? []).map((x) => ({
+        id: x.id,
+        body: x.body,
+        user: { login: "someone" },
+        created_at: "2026-10-01T00:00:00Z",
+      })),
+    );
   }
   const m = tail.match(/^issues\/(\d+)\/(sub_issues|parent|dependencies\/blocking)$/);
   if (m) {

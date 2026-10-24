@@ -114,6 +114,8 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
         ]),
         // Stories: parent (A-76).
         ...[10, 11, 12, 13].map((n) => `api ${r}/issues/${n}/parent`),
+        // Open PRD tracking issues: their comments, for the status marker (S-014 batch 6, A-67).
+        `api --paginate ${r}/issues/1/comments?per_page=100`,
         // Critical issues: what they block (A-72).
         ...[20, 21, 22].map(
           (n) => `api --paginate ${r}/issues/${n}/dependencies/blocking?per_page=100`,
@@ -157,11 +159,17 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
     expect(reads).not.toContain("workstream/archive/planner-state-alpha-phase-0.md");
   });
 
-  it("a missing roadmap reads as null, not an error", async () => {
+  // S-014 AC-2: a missing roadmap stops the read before any issue is read.
+  it("a missing roadmap is a refusal, and no issue is read after the check", async () => {
     const model = cloneModel(loadModel("survey"));
     delete model.files["docs/roadmap.md"];
-    const { snapshot } = await read(model);
-    expect(snapshot.roadmap).toBeNull();
+    const rec = recordingRunner(model);
+    await expect(
+      readSnapshot({ runner: rec.runner, reader: modelReader(model) }),
+    ).rejects.toMatchObject({
+      kind: "roadmap",
+    });
+    expect(rec.calls.map((c) => c[0])).toEqual(["auth", "repo"]);
   });
 
   // EC-105, MU-23: more than 1,000 open issues, all read.
