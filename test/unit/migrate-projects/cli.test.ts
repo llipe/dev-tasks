@@ -19,6 +19,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { readSnapshot } from "#core/migrate-projects/snapshot.js";
 import { runMigrationApply } from "#core/migrate-projects/index.js";
 import {
@@ -46,6 +47,18 @@ import { modelReader } from "./helpers/recording-runner.js";
 // loop, so vitest's own timeout cannot fire while a child hangs.
 vi.setConfig({ testTimeout: 180_000 });
 const SPAWN_TIMEOUT = 60_000;
+/**
+ * The binary in one process, tsx as a loader (5.25). The tsx CLI runs the
+ * script in a child and, on a signal, waits 30 ms for it to answer before
+ * killing it with SIGKILL and exiting 128+signal: on a loaded machine that
+ * reported 130/143 for a run that handled the signal. The shipped binary is
+ * plain `node dist/bin/dev-tasks.js`, one process, like this.
+ */
+const singleProcess = () => [
+  "--import",
+  pathToFileURL(resolve(ROOT, "node_modules/tsx/dist/loader.mjs")).href,
+  BIN,
+];
 
 /** A spawnSync result, failing loudly when the child was killed for hanging. */
 function finished<T extends { error?: Error; signal: NodeJS.Signals | null }>(
@@ -659,18 +672,22 @@ describe(
       "%s before any write: exit 1, the lock and temp dir removed, zero writes, the plan untouched",
       async (signal) => {
         const { text } = await setupApply(loadModel("ac11"));
-        const child = spawn(process.execPath, [TSX_CLI, BIN, "migrate", "projects", "--apply"], {
-          cwd,
-          env: {
-            PATH: pathDir,
-            HOME: process.env.HOME ?? tmp,
-            TMPDIR: join(tmp, "systmp"),
-            TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
-            FAKE_GH_SCENARIO: join(tmp, "scenario.json"),
-            FAKE_GH_LOG: join(tmp, "gh.log"),
-            FAKE_GH_DELAY_MS: "1500",
+        const child = spawn(
+          process.execPath,
+          [...singleProcess(), "migrate", "projects", "--apply"],
+          {
+            cwd,
+            env: {
+              PATH: pathDir,
+              HOME: process.env.HOME ?? tmp,
+              TMPDIR: join(tmp, "systmp"),
+              TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
+              FAKE_GH_SCENARIO: join(tmp, "scenario.json"),
+              FAKE_GH_LOG: join(tmp, "gh.log"),
+              FAKE_GH_DELAY_MS: "1500",
+            },
           },
-        });
+        );
         const exited = new Promise<number | null>((done) => child.on("exit", (code) => done(code)));
         // `repo view` is the snapshot's first call: the lock is held by then.
         const deadline = Date.now() + 90_000;
@@ -696,18 +713,22 @@ describe(
       "interrupted mid-run by %s: exit 1, states so far kept, lock and temp dir removed; the resume repeats no done write",
       async (signal) => {
         await setupApply(loadModel("ac11"));
-        const child = spawn(process.execPath, [TSX_CLI, BIN, "migrate", "projects", "--apply"], {
-          cwd,
-          env: {
-            PATH: pathDir,
-            HOME: process.env.HOME ?? tmp,
-            TMPDIR: join(tmp, "systmp"),
-            TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
-            FAKE_GH_SCENARIO: join(tmp, "scenario.json"),
-            FAKE_GH_LOG: join(tmp, "gh.log"),
-            FAKE_GH_DELAY_MS: "150",
+        const child = spawn(
+          process.execPath,
+          [...singleProcess(), "migrate", "projects", "--apply"],
+          {
+            cwd,
+            env: {
+              PATH: pathDir,
+              HOME: process.env.HOME ?? tmp,
+              TMPDIR: join(tmp, "systmp"),
+              TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
+              FAKE_GH_SCENARIO: join(tmp, "scenario.json"),
+              FAKE_GH_LOG: join(tmp, "gh.log"),
+              FAKE_GH_DELAY_MS: "150",
+            },
           },
-        });
+        );
         const exited = new Promise<number | null>((done) => child.on("exit", (code) => done(code)));
         // 5.25: signal only once the run is writing (its handlers are installed
         // before its first gh call); never signal a child still starting.
