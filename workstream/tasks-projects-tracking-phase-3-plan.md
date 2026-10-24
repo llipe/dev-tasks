@@ -33,6 +33,7 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 - `test/unit/migrate-projects/helpers/*.ts` - fake GitHub model, recording runner, test-side write oracle, seeded PRNG (S-013)
 - `test/fixtures/migrate-projects/fake-gh/gh` - fake `gh` for the Layer 2 CLI tests (S-013, A-85)
 - `test/unit/roadmap-parity.test.ts` - imports the shared roadmap parser (S-013, A-59)
+- `test/unit/parse-args.test.ts`, `test/unit/cli-flags.test.ts`, `CHANGELOG.md` - flag handling for every command (S-013 task 3.16)
 - `README.md`, `docs/dev-tasks-user-manual.md`, `TESTING.md` - `migrate projects --plan` reference and the test harness note (S-013)
 - `test/fixtures/migrate-projects/**/*.json` - synthetic `gh` output, including the AC-11 fixture (S-013, S-014)
 - `docs/runbooks/runbook-migrate-to-projects-tracking.md`, `docs/runbooks/README.md` - the runbook and its index entry (S-017)
@@ -101,6 +102,9 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 3.13 Manual check: `pnpm exec tsx bin/dev-tasks.ts migrate projects --plan` on this repository; nothing changes on GitHub
   - [x] 3.14 AC-to-test mapping: AC-1, AC-2 → `cli.test.ts`; AC-3 → `snapshot.test.ts`; AC-4 → `classify.test.ts`; AC-5 → `planfile.test.ts`; AC-6, AC-7 → `plan-readonly.test.ts`
   - [x] 3.15 Run Tests: `pnpm run test:unit`, `pnpm run typecheck`, `pnpm run validate` green
+  - [x] 3.16 parse-args regression (High, qa-engineer gate on PR #328): every command exits 2 (`InvalidUsage`) on an unknown flag, naming it, and on a value flag without a value (`--profile`, `--pin`, `--repo`, `--out`, `--plan-file`, including an empty `--flag=`); `dev-tasks migrate --plan`/`--apply` without the `projects` sub-verb exits 2 with a hint to use `migrate projects` and never runs the legacy migration; `pin -x` keeps exiting 2. Add `test/unit/parse-args.test.ts` (Layer 1, imports `parseArgs`) and CLI tests across install, update, status, pin, migrate docs and migrate; add a CHANGELOG line under the unreleased section. Test first.
+  - [x] 3.17 EC-110 / mutant M1 (High): tests where a story also carries a tracking signal (`[PRD-alpha] Story S-001: x` with `level: wave`; the same with `type: prd`; `[PRD-alpha] Wave 1: x` with a `**Story:**` body line) assert the story wins; RT-13 asserts which kind wins, not only "exactly one". Test first.
+  - [x] 3.18 Error paths (Medium): snapshot parent read failing with a non-404 and with unreadable JSON, and unreadable `repo view` JSON, report the named call and never crash (EC-157); planfile parse guards (missing column, cell-count mismatch, bad `Generated:`, unexpected `##` section) and the missing separator in `core/checks/roadmap.ts`; classify's "search incomplete" and "roadmap missing" notes asserted; a CLI test for exit 1 on a failed read; `isRetiredLabel` used or removed. Test first.
 
 - [ ] 4.0 Implement Story S-014: The plan maps stories to waves by precedence and batches only the writes the scope rules permit (#321)
 
