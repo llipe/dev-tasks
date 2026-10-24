@@ -10,9 +10,15 @@
  * no cross-test import.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
+import {
+  TYPE_SET as CODE_TYPE_SET,
+  TYPE_DEFINITIONS as CODE_TYPE_DEFINITIONS,
+  RETIRED_TYPE_LABELS as CODE_RETIRED_TYPE_LABELS,
+  DEFAULT_LABEL_SUGGESTIONS as CODE_DEFAULT_LABEL_SUGGESTIONS,
+} from "#core/migrate-projects/conventions.js";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -573,6 +579,74 @@ describe("product-engineer roadmap conversion (S-016)", () => {
     }
     for (const marker of [...CONVERSION_STEPS, PLAN_REFUSES, NO_STATE_FILE_EDIT, NEVER_DONE]) {
       expectIdenticalLine(trees, CONVERSION, marker);
+    }
+  });
+});
+
+// --- core/migrate-projects (S-013, #320) ---------------------------------------
+
+// PT-81 — A-87, D-85 (deferred from S-019): the type set is defined once in
+// code, and the code agrees with github-ops' Labels section. Read from the
+// prompt here, not from this file's own TYPE_SET, so the pin compares the
+// two sources the agents and the CLI actually use.
+describe("conventions.ts matches github-ops (PT-81)", () => {
+  const labels = sectionOf(loadTrees(GITHUB_OPS_TREES)[0], "Labels");
+
+  it("the type set and its tie-break order", () => {
+    const tags = labels.split("\n").find((l) => l.startsWith("- Type tags: "));
+    expect(tags, "no Type tags line").toBeDefined();
+    const fromPrompt = [...tags!.matchAll(/`type: ([a-z-]+)`/g)].map((m) => m[1]);
+    expect([...CODE_TYPE_SET]).toEqual(fromPrompt);
+    const tieBreak = labels.match(/`((?:[a-z-]+ > )+[a-z-]+)`/);
+    expect(tieBreak, "no tie-break literal").not.toBeNull();
+    expect(CODE_TYPE_SET.join(" > ")).toBe(tieBreak![1]);
+  });
+
+  it("each type's definition", () => {
+    for (const type of CODE_TYPE_SET) {
+      const row = tableRow(labels, `type: ${type}`);
+      expect(row, `no row for type: ${type}`).toBeDefined();
+      expect(row!).toContain(`| ${CODE_TYPE_DEFINITIONS[type]} |`);
+    }
+  });
+
+  it("the retired type labels and the default labels that are not types (D-91, D-100)", () => {
+    const retired = labels.split("\n").find((l) => l.startsWith("- Retired labels, in full: "));
+    expect(retired, "no Retired labels line").toBeDefined();
+    for (const name of CODE_RETIRED_TYPE_LABELS) expect(retired!).toContain(`\`${name}\``);
+    for (const name of ["bug", "documentation", "enhancement"]) {
+      expect(Object.keys(CODE_DEFAULT_LABEL_SUGGESTIONS)).toContain(name);
+      expect(retired!).toContain(`\`${name}\``);
+    }
+  });
+});
+
+// PT-80 — A-60, D-81, D-22: no Project write from the migration module. Only
+// S-014's `plan.ts` may later carry the batch 7 strings, and only the read
+// query and the delete template it prints for the user (D-97); no file may
+// build a `project` argv for the runner.
+describe("no Project calls in core/migrate-projects (PT-80)", () => {
+  const DIR = "core/migrate-projects";
+  const files = readdirSync(resolve(ROOT, DIR)).filter((f) => f.endsWith(".ts"));
+  const PRINTED_ONLY = new Map([["plan.ts", /^(item-list|item-delete)$/]]);
+
+  it("the walk finds the module", () => {
+    for (const f of ["gh.ts", "snapshot.ts", "classify.ts", "planfile.ts", "conventions.ts", "index.ts"]) {
+      expect(files).toContain(f);
+    }
+  });
+
+  it("no `gh project` string outside plan.ts's printed batch 7, and no `project` argv", () => {
+    for (const file of files) {
+      const lines = readFileSync(resolve(ROOT, DIR, file), "utf-8").split("\n");
+      for (const [index, line] of lines.entries()) {
+        const where = `${DIR}/${file}:${index + 1}`;
+        expect(line, `${where} builds a project argv`).not.toMatch(/["'`]project["'`]/);
+        for (const m of line.matchAll(/\bgh\s+project\s+([a-z-]+)/g)) {
+          const allowed = PRINTED_ONLY.get(file);
+          expect(allowed !== undefined && allowed.test(m[1]), `${where} names gh project ${m[1]}`).toBe(true);
+        }
+      }
     }
   });
 });

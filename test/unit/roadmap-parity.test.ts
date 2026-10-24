@@ -16,6 +16,7 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
+import { parseRoadmapTable, ROADMAP_HEADER, ROADMAP_STATUSES } from "../../core/checks/roadmap.js";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 
@@ -175,16 +176,10 @@ describe("the roadmap is registered and well-formed", () => {
     },
   );
 
+  // A-59: the canonical-table definition is the one `migrate projects` uses,
+  // imported from core/checks/roadmap.ts rather than restated here.
   it("docs/roadmap.md exists with one table whose statuses are from the fixed set", () => {
-    const table = read("docs/roadmap.md")
-      .split("\n")
-      .filter((l) => l.startsWith("|"));
-    const cells = (l: string): string[] =>
-      l
-        .split("|")
-        .slice(1, -1)
-        .map((c) => c.trim());
-    expect(cells(table[0])).toEqual([
+    expect(ROADMAP_HEADER).toEqual([
       "PRD",
       "Phase/Wave",
       "Scope (one line)",
@@ -192,11 +187,29 @@ describe("the roadmap is registered and well-formed", () => {
       "Issues/PRs",
       "What's missing",
     ]);
-    const rows = table.slice(2); // header, separator, then data
-    expect(rows.length).toBeGreaterThan(0);
-    for (const row of rows) {
-      expect(cells(row), `wrong column count in: ${row}`).toHaveLength(6);
-      expect(STATUSES, `bad status in: ${row}`).toContain(cells(row)[3]);
+    expect(ROADMAP_STATUSES).toEqual(STATUSES);
+    const parsed = parseRoadmapTable(read("docs/roadmap.md"));
+    expect(parsed.ok, parsed.ok ? "" : parsed.reason).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.rows.length).toBeGreaterThan(0);
+    for (const row of parsed.rows) expect(STATUSES, `bad status in: ${row.line}`).toContain(row.status);
+  });
+
+  it("the shared parser refuses what is not a canonical table (A-59)", () => {
+    const header = `| ${ROADMAP_HEADER.join(" | ")} |\n| --- | --- | --- | --- | --- | --- |\n`;
+    const row = "| [alpha](requirements/prd-alpha.md) | 1 | Widgets | Done | #1 | — |\n";
+    const ok = parseRoadmapTable(`# Roadmap\n\nText.\n\n${header}${row}`);
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.rows[0]).toMatchObject({ prd: "alpha", phase: "1", status: "Done" });
+    for (const [name, text] of [
+      ["narrative only", "# Roadmap\n\nWave 1 shipped.\n"],
+      ["header only (not a partial table)", header],
+      ["five columns", "| PRD | Phase/Wave | Scope (one line) | Status | Issues/PRs |\n| - | - | - | - | - |\n| a | 1 | s | Done | x |\n"],
+      ["wrong header cell", header.replace("Phase/Wave", "Phase") + row],
+      ["status outside the set", header + row.replace("Done", "Paused")],
+      ["a row with a missing cell", header + "| [alpha](x) | 1 | Widgets | Done | #1 |\n"],
+    ] as const) {
+      expect(parseRoadmapTable(text).ok, name).toBe(false);
     }
   });
 
