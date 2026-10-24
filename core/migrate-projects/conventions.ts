@@ -85,6 +85,22 @@ export const PRIORITY_DEFINITIONS = {
   "priority: low": { color: "C5DEF5", description: "Backlog" },
 } as const satisfies Record<string, LabelDefinition>;
 
+/**
+ * The PRD status comment's State vocabulary, as github-ops' § Status
+ * comment states it (D-107); PT-81 pins the two together. Batch 6 writes
+ * only `not started`, `published`, `in progress` and `shipped`; the planner
+ * writes `consolidated PR #n open`.
+ */
+export const PRD_STATES = [
+  "not started",
+  "published",
+  "in progress",
+  "consolidated PR #n open",
+  "shipped",
+] as const;
+
+export type PrdState = (typeof PRD_STATES)[number];
+
 /** GitHub refuses a label description longer than this. */
 export const LABEL_DESCRIPTION_MAX = 100;
 
