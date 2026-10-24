@@ -909,11 +909,13 @@ export async function runMigrationApply(
         throw new Interrupted(w.id, err);
       }
       if (state === w.state) continue;
+      const previous = w.state;
       w.state = state;
       try {
         store.write(planFile, renderMigrationPlan(plan));
       } catch (err) {
-        w.state = "pending";
+        // The file still holds the previous state; so must the result (F-6).
+        w.state = previous;
         throw new Interrupted(w.id, err, true);
       }
     }

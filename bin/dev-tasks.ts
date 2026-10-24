@@ -26,6 +26,7 @@ import {
   createGhRunner,
   createLocalReader,
   createLockFile,
+  killRunningGh,
   createPlanFileStore,
   formatMigrationApplySummary,
   formatMigrationPlanSummary,
@@ -536,6 +537,8 @@ async function migrateProjectsApply(
     rmSync(tmpDir, { recursive: true, force: true });
   };
   const onSignal = (signal: NodeJS.Signals) => {
+    // D-111: the gh call in flight dies first, so no write lands once the lock is gone.
+    killRunningGh();
     cleanup();
     process.stderr.write(
       `migrate projects: interrupted by ${signal}; the states so far are in ${planFile}: run --apply again to resume\n`,
@@ -547,6 +550,7 @@ async function migrateProjectsApply(
   // handled only between event-loop turns, and none passes before this line (5.25).
   process.once("SIGINT", onSignal);
   process.once("SIGTERM", onSignal);
+  process.once("SIGHUP", onSignal);
   let result;
   try {
     result = await runMigrationApply({
