@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - feat(cli): `dev-tasks migrate projects --plan` writes a reviewable, read-only projects-tracking migration plan (#320)
+- feat(cli): `dev-tasks migrate projects --apply` runs an approved migration plan's batches 1 to 6, records each write's state in the plan file and resumes from it; it never runs the Project batch, deletes nothing and refuses an unapproved, edited, locked or stale plan with exit `14` (#322)
 
 ### Changed
 

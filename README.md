@@ -119,10 +119,10 @@ dev-tasks status            # compare installed vs latest version
 | Code | Meaning                                                                                     |
 | ---- | ------------------------------------------------------------------------------------------- |
 | 0    | Success                                                                                     |
-| 1    | Unexpected error                                                                            |
+| 1    | Unexpected error, or a write that failed (`migrate projects --apply`)                       |
 | 2    | Incorrect usage, or no canonical `docs/roadmap.md` table (`migrate projects`)               |
 | 11   | Dependency check failed (`doctor`), or `gh` missing or unauthenticated (`migrate projects`) |
-| 14   | Reconciliation conflict (edited fields)                                                     |
+| 14   | Reconciliation conflict (edited fields; an unapproved, edited or stale migration plan)      |
 
 Full contract, including retirement history for codes no longer in use: [`core/exit-codes.ts`](core/exit-codes.ts).
 
@@ -140,6 +140,7 @@ dev-tasks doctor                      # Check Node ≥24, git ≥2.37, cache wri
 dev-tasks migrate                     # Migrate from legacy shell-script install
 dev-tasks migrate docs [--force]      # Rename the foundation docs to their current names
 dev-tasks migrate projects --plan     # Write a reviewable projects-tracking migration plan (read-only)
+dev-tasks migrate projects --apply    # Apply an approved migration plan, recording every write
 ```
 
 ### Version Pinning
@@ -226,8 +227,24 @@ first (exit `11` with the `gh auth login` hint otherwise), and it must run
 inside a clone of the repository: `--repo` may only confirm it (exit `2`
 otherwise). It exits `2` when `docs/roadmap.md` has no canonical table:
 run product-engineer's roadmap conversion first. It refuses with exit `14`
-to overwrite a plan file that already records applied writes. `--apply` is
-not in this version yet.
+to overwrite a plan file that already records applied writes.
+
+`dev-tasks migrate projects --apply [--plan-file <path>] [--json]` applies the
+plan once you have reviewed it and set its header to exactly `Approved: yes`.
+It runs batches 1 to 6 in order and records each write's state in the plan
+file after its call (`done`, `done(#N)` for a created issue,
+`failed(<reason>)`, `skipped(already applied)`, `skipped(depends on W-NNN)`),
+so an interrupted or failed run is resumed by running it again: it never
+repeats a `done` write, and it checks each write's target first, so a write
+that landed without being recorded is found, not made twice. It refuses with
+exit `14`, writing nothing, when the plan is not approved, when a row was
+edited after the plan was generated (`Plan digest:`), when another run holds
+`workstream/.migration-projects.lock`, or, before any write is recorded,
+when the repository changed since the plan (regenerate it with `--plan`).
+It exits `1` when any write failed. It never runs batch 7, never makes a
+Project call, never deletes a label or anything else, and never writes a
+title or a Status: it prints batch 7's steps for you to run. Answers in the
+review tables become writes only through a fresh `--plan`.
 
 **Note the asymmetry with the bare `migrate` command.** `dev-tasks migrate`
 (no sub-verb) migrates a legacy shell-script install and applies its change

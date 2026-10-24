@@ -347,7 +347,23 @@ dev-tasks migrate projects --plan [--repo <owner/repo>] [--out <path>] [--json]
 - Batches, in order, each row with an ID, Action, Target, Detail, `Depends on` and State: `1` labels (missing `level:` and `type:` labels created, type and `priority:` descriptions set, retired descriptions prefixed `Retired (D-91): `), `2` tracking issues (reused, or created with the exact title shown; none for a `Done` wave), `3` hierarchy links (never a relink), `4` `level:` and answered `type:` labels, `4b` blocking-link and priority answers, `5` retired labels removed from open issues, `6` the PRD status comment (created, or missing rows added), and `7` the Project cleanup steps you run yourself. A row already in effect is not proposed, so re-planning after an apply proposes no writes.
 - Answers: fill the Answer columns (a wave id such as `alpha 2`, or `standalone`; a type; `#<issue it blocks>` or `lower priority to high`; `yes` on an Information question) and run `--plan` again. It reads the previous file's answers, rebuilds the batches and resets `Approved: no`; an invalid answer stays listed with the reason.
 - It refuses with exit `14` to overwrite the file at `--out` when that file is a plan with any row that is not `pending`, or is not a migration plan at all; choose another `--out`.
-- `--apply` is not in this version yet.
+
+#### `dev-tasks migrate projects --apply`
+
+Runs an approved migration plan and records every write's result in the plan file, so a re-run resumes.
+
+```bash
+dev-tasks migrate projects --apply [--plan-file <path>] [--json]
+```
+
+- `--plan-file` defaults to `workstream/migration-projects.md`; the states are written back to that file only, after every call, through a temporary file and a rename.
+- Gates, in this order, each writing nothing: a missing or unparsable plan file, or a row whose Detail does not match its Action, exits `2`; `gh` missing or unauthenticated exits `11`; then exit `14` when the header is not exactly one `Approved: yes` line, when `Plan digest:` no longer matches the rows (a row edited after the plan was generated), when another run holds `workstream/.migration-projects.lock`, or, while every row is still `pending`, when the repository changed since the plan was generated ("regenerate the plan").
+- Batches `1` to `6` run in order. Each row's State becomes `done` (`done(#N)` for a created issue), `failed(<first line of gh's error>)`, `skipped(already applied)` when its target is already in the desired state, or `skipped(depends on W-NNN)` when a row it depends on did not apply. A failed row does not stop rows that do not depend on it.
+- A re-run executes `pending`, `failed` and `skipped(depends on …)` rows, never a `done` or `skipped(already applied)` one. Once any row is recorded, the snapshot hash is no longer compared; each write instead checks its own target just before it runs and records `failed(target changed)` when the target is in neither the state the plan expected nor the desired one. A created tracking issue whose state was lost is found again by its exact title, never created twice.
+- Every write is built from the row's Action, Target and Detail only, each value as `--flag=value` and a label name after `--`. Issue and comment bodies go through `--body-file` (an edit through `--field=body=@<file>`) in a temporary directory, removed after each call. The PRD status comment is found by its marker: created when absent, otherwise edited in place by id with only the missing rows added.
+- It never runs batch 7, never makes a Project call, never deletes a label, issue or comment, and never writes a title or a Status. The summary prints batch 7's steps for you to run with your own session; tick each by setting its State to `done`.
+- Answers in the review tables never become writes here: run `--plan` again to turn them into rows, then approve the rebuilt plan. The summary counts the items still waiting for an answer.
+- It exits `0` when every write applied, and `1` when any write is `failed` or the run was interrupted (the states so far are kept). `--json` prints `{ command, mode: "apply", repo, planFile, batches: [{ name, pending, done, failed, skipped }], review, exitCode }`.
 
 ---
 
@@ -355,13 +371,13 @@ dev-tasks migrate projects --plan [--repo <owner/repo>] [--out <path>] [--json]
 
 Every code comes from [`core/exit-codes.ts`](../core/exit-codes.ts); no command adds its own.
 
-| Code | Constant                 | Meaning                                                                                                                                                                                                         |
-| ---- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | `Success`                | Command completed successfully                                                                                                                                                                                  |
-| 1    | `GeneralError`           | Unexpected error, a failed rename in `migrate docs`, or a failed `gh` read in `migrate projects`                                                                                                                |
-| 2    | `InvalidUsage`           | Invalid arguments or flags: an unknown flag, a value flag with no value, an unknown command, a `--repo` that is not the working tree's repository, or no canonical `docs/roadmap.md` table (`migrate projects`) |
-| 11   | `DependencyError`        | A `doctor` check failed, or `gh` is missing or unauthenticated (`migrate projects`)                                                                                                                             |
-| 14   | `ReconciliationConflict` | `update` found conflicting edits (use `--force`), `migrate docs` skipped a rename, or `migrate projects --plan` refused to overwrite the file at `--out` (an applied plan, or not a plan)                       |
+| Code | Constant                 | Meaning                                                                                                                                                                                                                                                                                                                             |
+| ---- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | `Success`                | Command completed successfully                                                                                                                                                                                                                                                                                                      |
+| 1    | `GeneralError`           | Unexpected error, a failed rename in `migrate docs`, a failed `gh` read in `migrate projects`, or a `failed` write or an interrupted run in `migrate projects --apply`                                                                                                                                                              |
+| 2    | `InvalidUsage`           | Invalid arguments or flags: an unknown flag, a value flag with no value, an unknown command, a `--repo` that is not the working tree's repository, or no canonical `docs/roadmap.md` table (`migrate projects`)                                                                                                                     |
+| 11   | `DependencyError`        | A `doctor` check failed, or `gh` is missing or unauthenticated (`migrate projects`)                                                                                                                                                                                                                                                 |
+| 14   | `ReconciliationConflict` | `update` found conflicting edits (use `--force`), `migrate docs` skipped a rename, `migrate projects --plan` refused to overwrite the file at `--out` (an applied plan, or not a plan), or `migrate projects --apply` refused a plan that is not approved, was edited after it was generated, is locked by another run, or is stale |
 
 ---
 
