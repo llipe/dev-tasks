@@ -41,7 +41,7 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 1.2 In the three github-ops copies' Labels section, list the eight types with their definitions, the "exactly one `type:` per issue" rule, the tie-break order, and `type: other` as retired; add a `type: test` row and narrow `tech-debt`'s description (D-85)
   - [x] 1.3 Rewrite the priority rows to the D-84 scale, with the `blocked by` relation and the `**Blocks:** #N — <reason>` body line for `critical`, and the rule that any issue blocking another carries the line (D-84)
   - [x] 1.4 Add the dependency commands (`POST` and `DELETE` on `repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by`) to the Command Map, with the sentence that issue dependencies are issue data an agent may write, unlike the Project (D-22, D-83)
-  - [ ] 1.5 Add the three audit checks: `critical` without a blocking relation, zero or several `type:` labels, a retired label on an open issue
+  - [x] 1.5 Add the three audit checks: `critical` without a blocking relation, zero or several `type:` labels, a retired label on an open issue
   - [ ] 1.6 Add the aggregation queries to product-engineer ×3: follow-ups by `Follow-up to #N`, bugs by `type: bug` without `level:`, release blockers by `priority: critical` (D-83)
   - [ ] 1.7 Require exactly one `type:` from the set in activity-publish-github ×3 (D-85)
   - [ ] 1.7a Put the aggregation queries in product-engineer § Drift Reconciliation (A-86); exempt `level: prd` and `level: wave` from the audit's type check (A-68); spell the dependency `DELETE` command exactly (A-89); PT-81 pins the prompt's type set to `core/migrate-projects/conventions.ts` (A-87)

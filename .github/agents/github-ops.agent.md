@@ -444,7 +444,10 @@ A milestone tracks the scope of a minor version (`vX.Y`); the tag `vX.Y.0` marks
 When invoked with `audit` as input, `github-ops` **MUST**:
 
 1. Fetch all open issues and PRs from the target repository.
-2. Check each against the conventions above.
+2. Check each against the conventions above, and report these three convention findings for every open issue (AC-16):
+   - **`critical` without a blocking relation:** a `priority: critical` issue for which `gh api repos/{o}/{r}/issues/{n}/dependencies/blocking --paginate` returns no relation, whether or not its body carries a `**Blocks:**` line (D-84, A-72). A relation to an issue that has since closed still exists, so it is not reported; lower the priority once the block is gone.
+   - **Zero or several `type:` labels:** an issue with no label from the eight-type set in [Labels](#labels), or with more than one; the retired `type: other`, `type: prd`, `type: wave` and `type: story`, and the unprefixed default labels, count as none (D-85, D-100). Issues labeled `level: prd` or `level: wave`, and tracking issues found by their title prefix (§ Title Format), are exempt, since containers carry no `type:` (A-68). Suggest the tie-break winner for a multi-type issue and the Conventional Commits title prefix's type for an untyped one; never re-type silently.
+   - **Retired label on an open issue:** any label in the retired list in [Labels](#labels) on an open issue. Report it for removal from the issue; never delete the label definition (D-91).
 3. Produce an audit report:
 
 ```markdown
@@ -457,6 +460,14 @@ Date: YYYY-MM-DD
 | #   | Title | Missing Labels | Title Format | Body Structure | Milestone |
 | --- | ----- | -------------- | ------------ | -------------- | --------- |
 | 42  | ...   | type, priority | ✅           | ❌ missing AC  | ❌ none   |
+
+## Conventions
+
+| #   | Title | Finding                                | Suggested fix                      |
+| --- | ----- | -------------------------------------- | ---------------------------------- |
+| 61  | ...   | `critical` without a blocking relation | add the relation or lower priority |
+| 64  | ...   | two `type:` labels (`bug`, `security`) | keep `type: security` (tie-break)  |
+| 70  | ...   | retired label `status: ready`          | take the label off the issue       |
 
 ## Pull Requests
 

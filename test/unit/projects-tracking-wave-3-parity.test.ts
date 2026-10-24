@@ -185,7 +185,7 @@ const AUDIT_CRITICAL = "**`critical` without a blocking relation:**";
 const AUDIT_TYPES = "**Zero or several `type:` labels:**";
 const AUDIT_RETIRED = "**Retired label on an open issue:**";
 const AUDIT_EXEMPT = "Issues labeled `level: prd` or `level: wave`, and tracking issues";
-const AUDIT_CLOSED_BLOCKED = "a relation to an issue that has since closed still exists";
+const AUDIT_CLOSED_BLOCKED = "A relation to an issue that has since closed still exists";
 
 /** product-engineer's aggregation queries (S-019 AC-5, D-83, A-86). */
 const AGG_FOLLOW_UPS = "**Post-wave follow-ups:**";
