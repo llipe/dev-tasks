@@ -591,6 +591,36 @@ describe("product-engineer roadmap conversion (S-016)", () => {
 // code, and the code agrees with github-ops' Labels section. Read from the
 // prompt here, not from this file's own TYPE_SET, so the pin compares the
 // two sources the agents and the CLI actually use.
+const RETIRED_LINE = "- Retired labels, in full: ";
+
+/**
+ * github-ops' retired list as exact names plus `wave:`-style prefixes. The
+ * sentence after the list (GitHub's default labels, D-100) is not part of it.
+ */
+function retiredFromPrompt(labelsSection: string): { names: string[]; prefixes: string[] } {
+  const line = labelsSection.split("\n").find((l) => l.startsWith(RETIRED_LINE));
+  if (line === undefined) throw new Error("no Retired labels line");
+  const list = line.slice(RETIRED_LINE.length).split(". GitHub's default")[0];
+  const prefixes = [...list.matchAll(/every `([^`]+)` label/g)].map((m) => m[1]);
+  const names = [...list.matchAll(/`([^`]+)`/g)]
+    .map((m) => m[1])
+    .filter((n) => !prefixes.includes(n));
+  return { names, prefixes };
+}
+
+function retiredDiff(
+  prompt: { names: string[]; prefixes: string[] },
+  codeNames: readonly string[],
+  codePrefixes: readonly string[],
+): { onlyInPrompt: string[]; onlyInCode: string[] } {
+  const p = new Set([...prompt.names, ...prompt.prefixes.map((x) => `${x}*`)]);
+  const c = new Set([...codeNames, ...codePrefixes.map((x) => `${x}*`)]);
+  return {
+    onlyInPrompt: [...p].filter((x) => !c.has(x)).sort(),
+    onlyInCode: [...c].filter((x) => !p.has(x)).sort(),
+  };
+}
+
 describe("conventions.ts matches github-ops (PT-81)", () => {
   const labels = sectionOf(loadTrees(GITHUB_OPS_TREES)[0], "Labels");
 
@@ -612,17 +642,35 @@ describe("conventions.ts matches github-ops (PT-81)", () => {
     }
   });
 
-  it("the retired type labels and the default labels that are not types (D-91, D-100)", () => {
-    const retired = labels.split("\n").find((l) => l.startsWith("- Retired labels, in full: "));
-    expect(retired, "no Retired labels line").toBeDefined();
-    for (const name of CODE_RETIRED_TYPE_LABELS) expect(retired!).toContain(`\`${name}\``);
-    for (const name of CODE_RETIRED_LABELS)
-      expect(retired!, name).toContain(name.replace(/^needs: /, ""));
-    for (const prefix of CODE_RETIRED_LABEL_PREFIXES)
-      expect(retired!).toContain(`every \`${prefix}\` label`);
+  // F-7 (verifier audit on PR #328): compared both ways, by exact name.
+  it("the retired labels, both ways, by exact name (D-91)", () => {
+    const fromPrompt = retiredFromPrompt(labels);
+    expect(retiredDiff(fromPrompt, CODE_RETIRED_LABELS, CODE_RETIRED_LABEL_PREFIXES)).toEqual({
+      onlyInPrompt: [],
+      onlyInCode: [],
+    });
+    for (const name of CODE_RETIRED_TYPE_LABELS) expect(fromPrompt.names).toContain(name);
+  });
+
+  it("the two-way comparison catches a label dropped from either side", () => {
+    const fromPrompt = retiredFromPrompt(labels);
+    const dropped = CODE_RETIRED_LABELS.filter((n) => n !== "needs: merge");
+    expect(retiredDiff(fromPrompt, dropped, CODE_RETIRED_LABEL_PREFIXES).onlyInPrompt).toEqual([
+      "needs: merge",
+    ]);
+    const extra = [...CODE_RETIRED_LABELS, "needs: review"];
+    expect(retiredDiff(fromPrompt, extra, CODE_RETIRED_LABEL_PREFIXES).onlyInCode).toEqual([
+      "needs: review",
+    ]);
+    expect(retiredDiff(fromPrompt, CODE_RETIRED_LABELS, []).onlyInPrompt).toEqual(["wave:*"]);
+  });
+
+  it("the default labels are neither retired nor a type (D-100)", () => {
+    const retired = labels.split("\n").find((l) => l.startsWith(RETIRED_LINE))!;
     for (const name of ["bug", "documentation", "enhancement"]) {
       expect(Object.keys(CODE_DEFAULT_LABEL_SUGGESTIONS)).toContain(name);
-      expect(retired!).toContain(`\`${name}\``);
+      expect(retired).toContain(`\`${name}\``);
+      expect(retiredFromPrompt(labels).names).not.toContain(name);
     }
   });
 });
@@ -631,10 +679,32 @@ describe("conventions.ts matches github-ops (PT-81)", () => {
 // S-014's `plan.ts` may later carry the batch 7 strings, and only the read
 // query and the delete template it prints for the user (D-97); no file may
 // build a `project` argv for the runner.
+/** GraphQL ProjectV2 types and mutations, and REST `/projects` paths (F-8). */
+const PROJECT_API = /ProjectV2|projectV2|\/projects\b/;
+
 describe("no Project calls in core/migrate-projects (PT-80)", () => {
   const DIR = "core/migrate-projects";
   const files = readdirSync(resolve(ROOT, DIR)).filter((f) => f.endsWith(".ts"));
   const PRINTED_ONLY = new Map([["plan.ts", /^(item-list|item-delete)$/]]);
+
+  it("the Project API pattern catches GraphQL and REST forms, not the command name", () => {
+    for (const probe of [
+      'gh api graphql -f query="mutation { addProjectV2ItemById(input: $i) { item { id } } }"',
+      "deleteProjectV2Item",
+      "projectV2(number: 5)",
+      "repos/o/r/projects",
+      "users/o/projects?per_page=100",
+    ]) {
+      expect(probe, probe).toMatch(PROJECT_API);
+    }
+    for (const ok of [
+      "migrate projects --plan",
+      "workstream/migration-projects.md",
+      "projects-tracking",
+    ]) {
+      expect(ok, ok).not.toMatch(PROJECT_API);
+    }
+  });
 
   it("the walk finds the module", () => {
     for (const f of [
@@ -655,6 +725,8 @@ describe("no Project calls in core/migrate-projects (PT-80)", () => {
       for (const [index, line] of lines.entries()) {
         const where = `${DIR}/${file}:${index + 1}`;
         expect(line, `${where} builds a project argv`).not.toMatch(/["'`]project["'`]/);
+        // F-8: a GraphQL ProjectV2 mutation or a REST `/projects` path is a Project call too.
+        expect(line, `${where} names a Project API`).not.toMatch(PROJECT_API);
         for (const m of line.matchAll(/\bgh\s+project\s+([a-z-]+)/g)) {
           const allowed = PRINTED_ONLY.get(file);
           expect(
