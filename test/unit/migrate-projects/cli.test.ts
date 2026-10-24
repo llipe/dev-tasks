@@ -691,8 +691,66 @@ describe(
       expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
     });
 
+    // 5.29 (D-111): a signal during a slow write kills the gh child, so the
+    // write never lands after the lock is released, and none is recorded.
+    it.each(["SIGINT", "SIGTERM", "SIGHUP"] as const)(
+      "%s during a slow gh write: the gh child is killed, nothing lands or is recorded after exit",
+      async (signal) => {
+        const { text } = await setupApply(loadModel("ac11"));
+        const scenarioPath = join(tmp, "scenario.json");
+        const scenario = JSON.parse(readFileSync(scenarioPath, "utf-8")) as {
+          responses: Record<string, { delayMs?: number }>;
+        };
+        const firstWrite = Object.keys(scenario.responses).find((k) =>
+          k.startsWith("label\u0001create"),
+        )!;
+        scenario.responses[firstWrite].delayMs = 6000;
+        writeFileSync(scenarioPath, JSON.stringify(scenario));
+        const landed = join(tmp, "landed.log");
+        const child = spawn(
+          process.execPath,
+          [...singleProcess(), "migrate", "projects", "--apply"],
+          {
+            cwd,
+            env: {
+              PATH: pathDir,
+              HOME: process.env.HOME ?? tmp,
+              TMPDIR: join(tmp, "systmp"),
+              TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
+              FAKE_GH_SCENARIO: scenarioPath,
+              FAKE_GH_LOG: join(tmp, "gh.log"),
+              FAKE_GH_LANDED: landed,
+            },
+          },
+        );
+        const exited = new Promise<number | null>((done) => child.on("exit", (code) => done(code)));
+        const deadline = Date.now() + 90_000;
+        while (writesInLog().length < 1 && Date.now() < deadline && child.exitCode === null)
+          await new Promise((x) => setTimeout(x, 25));
+        if (writesInLog().length < 1) {
+          child.kill("SIGKILL");
+          expect(writesInLog().length, "the binary made no write within 90 s").toBe(1);
+        }
+        child.kill(signal);
+        expect(await exited).toBe(1);
+        // Past the write's delay: had the gh child survived, it would have landed by now.
+        await new Promise((x) => setTimeout(x, 7000));
+        const landedWrites = existsSync(landed)
+          ? readFileSync(landed, "utf-8")
+              .split("\n")
+              .filter((l) => l.length > 0)
+              .map((l) => JSON.parse(l) as string[])
+              .filter((a) => isWrite(a))
+          : [];
+        expect(landedWrites).toEqual([]);
+        expect(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).toBe(text);
+        expect(existsSync(join(cwd, LOCK))).toBe(false);
+        expect(leftTmp()).toEqual([]);
+      },
+    );
+
     // 5.25: a signal before any write, while the lock is held (the snapshot read).
-    it.each(["SIGINT", "SIGTERM"] as const)(
+    it.each(["SIGINT", "SIGTERM", "SIGHUP"] as const)(
       "%s before any write: exit 1, the lock and temp dir removed, zero writes, the plan untouched",
       async (signal) => {
         const { text } = await setupApply(loadModel("ac11"));
@@ -733,7 +791,7 @@ describe(
     );
 
     // E2E-23 at Layer 2, 5.23 (SG2, CT-34): interrupted by a signal between calls, then resumed.
-    it.each(["SIGINT", "SIGTERM"] as const)(
+    it.each(["SIGINT", "SIGTERM", "SIGHUP"] as const)(
       "interrupted mid-run by %s: exit 1, states so far kept, lock and temp dir removed; the resume repeats no done write",
       async (signal) => {
         await setupApply(loadModel("ac11"));

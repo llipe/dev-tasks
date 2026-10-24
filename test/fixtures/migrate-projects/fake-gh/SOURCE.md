@@ -16,3 +16,5 @@ with the write half of the fake (`helpers/fake-github-writes.ts`), then
 replays its answers. `$FAKE_GH_BODIES` records each body as `gh` would read
 it, and `$FAKE_GH_DELAY_MS` (or a response's `delayMs`) slows every answer
 so a test can interrupt a run between calls.
+`$FAKE_GH_LANDED` records each call that got past its delay, so a test can
+tell a write that landed from one killed while it was in flight (D-111).

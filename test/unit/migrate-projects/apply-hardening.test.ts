@@ -346,6 +346,50 @@ describe("cleanup and state after failures (5.22, BD1, BD3, S2, G7)", () => {
     expect(run.result.error).toMatch(/regenerate/);
   });
 
+  // 5.28 (verifier F-6): the result's counts match the file on disk.
+  it("a failed write-back restores the row's previous state, so the counts match the file", async () => {
+    const { model, approved } = await fresh();
+    let current = "";
+    const fail = (reason: string) => ({
+      beforeWrite: (id: string) => {
+        current = id;
+      },
+      runner: {
+        onWrite: () =>
+          current === "W-008" ? { stdout: "", stderr: reason, exitCode: 1 } : undefined,
+      },
+    });
+    const first = await applyModel(model, approved, fail("HTTP 500: first"));
+    expect(first.states()["W-008"]).toBe("failed(HTTP 500: first)");
+    // The re-run fails W-008 again, and that state cannot be written back.
+    const second = await applyModel(model, first.text, {
+      ...fail("HTTP 500: second"),
+      store: failingStore(first.text, 1),
+    });
+    expect(second.result.exitCode).toBe(1);
+    expect(second.states()["W-008"]).toBe("failed(HTTP 500: first)");
+    const onDisk = parseMigrationPlan(second.text).plan;
+    const counted = onDisk.batches.map((b) => {
+      const rows = [...b.writes, ...b.steps];
+      const n = (p: RegExp) => rows.filter((x) => p.test(x.state)).length;
+      return {
+        pending: n(/^pending$/),
+        done: n(/^done/),
+        failed: n(/^failed/),
+        skipped: n(/^skipped/),
+      };
+    });
+    expect(
+      second.result.summary!.batches.map(({ pending, done, failed, skipped }) => ({
+        pending,
+        done,
+        failed,
+        skipped,
+      })),
+    ).toEqual(counted);
+    expect(second.result.summary!.batches[0]).toMatchObject({ failed: 1, pending: 0 });
+  });
+
   it("G7: the plan file changing after the lock is taken exits 14 with zero writes", async () => {
     const { model, approved } = await fresh();
     const store = memoryStore({ [PLAN_PATH]: approved });
