@@ -444,6 +444,22 @@ const EXACT_MATCH = "maps `phase: X` only to a row whose `Phase/Wave` cell equal
 const NO_STATE_FILE_EDIT = "Migration edits no `workstream/planner-state-*.md` file";
 const PLANNER_RESUME = "the planner's resume adds the missing `Wave issue:` line";
 const NEVER_DONE = "A Status without merged evidence is never upgraded to `Done` by the conversion";
+const DONE_CITATION = "a `Done` row cites the merged PR or closed issue behind it.";
+// F1 (D-98, A-56): the exact match is scoped to the story's PRD.
+const PRD_SCOPE =
+  ", among the rows of the PRD named in the story's `[PRD-<name>]` title prefix (D-98)";
+// F2: the meaning-bearing phrases, not only the bold step labels.
+const MEANING: ReadonlyArray<readonly [string, string]> = [
+  ["narrative kept (M3)", "never instead of it"],
+  ["fixed set (M7)", "`Status` from the fixed set"],
+  ["user approval (M4)", "the user approves the draft"],
+  ["own PR (M5)", "never inside the migration's own PR"],
+  ["unmapped, never fuzzy (M6)", "is listed as unmapped for the user, never fuzzy-matched"],
+  [
+    "state files listed as information (M8)",
+    "`--plan` lists each active state file that lacks a `Wave issue:` line as information",
+  ],
+];
 
 describe("product-engineer roadmap conversion (S-016)", () => {
   const trees = loadTrees(PRODUCT_ENGINEER_TREES);
@@ -479,6 +495,9 @@ describe("product-engineer roadmap conversion (S-016)", () => {
       for (const marker of [PARTIAL_TABLE, PAUSED, TWO_SECTIONS]) {
         expect(text, `${copy.path}: missing "${marker}"`).toContain(marker);
       }
+      for (const [what, phrase] of MEANING) {
+        expect(text, `${copy.path}: ${what} lost "${phrase}"`).toContain(phrase);
+      }
     }
   });
 
@@ -488,6 +507,7 @@ describe("product-engineer roadmap conversion (S-016)", () => {
       const text = conversion(copy);
       expect(text, copy.path).toContain(PLAN_REFUSES);
       expect(text, copy.path).toContain(EXACT_MATCH);
+      expect(text, copy.path).toContain(EXACT_MATCH + PRD_SCOPE);
     }
   });
 
@@ -499,13 +519,23 @@ describe("product-engineer roadmap conversion (S-016)", () => {
     }
   });
 
-  // PT-72 — S-016 BR: no Done from narrative alone.
+  // PT-72 — S-016 BR: no Done from narrative alone. Sentence-based and
+  // case-insensitive (F2, probes M1 and M2): every sentence or clause naming
+  // done, with or without backticks, must be one of the two allowed ones.
   it("never upgrades a status to Done without merged evidence", () => {
+    const allowed = [NEVER_DONE, DONE_CITATION];
     for (const copy of trees) {
       const text = conversion(copy);
-      expect(text, copy.path).toContain(NEVER_DONE);
-      for (const line of text.split("\n").filter((l) => l.includes("`Done`"))) {
-        expect(line, `${copy.path}: a line lets the conversion set Done`).toMatch(/never|merged/);
+      expect(text, copy.path).toContain(`${NEVER_DONE}; ${DONE_CITATION}`);
+      const clauses = text
+        .split(/\n|;\s+|(?<=[.!?])\s+/)
+        .map((c) => c.trim())
+        .filter((c) => /\bdone\b/i.test(c));
+      for (const clause of clauses) {
+        expect(
+          allowed,
+          `${copy.path}: a sentence lets the conversion set Done: ${clause}`,
+        ).toContain(clause);
       }
     }
   });

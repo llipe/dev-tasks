@@ -59,17 +59,19 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 1.19 Reword the `priority: high` table row and the priority sentence from "blocks nothing" to "blocks no ship", so a `high` issue may block another issue while keeping `high` (finding 5; D-102)
   - [x] 1.20 Add a fourth github-ops audit check: a `priority: critical` issue that has a native `blocking` relation but no `**Blocks:** #N — <reason>` body line is reported (finding 6; D-102). Add it to the audit list and the `## Conventions` report table; extend PT-63
 
-- [x] 2.0 Implement Story S-016: product-engineer converts a narrative roadmap to the canonical table before migration (#319)
+- [ ] 2.0 Implement Story S-016: product-engineer converts a narrative roadmap to the canonical table before migration (#319)
 
   - [x] 2.1 Add pins for the conversion step, the migration dependency and the state-file sentence to the wave 3 parity file; confirm red
   - [x] 2.2 In product-engineer ×3 Roadmap Maintenance, add the conversion step: draft the canonical table when none exists, keep the narrative verbatim below it, flag every translated Status, ship it as its own docs PR before migration (FR-21, D-86)
-  - [x] 2.3 State that `migrate projects --plan` refuses to run without the table and maps `phase: X` only to an exactly equal `Phase/Wave` cell (D-86)
+  - [x] 2.3 State that `migrate projects --plan` refuses to run without the table and maps `phase: X` only to an exactly equal `Phase/Wave` cell, among the rows of the PRD named in the story's `[PRD-<name>]` title prefix (D-86, D-98)
   - [x] 2.4 State that migration edits no planner state file; the planner's resume adds a missing `Wave issue:` line (D-89)
   - [x] 2.4a Define a "partial table" as a canonical header with at least one row (A-59), and match PRD AC-13 as amended (D-99)
   - [x] 2.5 Verify Acceptance Criterion: AC-1 conversion step; AC-2 migration dependency; AC-3 state files
   - [x] 2.6 Edge cases in the step's text: a partial canonical table counts as canonical; a narrative "paused" translates to `Not started` and is flagged; two narrative sections for one wave give one row citing both
   - [x] 2.7 AC-to-test mapping: AC-1 → `product-engineer > roadmap conversion`; AC-2 → `product-engineer > migration dependency`; AC-3 → `product-engineer > state files`; AC-4 is the file
   - [x] 2.8 Run Tests: `pnpm run test:unit` green
+  - [ ] 2.9 Scope the exact match to the PRD (F1, D-98, A-56): append ", among the rows of the PRD named in the story's `[PRD-<name>]` title prefix (D-98)" to the `phase: X` sentence; extend PT-69. Test first.
+  - [ ] 2.10 Harden the pins (F2): make PT-72's negative check sentence-based and case-insensitive, allowing only the never-`Done` sentence and the citation sentence; pin "never instead of it", "from the fixed set", "the user approves the draft", "never inside the migration's own PR", "never fuzzy-matched" with the unmapped listing, and "as information" for `--plan` and state files; prove the pins catch the verifier's probes M1 to M8. Test first.
 
 - [ ] 3.0 Implement Story S-013: `dev-tasks migrate projects --plan` reads the repository and writes a reviewable migration plan (#320)
 
