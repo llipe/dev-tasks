@@ -102,6 +102,7 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [ ] 4.3a Mapping per §16a: drop rule 3 (D-98, A-57); scope rule 2 to the title prefix's PRD (A-56); map story-file slugs to PRDs by the roadmap link text, `All` rows for single-wave PRDs (A-55); in the AC-11 fixture, replace the milestone-mapped story with one whose only link is a milestone, which stays unmapped
   - [ ] 4.4 `plan.ts`: batches 1 to 7 in spec §8.3's order: labels; tracking issues (none for a shipped wave, FR-19); hierarchy links skipping existing ones; story and type labels; retired-label removals (D-91); PRD status comments with `—` for waves without an issue (D-92, D-73); the Project batch with runner `user`, printing the `gh project item-list` query, the `item-delete` template and the two Workflows-page steps (D-81, D-97)
   - [ ] 4.4a Batches per §16a: batch 1 creates every missing type and `level:` label and sets descriptions (A-71); batch 4b writes blocking-link and priority answers (A-73); batch 6 creates the PRD comment only when absent, else adds missing rows (A-67); every row carries `Depends on`, and create rows show title and template (A-81, A-84); edge rules of A-83; prefix `Retired (D-91): ` under 100 characters, never doubled (A-82); answers feed a fresh `--plan` that resets `Approved: no` (A-50)
+  - [ ] 4.4b Batch 1 also sets the four `priority:` label descriptions to the D-84 and D-102 meanings (D-103)
   - [ ] 4.5 Reused pre-`level:` tracking issues: add `level: prd` or `level: wave`, remove the experiment `type:` label; two matches omit that PRD's batches and list both (D-87)
   - [ ] 4.6 Guard the scope: no title write, no hierarchy write on a standalone issue, no Status write (D-19, D-27, D-82)
   - [ ] 4.7 Carry answers from the previous plan file's review tables into the next `--plan`
@@ -182,3 +183,5 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 | D-99 | PRD AC-13 amended |
 | D-100 | Default labels not retired, not counted as types |
 | D-101 | Hash only while all pending; then per-write target checks |
+| D-102 | `high` blocks no ship; audit checks `critical` for the `**Blocks:**` line |
+| D-103 | Migration batch 1 sets the `priority:` descriptions too |
