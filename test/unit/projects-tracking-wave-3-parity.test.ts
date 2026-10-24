@@ -16,6 +16,9 @@ import { describe, it, expect } from "vitest";
 import {
   TYPE_SET as CODE_TYPE_SET,
   TYPE_DEFINITIONS as CODE_TYPE_DEFINITIONS,
+  TYPE_COLORS as CODE_TYPE_COLORS,
+  LEVEL_DEFINITIONS as CODE_LEVEL_DEFINITIONS,
+  PRIORITY_DEFINITIONS as CODE_PRIORITY_DEFINITIONS,
   RETIRED_TYPE_LABELS as CODE_RETIRED_TYPE_LABELS,
   RETIRED_LABELS as CODE_RETIRED_LABELS,
   RETIRED_LABEL_PREFIXES as CODE_RETIRED_LABEL_PREFIXES,
@@ -642,6 +645,32 @@ describe("conventions.ts matches github-ops (PT-81)", () => {
     }
   });
 
+  // S-014 (A-71, D-103): batch 1 creates and describes labels from code, so
+  // the colours and descriptions it writes are github-ops' table, once.
+  it("each type colour, and each level and priority colour and description (A-71, D-103)", () => {
+    for (const type of CODE_TYPE_SET) {
+      expect(tableRow(labels, `type: ${type}`)!).toContain(`| \`#${CODE_TYPE_COLORS[type]}\` |`);
+    }
+    const defs = { ...CODE_LEVEL_DEFINITIONS, ...CODE_PRIORITY_DEFINITIONS };
+    expect(Object.keys(defs).sort()).toEqual(
+      [
+        "level: prd",
+        "level: story",
+        "level: wave",
+        "priority: critical",
+        "priority: high",
+        "priority: low",
+        "priority: medium",
+      ],
+    );
+    for (const [name, d] of Object.entries(defs)) {
+      const row = tableRow(labels, name);
+      expect(row, `no row for ${name}`).toBeDefined();
+      expect(row!).toContain(`| \`#${d.color}\` | ${d.description} |`);
+      expect(d.description.length, name).toBeLessThanOrEqual(100);
+    }
+  });
+
   // F-7 (verifier audit on PR #328): compared both ways, by exact name.
   it("the retired labels, both ways, by exact name (D-91)", () => {
     const fromPrompt = retiredFromPrompt(labels);
@@ -676,11 +705,20 @@ describe("conventions.ts matches github-ops (PT-81)", () => {
 });
 
 // PT-80 — A-60, D-81, D-22: no Project write from the migration module. Only
-// S-014's `plan.ts` may later carry the batch 7 strings, and only the read
-// query and the delete template it prints for the user (D-97); no file may
-// build a `project` argv for the runner.
+// S-014's `plan.ts` carries the batch 7 strings, only inside its batch 7
+// builder (`projectCleanupSteps`), and only the read query and the delete
+// template it prints for the user (D-97); no file may build a `project` argv
+// for the runner, and the CLI never runs a `gh project` call.
 /** GraphQL ProjectV2 types and mutations, and REST `/projects` paths (F-8). */
 const PROJECT_API = /ProjectV2|projectV2|\/projects\b/;
+
+/** The line range of `projectCleanupSteps` in plan.ts: its signature to its closing brace. */
+function batchSevenBuilder(lines: string[]): { start: number; end: number } {
+  const start = lines.findIndex((l) => l.startsWith("export function projectCleanupSteps("));
+  if (start === -1) throw new Error("plan.ts has no projectCleanupSteps");
+  const end = lines.findIndex((l, i) => i > start && l === "}");
+  return { start, end };
+}
 
 describe("no Project calls in core/migrate-projects (PT-80)", () => {
   const DIR = "core/migrate-projects";
@@ -706,6 +744,20 @@ describe("no Project calls in core/migrate-projects (PT-80)", () => {
     }
   });
 
+  it("the builder range catches a batch 7 string anywhere else in plan.ts", () => {
+    const probe = [
+      "const x = `gh project item-list 1`;",
+      "export function projectCleanupSteps(owner: string): string[] {",
+      "  return [`gh project item-delete <n> --owner ${owner} --id <item-id>`];",
+      "}",
+    ];
+    const { start, end } = batchSevenBuilder(probe);
+    const outside = probe
+      .map((l, i) => ({ l, i }))
+      .filter(({ l, i }) => /\bgh\s+project\b/.test(l) && !(i > start && i < end));
+    expect(outside.map((o) => o.i)).toEqual([0]);
+  });
+
   it("the walk finds the module", () => {
     for (const f of [
       "gh.ts",
@@ -714,16 +766,29 @@ describe("no Project calls in core/migrate-projects (PT-80)", () => {
       "planfile.ts",
       "conventions.ts",
       "index.ts",
+      "roadmap.ts",
+      "map.ts",
+      "answers.ts",
+      "plan.ts",
     ]) {
       expect(files).toContain(f);
     }
   });
 
   it("no `gh project` string outside plan.ts's printed batch 7, and no `project` argv", () => {
+    expect(files).toContain("plan.ts");
     for (const file of files) {
       const lines = readFileSync(resolve(ROOT, DIR, file), "utf-8").split("\n");
+      const builder = file === "plan.ts" ? batchSevenBuilder(lines) : null;
       for (const [index, line] of lines.entries()) {
         const where = `${DIR}/${file}:${index + 1}`;
+        // A-60: only inside the batch 7 builder, and only the two printed commands.
+        if (/\bgh\s+project\b/.test(line)) {
+          expect(
+            builder !== null && index > builder.start && index < builder.end,
+            `${where} names gh project outside the batch 7 builder`,
+          ).toBe(true);
+        }
         expect(line, `${where} builds a project argv`).not.toMatch(/["'`]project["'`]/);
         // F-8: a GraphQL ProjectV2 mutation or a REST `/projects` path is a Project call too.
         expect(line, `${where} names a Project API`).not.toMatch(PROJECT_API);
