@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                         | Author                    |
 | ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.5 | 2026-10-24 | §16a gains the S-014 audit records (F-2, F-5, F-7, F-8) and D-106 to D-109. | product-engineer |
 | 1.4 | 2026-10-24 | §16a A-53: the three accepted PRD-title forms, recorded after the S-013 audit (F-6). | product-engineer |
 | 1.3 | 2026-10-24 | Design Mode resolutions A-49 to A-93 confirmed by @llipe: §16a added; D-98 to D-101 (milestone rule dropped, AC-13 amended, default labels, resume check). | product-engineer |
 | 1.2 | 2026-10-23 | §8.3 batch 7 prints the Project item query and delete template instead of per-item commands (D-97). | product-engineer |
@@ -377,6 +378,8 @@ The Design Mode findings A-49 to A-93 (`workstream/test-plan-projects-tracking-p
 - **A-58, D-99.** PRD AC-13 is amended in v1.11.
 - **A-86.** S-019 AC-5's aggregation queries go in product-engineer § Drift Reconciliation; S-016 owns § Roadmap Maintenance.
 - **A-92.** Code exports use `MigrationPlan*` names. FR-17's "dry-run plan" reads "migration plan" in v1.11.
+
+- **S-014 audit records (v1.5).** The snapshot reads each open PRD tracking issue's comments, one paginated read per issue, so batch 6 can tell create from add-rows (F-2, A-67, extends A-74). A wave title longer than 80 characters is cut at a word and ends with `…` (F-5). A `Phase/Wave` cell containing a space or colon cannot form a `Wave <id>:` title, so it is listed, not created (F-7). A closed PRD tracking issue is never reused: an in-scope PRD gets a new one and the closed one is listed, as A-91 does for waves (F-8). Labels match case-insensitively (D-106); `not started` joins the PRD State vocabulary (D-107); no empty wave issue (D-108); an over-long PRD title is listed, not created (D-109).
 
 ## 17. Open Questions
 

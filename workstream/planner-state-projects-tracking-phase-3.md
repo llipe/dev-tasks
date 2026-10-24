@@ -7,7 +7,7 @@
 - Repository: llipe/dev-tasks
 - Wave issue: #317
 - Started: 2026-10-24T14:45Z
-- Last updated: 2026-10-24T16:57Z
+- Last updated: 2026-10-24T18:30Z
 - PRD issue: #289
 
 ## Story Status
@@ -17,15 +17,15 @@
 | 1 | S-019 | #318 | ✅ Merged | #326 | story/S-019-type-priority-conventions |
 | 2 | S-016 | #319 | ✅ Merged | #327 | story/S-016-roadmap-conversion |
 | 3 | S-013 | #320 | ✅ Merged | #328 | story/S-013-migrate-plan |
-| 4        | S-014    | #321    | ⏳ Pending | —   | —      |
+| 4 | S-014 | #321 | ✅ Merged | #329 | story/S-014-map-and-batches |
 | 5        | S-015    | #322    | ⏳ Pending | —   | —      |
 | 6        | S-017    | #323    | ⏳ Pending | —   | —      |
 
 ## Current Position
 
-- Next story: S-014
-- Last merged PR: #328
-- Integration branch HEAD: 29caaa0
+- Next story: S-015
+- Last merged PR: #329
+- Integration branch HEAD: 1098223
 
 ## Decisions Log
 
@@ -43,3 +43,6 @@
 - S-013 QA routing: parse-args regression (every command silently ignored unknown and valueless flags) fixed in-story as 3.16, now exit 2 on every command, CHANGELOG [Unreleased]; M1 story-precedence tests 3.17; error paths 3.18.
 - S-013 audit routing: F-5, F-7, F-8 fixed in-story (3.19 to 3.21); F-1 (answers carried over) left to S-014 task 4.7; F-2 test-plan MC-2 and F-6 spec §16a A-53 corrected in this checkpoint; F-3, F-4 Intended deferrals.
 - wave_status: written at S-013 start, closeout (PR open, before merge gates), gate 10 confirmed `PR open #328`.
+- S-014: memo_intent written(a3e84b16), memo_outcome written(2079b524); coverage_gate PASS (core 93.8% stmts; 37/38 mutants, survivor then killed); verifier High, Minor, 9 findings (PR #329 comment 6387615318).
+- S-014 routing: QA gaps fixed in-story 4.15 to 4.19 (D-106 self-resolved); audit F-3 fixed 4.20; F-1, F-4, F-6 Undetermined resolved by @llipe as D-107 to D-109 (4.21 to 4.23); F-2, F-5, F-7, F-8 recorded in spec §16a v1.5; F-9 annotation synced to #321 by the planner. D-108 scoped by the developer to the story-driven case; an active state file still gets its wave issue (FR-19), accepted by the planner.
+- wave_status: written at S-014 start, closeout (PR open, before merge gates), gate 10 confirmed `PR open #329`.
