@@ -7,7 +7,7 @@
 - Repository: llipe/dev-tasks
 - Wave issue: #317
 - Started: 2026-10-24T14:45Z
-- Last updated: 2026-10-24T18:30Z
+- Last updated: 2026-10-24T23:56Z
 - PRD issue: #289
 
 ## Story Status
@@ -18,14 +18,14 @@
 | 2 | S-016 | #319 | ✅ Merged | #327 | story/S-016-roadmap-conversion |
 | 3 | S-013 | #320 | ✅ Merged | #328 | story/S-013-migrate-plan |
 | 4 | S-014 | #321 | ✅ Merged | #329 | story/S-014-map-and-batches |
-| 5        | S-015    | #322    | ⏳ Pending | —   | —      |
+| 5 | S-015 | #322 | ✅ Merged | #330 | story/S-015-migrate-apply |
 | 6        | S-017    | #323    | ⏳ Pending | —   | —      |
 
 ## Current Position
 
-- Next story: S-015
-- Last merged PR: #329
-- Integration branch HEAD: 1098223
+- Next story: S-017
+- Last merged PR: #330
+- Integration branch HEAD: 187b131
 
 ## Decisions Log
 
@@ -46,3 +46,6 @@
 - S-014: memo_intent written(a3e84b16), memo_outcome written(2079b524); coverage_gate PASS (core 93.8% stmts; 37/38 mutants, survivor then killed); verifier High, Minor, 9 findings (PR #329 comment 6387615318).
 - S-014 routing: QA gaps fixed in-story 4.15 to 4.19 (D-106 self-resolved); audit F-3 fixed 4.20; F-1, F-4, F-6 Undetermined resolved by @llipe as D-107 to D-109 (4.21 to 4.23); F-2, F-5, F-7, F-8 recorded in spec §16a v1.5; F-9 annotation synced to #321 by the planner. D-108 scoped by the developer to the story-driven case; an active state file still gets its wave issue (FR-19), accepted by the planner.
 - wave_status: written at S-014 start, closeout (PR open, before merge gates), gate 10 confirmed `PR open #329`.
+- S-015: memo_intent written(6f53af94), memo_outcome written(8cb1196c); coverage_gate first FAIL (apply.ts 88.8%/81.7%, 22 surviving mutants), then PASS on re-run (27/27 killed, apply.ts 99.7%/98.1%); verifier High, Minor, 9 findings (PR #330 comment 6390352409).
+- S-015 routing: QA FAIL closed in-story (5.18 to 5.24), test robustness under load (5.25 to 5.27); audit F-6, F-7, F-10 fixed (5.28, 5.30, 5.31); F-8 resolved by @llipe as D-111 (5.29); Intended F-1, F-2, F-3, F-5 confirmed by @llipe as D-110 and amended in this checkpoint (story v1.2, test plan CT-25, CT-28, MU-61, spec §16a v1.6); F-9 annotation synced to #322 by the planner.
+- wave_status: written at S-015 start, closeout (PR open, before merge gates), gate 10 confirmed `PR open #330`.
