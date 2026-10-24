@@ -47,7 +47,7 @@ export const RETIRED_TYPE_LABELS = [
   "type: story",
 ] as const;
 
-/** Every retired label by exact name (D-91, D-07, D-15); `wave:` labels are matched by prefix. */
+/** Every retired label by exact name (D-91, D-07, D-15); `wave:` labels are matched by prefix. S-014 batch 5 removes them; PT-81 pins the list. */
 export const RETIRED_LABELS = [
   ...RETIRED_TYPE_LABELS,
   "status: ready",
@@ -58,13 +58,6 @@ export const RETIRED_LABELS = [
 ] as const;
 
 export const RETIRED_LABEL_PREFIXES = ["wave:"] as const;
-
-export function isRetiredLabel(name: string): boolean {
-  return (
-    (RETIRED_LABELS as readonly string[]).includes(name) ||
-    RETIRED_LABEL_PREFIXES.some((p) => name.startsWith(p))
-  );
-}
 
 export const LEVEL_LABELS = {
   prd: "level: prd",

@@ -73,6 +73,36 @@ describe("story (D-82, A-54)", () => {
   });
 });
 
+describe("a story with a tracking signal is a story (EC-110, A-53, qa mutant M1)", () => {
+  const line = "**Story:** `workstream/user-stories-alpha-phase-1.md` → S-001";
+  it.each([
+    ["[PRD-alpha] Story S-001: x", ["level: wave"], ""],
+    ["[PRD-alpha] Story S-001: x", ["type: prd"], ""],
+    ["[PRD-alpha] Story S-001: x", ["level: prd", "type: wave"], ""],
+    ["[PRD-alpha] Wave 1: x", [], line],
+    ["[PRD-alpha] Alpha widgets", ["level: prd"], line],
+  ])("%s %j with body %j", (title, labels, body) => {
+    expect(issueKind(issue(title, labels, body), PRDS).kind).toBe("story");
+  });
+
+  it("classifySnapshot keeps it a story", async () => {
+    const model = cloneModel(loadModel("empty"));
+    model.issues.push({
+      id: 1,
+      number: 1,
+      state: "open",
+      title: "[PRD-alpha] Wave 1: x",
+      body: line,
+      labels: ["level: wave"],
+      milestone: null,
+      parent: null,
+      blocking: [],
+    });
+    const c = classifySnapshot(await snapshotOf(model));
+    expect(c.issues[0].kind.kind).toBe("story");
+  });
+});
+
 describe("tracking issue (D-87, A-53)", () => {
   // MU-3
   it("`[PRD-<name>] <PRD H1 title>` is a PRD tracking issue with or without labels", () => {
@@ -264,6 +294,28 @@ describe("classifySnapshot on the survey fixture", () => {
     expect(c.roadmap[0].note).toMatch(/product-engineer/);
   });
 
+  it("a missing roadmap gets a roadmap note (D-86)", async () => {
+    const model = cloneModel(loadModel("survey"));
+    delete model.files["docs/roadmap.md"];
+    const c = classifySnapshot(await snapshotOf(model));
+    expect(c.roadmap).toEqual([
+      {
+        row: "docs/roadmap.md",
+        note: "missing; product-engineer's roadmap conversion comes first (D-86)",
+      },
+    ]);
+  });
+
+  it("an incomplete closed-issue search is an Information note", async () => {
+    const model = loadModel("survey");
+    const snapshot = await readSnapshot({
+      runner: recordingRunner(model, { searchIncomplete: true }).runner,
+      reader: modelReader(model),
+    });
+    const note = classifySnapshot(snapshot).information.find((n) => n.ref === "search");
+    expect(note?.note).toMatch(/1,000-result window/);
+  });
+
   it("the canonical roadmap gives no roadmap note", async () => {
     const c = classifySnapshot(await snapshotOf(loadModel("survey")));
     expect(c.roadmap).toEqual([]);
@@ -271,7 +323,7 @@ describe("classifySnapshot on the survey fixture", () => {
 });
 
 // RT-13: every issue gets exactly one classification, whatever its shape.
-describe("RT-13 every issue classified exactly once", () => {
+describe("RT-13 every issue classified exactly once, story first", () => {
   const seed = seedFromEnv(13013);
   it(`random open issues (seed ${seed})`, async () => {
     const r = prng(seed);
@@ -286,7 +338,15 @@ describe("RT-13 every issue classified exactly once", () => {
       "plain",
       "[chore] f",
     ];
-    const labelPool = ["level: prd", "level: wave", "type: prd", "type: bug", "phase: 1", "bug"];
+    const labelPool = [
+      "level: prd",
+      "level: wave",
+      "type: prd",
+      "type: wave",
+      "type: bug",
+      "phase: 1",
+      "bug",
+    ];
     const bodies = [
       "",
       "**Story:** workstream/user-stories-alpha-phase-1.md",
@@ -312,10 +372,22 @@ describe("RT-13 every issue classified exactly once", () => {
       const c = classifySnapshot(await snapshotOf(model));
       const numbers = c.issues.map((i) => i.number);
       expect(numbers, `seed ${seed} iter ${iter}`).toEqual(model.issues.map((i) => i.number));
+      // An independent oracle for which kind wins: story first, then tracking (A-53).
       for (const i of c.issues) {
-        expect(["story", "tracking", "standalone"], `seed ${seed} iter ${iter}`).toContain(
-          i.kind.kind,
+        const src = model.issues.find((m) => m.number === i.number)!;
+        const story = /\bStory S-\d+\b/.test(src.title) || src.body === bodies[1];
+        const container = ["level: prd", "level: wave", "type: prd", "type: wave"].some((l) =>
+          src.labels.includes(l),
         );
+        const tracking =
+          /^\[PRD-[^\]\s]+\] Wave [^\s:]+:/.test(src.title) ||
+          src.title === "[PRD-alpha] Alpha widgets" ||
+          (src.title.startsWith("[PRD-") && container);
+        const expected = story ? "story" : tracking ? "tracking" : "standalone";
+        expect(
+          i.kind.kind,
+          `seed ${seed} iter ${iter} #${i.number} ${src.title} ${JSON.stringify(src.labels)} ${JSON.stringify(src.body)}`,
+        ).toBe(expected);
       }
     }
   });

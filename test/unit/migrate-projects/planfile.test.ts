@@ -336,6 +336,56 @@ describe("parse (MU-25 to MU-30)", () => {
   });
 });
 
+describe("parse guards (3.18)", () => {
+  const base = renderMigrationPlan(samplePlan());
+  it.each([
+    [
+      "a missing column",
+      base.replace("| Issue | Title | Priority | Answer", "| Issue | Title | Answer"),
+      /missing the Priority column/,
+    ],
+    [
+      "a row with too few cells",
+      base.replace("| #20 | fix: crash | priority: critical |  |", "| #20 | fix: crash |  |"),
+      /cells/,
+    ],
+    [
+      "a bad Generated:",
+      base.replace("Generated: 2026-10-24T12:00:00Z", "Generated: yesterday"),
+      /Generated/,
+    ],
+    [
+      "an unexpected ## section",
+      base.replace("## Batches", "## Notes\n\n## Batches"),
+      /unexpected section/,
+    ],
+    [
+      "a duplicate header key",
+      base.replace("Format: 1\n", "Format: 1\nFormat: 1\n"),
+      /duplicate Format/,
+    ],
+    [
+      "a missing separator row",
+      base.replace(
+        '| Issue | Title | Why | Answer (wave id, or "standalone") |\n| --- | --- | --- | --- |\n',
+        '| Issue | Title | Why | Answer (wave id, or "standalone") |\n',
+      ),
+      /separator/,
+    ],
+    ["a missing Batches section", base.slice(0, base.indexOf("## Batches")), /Batches/],
+    [
+      "a table outside any section",
+      base.replace("## Needs your answer\n", "## Needs your answer\n\n| a |\n"),
+      /outside any section/,
+    ],
+    ["a bad Issue cell", base.replace("| #20 | fix: crash |", "| 20 | fix: crash |"), /Issue cell/],
+  ])("%s is a typed parse error", (_name, text, message) => {
+    expect(text).not.toBe(base);
+    expect(() => parseMigrationPlan(text)).toThrow(MigrationPlanParseError);
+    expect(() => parseMigrationPlan(text)).toThrow(message);
+  });
+});
+
 describe("approval grammar (CT-25, A-79)", () => {
   const base = renderMigrationPlan(samplePlan());
   it("exactly `Approved: yes` approves", () => {

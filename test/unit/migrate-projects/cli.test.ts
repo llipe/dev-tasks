@@ -251,6 +251,24 @@ describe("auth first (AC-2, D-96)", () => {
   });
 });
 
+describe("read failures (3.18, EC-157)", () => {
+  it("a failed read exits 1, names the call on stderr, and writes no file", async () => {
+    await setup(loadModel("survey"));
+    const scenario = JSON.parse(readFileSync(join(tmp, "scenario.json"), "utf-8")) as {
+      responses: Record<string, { stdout: string; stderr: string; exitCode: number }>;
+    };
+    const key = Object.keys(scenario.responses).find((k) => k.includes("/labels"))!;
+    scenario.responses[key] = { stdout: "", stderr: "gh: Server Error (HTTP 500)\n", exitCode: 1 };
+    writeFileSync(join(tmp, "scenario.json"), JSON.stringify(scenario));
+    const r = run(["migrate", "projects", "--plan"]);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("labels");
+    expect(r.stderr).toContain("HTTP 500");
+    expect(r.stderr).not.toMatch(/\n\s+at /);
+    expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
+  });
+});
+
 describe("flags (A-63)", () => {
   // MC-9
   it.each([

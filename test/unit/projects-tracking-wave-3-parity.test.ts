@@ -17,6 +17,8 @@ import {
   TYPE_SET as CODE_TYPE_SET,
   TYPE_DEFINITIONS as CODE_TYPE_DEFINITIONS,
   RETIRED_TYPE_LABELS as CODE_RETIRED_TYPE_LABELS,
+  RETIRED_LABELS as CODE_RETIRED_LABELS,
+  RETIRED_LABEL_PREFIXES as CODE_RETIRED_LABEL_PREFIXES,
   DEFAULT_LABEL_SUGGESTIONS as CODE_DEFAULT_LABEL_SUGGESTIONS,
 } from "#core/migrate-projects/conventions.js";
 
@@ -614,6 +616,10 @@ describe("conventions.ts matches github-ops (PT-81)", () => {
     const retired = labels.split("\n").find((l) => l.startsWith("- Retired labels, in full: "));
     expect(retired, "no Retired labels line").toBeDefined();
     for (const name of CODE_RETIRED_TYPE_LABELS) expect(retired!).toContain(`\`${name}\``);
+    for (const name of CODE_RETIRED_LABELS)
+      expect(retired!, name).toContain(name.replace(/^needs: /, ""));
+    for (const prefix of CODE_RETIRED_LABEL_PREFIXES)
+      expect(retired!).toContain(`every \`${prefix}\` label`);
     for (const name of ["bug", "documentation", "enhancement"]) {
       expect(Object.keys(CODE_DEFAULT_LABEL_SUGGESTIONS)).toContain(name);
       expect(retired!).toContain(`\`${name}\``);

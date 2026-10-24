@@ -205,6 +205,75 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
   });
 });
 
+// EC-157: every failing or unreadable read names its call and never crashes.
+describe("error paths (EC-157)", () => {
+  async function failWith(
+    match: string,
+    result: { stdout: string; stderr: string; exitCode: number },
+  ) {
+    const model = loadModel("survey");
+    const rec = recordingRunner(model);
+    const runner: typeof rec.runner = async (args) =>
+      args.join(" ").includes(match) ? result : rec.runner(args);
+    return readSnapshot({ runner, reader: modelReader(model) }).catch((e: unknown) => e);
+  }
+
+  it("a parent read failing with a non-404 is a read error naming the call", async () => {
+    const err = await failWith("issues/10/parent", {
+      stdout: "",
+      stderr: "gh: Server Error (HTTP 502)",
+      exitCode: 1,
+    });
+    expect(err).toBeInstanceOf(SnapshotError);
+    expect((err as SnapshotError).kind).toBe("read");
+    expect((err as SnapshotError).message).toContain("issues/10/parent");
+    expect((err as SnapshotError).message).toContain("HTTP 502");
+  });
+
+  it("a parent read returning unreadable JSON is a read error naming the call", async () => {
+    const err = await failWith("issues/10/parent", {
+      stdout: "{not json",
+      stderr: "",
+      exitCode: 0,
+    });
+    expect(err).toBeInstanceOf(SnapshotError);
+    expect((err as SnapshotError).kind).toBe("read");
+    expect((err as SnapshotError).message).toContain("issues/10/parent");
+  });
+
+  it("a list returning unreadable JSON is a read error naming the call", async () => {
+    const err = await failWith("/labels", { stdout: "[{", stderr: "", exitCode: 0 });
+    expect((err as SnapshotError).kind).toBe("read");
+    expect((err as SnapshotError).message).toContain("labels");
+  });
+
+  it("a list item that is not an issue is a read error, not a crash", async () => {
+    const err = await failWith("issues?state=open", {
+      stdout: '[{"number":"x"}]',
+      stderr: "",
+      exitCode: 0,
+    });
+    expect((err as SnapshotError).kind).toBe("read");
+    expect((err as SnapshotError).message).toContain("open-issue list");
+  });
+
+  it("unreadable `repo view` JSON is a repo-view failure naming the call", async () => {
+    const err = await failWith("repo view", { stdout: "not json", stderr: "", exitCode: 0 });
+    expect(err).toBeInstanceOf(SnapshotError);
+    expect((err as SnapshotError).kind).toBe("repo-view");
+    expect((err as SnapshotError).message).toContain("gh repo view");
+  });
+
+  it("a runner that throws something else propagates as itself", async () => {
+    const runner = async () => {
+      throw new RangeError("boom");
+    };
+    await expect(
+      readSnapshot({ runner, reader: modelReader(loadModel("survey")) }),
+    ).rejects.toThrow(RangeError);
+  });
+});
+
 describe("parseJsonStream (gh --paginate output)", () => {
   it("merges concatenated arrays and splits concatenated objects", () => {
     expect(parseJsonStream("[1,2][3]\n[4]")).toEqual([[1, 2], [3], [4]]);

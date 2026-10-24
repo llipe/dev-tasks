@@ -212,6 +212,7 @@ describe("the roadmap is registered and well-formed", () => {
       ["wrong header cell", header.replace("Phase/Wave", "Phase") + row],
       ["status outside the set", header + row.replace("Done", "Paused")],
       ["a row with a missing cell", header + "| [alpha](x) | 1 | Widgets | Done | #1 |\n"],
+      ["no separator row", `| ${ROADMAP_HEADER.join(" | ")} |\n` + row],
     ] as const) {
       expect(parseRoadmapTable(text).ok, name).toBe(false);
     }
