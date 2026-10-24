@@ -25,6 +25,7 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 - `core/migrate-projects/summary.ts` - per-batch and per-list counts shared by `--plan` and `--apply`, split out of `index.ts` (S-015)
 - `core/migrate-projects/snapshot.ts` - `SNAPSHOT_ERROR_EXIT`, the exit code per snapshot failure, shared by both modes (S-015)
 - `test/unit/migrate-projects/apply-gates.test.ts`, `apply-states.test.ts`, `apply-scope.test.ts`, `apply-bodies.test.ts` - `--apply` AC-1 to AC-7, RT-11, RT-12, RT-14 (S-015)
+- `test/unit/migrate-projects/apply-hardening.test.ts`, `apply-writeback.test.ts`, `apply-paths.test.ts` - the qa-pass safety properties, EC-140 under a simulated crash, the remaining paths (S-015 tasks 5.18 to 5.24)
 - `test/unit/migrate-projects/helpers/fake-github-writes.ts`, `apply-run.ts`, `random-repo.ts` - the model's write half, the in-process apply run, the RT-11 generator (S-015)
 - `.gitignore` - ignores `workstream/.migration-projects.lock` (S-015, A-80)
 - `core/migrate-projects/index.ts` - module entry (S-013 to S-015)
@@ -166,6 +167,13 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 5.15 Integration: a runner that throws on write 5, resumed from the plan file, repeats writes 1 to 4 zero times (PRD AC-12)
   - [x] 5.16 AC-to-test mapping: AC-1, AC-2 → `apply-gates.test.ts`; AC-3, AC-4 → `apply-states.test.ts`; AC-5, AC-6 → `apply-scope.test.ts`; AC-7 → `apply-bodies.test.ts`; AC-8 → `cli.test.ts`
   - [x] 5.17 Run Tests: `pnpm run test:unit`, `pnpm run validate` green
+  - [x] 5.18 (qa D15, D15b) resolveRef title check: a create row hand-edited to `done(#N)` where #N's title differs → dependent rows `failed(target changed)`, never written against #N. Test first.
+  - [x] 5.19 (qa G2b) Gate order: an unapproved plan with failing auth exits 11, not 14; pin the full order unparsable → 2, auth → 11, approval → 14, digest → 14, lock → 14, stale-while-pending → 14 in one table-driven test. Test first.
+  - [x] 5.20 (qa R2c, D3b, D9b, D13, D13b, D11, D5) Targets that change between runs: `skipped(already applied)` rows are never re-run even if the target later changes; edit-label on a label deleted since → `failed(target changed)`; add-blocked-by on a blocked issue that no longer exists → `failed(target changed)`; planned `add:` with the marker comment gone → `failed(target changed)`, never a new marker comment; planned `create:` when a marker appeared since → `failed(target changed)`, no PATCH; the comment gaining a row between `--plan` and `--apply` → only still-missing rows added; create-issue dedupe requires the matching `level:` label (a same-titled issue without it is not adopted). Extend RT-11 to change targets between runs. Test first.
+  - [x] 5.21 (qa D3, D6, D9) Lost write-back for edit-label, add/remove-label and add-blocked-by: a re-run detects the applied state as `skipped(already applied)`; add-blocked-by checks the blocking list before POSTing, so a duplicate never produces a 422 `failed` and exit 1. Test first.
+  - [x] 5.22 (qa S5, S5b, BD1, BD3, SG4, S2, G7) Atomic write-back and body cleanup: EC-140 (a crash between write and rename leaves the old file intact; never a truncated file); each body file gone right after its call (MU-77), the run's temp dir removed, `bin` removing it in `finally`; the in-memory state reset after a failed write-back; the plan file changing after the lock is taken → 14. Test first.
+  - [x] 5.23 (qa SG2, CT-34) Signals and exits: SIGINT and SIGTERM both release the lock and exit 1 (`GeneralError`), matching the user manual and CT-34; test both signals. Test first.
+  - [x] 5.24 (qa) Tighten: MU-61 near-miss asserts exactly 14; CT-25 a fenced `Approved: yes` does not approve; RT-14 asserts writes exactly match the unmutated plan's and gets an explicit timeout like RT-11's; the comma guard (C1) tested; the post-failed-write-back message states that the next run may need a regenerated plan.
 
 - [ ] 6.0 Implement Story S-017: A runbook and github-ops' migration mode take a repository through the migration; this repository goes first (#323)
 
