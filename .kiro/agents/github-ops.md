@@ -50,12 +50,16 @@ Use this table to translate each convention in this file into a `gh` invocation.
 | Create/list labels                                         | `gh label create "<name>" --color "<hex>" --description "<desc>"` / `gh label list`                                                                   | `create_label` / `list_labels`                 |
 | Create/list milestones                                     | `gh api repos/<owner>/<repo>/milestones -f title="<title>" -f description="<desc>" -f due_on="<ISO date>"` / `gh api repos/<owner>/<repo>/milestones` | (no dedicated MCP tool; use REST)              |
 | Assign milestone to issue                                  | `gh issue edit <number> --milestone "<milestone>"`                                                                                                    | `update_issue`                                 |
+| Add a blocking relation (issue data)                       | `gh api -X POST repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by -F issue_id=<blocker numeric id>`                                              | (no dedicated MCP tool; use REST)              |
+| Remove a blocking relation                                 | `gh api -X DELETE repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by/{blocker numeric id}`                                                        | (no dedicated MCP tool; use REST)              |
+| List what an issue blocks / is blocked by                  | `gh api repos/{o}/{r}/issues/{n}/dependencies/blocking --paginate` / `gh api repos/{o}/{r}/issues/{n}/dependencies/blocked_by --paginate`             | (no dedicated MCP tool; use REST)              |
 | Create branch                                              | `git checkout -b <branch>` (name per [Branch Naming](#branch-naming))                                                                                 | n/a (local git operation)                      |
 
 Notes:
 
 - Prefer `--json` output on `gh issue list` / `gh pr list` and `gh api` for machine-parseable results — do not scrape the default human-readable table output.
 - `gh api <endpoint>` is the fallback for anything without a dedicated subcommand (milestones, some label edge cases, reactions). See <https://cli.github.com/manual/gh_api>.
+- **Issue dependencies are issue data an agent may write, unlike the Project.** A blocking relation lives on the blocked issue (`{blocked}`) and names its blocker by the blocker's REST numeric id, read with `gh api repos/{o}/{r}/issues/<blocker number> --jq .id`, as the sub-issue endpoint does; an issue number or a GraphQL node id is rejected. No agent writes the Project (D-22); these commands change only the two issues they name (D-83). Write a relation only when the user or the issue text names the blocked issue, and add the `**Blocks:**` line to the blocker's body in the same change (see [Labels](#labels)).
 - `gh` respects the repository detected from the current working directory; pass `--repo <owner/repo>` explicitly when operating on a different repository than the one checked out locally.
 - Every `gh` invocation that mutates state (create/edit/close/merge) **MUST** be reflected in the Output Contract's `Changes applied` list, exactly as an MCP-driven change would be.
 
