@@ -24,11 +24,16 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 - `core/migrate-projects/index.ts` - module entry (S-013 to S-015)
 - `bin/dev-tasks.ts` - `migrate projects --plan | --apply` dispatch and help (S-013, S-015)
 - `bin/parse-args.ts` - flag validation (S-013, A-63)
+- `core/migrate-projects/local-reader.ts` - injectable `LocalReader` for the roadmap, PRD and state files (S-013, A-52)
 - `core/migrate-projects/conventions.ts` - the type set, tie-break and suggestions, defined once (S-013, A-87)
-- `core/checks/roadmap.ts` - exported canonical-table parser (S-014, A-59)
+- `core/checks/roadmap.ts`, `core/checks/index.ts` - exported canonical-table parser (S-013, A-59), used by S-014
 - `test/unit/runbook-set.test.ts` - gains the new runbook (S-017, A-62)
 - `test/unit/projects-tracking-wave-3-parity.test.ts` - prompt pins (S-019, S-016, S-017)
 - `test/unit/migrate-projects/*.test.ts` - module and CLI tests (S-013 to S-015)
+- `test/unit/migrate-projects/helpers/*.ts` - fake GitHub model, recording runner, test-side write oracle, seeded PRNG (S-013)
+- `test/fixtures/migrate-projects/fake-gh/gh` - fake `gh` for the Layer 2 CLI tests (S-013, A-85)
+- `test/unit/roadmap-parity.test.ts` - imports the shared roadmap parser (S-013, A-59)
+- `README.md`, `docs/dev-tasks-user-manual.md`, `TESTING.md` - `migrate projects --plan` reference and the test harness note (S-013)
 - `test/fixtures/migrate-projects/**/*.json` - synthetic `gh` output, including the AC-11 fixture (S-013, S-014)
 - `docs/runbooks/runbook-migrate-to-projects-tracking.md`, `docs/runbooks/README.md` - the runbook and its index entry (S-017)
 - `workstream/migration-projects.md` - this repository's migration record, force-added (S-017)
@@ -74,28 +79,28 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 2.10 Harden the pins (F2): make PT-72's negative check sentence-based and case-insensitive, allowing only the never-`Done` sentence and the citation sentence; pin "never instead of it", "from the fixed set", "the user approves the draft", "never inside the migration's own PR", "never fuzzy-matched" with the unmapped listing, and "as information" for `--plan` and state files; prove the pins catch the verifier's probes M1 to M8. Test first.
   - [x] 2.11 In the conversion's Status step, before writing `Done`, confirm on GitHub that the cited PR merged or the issue closed (`gh pr view <n> --json state` / `gh issue view <n> --json state`); otherwise keep the translated Status and flag it (D-104). Amend the "Never mark a row `Done` yourself" bullet in Roadmap Maintenance so it names the conversion as the second exception, only on confirmed merged evidence (D-104). Pin both, and pin ", with the original word, for the user to confirm or correct" (probe M9). Test first.
 
-- [ ] 3.0 Implement Story S-013: `dev-tasks migrate projects --plan` reads the repository and writes a reviewable migration plan (#320)
+- [x] 3.0 Implement Story S-013: `dev-tasks migrate projects --plan` reads the repository and writes a reviewable migration plan (#320)
 
-  - [ ] 3.1 Write synthetic fixtures under `test/fixtures/migrate-projects/` shaped like the 2026-10-23 survey: `Story S-NNN` titles without a body line, `phase:` labels on stories and follow-ups, one shared milestone, a `type: prd` tracking issue, retired `status:` and `needs:` labels, zero- and two-`type:` issues (D-95)
-  - [ ] 3.2 Write failing tests: `classify.test.ts` per rule, `planfile.test.ts` round-trip with answers, `snapshot.test.ts` hash stable under reordering, `plan-readonly.test.ts` asserting zero write calls and no issue bodies in the file (D-90)
-  - [ ] 3.3 `gh.ts`: the `GhRunner` type and the real runner over `execFile("gh", args)`, never a shell string (D-79, D-90)
-  - [ ] 3.4 `snapshot.ts`: labels, open issues, tracking issues' sub-issues and parent, `docs/roadmap.md`, `workstream/planner-state-*.md`; `--paginate` or `--limit 1000` on every list; SHA-256 over sorted, normalized JSON
-  - [ ] 3.5 `classify.ts`: story by `/\bStory S-\d+\b/` or the `**Story:**` line (D-82); tracking issue by the D-36 prefix with or without its `level:` label (D-87); standalone otherwise; "needs a type" with the Conventional Commits suggestion, counting `type: other` and `type: prd|wave|story` as none (D-85); "needs a blocking link" for `critical` without a relation or `**Blocks:**` line, never inventing one (D-84)
-  - [ ] 3.6 `planfile.ts`: render and parse the spec §5 shape (header with `Generated`, `Snapshot`, `Approved: no`; review tables; batch tables with states); issue numbers, titles and label names only
-  - [ ] 3.6a `conventions.ts`: the D-85 type set, tie-break and D-100 suggestions, defined once (A-87); `core/checks/roadmap.ts`: export the canonical-table parser and make `roadmap-parity.test.ts` import it (A-59)
-  - [ ] 3.6b Reads per §16a: an injectable `LocalReader` for roadmap and state files, `--repo` checked against the working tree, both files hashed (A-52); `gh api --paginate` with REST numeric ids, no `--limit` cap (A-74, A-75); story parents read (A-76); tracking issues searched `--state all` (A-91)
-  - [ ] 3.6c Classification per §16a: stories first, then tracking issues by the A-53 rule, the tolerant `**Story:**` pattern (A-54), tracking issues exempt from "needs a type" (A-68), only D-85 types counted and D-100 suggestions (A-69, A-70), the critical check on `.../dependencies/blocking` (A-72)
-  - [ ] 3.6d Plan file per §16a: `Format: 1` and `Plan digest:` headers, one table per review list plus Information, `W-NNN` IDs, escaped cells (A-51, A-77, A-78); `--plan` refuses to overwrite a file with non-`pending` rows (A-65); `MigrationPlan*` export names (A-92)
-  - [ ] 3.6e CLI per §16a: `bin/parse-args.ts` rejects unknown flags and both or neither of `--plan`/`--apply` with exit 2 (A-63); exit codes and the `--json` schema of A-64; `gh auth status --hostname github.com` (A-88); CLI tests against a fake `gh` on a purpose-built `PATH` with an injected clock (A-85)
-  - [ ] 3.7 `bin/dev-tasks.ts`: `migrate projects --plan [--repo] [--out] [--json]`, `--repo` from `gh repo view --json nameWithOwner`; `gh auth status` first, `DependencyError` (11) with the `gh auth login` hint on failure (D-96); help text beside `migrate docs`
-  - [ ] 3.8 Verify Acceptance Criterion: AC-1 command and defaults; AC-2 auth check and exit 11
-  - [ ] 3.9 Verify Acceptance Criterion: AC-3 snapshot reads through the injectable runner, paginated
-  - [ ] 3.10 Verify Acceptance Criterion: AC-4 classification and both review lists
-  - [ ] 3.11 Verify Acceptance Criterion: AC-5 render then parse round-trips with answers; AC-6 zero write calls; AC-7 no bodies in the file
-  - [ ] 3.12 Edge cases: `gh` not on PATH; zero open issues; a story with an empty body; a `[PRD-x] Wave 1:` title without `level:`; CRLF bodies; more than 1,000 issues
-  - [ ] 3.13 Manual check: `pnpm exec tsx bin/dev-tasks.ts migrate projects --plan` on this repository; nothing changes on GitHub
-  - [ ] 3.14 AC-to-test mapping: AC-1, AC-2 → `cli.test.ts`; AC-3 → `snapshot.test.ts`; AC-4 → `classify.test.ts`; AC-5 → `planfile.test.ts`; AC-6, AC-7 → `plan-readonly.test.ts`
-  - [ ] 3.15 Run Tests: `pnpm run test:unit`, `pnpm run typecheck`, `pnpm run validate` green
+  - [x] 3.1 Write synthetic fixtures under `test/fixtures/migrate-projects/` shaped like the 2026-10-23 survey: `Story S-NNN` titles without a body line, `phase:` labels on stories and follow-ups, one shared milestone, a `type: prd` tracking issue, retired `status:` and `needs:` labels, zero- and two-`type:` issues (D-95)
+  - [x] 3.2 Write failing tests: `classify.test.ts` per rule, `planfile.test.ts` round-trip with answers, `snapshot.test.ts` hash stable under reordering, `plan-readonly.test.ts` asserting zero write calls and no issue bodies in the file (D-90)
+  - [x] 3.3 `gh.ts`: the `GhRunner` type and the real runner over `execFile("gh", args)`, never a shell string (D-79, D-90)
+  - [x] 3.4 `snapshot.ts`: labels, open issues, tracking issues' sub-issues and parent, `docs/roadmap.md`, `workstream/planner-state-*.md`; `--paginate` or `--limit 1000` on every list; SHA-256 over sorted, normalized JSON
+  - [x] 3.5 `classify.ts`: story by `/\bStory S-\d+\b/` or the `**Story:**` line (D-82); tracking issue by the D-36 prefix with or without its `level:` label (D-87); standalone otherwise; "needs a type" with the Conventional Commits suggestion, counting `type: other` and `type: prd|wave|story` as none (D-85); "needs a blocking link" for `critical` without a relation or `**Blocks:**` line, never inventing one (D-84)
+  - [x] 3.6 `planfile.ts`: render and parse the spec §5 shape (header with `Generated`, `Snapshot`, `Approved: no`; review tables; batch tables with states); issue numbers, titles and label names only
+  - [x] 3.6a `conventions.ts`: the D-85 type set, tie-break and D-100 suggestions, defined once (A-87); `core/checks/roadmap.ts`: export the canonical-table parser and make `roadmap-parity.test.ts` import it (A-59)
+  - [x] 3.6b Reads per §16a: an injectable `LocalReader` for roadmap and state files, `--repo` checked against the working tree, both files hashed (A-52); `gh api --paginate` with REST numeric ids, no `--limit` cap (A-74, A-75); story parents read (A-76); tracking issues searched `--state all` (A-91)
+  - [x] 3.6c Classification per §16a: stories first, then tracking issues by the A-53 rule, the tolerant `**Story:**` pattern (A-54), tracking issues exempt from "needs a type" (A-68), only D-85 types counted and D-100 suggestions (A-69, A-70), the critical check on `.../dependencies/blocking` (A-72)
+  - [x] 3.6d Plan file per §16a: `Format: 1` and `Plan digest:` headers, one table per review list plus Information, `W-NNN` IDs, escaped cells (A-51, A-77, A-78); `--plan` refuses to overwrite a file with non-`pending` rows (A-65); `MigrationPlan*` export names (A-92)
+  - [x] 3.6e CLI per §16a: `bin/parse-args.ts` rejects unknown flags and both or neither of `--plan`/`--apply` with exit 2 (A-63); exit codes and the `--json` schema of A-64; `gh auth status --hostname github.com` (A-88); CLI tests against a fake `gh` on a purpose-built `PATH` with an injected clock (A-85)
+  - [x] 3.7 `bin/dev-tasks.ts`: `migrate projects --plan [--repo] [--out] [--json]`, `--repo` from `gh repo view --json nameWithOwner`; `gh auth status` first, `DependencyError` (11) with the `gh auth login` hint on failure (D-96); help text beside `migrate docs`
+  - [x] 3.8 Verify Acceptance Criterion: AC-1 command and defaults; AC-2 auth check and exit 11
+  - [x] 3.9 Verify Acceptance Criterion: AC-3 snapshot reads through the injectable runner, paginated
+  - [x] 3.10 Verify Acceptance Criterion: AC-4 classification and both review lists
+  - [x] 3.11 Verify Acceptance Criterion: AC-5 render then parse round-trips with answers; AC-6 zero write calls; AC-7 no bodies in the file
+  - [x] 3.12 Edge cases: `gh` not on PATH; zero open issues; a story with an empty body; a `[PRD-x] Wave 1:` title without `level:`; CRLF bodies; more than 1,000 issues
+  - [x] 3.13 Manual check: `pnpm exec tsx bin/dev-tasks.ts migrate projects --plan` on this repository; nothing changes on GitHub
+  - [x] 3.14 AC-to-test mapping: AC-1, AC-2 → `cli.test.ts`; AC-3 → `snapshot.test.ts`; AC-4 → `classify.test.ts`; AC-5 → `planfile.test.ts`; AC-6, AC-7 → `plan-readonly.test.ts`
+  - [x] 3.15 Run Tests: `pnpm run test:unit`, `pnpm run typecheck`, `pnpm run validate` green
 
 - [ ] 4.0 Implement Story S-014: The plan maps stories to waves by precedence and batches only the writes the scope rules permit (#321)
 
