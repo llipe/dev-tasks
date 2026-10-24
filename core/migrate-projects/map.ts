@@ -12,6 +12,7 @@
  * fall through to the next rule. Pure and never fuzzy (D-18, D-86).
  */
 import type { StoryRef } from "./classify.js";
+import { hasLabelPrefix } from "./conventions.js";
 import { roadmapRows, waveId, type RoadmapRow } from "./roadmap.js";
 
 export interface StoryToMap {
@@ -65,7 +66,7 @@ export function mapStory(story: StoryToMap, rows: readonly RoadmapRow[]): MapRes
   }
 
   // Rule 2, evaluated even when rule 1 hits, so a disagreement is cited.
-  const phases = story.labels.filter((l) => l.startsWith(PHASE_LABEL));
+  const phases = story.labels.filter((l) => hasLabelPrefix(l, PHASE_LABEL));
   const values = phases.map((l) => l.slice(PHASE_LABEL.length));
   const scope = titlePrd(story.title);
   let label: RoadmapRow | null = null;

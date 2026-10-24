@@ -15,7 +15,7 @@
  */
 import { createHash } from "node:crypto";
 import { ROADMAP_FILE, tableCells } from "../checks/roadmap.js";
-import { PRIORITY_CRITICAL } from "./conventions.js";
+import { hasLabel, PRIORITY_CRITICAL } from "./conventions.js";
 import { issueKind } from "./classify.js";
 import { loadRoadmap } from "./roadmap.js";
 import { firstLine, GhNotFoundError, paginatedItems, type GhRunner } from "./gh.js";
@@ -331,7 +331,7 @@ export async function readSnapshot(options: ReadSnapshotOptions): Promise<Migrat
         ]),
       );
     }
-    if (issue.state === "open" && issue.labels.includes(PRIORITY_CRITICAL)) {
+    if (issue.state === "open" && hasLabel(issue.labels, PRIORITY_CRITICAL)) {
       issue.blocking = numbersOf(
         await readJson(runner, [
           "api",

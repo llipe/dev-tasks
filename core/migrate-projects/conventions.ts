@@ -123,11 +123,34 @@ export const PRIORITY_LABEL_PREFIX = "priority: ";
 export const PRIORITY_CRITICAL = "priority: critical";
 export const PRIORITY_HIGH = "priority: high";
 
-/** True for a retired label (D-91): an exact name, or a `wave:` label. */
+/**
+ * Label names compare case-insensitively, as GitHub compares them: a
+ * repository cannot hold both `type: bug` and `Type: Bug`, so the one it
+ * has is the one to reuse (EC-117, D-106).
+ */
+export function sameLabel(a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
+/** The issue's own spelling of `name`, or `undefined` when it does not carry it. */
+export function findLabel(labels: readonly string[], name: string): string | undefined {
+  return labels.find((l) => sameLabel(l, name));
+}
+
+export function hasLabel(labels: readonly string[], name: string): boolean {
+  return findLabel(labels, name) !== undefined;
+}
+
+/** `label` starts with `prefix`, ignoring case (`Type: ` is a `type: ` label). */
+export function hasLabelPrefix(label: string, prefix: string): boolean {
+  return label.toLowerCase().startsWith(prefix.toLowerCase());
+}
+
+/** True for a retired label (D-91): an exact name, or a `wave:` label, in any case. */
 export function isRetiredLabel(name: string): boolean {
   return (
-    (RETIRED_LABELS as readonly string[]).includes(name) ||
-    RETIRED_LABEL_PREFIXES.some((p) => name.startsWith(p))
+    RETIRED_LABELS.some((r) => sameLabel(r, name)) ||
+    RETIRED_LABEL_PREFIXES.some((p) => hasLabelPrefix(name, p))
   );
 }
 
@@ -154,7 +177,7 @@ export const DEFAULT_LABEL_SUGGESTIONS: Readonly<Record<string, IssueType | null
 
 /** The issue's labels that are members of the type set, as type names. */
 export function validTypes(labels: readonly string[]): IssueType[] {
-  return TYPE_SET.filter((t) => labels.includes(`${TYPE_LABEL_PREFIX}${t}`));
+  return TYPE_SET.filter((t) => hasLabel(labels, `${TYPE_LABEL_PREFIX}${t}`));
 }
 
 /** The first of `types` in tie-break order, or `null` for none. */
@@ -197,8 +220,9 @@ export function suggestType(title: string, labels: readonly string[]): IssueType
     if (t !== null) return t;
   }
   for (const label of labels) {
-    if (Object.hasOwn(DEFAULT_LABEL_SUGGESTIONS, label)) {
-      const t = DEFAULT_LABEL_SUGGESTIONS[label];
+    const key = label.toLowerCase();
+    if (Object.hasOwn(DEFAULT_LABEL_SUGGESTIONS, key)) {
+      const t = DEFAULT_LABEL_SUGGESTIONS[key];
       if (t !== null) return t;
     }
   }

@@ -7,6 +7,8 @@
  * blocking link: those wait for the owner.
  */
 import {
+  hasLabel,
+  hasLabelPrefix,
   LEVEL_LABELS,
   PRIORITY_CRITICAL,
   PRIORITY_LABEL_PREFIX,
@@ -105,7 +107,7 @@ export function issueKind(issue: IssueShape, prdTitles: ReadonlyMap<string, stri
     if (h1 !== undefined && prdTitleForms(name, h1).includes(rest)) {
       return { kind: "tracking", level: "prd", prd: name, wave: null };
     }
-    const has = (l: string) => issue.labels.includes(l);
+    const has = (l: string) => hasLabel(issue.labels, l);
     if (has(LEVEL_LABELS.wave) || has("type: wave")) {
       return { kind: "tracking", level: "wave", prd: name, wave: null };
     }
@@ -176,8 +178,8 @@ export function prdTitleMap(snapshot: MigrationSnapshot): Map<string, string> {
 function isContainer(issue: SnapshotIssue, kind: IssueKind): boolean {
   return (
     kind.kind === "tracking" ||
-    issue.labels.includes(LEVEL_LABELS.prd) ||
-    issue.labels.includes(LEVEL_LABELS.wave)
+    hasLabel(issue.labels, LEVEL_LABELS.prd) ||
+    hasLabel(issue.labels, LEVEL_LABELS.wave)
   );
 }
 
@@ -207,13 +209,13 @@ export function classifySnapshot(snapshot: MigrationSnapshot): MigrationPlanClas
       needsType.push({
         issue: issue.number,
         title: issue.title,
-        currentTypeLabels: issue.labels.filter((l) => l.startsWith(TYPE_LABEL_PREFIX)).sort(),
+        currentTypeLabels: issue.labels.filter((l) => hasLabelPrefix(l, TYPE_LABEL_PREFIX)).sort(),
         suggested: suggestType(issue.title, issue.labels),
       });
     }
 
     // D-84, A-72: what a critical issue blocks, read from `dependencies/blocking`.
-    if (issue.labels.includes(PRIORITY_CRITICAL) && (issue.blocking ?? []).length === 0) {
+    if (hasLabel(issue.labels, PRIORITY_CRITICAL) && (issue.blocking ?? []).length === 0) {
       needsBlockingLink.push({
         issue: issue.number,
         title: issue.title,
@@ -235,7 +237,7 @@ export function classifySnapshot(snapshot: MigrationSnapshot): MigrationPlanClas
     }
 
     // EC-115: two priorities is an observation, not a list of its own.
-    if (issue.labels.filter((l) => l.startsWith(PRIORITY_LABEL_PREFIX)).length > 1) {
+    if (issue.labels.filter((l) => hasLabelPrefix(l, PRIORITY_LABEL_PREFIX)).length > 1) {
       information.push({
         ref: `#${issue.number}`,
         note: "carries several `priority:` labels; keep one",

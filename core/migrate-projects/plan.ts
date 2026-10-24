@@ -39,7 +39,11 @@ import {
   type PreviousAnswers,
 } from "./answers.js";
 import {
+  findLabel,
+  hasLabel,
+  hasLabelPrefix,
   isRetiredLabel,
+  sameLabel,
   LABEL_DESCRIPTION_MAX,
   LEVEL_DEFINITIONS,
   LEVEL_LABELS,
@@ -222,7 +226,8 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
   const open = [...snapshot.openIssues].sort((a, b) => a.number - b.number);
   const openByNumber = new Map(open.map((i) => [i.number, i]));
   const kindOf = new Map(classification.issues.map((i) => [i.number, i.kind]));
-  const labels = new Map(snapshot.labels.map((l) => [l.name, l]));
+  // Keyed by lower case: GitHub label names are case-insensitive (D-106).
+  const labels = new Map(snapshot.labels.map((l) => [l.name.toLowerCase(), l]));
   const prdKeys = roadmapPrds(rows);
 
   // --- tracking issues (D-87, A-91) ---------------------------------------------
@@ -498,7 +503,7 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
   // --- batch 1: labels (A-71, A-82, D-103) ---------------------------------------------
   const needHigh = blockingAnswers.some((b) => b.blocks === null);
   const createLabel = (name: string, d: LabelDefinition) => {
-    if (!labels.has(name))
+    if (!labels.has(name.toLowerCase()))
       drafts.add(
         "1",
         "create-label",
@@ -516,9 +521,9 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
     });
   if (needHigh) createLabel(PRIORITY_HIGH, PRIORITY_DEFINITIONS[PRIORITY_HIGH]);
   const editDescription = (name: string, description: string) => {
-    const l = labels.get(name);
+    const l = labels.get(name.toLowerCase());
     if (l !== undefined && l.description !== description)
-      drafts.add("1", "edit-label", `label:${name}`, `description: ${description}`);
+      drafts.add("1", "edit-label", `label:${l.name}`, `description: ${description}`);
   };
   for (const t of TYPE_SET) editDescription(`${TYPE_LABEL_PREFIX}${t}`, TYPE_DEFINITIONS[t]);
   for (const [name, d] of Object.entries(PRIORITY_DEFINITIONS))
@@ -633,20 +638,20 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
   // --- batch 4: level and type labels (D-87, MU-56) ------------------------------------
   const removed = new Set<string>();
   const remove = (batch: MigrationPlanBatchKey, issue: number, label: string) => {
-    removed.add(`${issue}\u0000${label}`);
+    removed.add(`${issue}\u0000${label.toLowerCase()}`);
     drafts.add(batch, "remove-label", `#${issue}`, label);
   };
   for (const t of openTracking) {
     if (omitted.has(t.kind.prd)) continue;
     const level = t.kind.level === "prd" ? LEVEL_LABELS.prd : LEVEL_LABELS.wave;
-    if (!t.issue.labels.includes(level))
+    if (!hasLabel(t.issue.labels, level))
       drafts.add("4", "add-label", `#${t.issue.number}`, level, [drafts.ifAny(labelKey(level))]);
     for (const l of [...t.issue.labels].sort()) {
-      if ((RETIRED_TYPE_LABELS as readonly string[]).includes(l)) remove("4", t.issue.number, l);
+      if (RETIRED_TYPE_LABELS.some((r) => sameLabel(r, l))) remove("4", t.issue.number, l);
     }
   }
   for (const m of [...mapped].sort((a, b) => a.issue.number - b.issue.number)) {
-    if (!m.issue.labels.includes(LEVEL_LABELS.story)) {
+    if (!hasLabel(m.issue.labels, LEVEL_LABELS.story)) {
       drafts.add("4", "add-label", `#${m.issue.number}`, LEVEL_LABELS.story, [
         drafts.ifAny(labelKey(LEVEL_LABELS.story)),
       ]);
@@ -655,10 +660,10 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
   for (const a of typeAnswers) {
     const issue = openByNumber.get(a.issue)!;
     const label = `${TYPE_LABEL_PREFIX}${a.type}`;
-    if (!issue.labels.includes(label))
+    if (!hasLabel(issue.labels, label))
       drafts.add("4", "add-label", `#${a.issue}`, label, [drafts.ifAny(labelKey(label))]);
     for (const l of [...issue.labels].sort()) {
-      if (l.startsWith(TYPE_LABEL_PREFIX) && l !== label) remove("4", a.issue, l);
+      if (hasLabelPrefix(l, TYPE_LABEL_PREFIX) && !sameLabel(l, label)) remove("4", a.issue, l);
     }
   }
 
@@ -668,11 +673,11 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
       drafts.add("4b", "add-blocked-by", `#${b.blocks}`, `blocked by #${b.issue}`);
     else {
       const issue = openByNumber.get(b.issue)!;
-      if (!issue.labels.includes(PRIORITY_HIGH))
+      if (!hasLabel(issue.labels, PRIORITY_HIGH))
         drafts.add("4b", "add-label", `#${b.issue}`, PRIORITY_HIGH, [
           drafts.ifAny(labelKey(PRIORITY_HIGH)),
         ]);
-      remove("4b", b.issue, PRIORITY_CRITICAL);
+      remove("4b", b.issue, findLabel(issue.labels, PRIORITY_CRITICAL) ?? PRIORITY_CRITICAL);
     }
   }
 
@@ -680,7 +685,7 @@ export function planMigration(input: MigrationPlanInput): MigrationPlanBuild {
   for (const issue of open) {
     if (untouchable.has(issue.number)) continue;
     for (const l of [...issue.labels].sort()) {
-      if (isRetiredLabel(l) && !removed.has(`${issue.number}\u0000${l}`))
+      if (isRetiredLabel(l) && !removed.has(`${issue.number}\u0000${l.toLowerCase()}`))
         drafts.add("5", "remove-label", `#${issue.number}`, l);
     }
   }
