@@ -7,7 +7,7 @@
 - Repository: llipe/dev-tasks
 - Wave issue: #317
 - Started: 2026-10-24T14:45Z
-- Last updated: 2026-10-24T15:56Z
+- Last updated: 2026-10-24T16:57Z
 - PRD issue: #289
 
 ## Story Status
@@ -16,16 +16,16 @@
 | -------- | -------- | ------- | ---------- | --- | ------ |
 | 1 | S-019 | #318 | ✅ Merged | #326 | story/S-019-type-priority-conventions |
 | 2 | S-016 | #319 | ✅ Merged | #327 | story/S-016-roadmap-conversion |
-| 3        | S-013    | #320    | ⏳ Pending | —   | —      |
+| 3 | S-013 | #320 | ✅ Merged | #328 | story/S-013-migrate-plan |
 | 4        | S-014    | #321    | ⏳ Pending | —   | —      |
 | 5        | S-015    | #322    | ⏳ Pending | —   | —      |
 | 6        | S-017    | #323    | ⏳ Pending | —   | —      |
 
 ## Current Position
 
-- Next story: S-013
-- Last merged PR: #327
-- Integration branch HEAD: 528a478
+- Next story: S-014
+- Last merged PR: #328
+- Integration branch HEAD: 29caaa0
 
 ## Decisions Log
 
@@ -39,3 +39,7 @@
 - S-016: memo_intent written(7793fc4e), memo_outcome written(7f465fec); coverage_gate SKIPPED(prompt-text only; mutation probes showed presence-only pins); verifier High, Minor, 5 findings (PR #327 comment 6386177208).
 - S-016 audit routing: F1 (D-98 PRD scope) and F2 (pin hardening, probes M0 to M10 now caught) fixed in-story as 2.9, 2.10; F4 annotation synced to #319 by the planner; F3 and F5 Undetermined, resolved by @llipe as D-104 (2.11) and D-105 (PRD v1.12 FR-21, this checkpoint).
 - wave_status: written at S-016 start, closeout (PR open, before merge gates), gate 10 confirmed `PR open #327`.
+- S-013: memo_intent written(280fe5a4), memo_outcome written(e3ca2f29); coverage_gate PASS (module 90.8% stmts, 86.3% branches; 9/10 mutants killed, M1 then fixed); verifier High, Minor, 8 findings (PR #328 comment 6386912117).
+- S-013 QA routing: parse-args regression (every command silently ignored unknown and valueless flags) fixed in-story as 3.16, now exit 2 on every command, CHANGELOG [Unreleased]; M1 story-precedence tests 3.17; error paths 3.18.
+- S-013 audit routing: F-5, F-7, F-8 fixed in-story (3.19 to 3.21); F-1 (answers carried over) left to S-014 task 4.7; F-2 test-plan MC-2 and F-6 spec §16a A-53 corrected in this checkpoint; F-3, F-4 Intended deferrals.
+- wave_status: written at S-013 start, closeout (PR open, before merge gates), gate 10 confirmed `PR open #328`.

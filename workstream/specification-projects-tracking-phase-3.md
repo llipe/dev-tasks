@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                                                         | Author                    |
 | ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.4 | 2026-10-24 | §16a A-53: the three accepted PRD-title forms, recorded after the S-013 audit (F-6). | product-engineer |
 | 1.3 | 2026-10-24 | Design Mode resolutions A-49 to A-93 confirmed by @llipe: §16a added; D-98 to D-101 (milestone rule dropped, AC-13 amended, default labels, resume check). | product-engineer |
 | 1.2 | 2026-10-23 | §8.3 batch 7 prints the Project item query and delete template instead of per-item commands (D-97). | product-engineer |
 | 1.1 | 2026-10-23 | §6 exit codes mapped onto the existing `core/exit-codes.ts` values; no new exit code. | product-engineer |
@@ -316,7 +317,7 @@ The Design Mode findings A-49 to A-93 (`workstream/test-plan-projects-tracking-p
 **Reads and classification**
 
 - **A-52.** Local files (`docs/roadmap.md`, `workstream/planner-state-*.md`) are read through an injectable `LocalReader`, not the `GhRunner`. `--plan` exits 2 when `--repo` differs from the working tree's `gh repo view` result. Both files enter the snapshot hash.
-- **A-53.** Classification runs stories first. Story titles carry the `[PRD-…]` prefix too, for example #318. A tracking issue is a non-story whose title is `[PRD-<name>] Wave <id>:` or exactly `[PRD-<name>] <H1 of the PRD file>`, or a non-story with that prefix carrying `level: prd`, `level: wave` or the experiment's `type: prd`/`type: wave`. Any other prefixed issue, such as #201, is standalone.
+- **A-53.** Classification runs stories first. Story titles carry the `[PRD-…]` prefix too, for example #318. A tracking issue is a non-story whose title is `[PRD-<name>] Wave <id>:` or exactly `[PRD-<name>] <H1 of the PRD file>`, or a non-story with that prefix carrying `level: prd`, `level: wave` or the experiment's `type: prd`/`type: wave`. Any other prefixed issue, such as #201, is standalone. The PRD-title match accepts three forms of the PRD file's H1: the H1 itself, the H1 without a leading `PRD:`, and that form without a leading `<name> —` (or `-`, `–`), so #289's title matches (S-013 audit F-6).
 - **A-54.** The `**Story:**` pattern tolerates the live form: optional backticks around the path and an optional `→ S-NNN` suffix, e.g. ``**Story:** `workstream/user-stories-<slug>-phase-<N>.md` → S-019``.
 - **A-55.** A story file's slug maps to a PRD by the roadmap PRD link text, exactly. A single-wave PRD's `All` row matches a story file without `-phase-N`. No match means unmapped.
 - **A-56, A-57, D-98.** Rule 2 matches `phase: X` only within the PRD named by the story's title prefix. Rule 3 (the milestone) is dropped. Precedence is the `**Story:**` line, then the scoped `phase:` label, then unmapped.

@@ -292,7 +292,7 @@ The plan file is a contract among four parties. `--plan` produces it. The human 
 | ID    | Case                                                                                                                                  | Pos/Neg |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------- | ------- |
 | MC-1  | `--plan` → exit 0; default `workstream/migration-projects.md`; summary lines; next action text.                                       | pos     |
-| MC-2  | `--plan --repo o/r` → no `repo view` argv; header names `o/r`.                                                                        | pos     |
+| MC-2  | In a clone of `o/r`, `--plan --repo o/r` runs `repo view` (A-52) and the header names `o/r`; in a clone of another repository it exits 2 (corrected after the S-013 audit F-2). | pos     |
 | MC-3  | `--plan` without `--repo` → `repo view --json nameWithOwner` argv; header uses its value.                                             | pos     |
 | MC-4  | `--plan --out x/y.md` and `--out=x/y.md` → file at that path, default path untouched.                                                 | pos     |
 | MC-5  | `--plan --json` → stdout parses as JSON; counts equal the file (CT-35).                                                               | pos     |
