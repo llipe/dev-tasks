@@ -483,7 +483,7 @@ describe("github-ops", () => {
     const rules: string[] = [];
     for (const copy of trees) {
       expect(prdStateCell(copy), copy.path).toBe(
-        "<published, in progress, consolidated PR #n open or shipped>",
+        "<not started, published, in progress, consolidated PR #n open or shipped>",
       );
       const section = sectionOf(copy, "Status comment");
       const rule = lineWith(section, "one row per wave", copy.path);

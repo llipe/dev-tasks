@@ -19,6 +19,7 @@ import {
   TYPE_COLORS as CODE_TYPE_COLORS,
   LEVEL_DEFINITIONS as CODE_LEVEL_DEFINITIONS,
   PRIORITY_DEFINITIONS as CODE_PRIORITY_DEFINITIONS,
+  PRD_STATES as CODE_PRD_STATES,
   RETIRED_TYPE_LABELS as CODE_RETIRED_TYPE_LABELS,
   RETIRED_LABELS as CODE_RETIRED_LABELS,
   RETIRED_LABEL_PREFIXES as CODE_RETIRED_LABEL_PREFIXES,
@@ -666,6 +667,29 @@ describe("conventions.ts matches github-ops (PT-81)", () => {
       expect(row, `no row for ${name}`).toBeDefined();
       expect(row!).toContain(`| \`#${d.color}\` | ${d.description} |`);
       expect(d.description.length, name).toBeLessThanOrEqual(100);
+    }
+  });
+
+  // D-107 (verifier F-1 on PR #329): batch 6 writes only github-ops' PRD
+  // States, and the vocabulary names `not started` for an unpublished wave.
+  it("the PRD State vocabulary, in every tree (D-107)", () => {
+    const cells = loadTrees(GITHUB_OPS_TREES).map((copy) => {
+      const section = sectionOf(copy, "Status comment");
+      const row = section.split("\n").find((l) => l.startsWith("| <id> |"));
+      expect(row, copy.path).toBeDefined();
+      return row!.split("|")[2].trim();
+    });
+    for (const cell of cells) {
+      const states = cell
+        .replace(/^<|>$/g, "")
+        .split(/, | or /)
+        .map((x) => x.trim());
+      expect(states).toEqual([...CODE_PRD_STATES]);
+    }
+    for (const copy of loadTrees(GITHUB_OPS_TREES)) {
+      expect(sectionOf(copy, "Status comment"), copy.path).toContain(
+        "A roadmap wave not yet published reads `not started`, with `—` in the `Wave issue` column (D-107).",
+      );
     }
   });
 

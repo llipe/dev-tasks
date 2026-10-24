@@ -9,6 +9,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   LEVEL_DEFINITIONS,
+  PRD_STATES,
   PRIORITY_DEFINITIONS,
   RETIRED_DESCRIPTION_PREFIX,
   TYPE_COLORS,
@@ -1053,5 +1054,101 @@ describe("remaining branches (4.19)", () => {
     expect(run.plan.review.information).toContainEqual(
       expect.objectContaining({ ref: "[PRD-gamma]", answer: "" }),
     );
+  });
+});
+
+// Verifier audit on PR #329: F-3, F-1, F-4, F-6 (D-107 to D-109).
+describe("verifier findings (4.20 to 4.23)", () => {
+  // 4.20, F-3
+  it("an unmapped answer naming a wave of an omitted PRD keeps the answer and says why", async () => {
+    const m = base([
+      issue(1, "[PRD-alpha] Alpha kit"),
+      issue(3, "[PRD-alpha] Alpha kit"),
+      issue(10, "Story S-010: s", { labels: ["type: enhancement"] }),
+    ]);
+    const first = await planModel(m);
+    const p = parseMigrationPlan(first.text).plan;
+    p.review.unmapped[0].answer = "alpha 2";
+    const second = await planModel(m, { previous: renderMigrationPlan(p) });
+    const row = second.plan.review.unmapped[0];
+    expect(row.answer).toBe("alpha 2");
+    expect(row.why).toMatch(
+      /^names wave alpha 2 of PRD alpha, whose batches are omitted \(D-87\); /,
+    );
+    expect(second.writes().some((w) => w.target === "#10" || w.detail.includes("#10"))).toBe(false);
+  });
+
+  // 4.21, F-1, D-107
+  it("every State batch 6 writes is in the github-ops PRD vocabulary", async () => {
+    expect([...PRD_STATES]).toEqual([
+      "not started",
+      "published",
+      "in progress",
+      "consolidated PR #n open",
+      "shipped",
+    ]);
+    const run = await planModel(base([PRD_A(), WAVE_A2(), STORY(10, "2", { parent: 2 })]));
+    const states = run
+      .batch("6")
+      .writes[0].detail.replace(/^create: /, "")
+      .split("; ")
+      .map((c) => c.split(" = ")[1].split(", ")[0]);
+    expect(states).toEqual(["shipped", "in progress", "not started"]);
+    for (const s of states) expect(PRD_STATES).toContain(s);
+  });
+
+  // 4.22, F-4, D-108
+  it("a story under a closed wave issue of its row creates no wave issue and no link", async () => {
+    const closed = issue(2, "[PRD-alpha] Wave 2: Alpha search", {
+      labels: ["level: wave"],
+      parent: 1,
+      state: "closed",
+    });
+    const run = await planModel(base([PRD_A(), closed, STORY(10, "2", { parent: 2 })]));
+    expect(run.batch("2").writes).toEqual([]);
+    expect(run.batch("3").writes).toEqual([]);
+    expect(run.plan.review.information).toContainEqual(
+      expect.objectContaining({
+        ref: "#10",
+        note: "parent #2 is a closed wave issue; never relinked",
+      }),
+    );
+  });
+
+  it("another mapped story that would be linked still gets the new wave issue", async () => {
+    const closed = issue(2, "[PRD-alpha] Wave 2: Alpha search", {
+      labels: ["level: wave"],
+      parent: 1,
+      state: "closed",
+    });
+    const run = await planModel(
+      base([PRD_A(), closed, STORY(10, "2", { parent: 2 }), STORY(11, "2", { parent: null })]),
+    );
+    const create = run.batch("2").writes;
+    expect(create).toHaveLength(1);
+    expect(run.batch("3").writes.map(triple)).toEqual([
+      ["link-sub-issue", "#1", `sub-issue ${create[0].id}`],
+      ["link-sub-issue", create[0].id, "sub-issue #11"],
+    ]);
+    const notes = run.plan.review.information.filter((i) => i.ref === "#10").map((i) => i.note);
+    expect(notes).toEqual(["parent #2 is a closed wave issue; never relinked"]);
+  });
+
+  // 4.23, F-6, D-109
+  it("a PRD title over 80 characters is not created; its waves' rows are omitted with the reason", async () => {
+    const m = base([STORY(10, "2", { labels: ["type: enhancement"] })]);
+    const h1 = "A very long product requirements title that keeps going well past the limit";
+    m.files["docs/requirements/prd-alpha.md"] = `# PRD: alpha — ${h1}\n`;
+    const run = await planModel(m);
+    expect(run.batch("2").writes).toEqual([]);
+    expect(run.batch("3").writes).toEqual([]);
+    expect(run.batch("6").writes).toEqual([]);
+    const notes = run.plan.review.information
+      .filter((i) => i.ref === "[PRD-alpha]")
+      .map((i) => i.note);
+    expect(notes).toEqual([
+      `its PRD tracking issue title would be ${`[PRD-alpha] ${h1}`.length} characters, over github-ops' 80-character limit; shorten the H1 of \`docs/requirements/prd-alpha.md\` (D-109)`,
+      "wave alpha 2 needs a wave issue, but the PRD has no tracking issue to hold it; none is created",
+    ]);
   });
 });
