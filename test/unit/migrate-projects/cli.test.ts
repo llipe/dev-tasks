@@ -122,12 +122,15 @@ async function setup(
   if (options.noGh !== true) symlinkSync(FAKE_GH, join(pathDir, "gh"));
 }
 
-function run(args: string[]): { stdout: string; stderr: string; exitCode: number } {
-  const r = spawnSync(process.execPath, [TSX_CLI, BIN, ...args], {
+/**
+ * Run the binary without blocking the worker's event loop (5.26): a
+ * `spawnSync` here starved vitest's worker RPC under load ("Timeout calling
+ * onTaskUpdate"), and kept vitest's own timeout from firing on a hung
+ * child. A child still running after SPAWN_TIMEOUT is killed and fails the test.
+ */
+async function run(args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const child = spawn(process.execPath, [TSX_CLI, BIN, ...args], {
     cwd,
-    encoding: "utf-8",
-    timeout: SPAWN_TIMEOUT,
-    killSignal: "SIGKILL",
     env: {
       PATH: pathDir,
       HOME: process.env.HOME ?? tmp,
@@ -138,8 +141,22 @@ function run(args: string[]): { stdout: string; stderr: string; exitCode: number
       FAKE_GH_LOG: join(tmp, "gh.log"),
     },
   });
-  finished(r, `dev-tasks ${args.join(" ")}`);
-  return { stdout: r.stdout, stderr: r.stderr, exitCode: r.status ?? -1 };
+  let stdout = "";
+  let stderr = "";
+  child.stdout.setEncoding("utf-8").on("data", (d: string) => (stdout += d));
+  child.stderr.setEncoding("utf-8").on("data", (d: string) => (stderr += d));
+  let hung = false;
+  const timer = setTimeout(() => {
+    hung = true;
+    child.kill("SIGKILL");
+  }, SPAWN_TIMEOUT);
+  const exitCode = await new Promise<number>((done) =>
+    child.on("close", (code) => done(code ?? -1)),
+  );
+  clearTimeout(timer);
+  if (hung)
+    throw new Error(`dev-tasks ${args.join(" ")}: did not finish within ${SPAWN_TIMEOUT / 1000} s`);
+  return { stdout, stderr, exitCode };
 }
 
 function ghLog(): string[][] {
@@ -157,7 +174,7 @@ describe("migrate projects --plan (AC-1)", () => {
   // MC-1, E2E-16
   it("exit 0, the default plan file, one line per batch and list, the next action", async () => {
     await setup(loadModel("survey"));
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.stderr).toBe("");
     expect(r.exitCode).toBe(0);
     const text = readFileSync(planAt(DEFAULT_PLAN), "utf-8");
@@ -183,10 +200,12 @@ describe("migrate projects --plan (AC-1)", () => {
   // MC-2, MC-3, A-52
   it("--repo equal to the working tree is accepted; another repository exits 2", async () => {
     await setup(loadModel("survey"));
-    expect(run(["migrate", "projects", "--plan", "--repo", "acme/widgets"]).exitCode).toBe(0);
+    expect((await run(["migrate", "projects", "--plan", "--repo", "acme/widgets"])).exitCode).toBe(
+      0,
+    );
     expect(ghLog().some((a) => a[0] === "repo" && a[1] === "view")).toBe(true);
     rmSync(planAt(DEFAULT_PLAN));
-    const r = run(["migrate", "projects", "--plan", "--repo=other/repo"]);
+    const r = await run(["migrate", "projects", "--plan", "--repo=other/repo"]);
     expect(r.exitCode).toBe(2);
     expect(r.stderr).toMatch(/other\/repo/);
     expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
@@ -197,7 +216,12 @@ describe("migrate projects --plan (AC-1)", () => {
     "%s writes there and leaves the default path alone",
     async (...flag) => {
       await setup(loadModel("survey"));
-      const r = run(["migrate", "projects", "--plan", ...flag.filter((f) => f !== undefined)]);
+      const r = await run([
+        "migrate",
+        "projects",
+        "--plan",
+        ...flag.filter((f) => f !== undefined),
+      ]);
       expect(r.exitCode).toBe(0);
       expect(existsSync(planAt("x/y.md"))).toBe(true);
       expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
@@ -207,7 +231,7 @@ describe("migrate projects --plan (AC-1)", () => {
   // MC-5, CT-35, A-64
   it("--json prints only the A-64 JSON on stdout", async () => {
     await setup(loadModel("survey"));
-    const r = run(["migrate", "projects", "--plan", "--json"]);
+    const r = await run(["migrate", "projects", "--plan", "--json"]);
     expect(r.exitCode).toBe(0);
     const json = JSON.parse(r.stdout) as Record<string, unknown>;
     expect(json).toMatchObject({
@@ -296,7 +320,7 @@ describe("migrate projects --plan (AC-1)", () => {
     });
     mkdirSync(join(cwd, "workstream"), { recursive: true });
     writeFileSync(planAt(DEFAULT_PLAN), applied);
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.exitCode).toBe(14);
     expect(r.stderr).toMatch(/--out/);
     expect(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).toBe(applied);
@@ -307,7 +331,7 @@ describe("auth first (AC-2, D-96)", () => {
   // MC-6, E2E-18
   it("unauthenticated: exit 11, the `gh auth login` hint, one gh call, no file", async () => {
     await setup(loadModel("survey"), { authFails: true });
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.exitCode).toBe(11);
     expect(r.stderr).toContain("gh auth login");
     expect(ghLog()).toEqual([["auth", "status", "--hostname", "github.com"]]);
@@ -317,7 +341,7 @@ describe("auth first (AC-2, D-96)", () => {
   // MC-7, EC-101
   it("no gh on PATH: exit 11 with the hint, no file, no stack trace", async () => {
     await setup(loadModel("survey"), { noGh: true });
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.exitCode).toBe(11);
     expect(r.stderr).toContain("gh auth login");
     expect(r.stderr).not.toMatch(/\n\s+at /);
@@ -326,7 +350,7 @@ describe("auth first (AC-2, D-96)", () => {
 
   it("a failing `gh repo view`: exit 11 (A-64)", async () => {
     await setup(loadModel("survey"), { repoViewFails: true });
-    expect(run(["migrate", "projects", "--plan"]).exitCode).toBe(11);
+    expect((await run(["migrate", "projects", "--plan"])).exitCode).toBe(11);
   });
 });
 
@@ -345,7 +369,7 @@ describe("canonical roadmap first (S-014 AC-2, D-86)", () => {
       const model = loadModel("survey");
       edit(model);
       await setup(model);
-      const r = run(["migrate", "projects", "--plan"]);
+      const r = await run(["migrate", "projects", "--plan"]);
       expect(r.exitCode).toBe(2);
       expect(r.stderr).toMatch(/docs\/roadmap\.md (has no canonical table|is missing)/);
       expect(r.stderr).toContain("product-engineer's roadmap conversion");
@@ -362,7 +386,7 @@ describe("canonical roadmap first (S-014 AC-2, D-86)", () => {
     const model = loadModel("survey");
     model.files["docs/roadmap.md"] = "# Roadmap\n";
     await setup(model);
-    const r = run(["migrate", "projects", "--plan", "--json"]);
+    const r = await run(["migrate", "projects", "--plan", "--json"]);
     expect(r.exitCode).toBe(2);
     expect(JSON.parse(r.stdout)).toMatchObject({
       exitCode: 2,
@@ -380,7 +404,7 @@ describe("read failures (3.18, EC-157)", () => {
     const key = Object.keys(scenario.responses).find((k) => k.includes("/labels"))!;
     scenario.responses[key] = { stdout: "", stderr: "gh: Server Error (HTTP 500)\n", exitCode: 1 };
     writeFileSync(join(tmp, "scenario.json"), JSON.stringify(scenario));
-    const r = run(["migrate", "projects", "--plan"]);
+    const r = await run(["migrate", "projects", "--plan"]);
     expect(r.exitCode).toBe(1);
     expect(r.stderr).toContain("labels");
     expect(r.stderr).toContain("HTTP 500");
@@ -402,7 +426,7 @@ describe("flags (A-63)", () => {
     [["migrate", "projects", "--plan", "--repo", "not-a-repo"]],
   ])("%j exits 2 and touches nothing", async (args) => {
     await setup(loadModel("survey"));
-    const r = run(args);
+    const r = await run(args);
     expect(r.exitCode).toBe(2);
     expect(r.stderr).toMatch(/migrate projects/);
     expect(ghLog()).toEqual([]);
@@ -415,7 +439,7 @@ describe("flags (A-63)", () => {
     [["migrate", "projects", "--apply", "--force"]],
   ])("%j exits 2 before any gh call", async (args) => {
     await setup(loadModel("survey"));
-    const r = run(args);
+    const r = await run(args);
     expect(r.exitCode).toBe(2);
     expect(r.stderr).toMatch(/migrate projects/);
     expect(ghLog()).toEqual([]);
@@ -539,7 +563,7 @@ describe(
     // MC-11, E2E-20
     it("`Approved: no`: exit 14, zero write argv, plan file byte-identical", async () => {
       const { text } = await setupApply(loadModel("ac11"), { approved: false });
-      const r = run(["migrate", "projects", "--apply"]);
+      const r = await run(["migrate", "projects", "--apply"]);
       expect(r.exitCode).toBe(14);
       expect(r.stderr).toMatch(/Approved: yes/);
       expect(writesInLog()).toEqual([]);
@@ -552,7 +576,7 @@ describe(
       const { text } = await setupApply(loadModel("ac11"), {
         after: (m) => m.issues.find((i) => i.number === 20)!.labels.push("type: chore"),
       });
-      const r = run(["migrate", "projects", "--apply"]);
+      const r = await run(["migrate", "projects", "--apply"]);
       expect(r.exitCode).toBe(14);
       expect(r.stderr).toMatch(/regenerate the plan/);
       expect(writesInLog()).toEqual([]);
@@ -562,10 +586,10 @@ describe(
     // MC-16
     it("a missing or unparsable plan file: exit 2, no gh call", async () => {
       await setup(loadModel("ac11"));
-      expect(run(["migrate", "projects", "--apply"]).exitCode).toBe(2);
+      expect((await run(["migrate", "projects", "--apply"])).exitCode).toBe(2);
       mkdirSync(join(cwd, "workstream"), { recursive: true });
       writeFileSync(planAt(DEFAULT_PLAN), "# not a plan\n");
-      const r = run(["migrate", "projects", "--apply"]);
+      const r = await run(["migrate", "projects", "--apply"]);
       expect(r.exitCode).toBe(2);
       expect(r.stderr).toMatch(/plan file/);
       expect(ghLog()).toEqual([]);
@@ -574,7 +598,7 @@ describe(
     // MC-17
     it("gh unauthenticated: exit 11 after the auth check alone", async () => {
       await setupApply(loadModel("ac11"), { fake: { authFails: true } });
-      const r = run(["migrate", "projects", "--apply"]);
+      const r = await run(["migrate", "projects", "--apply"]);
       expect(r.exitCode).toBe(11);
       expect(r.stderr).toContain("gh auth login");
       expect(ghLog()).toEqual([["auth", "status", "--hostname", "github.com"]]);
@@ -583,7 +607,7 @@ describe(
     it("a lock file left by another run: exit 14, zero writes", async () => {
       await setupApply(loadModel("ac11"));
       writeFileSync(join(cwd, LOCK), "pid 1\n");
-      const r = run(["migrate", "projects", "--apply"]);
+      const r = await run(["migrate", "projects", "--apply"]);
       expect(r.exitCode).toBe(14);
       expect(r.stderr).toContain(LOCK);
       expect(writesInLog()).toEqual([]);
@@ -598,7 +622,7 @@ describe(
     // MC-13, E2E-22
     it("every write succeeds: exit 0, states recorded, batch 7 printed, the lock gone", async () => {
       await setupApply(loadModel("ac11"));
-      const r = run(["migrate", "projects", "--apply"]);
+      const r = await run(["migrate", "projects", "--apply"]);
       expect(r.stderr).toBe("");
       expect(r.exitCode).toBe(0);
       const plan = parseMigrationPlan(readFileSync(planAt(DEFAULT_PLAN), "utf-8")).plan;
@@ -621,7 +645,7 @@ describe(
             ? { stdout: "", stderr: "HTTP 422: Validation Failed\n{}", exitCode: 1 }
             : undefined,
       });
-      const r = run(["migrate", "projects", "--apply", "--json"]);
+      const r = await run(["migrate", "projects", "--apply", "--json"]);
       expect(r.exitCode).toBe(1);
       const json = JSON.parse(r.stdout) as {
         command: string;
@@ -661,7 +685,7 @@ describe(
     // MC-15
     it("--plan-file p.md reads and writes back p.md only", async () => {
       await setupApply(loadModel("ac11"), { planFile: "p.md" });
-      const r = run(["migrate", "projects", "--apply", "--plan-file", "p.md"]);
+      const r = await run(["migrate", "projects", "--apply", "--plan-file", "p.md"]);
       expect(r.exitCode).toBe(0);
       expect(readFileSync(planAt("p.md"), "utf-8")).toMatch(/\| done \|/);
       expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
@@ -756,7 +780,7 @@ describe(
           .map((a) => a.join(" "));
         rmSync(join(tmp, "gh.log"));
 
-        const r = run(["migrate", "projects", "--apply"]);
+        const r = await run(["migrate", "projects", "--apply"]);
         expect(r.exitCode).toBe(0);
         const doneArgv = new Set(firstLog.slice(0, done.length));
         for (const a of writesInLog()) expect(doneArgv.has(a.join(" ")), a.join(" ")).toBe(false);
