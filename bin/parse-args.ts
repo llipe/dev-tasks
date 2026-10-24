@@ -1,6 +1,10 @@
 /**
  * Shared CLI argument parser for the dev-tasks binary.
- * Handles --json, --pin, --force, --profile, -v/--verbose, and --version flags.
+ * Handles --json, --pin, --force, --profile, -v/--verbose, --version, and
+ * the `migrate projects` flags (--plan, --apply, --repo, --out, --plan-file).
+ *
+ * Unknown flags are collected in `unknownFlags`, not treated as positional
+ * arguments, so a command can refuse them (A-63).
  */
 
 export interface ParsedArgs {
@@ -14,21 +18,43 @@ export interface ParsedArgs {
     pin: string | undefined;
     force: boolean;
     profile: string | undefined;
+    plan: boolean;
+    apply: boolean;
+    repo: string | undefined;
+    out: string | undefined;
+    planFile: string | undefined;
   };
+  /** Every recognised flag as typed in canonical long form (`--json`, `--out`, …), in order. */
+  seenFlags: string[];
+  /** Flags the parser does not know, as typed. */
+  unknownFlags: string[];
+  /** Value-taking flags given without a value. */
+  missingValues: string[];
 }
 
+/** Flags that take a value, by canonical name. */
+const VALUE_FLAGS = ["--pin", "--profile", "--repo", "--out", "--plan-file"] as const;
+
 export function parseArgs(argv: string[]): ParsedArgs {
-  const flags = {
+  const flags: ParsedArgs["flags"] = {
     json: false,
     verbose: false,
     version: false,
     help: false,
-    pin: undefined as string | undefined,
+    pin: undefined,
     force: false,
-    profile: undefined as string | undefined,
+    profile: undefined,
+    plan: false,
+    apply: false,
+    repo: undefined,
+    out: undefined,
+    planFile: undefined,
   };
 
   const positional: string[] = [];
+  const seenFlags: string[] = [];
+  const unknownFlags: string[] = [];
+  const missingValues: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
     let arg = argv[i];
@@ -41,23 +67,48 @@ export function parseArgs(argv: string[]): ParsedArgs {
       arg = arg.slice(0, eqIdx);
     }
 
-    if (arg === "--json") {
+    if ((VALUE_FLAGS as readonly string[]).includes(arg)) {
+      let value = inlineValue;
+      if (value === undefined) {
+        const next = argv[i + 1];
+        if (next !== undefined && !next.startsWith("--")) {
+          value = next;
+          i++;
+        }
+      }
+      seenFlags.push(arg);
+      if (value === undefined || value === "") {
+        missingValues.push(arg);
+        continue;
+      }
+      if (arg === "--pin") flags.pin = value;
+      else if (arg === "--profile") flags.profile = value;
+      else if (arg === "--repo") flags.repo = value;
+      else if (arg === "--out") flags.out = value;
+      else flags.planFile = value;
+    } else if (arg === "--json") {
       flags.json = true;
-    } else if (arg === "--pin") {
-      flags.pin = inlineValue ?? argv[++i];
-    } else if (arg === "--profile") {
-      flags.profile = inlineValue ?? argv[++i];
+      seenFlags.push("--json");
     } else if (arg === "--force" || arg === "-f") {
       flags.force = true;
+      seenFlags.push("--force");
     } else if (arg === "-v" || arg === "--verbose") {
       flags.verbose = true;
+      seenFlags.push("--verbose");
     } else if (arg === "--version") {
       flags.version = true;
+      seenFlags.push("--version");
     } else if (arg === "--help" || arg === "-h") {
       flags.help = true;
+      seenFlags.push("--help");
+    } else if (arg === "--plan") {
+      flags.plan = true;
+      seenFlags.push("--plan");
+    } else if (arg === "--apply") {
+      flags.apply = true;
+      seenFlags.push("--apply");
     } else if (argv[i].startsWith("-")) {
-      // Unknown flag — treat as positional for now
-      positional.push(argv[i]);
+      unknownFlags.push(argv[i]);
     } else {
       positional.push(argv[i]);
     }
@@ -66,5 +117,63 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const command = positional.length > 0 ? positional[0] : undefined;
   const rest = positional.slice(1);
 
-  return { command, positional: rest, flags };
+  return { command, positional: rest, flags, seenFlags, unknownFlags, missingValues };
+}
+
+export type MigrateProjectsArgs =
+  | { ok: true; mode: "plan"; repo: string | undefined; out: string; json: boolean }
+  | { ok: true; mode: "apply"; planFile: string; json: boolean }
+  | { ok: false; error: string };
+
+export const MIGRATE_PROJECTS_USAGE =
+  "Usage: dev-tasks migrate projects --plan [--repo <owner/repo>] [--out <path>] [--json]";
+
+const DEFAULT_PLAN_FILE = "workstream/migration-projects.md";
+const REPO_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+
+/**
+ * Validate `migrate projects` flags (A-63): exactly one of `--plan` and
+ * `--apply`, no unknown or foreign flag, no stray argument, and every value
+ * flag with its value. Any violation is `InvalidUsage` (2) for the caller.
+ */
+export function parseMigrateProjectsArgs(args: ParsedArgs): MigrateProjectsArgs {
+  if (args.flags.plan === args.flags.apply) {
+    return { ok: false, error: "give exactly one of --plan or --apply" };
+  }
+  if (args.unknownFlags.length > 0) {
+    return { ok: false, error: `unknown flag ${args.unknownFlags[0]}` };
+  }
+  if (args.missingValues.length > 0) {
+    return { ok: false, error: `${args.missingValues[0]} needs a value` };
+  }
+  if (args.positional.length > 1) {
+    return { ok: false, error: `unexpected argument ${args.positional[1]}` };
+  }
+  const mode = args.flags.plan ? "plan" : "apply";
+  const allowed =
+    mode === "plan"
+      ? ["--plan", "--repo", "--out", "--json", "--verbose"]
+      : ["--apply", "--plan-file", "--json", "--verbose"];
+  const foreign = args.seenFlags.find((f) => !allowed.includes(f));
+  if (foreign !== undefined) {
+    return { ok: false, error: `${foreign} does not apply to migrate projects --${mode}` };
+  }
+  if (mode === "apply") {
+    return {
+      ok: true,
+      mode,
+      planFile: args.flags.planFile ?? DEFAULT_PLAN_FILE,
+      json: args.flags.json,
+    };
+  }
+  if (args.flags.repo !== undefined && !REPO_PATTERN.test(args.flags.repo)) {
+    return { ok: false, error: `--repo must read <owner>/<repo>, not ${args.flags.repo}` };
+  }
+  return {
+    ok: true,
+    mode,
+    repo: args.flags.repo,
+    out: args.flags.out ?? DEFAULT_PLAN_FILE,
+    json: args.flags.json,
+  };
 }
