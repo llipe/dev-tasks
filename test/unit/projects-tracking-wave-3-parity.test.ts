@@ -173,6 +173,11 @@ const CRITICAL_RULE =
 const BLOCKS_ANY_PRIORITY =
   "ny issue that blocks another carries the `**Blocks:**` line whatever its priority";
 
+const RETIRED_LIST = "- Retired labels, in full:";
+const PRIORITY_SENTENCE =
+  "`priority: high` lands in the current wave or cycle and blocks nothing; `priority: medium` lands in the next; `priority: low` is backlog";
+const DEPENDENCY_READ_ROW = "| List what an issue blocks";
+
 /** The dependency commands (S-019 AC-3, A-89, CT-40). */
 const DEPENDENCY_POST =
   "`gh api -X POST repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by -F issue_id=<blocker numeric id>`";
@@ -289,6 +294,34 @@ describe("github-ops", () => {
     }
     for (const marker of [AUDIT_CRITICAL, AUDIT_TYPES, AUDIT_RETIRED]) {
       expectIdenticalLine(trees, "Audit Mode", marker);
+    }
+  });
+});
+
+// PT-66 widened (S-019 audit finding 2): the remaining S-019 lines are
+// byte-identical across the trees too.
+describe("github-ops identity (finding 2)", () => {
+  const trees = loadTrees(GITHUB_OPS_TREES);
+
+  it("retired list, priority sentence and dependency read row", () => {
+    expectIdenticalLine(trees, "Labels", RETIRED_LIST);
+    expectIdenticalLine(trees, "Labels", PRIORITY_SENTENCE);
+    expectIdenticalLine(trees, "Command Map", DEPENDENCY_READ_ROW);
+  });
+
+  it("Conventions report-template table", () => {
+    const tables = trees.map((copy) => {
+      const audit = sectionOf(copy, "Audit Mode");
+      const start = audit.indexOf("## Conventions");
+      const end = audit.indexOf("## Pull Requests", start);
+      expect(start, `${copy.path}: no Conventions table`).toBeGreaterThan(-1);
+      expect(end, `${copy.path}: Conventions table not followed by Pull Requests`).toBeGreaterThan(
+        start,
+      );
+      return audit.slice(start, end);
+    });
+    for (const [i, table] of tables.entries()) {
+      expect(table, `${trees[i].path}: Conventions table differs`).toBe(tables[0]);
     }
   });
 });
