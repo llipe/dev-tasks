@@ -10,9 +10,17 @@
  * no cross-test import.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
+import {
+  TYPE_SET as CODE_TYPE_SET,
+  TYPE_DEFINITIONS as CODE_TYPE_DEFINITIONS,
+  RETIRED_TYPE_LABELS as CODE_RETIRED_TYPE_LABELS,
+  RETIRED_LABELS as CODE_RETIRED_LABELS,
+  RETIRED_LABEL_PREFIXES as CODE_RETIRED_LABEL_PREFIXES,
+  DEFAULT_LABEL_SUGGESTIONS as CODE_DEFAULT_LABEL_SUGGESTIONS,
+} from "#core/migrate-projects/conventions.js";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -573,6 +581,160 @@ describe("product-engineer roadmap conversion (S-016)", () => {
     }
     for (const marker of [...CONVERSION_STEPS, PLAN_REFUSES, NO_STATE_FILE_EDIT, NEVER_DONE]) {
       expectIdenticalLine(trees, CONVERSION, marker);
+    }
+  });
+});
+
+// --- core/migrate-projects (S-013, #320) ---------------------------------------
+
+// PT-81 — A-87, D-85 (deferred from S-019): the type set is defined once in
+// code, and the code agrees with github-ops' Labels section. Read from the
+// prompt here, not from this file's own TYPE_SET, so the pin compares the
+// two sources the agents and the CLI actually use.
+const RETIRED_LINE = "- Retired labels, in full: ";
+
+/**
+ * github-ops' retired list as exact names plus `wave:`-style prefixes. The
+ * sentence after the list (GitHub's default labels, D-100) is not part of it.
+ */
+function retiredFromPrompt(labelsSection: string): { names: string[]; prefixes: string[] } {
+  const line = labelsSection.split("\n").find((l) => l.startsWith(RETIRED_LINE));
+  if (line === undefined) throw new Error("no Retired labels line");
+  const list = line.slice(RETIRED_LINE.length).split(". GitHub's default")[0];
+  const prefixes = [...list.matchAll(/every `([^`]+)` label/g)].map((m) => m[1]);
+  const names = [...list.matchAll(/`([^`]+)`/g)]
+    .map((m) => m[1])
+    .filter((n) => !prefixes.includes(n));
+  return { names, prefixes };
+}
+
+function retiredDiff(
+  prompt: { names: string[]; prefixes: string[] },
+  codeNames: readonly string[],
+  codePrefixes: readonly string[],
+): { onlyInPrompt: string[]; onlyInCode: string[] } {
+  const p = new Set([...prompt.names, ...prompt.prefixes.map((x) => `${x}*`)]);
+  const c = new Set([...codeNames, ...codePrefixes.map((x) => `${x}*`)]);
+  return {
+    onlyInPrompt: [...p].filter((x) => !c.has(x)).sort(),
+    onlyInCode: [...c].filter((x) => !p.has(x)).sort(),
+  };
+}
+
+describe("conventions.ts matches github-ops (PT-81)", () => {
+  const labels = sectionOf(loadTrees(GITHUB_OPS_TREES)[0], "Labels");
+
+  it("the type set and its tie-break order", () => {
+    const tags = labels.split("\n").find((l) => l.startsWith("- Type tags: "));
+    expect(tags, "no Type tags line").toBeDefined();
+    const fromPrompt = [...tags!.matchAll(/`type: ([a-z-]+)`/g)].map((m) => m[1]);
+    expect([...CODE_TYPE_SET]).toEqual(fromPrompt);
+    const tieBreak = labels.match(/`((?:[a-z-]+ > )+[a-z-]+)`/);
+    expect(tieBreak, "no tie-break literal").not.toBeNull();
+    expect(CODE_TYPE_SET.join(" > ")).toBe(tieBreak![1]);
+  });
+
+  it("each type's definition", () => {
+    for (const type of CODE_TYPE_SET) {
+      const row = tableRow(labels, `type: ${type}`);
+      expect(row, `no row for type: ${type}`).toBeDefined();
+      expect(row!).toContain(`| ${CODE_TYPE_DEFINITIONS[type]} |`);
+    }
+  });
+
+  // F-7 (verifier audit on PR #328): compared both ways, by exact name.
+  it("the retired labels, both ways, by exact name (D-91)", () => {
+    const fromPrompt = retiredFromPrompt(labels);
+    expect(retiredDiff(fromPrompt, CODE_RETIRED_LABELS, CODE_RETIRED_LABEL_PREFIXES)).toEqual({
+      onlyInPrompt: [],
+      onlyInCode: [],
+    });
+    for (const name of CODE_RETIRED_TYPE_LABELS) expect(fromPrompt.names).toContain(name);
+  });
+
+  it("the two-way comparison catches a label dropped from either side", () => {
+    const fromPrompt = retiredFromPrompt(labels);
+    const dropped = CODE_RETIRED_LABELS.filter((n) => n !== "needs: merge");
+    expect(retiredDiff(fromPrompt, dropped, CODE_RETIRED_LABEL_PREFIXES).onlyInPrompt).toEqual([
+      "needs: merge",
+    ]);
+    const extra = [...CODE_RETIRED_LABELS, "needs: review"];
+    expect(retiredDiff(fromPrompt, extra, CODE_RETIRED_LABEL_PREFIXES).onlyInCode).toEqual([
+      "needs: review",
+    ]);
+    expect(retiredDiff(fromPrompt, CODE_RETIRED_LABELS, []).onlyInPrompt).toEqual(["wave:*"]);
+  });
+
+  it("the default labels are neither retired nor a type (D-100)", () => {
+    const retired = labels.split("\n").find((l) => l.startsWith(RETIRED_LINE))!;
+    for (const name of ["bug", "documentation", "enhancement"]) {
+      expect(Object.keys(CODE_DEFAULT_LABEL_SUGGESTIONS)).toContain(name);
+      expect(retired).toContain(`\`${name}\``);
+      expect(retiredFromPrompt(labels).names).not.toContain(name);
+    }
+  });
+});
+
+// PT-80 — A-60, D-81, D-22: no Project write from the migration module. Only
+// S-014's `plan.ts` may later carry the batch 7 strings, and only the read
+// query and the delete template it prints for the user (D-97); no file may
+// build a `project` argv for the runner.
+/** GraphQL ProjectV2 types and mutations, and REST `/projects` paths (F-8). */
+const PROJECT_API = /ProjectV2|projectV2|\/projects\b/;
+
+describe("no Project calls in core/migrate-projects (PT-80)", () => {
+  const DIR = "core/migrate-projects";
+  const files = readdirSync(resolve(ROOT, DIR)).filter((f) => f.endsWith(".ts"));
+  const PRINTED_ONLY = new Map([["plan.ts", /^(item-list|item-delete)$/]]);
+
+  it("the Project API pattern catches GraphQL and REST forms, not the command name", () => {
+    for (const probe of [
+      'gh api graphql -f query="mutation { addProjectV2ItemById(input: $i) { item { id } } }"',
+      "deleteProjectV2Item",
+      "projectV2(number: 5)",
+      "repos/o/r/projects",
+      "users/o/projects?per_page=100",
+    ]) {
+      expect(probe, probe).toMatch(PROJECT_API);
+    }
+    for (const ok of [
+      "migrate projects --plan",
+      "workstream/migration-projects.md",
+      "projects-tracking",
+    ]) {
+      expect(ok, ok).not.toMatch(PROJECT_API);
+    }
+  });
+
+  it("the walk finds the module", () => {
+    for (const f of [
+      "gh.ts",
+      "snapshot.ts",
+      "classify.ts",
+      "planfile.ts",
+      "conventions.ts",
+      "index.ts",
+    ]) {
+      expect(files).toContain(f);
+    }
+  });
+
+  it("no `gh project` string outside plan.ts's printed batch 7, and no `project` argv", () => {
+    for (const file of files) {
+      const lines = readFileSync(resolve(ROOT, DIR, file), "utf-8").split("\n");
+      for (const [index, line] of lines.entries()) {
+        const where = `${DIR}/${file}:${index + 1}`;
+        expect(line, `${where} builds a project argv`).not.toMatch(/["'`]project["'`]/);
+        // F-8: a GraphQL ProjectV2 mutation or a REST `/projects` path is a Project call too.
+        expect(line, `${where} names a Project API`).not.toMatch(PROJECT_API);
+        for (const m of line.matchAll(/\bgh\s+project\s+([a-z-]+)/g)) {
+          const allowed = PRINTED_ONLY.get(file);
+          expect(
+            allowed !== undefined && allowed.test(m[1]),
+            `${where} names gh project ${m[1]}`,
+          ).toBe(true);
+        }
+      }
     }
   });
 });

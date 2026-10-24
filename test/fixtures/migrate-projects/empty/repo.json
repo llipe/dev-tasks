@@ -1,0 +1,12 @@
+{
+  "repo": "acme/empty",
+  "labels": [
+    { "name": "bug", "description": "Something isn't working", "color": "d73a4a" },
+    { "name": "type: bug", "description": "Behavior that differs from the spec or intent", "color": "D93F0B" }
+  ],
+  "issues": [],
+  "files": {
+    "docs/roadmap.md": "# Roadmap\n\n| PRD | Phase/Wave | Scope (one line) | Status | Issues/PRs | What's missing |\n| --- | --- | --- | --- | --- | --- |\n| [alpha](requirements/prd-alpha.md) | 1 | Alpha widgets | Not started | — | All |\n",
+    "docs/requirements/prd-alpha.md": "# PRD: alpha — Alpha widgets\n"
+  }
+}

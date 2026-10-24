@@ -123,6 +123,8 @@ When coverage cannot be measured, report `coverage_gate: SKIPPED(<non-empty reas
 
 Tests primarily use deterministic fixture repositories under `test/fixtures/`, temporary directories rooted in the OS temp directory, and subprocess execution for CLI entry points. Fixture projects that intentionally model harness defects are excluded from Vitest collection. No duplicated token builders or client mocks were detected, and no global `fetch`/timer stubs were detected. Any future global stub must be restored explicitly.
 
+`migrate projects` (`core/migrate-projects/`) is tested against an in-memory GitHub model (`test/unit/migrate-projects/helpers/fake-github.ts`) served through an injected `GhRunner`, never the network. Its read-only guarantee is checked by a write classifier written in the test (`helpers/is-write.ts`), never imported from production, so the property is not checked by the code it checks. The Layer 2 CLI tests run the real binary and the real `execFile("gh")` runner against a fake `gh` (`test/fixtures/migrate-projects/fake-gh/gh`) placed alone with a `node` symlink in a purpose-built `PATH` directory, with the clock injected through `DEV_TASKS_NOW`. Property tests use a seeded PRNG (`helpers/prng.ts`, seed from `MIGRATE_SEED`, printed in every failure message), not a property-testing dependency.
+
 Gold or generated fixture files must record their source and regeneration path where applicable. Generated catalog outputs are test artifacts, not coverage evidence, and must not be used as durable validation without freshness and scope checks.
 
 ## Security-Negative Tests
@@ -179,6 +181,7 @@ Behavioural acceptance criteria of the projects-tracking PRD cannot run inside V
 
 | Version | Date       | Change                                                                                                                                                                                        | Author             |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| 1.8     | 2026-10-24 | Fixtures and Mocking: the `migrate projects` harness (fake GitHub model, test-side write oracle, fake `gh` on a purpose-built `PATH`, `DEV_TASKS_NOW`, seeded PRNG) (S-013, #320).            | developer          |
 | 1.7     | 2026-10-22 | DF-5 Done observed after PR #312 merged; wave 2 DF-15 and DF-16 observed from the merged prompt (Phase 6).                                                                                    | planner            |
 | 1.6     | 2026-10-22 | DF-5 (PRD AC-3 a) and wave 2 DF-11 observed on consolidated PR #312: GitHub moved all eight linked issues to In progress (#285).                                                              | planner            |
 | 1.5     | 2026-10-22 | Known limitations section: regex parity tests prove presence, not meaning (wave 2 decision). PRD AC-1 row observed; wave 2 dogfood rows DF-6 to DF-16 added (hand-applied, Design Mode A-25). | planner            |

@@ -1,0 +1,130 @@
+{
+  "repo": "acme/widgets",
+  "labels": [
+    { "name": "bug", "description": "Something isn't working", "color": "d73a4a" },
+    { "name": "documentation", "description": "Improvements or additions to documentation", "color": "0075ca" },
+    { "name": "enhancement", "description": "New feature or request", "color": "a2eeef" },
+    { "name": "type: enhancement", "description": "New feature or request", "color": "0E8A16" },
+    { "name": "type: bug", "description": "Something is broken", "color": "D93F0B" },
+    { "name": "type: chore", "description": "Maintenance", "color": "FEF2C0" },
+    { "name": "type: docs", "description": "Documentation", "color": "0075CA" },
+    { "name": "type: refactor", "description": "Refactor", "color": "D4C5F9" },
+    { "name": "type: security", "description": "Security", "color": "B60205" },
+    { "name": "type: other", "description": "Anything else", "color": "CCCCCC" },
+    { "name": "type: prd", "description": "PRD tracking issue", "color": "5319E7" },
+    { "name": "status: ready", "description": "Ready to start", "color": "0E8A16" },
+    { "name": "status: blocked", "description": "Blocked", "color": "B60205" },
+    { "name": "needs: decision", "description": "Waiting on a decision", "color": "FBCA04" },
+    { "name": "wave: 2", "description": "Wave 2", "color": "C5DEF5" },
+    { "name": "phase: 1", "description": "Phase 1", "color": "C5DEF5" },
+    { "name": "phase: 2", "description": "Phase 2", "color": "C5DEF5" },
+    { "name": "priority: critical", "description": "Must be addressed immediately", "color": "B60205" },
+    { "name": "priority: high", "description": "High", "color": "D93F0B" }
+  ],
+  "issues": [
+    {
+      "id": 90001, "number": 1, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "[PRD-alpha] Alpha widgets",
+      "labels": ["type: prd"],
+      "body": "PRD tracking issue. BODY-SENTINEL-1 zebra-quartz"
+    },
+    {
+      "id": 90002, "number": 2, "state": "open", "milestone": "Alpha", "parent": 1, "blocking": [],
+      "title": "[PRD-alpha] Wave 2: Gadgets",
+      "labels": [],
+      "body": "Wave tracking issue without a level label. BODY-SENTINEL-2 zebra-quartz"
+    },
+    {
+      "id": 90010, "number": 10, "state": "open", "milestone": "Alpha", "parent": null, "blocking": [],
+      "title": "Story S-001: Widget list",
+      "labels": ["phase: 1", "type: enhancement"],
+      "body": "As a user I want a list. BODY-SENTINEL-10 zebra-quartz"
+    },
+    {
+      "id": 90011, "number": 11, "state": "open", "milestone": "Alpha", "parent": null, "blocking": [],
+      "title": "Story S-002: Widget detail | with pipes",
+      "labels": ["phase: 2", "status: ready", "type: enhancement", "wave: 2"],
+      "body": "As a user I want detail. BODY-SENTINEL-11 zebra-quartz"
+    },
+    {
+      "id": 90012, "number": 12, "state": "open", "milestone": "Alpha", "parent": 2, "blocking": [],
+      "title": "Story S-003: Gadget search",
+      "labels": ["type: bug", "type: enhancement"],
+      "body": "## Summary\r\n\r\n**Story:** `workstream/user-stories-alpha-phase-2.md` → S-003\r\n\r\nBODY-SENTINEL-12 zebra-quartz\r\n"
+    },
+    {
+      "id": 90013, "number": 13, "state": "open", "milestone": "Alpha", "parent": 24, "blocking": [],
+      "title": "[PRD-alpha] Story S-004: Gadget export",
+      "labels": ["enhancement"],
+      "body": "**Story:** workstream/user-stories-alpha-phase-2.md\n\nBODY-SENTINEL-13 zebra-quartz"
+    },
+    {
+      "id": 90014, "number": 14, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "Gadget import",
+      "labels": ["type: enhancement"],
+      "body": "Quoted example only:\n\n> **Story:** workstream/user-stories-alpha-phase-2.md\n\n```\n**Story:** workstream/user-stories-alpha-phase-1.md\n```\n\nBODY-SENTINEL-14 zebra-quartz"
+    },
+    {
+      "id": 90020, "number": 20, "state": "open", "milestone": "Alpha", "parent": null, "blocking": [],
+      "title": "fix: widget crash on empty list",
+      "labels": ["phase: 1", "needs: decision", "priority: critical"],
+      "body": "Follow-up to #10\n\n**Blocks:** #2 — the wave cannot ship with this crash\n\nBODY-SENTINEL-20 zebra-quartz"
+    },
+    {
+      "id": 90021, "number": 21, "state": "open", "milestone": null, "parent": null, "blocking": [11],
+      "title": "feat(api): paginate widgets",
+      "labels": ["type: other", "priority: critical"],
+      "body": "**Blocks:** #11 — detail needs pagination\n\nBODY-SENTINEL-21 zebra-quartz"
+    },
+    {
+      "id": 90022, "number": 22, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "[chore] bump dependencies",
+      "labels": ["type: chore", "priority: high", "priority: critical"],
+      "body": "BODY-SENTINEL-22 zebra-quartz"
+    },
+    {
+      "id": 90023, "number": 23, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "Update the README",
+      "labels": ["documentation"],
+      "body": null
+    },
+    {
+      "id": 90024, "number": 24, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "[PRD-alpha] Remove old fallback",
+      "labels": ["type: refactor"],
+      "body": "BODY-SENTINEL-24 zebra-quartz"
+    },
+    {
+      "id": 90025, "number": 25, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "perf: faster list",
+      "labels": [],
+      "body": "BODY-SENTINEL-25 zebra-quartz"
+    },
+    {
+      "id": 90030, "number": 30, "state": "closed", "milestone": "Alpha", "parent": 1, "blocking": [],
+      "title": "[PRD-alpha] Wave 1: Widgets",
+      "labels": ["level: wave"],
+      "body": "Closed wave tracking issue. BODY-SENTINEL-30 zebra-quartz"
+    },
+    {
+      "id": 90031, "number": 31, "state": "closed", "milestone": "Alpha", "parent": 30, "blocking": [],
+      "title": "[PRD-alpha] Story S-000: Widget model",
+      "labels": ["type: enhancement"],
+      "body": "BODY-SENTINEL-31 zebra-quartz"
+    },
+    {
+      "id": 90040, "number": 40, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "pullRequest": true,
+      "title": "feat: a pull request, not an issue",
+      "labels": [],
+      "body": "BODY-SENTINEL-40 zebra-quartz"
+    }
+  ],
+  "files": {
+    "docs/roadmap.md": "# Roadmap\n\nNarrative intro.\n\n| PRD | Phase/Wave | Scope (one line) | Status | Issues/PRs | What's missing |\n| --- | --- | --- | --- | --- | --- |\n| [alpha](requirements/prd-alpha.md) | 1 | Widgets | Done | #30 | — |\n| [alpha](requirements/prd-alpha.md) | 2 | Gadgets | In progress | #2 | Export |\n",
+    "docs/requirements/prd-alpha.md": "# PRD: alpha — Alpha widgets\n\n## Changelog\n",
+    "workstream/planner-state-alpha-phase-1.md": "# Planner state\n\n- Wave issue: #30\n",
+    "workstream/planner-state-alpha-phase-2.md": "# Planner state\n\n- Integration branch: integration/alpha-phase-2\n",
+    "workstream/archive/planner-state-alpha-phase-0.md": "# Planner state (archived)\n"
+  }
+}

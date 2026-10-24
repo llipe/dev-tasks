@@ -116,13 +116,13 @@ dev-tasks status            # compare installed vs latest version
 
 ### Exit codes
 
-| Code | Meaning                                 |
-| ---- | --------------------------------------- |
-| 0    | Success                                 |
-| 1    | Unexpected error                        |
-| 2    | Incorrect usage                         |
-| 11   | Dependency check failed (`doctor`)      |
-| 14   | Reconciliation conflict (edited fields) |
+| Code | Meaning                                                                                     |
+| ---- | ------------------------------------------------------------------------------------------- |
+| 0    | Success                                                                                     |
+| 1    | Unexpected error                                                                            |
+| 2    | Incorrect usage                                                                             |
+| 11   | Dependency check failed (`doctor`), or `gh` missing or unauthenticated (`migrate projects`) |
+| 14   | Reconciliation conflict (edited fields)                                                     |
 
 Full contract, including retirement history for codes no longer in use: [`core/exit-codes.ts`](core/exit-codes.ts).
 
@@ -139,6 +139,7 @@ dev-tasks unpin                       # Remove the version pin
 dev-tasks doctor                      # Check Node ≥24, git ≥2.37, cache writable
 dev-tasks migrate                     # Migrate from legacy shell-script install
 dev-tasks migrate docs [--force]      # Rename the foundation docs to their current names
+dev-tasks migrate projects --plan     # Write a reviewable projects-tracking migration plan (read-only)
 ```
 
 ### Version Pinning
@@ -195,6 +196,29 @@ Both forms accept `--json`.
 Files you own are yours to update. The command reports which of them still
 name the old documents; it does not edit them, and neither does
 `dev-tasks update`.
+
+### Projects-Tracking Migration Plan
+
+`dev-tasks migrate projects --plan` reads an existing repository through `gh`
+and writes a migration plan to `workstream/migration-projects.md`: what the
+projects-tracking conventions would change, and the lists that need your
+answer (issues that need a `type:`, `priority: critical` issues with no
+blocking link, planner state files without a `Wave issue:` line, roadmap
+notes). It is **read-only**: nothing on GitHub changes, and the plan file
+holds issue numbers, titles and label names, never issue bodies.
+
+```bash
+dev-tasks migrate projects --plan                        # Plan for the current repository
+dev-tasks migrate projects --plan --out /tmp/plan.md     # Write the plan elsewhere
+dev-tasks migrate projects --plan --json                 # Summary as JSON
+```
+
+It needs `gh` authenticated to github.com with the `repo` scope, checked
+first (exit `11` with the `gh auth login` hint otherwise), and it must run
+inside a clone of the repository: `--repo` may only confirm it (exit `2`
+otherwise). It refuses with exit `14` to overwrite a plan file that already
+records applied writes. Mapping stories to waves, the write batches and
+`--apply` are not in this version yet.
 
 **Note the asymmetry with the bare `migrate` command.** `dev-tasks migrate`
 (no sub-verb) migrates a legacy shell-script install and applies its change
