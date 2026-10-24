@@ -50,12 +50,16 @@ Use this table to translate each convention in this file into a `gh` invocation.
 | Create/list labels                                         | `gh label create "<name>" --color "<hex>" --description "<desc>"` / `gh label list`                                                                   | `create_label` / `list_labels`                 |
 | Create/list milestones                                     | `gh api repos/<owner>/<repo>/milestones -f title="<title>" -f description="<desc>" -f due_on="<ISO date>"` / `gh api repos/<owner>/<repo>/milestones` | (no dedicated MCP tool; use REST)              |
 | Assign milestone to issue                                  | `gh issue edit <number> --milestone "<milestone>"`                                                                                                    | `update_issue`                                 |
+| Add a blocking relation (issue data)                       | `gh api -X POST repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by -F issue_id=<blocker numeric id>`                                              | (no dedicated MCP tool; use REST)              |
+| Remove a blocking relation                                 | `gh api -X DELETE repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by/{blocker numeric id}`                                                        | (no dedicated MCP tool; use REST)              |
+| List what an issue blocks / is blocked by                  | `gh api repos/{o}/{r}/issues/{n}/dependencies/blocking --paginate` / `gh api repos/{o}/{r}/issues/{n}/dependencies/blocked_by --paginate`             | (no dedicated MCP tool; use REST)              |
 | Create branch                                              | `git checkout -b <branch>` (name per [Branch Naming](#branch-naming))                                                                                 | n/a (local git operation)                      |
 
 Notes:
 
 - Prefer `--json` output on `gh issue list` / `gh pr list` and `gh api` for machine-parseable results — do not scrape the default human-readable table output.
 - `gh api <endpoint>` is the fallback for anything without a dedicated subcommand (milestones, some label edge cases, reactions). See <https://cli.github.com/manual/gh_api>.
+- **Issue dependencies are issue data an agent may write, unlike the Project.** A blocking relation lives on the blocked issue (`{blocked}`) and names its blocker by the blocker's REST numeric id, read with `gh api repos/{o}/{r}/issues/<blocker number> --jq .id`, as the sub-issue endpoint does; an issue number or a GraphQL node id is rejected. No agent writes the Project (D-22); these commands change only the two issues they name (D-83). Write a relation only when the user or the issue text names the blocked issue, and add the `**Blocks:**` line to the blocker's body in the same change (see [Labels](#labels)).
 - `gh` respects the repository detected from the current working directory; pass `--repo <owner/repo>` explicitly when operating on a different repository than the one checked out locally.
 - Every `gh` invocation that mutates state (create/edit/close/merge) **MUST** be reflected in the Output Contract's `Changes applied` list, exactly as an MCP-driven change would be.
 
@@ -355,39 +359,47 @@ The following label set **MUST** exist in every project. `github-ops` **MUST** c
 
 The following tags are the canonical, most-used tags for issues and **MUST** be preferred over ad-hoc alternatives:
 
-- Type tags: `type: enhancement`, `type: bug`, `type: security`, `type: tech-debt`, `type: other`
+- Type tags: `type: security`, `type: bug`, `type: enhancement`, `type: refactor`, `type: test`, `type: docs`, `type: chore`, `type: tech-debt`
 - Scope tags: `scope: frontend`, `scope: backend`, `scope: mobile`
 - Level tags: `level: prd`, `level: wave`, `level: story`
 
-| Category     | Label                      | Color     | Description                                                |
-| ------------ | -------------------------- | --------- | ---------------------------------------------------------- |
-| **Type**     | `type: enhancement`        | `#0E8A16` | New feature or enhancement                                 |
-|              | `type: bug`                | `#D93F0B` | Something is broken                                        |
-|              | `type: security`           | `#B60205` | Security vulnerability, hardening, or compliance work      |
-|              | `type: tech-debt`          | `#5319E7` | Refactoring, cleanup, or deferred engineering improvements |
-|              | `type: other`              | `#EDEDED` | Work that does not fit other type categories               |
-|              | `type: chore`              | `#FEF2C0` | Maintenance or dependency work                             |
-|              | `type: docs`               | `#0075CA` | Documentation changes                                      |
-|              | `type: refactor`           | `#D4C5F9` | Code restructure, no behavior change                       |
-| **Priority** | `priority: critical`       | `#B60205` | Must be addressed immediately                              |
-|              | `priority: high`           | `#D93F0B` | Should be in the current cycle                             |
-|              | `priority: medium`         | `#FBCA04` | Planned but not urgent                                     |
-|              | `priority: low`            | `#C5DEF5` | Nice to have                                               |
-| **Level**    | `level: prd`               | `#3F51B5` | PRD tracking issue; a container for waves, not work        |
-|              | `level: wave`              | `#5C6BC0` | Wave tracking issue; a container for stories, not work     |
-|              | `level: story`             | `#7986CB` | Story issue; the unit of work                              |
-| **Status**   | `status: blocked`          | `#E4E669` | Waiting on external dependency                             |
-|              | `status: needs-refinement` | `#F9D0C4` | Scope or AC unclear                                        |
-|              | `status: deferred`         | `#BFBFBF` | Parked by decision; not closed                             |
-| **Scope**    | `scope: frontend`          | `#BFD4F2` | Frontend changes                                           |
-|              | `scope: backend`           | `#D4C5F9` | Backend changes                                            |
-|              | `scope: mobile`            | `#FAD8C7` | Mobile app or mobile-specific changes                      |
-|              | `scope: infra`             | `#E6E6E6` | Infrastructure or CI/CD                                    |
-|              | `scope: api`               | `#C2E0C6` | API surface changes                                        |
+| Category     | Label                      | Color     | Description                                            |
+| ------------ | -------------------------- | --------- | ------------------------------------------------------ |
+| **Type**     | `type: security`           | `#B60205` | Security vulnerability, hardening, or compliance work  |
+|              | `type: bug`                | `#D93F0B` | Behavior that differs from the spec or intent          |
+|              | `type: enhancement`        | `#0E8A16` | New or changed behavior                                |
+|              | `type: refactor`           | `#D4C5F9` | Code restructure, no behavior change                   |
+|              | `type: test`               | `#BFDADC` | Test-only work                                         |
+|              | `type: docs`               | `#0075CA` | Documentation changes                                  |
+|              | `type: chore`              | `#FEF2C0` | Maintenance, dependencies, tooling, or CI              |
+|              | `type: tech-debt`          | `#5319E7` | Deferred engineering work that fits no other type      |
+| **Priority** | `priority: critical`       | `#B60205` | Blocks a wave, PRD, or release from shipping           |
+|              | `priority: high`           | `#D93F0B` | Lands in the current wave or cycle; blocks no ship     |
+|              | `priority: medium`         | `#FBCA04` | Lands in the next wave or cycle                        |
+|              | `priority: low`            | `#C5DEF5` | Backlog                                                |
+| **Level**    | `level: prd`               | `#3F51B5` | PRD tracking issue; a container for waves, not work    |
+|              | `level: wave`              | `#5C6BC0` | Wave tracking issue; a container for stories, not work |
+|              | `level: story`             | `#7986CB` | Story issue; the unit of work                          |
+| **Status**   | `status: blocked`          | `#E4E669` | Waiting on external dependency                         |
+|              | `status: needs-refinement` | `#F9D0C4` | Scope or AC unclear                                    |
+|              | `status: deferred`         | `#BFBFBF` | Parked by decision; not closed                         |
+| **Scope**    | `scope: frontend`          | `#BFD4F2` | Frontend changes                                       |
+|              | `scope: backend`           | `#D4C5F9` | Backend changes                                        |
+|              | `scope: mobile`            | `#FAD8C7` | Mobile app or mobile-specific changes                  |
+|              | `scope: infra`             | `#E6E6E6` | Infrastructure or CI/CD                                |
+|              | `scope: api`               | `#C2E0C6` | API surface changes                                    |
 
 Rules:
 
 - Every issue **MUST** have at least one `type:` label and one `priority:` label, except issues labeled `level: prd` or `level: wave`, which are containers and carry only their `level:` label.
+- Every issue that is not a container carries exactly one `type:` per issue, from the eight `type:` rows above: the label names the kind of work, so a filter on it is trustworthy. When work fits several types, the first in the tie-break order wins: `security > bug > enhancement > refactor > test > docs > chore > tech-debt` (D-85).
+- The tie-break decides a mixed case the same way every time: an issue that is both a bug and a security problem is `type: security`, and a test-only change that also touches docs is `type: test`. Suggest a type from the Conventional Commits prefix of the issue's title (`fix` → `type: bug`, `feat` → `type: enhancement`), and let the user confirm it; never re-type an issue silently.
+- `type: other` is retired, and so are the experiment's `type: prd`, `type: wave` and `type: story`, which `level:` replaces (D-85, D-91). A retired label is never applied to an issue; its definition stays in the repository, marked retired in its description, so closed issues keep their history.
+- Retired labels, in full: `type: other`, `type: prd`, `type: wave`, `type: story`, `status: ready`, `status: in-progress`, the retired `needs: decision`, `needs: approval` and `needs: merge` (D-15), and every `wave:` label (D-91). GitHub's default unprefixed labels (`bug`, `documentation`, `enhancement`) are neither retired nor a type (D-100).
+- `priority: critical` blocks a wave, PRD or release from shipping, and **MUST** name what it blocks: it carries a native `blocked by` relation from the issue it blocks plus a `**Blocks:** #N — <reason>` body line (D-84). Write the relation with the dependency commands in the Command Map.
+- `priority: high` lands in the current wave or cycle and blocks no ship; `priority: medium` lands in the next; `priority: low` is backlog. Priority says when, not what it blocks: a `high` issue may block another issue and keeps `high` (D-102).
+- Any issue that blocks another carries the `**Blocks:**` line whatever its priority: a `high` issue that blocks another keeps `high` and still carries the line, and the relation is written the same way.
+- A blocking relation is never invented: add one only when the user or the issue text names the blocked issue. A `critical` issue that names none is reported, not linked (D-84).
 - Hierarchy lives only in `level:`; `type:` keeps its meaning as the kind of work. A story issue carries `level: story` beside its `type:` and `priority:` labels.
 - `status:` labels are flags: add one when the condition starts and drop it when it ends. `status: ready` and `status: in-progress` are retired from this taxonomy everywhere, Project or not, because the linked pull request shows that state natively on the issue (FR-7); issues created before this rule keep their labels until a migration pass.
 - `scope:` labels are **RECOMMENDED** for multi-area projects.
@@ -446,7 +458,11 @@ A milestone tracks the scope of a minor version (`vX.Y`); the tag `vX.Y.0` marks
 When invoked with `audit` as input, `github-ops` **MUST**:
 
 1. Fetch all open issues and PRs from the target repository.
-2. Check each against the conventions above.
+2. Check each against the conventions above, and report these four convention findings for every open issue (AC-16, D-102):
+   - **`critical` without a blocking relation:** a `priority: critical` issue for which `gh api repos/{o}/{r}/issues/{n}/dependencies/blocking --paginate` returns no relation, whether or not its body carries a `**Blocks:**` line (D-84, A-72). A relation to an issue that has since closed still exists, so it is not reported; lower the priority once the block is gone.
+   - **Zero or several `type:` labels:** an issue with no label from the eight-type set in [Labels](#labels), or with more than one; the retired `type: other`, `type: prd`, `type: wave` and `type: story`, and the unprefixed default labels, count as none (D-85, D-100). Issues labeled `level: prd` or `level: wave`, and tracking issues found by their title prefix (§ Title Format), are exempt, since containers carry no `type:` (A-68). Suggest the tie-break winner for a multi-type issue and the Conventional Commits title prefix's type for an untyped one; never re-type silently.
+   - **Retired label on an open issue:** any label in the retired list in [Labels](#labels) on an open issue. Report it for removal from the issue; never delete the label definition (D-91).
+   - **Blocking relation without its body line:** a `priority: critical` issue whose `.../dependencies/blocking` returns a relation but whose body has no `**Blocks:** #N — <reason>` line naming the blocked issue (D-102). Suggest the line from the relation; the relation is never removed to clear the finding.
 3. Produce an audit report:
 
 ```markdown
@@ -459,6 +475,15 @@ Date: YYYY-MM-DD
 | #   | Title | Missing Labels | Title Format | Body Structure | Milestone |
 | --- | ----- | -------------- | ------------ | -------------- | --------- |
 | 42  | ...   | type, priority | ✅           | ❌ missing AC  | ❌ none   |
+
+## Conventions
+
+| #   | Title | Finding                                          | Suggested fix                         |
+| --- | ----- | ------------------------------------------------ | ------------------------------------- |
+| 61  | ...   | `critical` without a blocking relation           | add the relation or lower priority    |
+| 62  | ...   | `critical` relation without a `**Blocks:**` line | add the line naming the blocked issue |
+| 64  | ...   | two `type:` labels (`bug`, `security`)           | keep `type: security` (tie-break)     |
+| 70  | ...   | retired label `status: ready`                    | take the label off the issue          |
 
 ## Pull Requests
 

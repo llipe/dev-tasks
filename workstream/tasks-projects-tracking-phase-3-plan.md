@@ -35,24 +35,29 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 
 ## Tasks
 
-- [ ] 1.0 Implement Story S-019: github-ops states one type per issue, a priority scale that names release blockers, and the native blocking link (#318)
+- [x] 1.0 Implement Story S-019: github-ops states one type per issue, a priority scale that names release blockers, and the native blocking link (#318)
 
-  - [ ] 1.1 Create `test/unit/projects-tracking-wave-3-parity.test.ts` with pins for the type set and tie-break, the priority scale, the dependency commands, the three audit checks, product-engineer's aggregation queries and activity-publish-github's one-type rule, each line byte-identical across the three copies, plus the negative that no copy lists `type: other` as a valid choice; run `pnpm run test:unit`, confirm red
-  - [ ] 1.2 In the three github-ops copies' Labels section, list the eight types with their definitions, the "exactly one `type:` per issue" rule, the tie-break order, and `type: other` as retired; add a `type: test` row and narrow `tech-debt`'s description (D-85)
-  - [ ] 1.3 Rewrite the priority rows to the D-84 scale, with the `blocked by` relation and the `**Blocks:** #N — <reason>` body line for `critical`, and the rule that any issue blocking another carries the line (D-84)
-  - [ ] 1.4 Add the dependency commands (`POST` and `DELETE` on `repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by`) to the Command Map, with the sentence that issue dependencies are issue data an agent may write, unlike the Project (D-22, D-83)
-  - [ ] 1.5 Add the three audit checks: `critical` without a blocking relation, zero or several `type:` labels, a retired label on an open issue
-  - [ ] 1.6 Add the aggregation queries to product-engineer ×3: follow-ups by `Follow-up to #N`, bugs by `type: bug` without `level:`, release blockers by `priority: critical` (D-83)
-  - [ ] 1.7 Require exactly one `type:` from the set in activity-publish-github ×3 (D-85)
-  - [ ] 1.7a Put the aggregation queries in product-engineer § Drift Reconciliation (A-86); exempt `level: prd` and `level: wave` from the audit's type check (A-68); spell the dependency `DELETE` command exactly (A-89); PT-81 pins the prompt's type set to `core/migrate-projects/conventions.ts` (A-87)
-  - [ ] 1.8 Verify Acceptance Criterion: AC-1 type set, definitions, tie-break, `type: test` row, `type: other` retired
-  - [ ] 1.9 Verify Acceptance Criterion: AC-2 priority scale and `**Blocks:**` rule
-  - [ ] 1.10 Verify Acceptance Criterion: AC-3 dependency commands and the agent-may-write sentence
-  - [ ] 1.11 Verify Acceptance Criterion: AC-4 the three audit checks
-  - [ ] 1.12 Verify Acceptance Criterion: AC-5 aggregation queries; AC-6 one type per story
-  - [ ] 1.13 Edge cases: `bug` plus `security` resolves to `security`; a `high` issue blocking another keeps `high` and carries the line; a `critical` issue whose blocked issue is closed stays reported
-  - [ ] 1.14 AC-to-test mapping: AC-1 → `github-ops > type set`; AC-2 → `github-ops > priority scale`; AC-3 → `github-ops > dependency commands`; AC-4 → `github-ops > audit checks`; AC-5 → `product-engineer > aggregation`; AC-6 → `activity-publish-github > one type`; AC-7 is the file
-  - [ ] 1.15 Run Tests: `pnpm run test:unit`, `pnpm run validate` green
+  - [x] 1.1 Create `test/unit/projects-tracking-wave-3-parity.test.ts` with pins for the type set and tie-break, the priority scale, the dependency commands, the three audit checks, product-engineer's aggregation queries and activity-publish-github's one-type rule, each line byte-identical across the three copies, plus the negative that no copy lists `type: other` as a valid choice; run `pnpm run test:unit`, confirm red
+  - [x] 1.2 In the three github-ops copies' Labels section, list the eight types with their definitions, the "exactly one `type:` per issue" rule, the tie-break order, and `type: other` as retired; add a `type: test` row and narrow `tech-debt`'s description (D-85)
+  - [x] 1.3 Rewrite the priority rows to the D-84 scale, with the `blocked by` relation and the `**Blocks:** #N — <reason>` body line for `critical`, and the rule that any issue blocking another carries the line (D-84)
+  - [x] 1.4 Add the dependency commands (`POST` and `DELETE` on `repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by`) to the Command Map, with the sentence that issue dependencies are issue data an agent may write, unlike the Project (D-22, D-83)
+  - [x] 1.5 Add the three audit checks: `critical` without a blocking relation, zero or several `type:` labels, a retired label on an open issue
+  - [x] 1.6 Add the aggregation queries to product-engineer ×3: follow-ups by `Follow-up to #N`, bugs by `type: bug` without `level:`, release blockers by `priority: critical` (D-83)
+  - [x] 1.7 Require exactly one `type:` from the set in activity-publish-github ×3 (D-85)
+  - [x] 1.7a Put the aggregation queries in product-engineer § Drift Reconciliation (A-86); exempt `level: prd` and `level: wave` from the audit's type check (A-68); spell the dependency `DELETE` command exactly (A-89); PT-81 pins the prompt's type set to `core/migrate-projects/conventions.ts` (A-87) — done here: A-86, A-68, A-89; PT-81 deferred to S-013 (#320), which creates `conventions.ts`
+  - [x] 1.8 Verify Acceptance Criterion: AC-1 type set, definitions, tie-break, `type: test` row, `type: other` retired
+  - [x] 1.9 Verify Acceptance Criterion: AC-2 priority scale and `**Blocks:**` rule
+  - [x] 1.10 Verify Acceptance Criterion: AC-3 dependency commands and the agent-may-write sentence
+  - [x] 1.11 Verify Acceptance Criterion: AC-4 the three audit checks
+  - [x] 1.12 Verify Acceptance Criterion: AC-5 aggregation queries; AC-6 one type per story
+  - [x] 1.13 Edge cases: `bug` plus `security` resolves to `security`; a `high` issue blocking another keeps `high` and carries the line; a `critical` issue whose blocked issue is closed: the relation still exists, so it is not reported (A-72)
+  - [x] 1.14 AC-to-test mapping: AC-1 → `github-ops > type set`; AC-2 → `github-ops > priority scale`; AC-3 → `github-ops > dependency commands`; AC-4 → `github-ops > audit checks`; AC-5 → `product-engineer > aggregation`; AC-6 → `activity-publish-github > one type`; AC-7 is the file
+  - [x] 1.15 Run Tests: `pnpm run test:unit`, `pnpm run validate` green
+  - [x] 1.16 Pin byte-identity across the three trees for the `Retired labels, in full:` line, the `priority: high … medium … low` sentence, the Command Map "List what an issue blocks" row and the `## Conventions` report-template table (finding 2). Test first.
+  - [x] 1.17 Add `--limit 1000` to all three aggregation queries in product-engineer § Drift Reconciliation (all three trees) and update PT-64 (finding 4, A-74).
+  - [x] 1.18 Reword the bugs-query reason from "so tracking issues never count" to "so story and tracking issues never count" (finding 8), three trees.
+  - [x] 1.19 Reword the `priority: high` table row and the priority sentence from "blocks nothing" to "blocks no ship", so a `high` issue may block another issue while keeping `high` (finding 5; D-102)
+  - [x] 1.20 Add a fourth github-ops audit check: a `priority: critical` issue that has a native `blocking` relation but no `**Blocks:** #N — <reason>` body line is reported (finding 6; D-102). Add it to the audit list and the `## Conventions` report table; extend PT-63
 
 - [ ] 2.0 Implement Story S-016: product-engineer converts a narrative roadmap to the canonical table before migration (#319)
 

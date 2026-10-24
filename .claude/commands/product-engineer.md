@@ -98,6 +98,16 @@ Last updated: YYYY-MM-DD
 
 ---
 
+## Drift Reconciliation
+
+Drift findings from a mandatory `verifier` audit route through `activity-drift-reconciliation` (rule 9 below). When reconciling them, or when the owner asks what is left to fix or ship, aggregate standalone issues and follow-ups with these three queries; they read labels, body lines and native issue dependencies only, and no new label category exists for them (D-83):
+
+- **Post-wave follow-ups:** issues whose body carries the `Follow-up to #N` line that `activity-drift-reconciliation` writes for a closed scope: `gh issue list --state open --search '"Follow-up to #<N>" in:body' --json number,title,labels --limit 1000`.
+- **Bugs to fix:** `type: bug` without `level:`, so story and tracking issues never count: `gh issue list --state open --label "type: bug" --json number,title,labels --limit 1000 --jq 'map(select(all(.labels[]; .name | startswith("level:") | not)))'`.
+- **Release blockers:** `priority: critical`, each naming what it blocks in its `**Blocks:**` line and its native `blocked by` relation (github-ops § Labels): `gh issue list --state open --label "priority: critical" --json number,title,body --limit 1000`.
+
+---
+
 ## memo-cli Integration (When Available)
 
 ### Bank Declaration
