@@ -1,5 +1,5 @@
 ---
-version: 1.3
+version: 1.4
 name: Ubiquitous Language
 description: Canonical domain vocabulary, organized by bounded context. Append-only; terms are superseded, never deleted.
 status: active
@@ -33,6 +33,7 @@ A ninth term arrives the same way the first eight did — proposed in a PRD's
 
 | Version | Date       | Summary                                                                                                                                                                                                         | Author           |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1.4     | 2026-10-24 | PRD projects-tracking v1.11 approved (`projects-tracking#D-79` to `#D-101`), +migration plan, +standalone issue, +release blocker                                                                               | product-engineer |
 | 1.3     | 2026-10-20 | PRD projects-tracking approved (`projects-tracking#D-01` to `#D-27`), +tracking issue, +status comment                                                                                                          | product-engineer |
 | 1.2     | 2026-10-19 | PRD factory-board approved (`factory-board#D-01` to `#D-13`), +board, +wave stage, +roadmap drift                                                                                                               | product-engineer |
 | 1.1     | 2026-09-22 | Seeded from Phase 3 specification §8.7 (`shared-understanding#D-69`, closing `#D-45`), +decision log, +grilling, +exit gate, +bounded context, +package map, +runbook, +install-if-absent, +foundation document | product-engineer |
@@ -147,4 +148,28 @@ AI-assisted development.
 - Forbidden synonyms: progress comment, checkpoint comment, update comment
 - Invariants: Exactly one per issue, found by the marker `<!-- dev-tasks:status -->` and never by a stored id; edited in place, never re-posted; every other comment on the issue stays append-only.
 - Origin: docs/requirements/prd-projects-tracking.md FR-23, projects-tracking#D-25, projects-tracking#D-26
+- Status: active
+
+### migration plan
+
+- Definition: The reviewable file `workstream/migration-projects.md` listing every proposed write by batch, the items that need an answer, and each write's state.
+- Forbidden synonyms: dry run file, migration script
+- Invariants: Written only by `dev-tasks migrate projects --plan`; applied only by `--apply` once its header reads `Approved: yes` and its `Plan digest:` still matches; never overwritten once a row is no longer `pending`; committed as the record of what migration changed.
+- Origin: docs/requirements/prd-projects-tracking.md FR-17, projects-tracking#D-79, projects-tracking#D-88, projects-tracking#D-93
+- Status: active
+
+### standalone issue
+
+- Definition: An open issue that is not a story or a tracking issue; it carries no `level:` label and no parent.
+- Forbidden synonyms: orphan issue, loose issue
+- Invariants: Follow-ups, bugs and chores are standalone unless they are stories; a `phase:` label stays on it as a filter; migration never links it into the hierarchy.
+- Origin: docs/requirements/prd-projects-tracking.md FR-19, projects-tracking#D-19, projects-tracking#D-82
+- Status: active
+
+### release blocker
+
+- Definition: An issue labelled `priority: critical` that blocks a wave, PRD or release from shipping, linked by a native `blocked by` relation from the issue it blocks.
+- Forbidden synonyms: showstopper, blocker label
+- Invariants: Carries a `**Blocks:** #N — <reason>` body line; a `critical` issue without a blocking relation is reported by the github-ops audit; a blocking link is never invented.
+- Origin: docs/requirements/prd-projects-tracking.md FR-26, projects-tracking#D-84
 - Status: active
