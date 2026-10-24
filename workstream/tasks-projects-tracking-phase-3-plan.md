@@ -56,6 +56,8 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 1.16 Pin byte-identity across the three trees for the `Retired labels, in full:` line, the `priority: high … medium … low` sentence, the Command Map "List what an issue blocks" row and the `## Conventions` report-template table (finding 2). Test first.
   - [x] 1.17 Add `--limit 1000` to all three aggregation queries in product-engineer § Drift Reconciliation (all three trees) and update PT-64 (finding 4, A-74).
   - [x] 1.18 Reword the bugs-query reason from "so tracking issues never count" to "so story and tracking issues never count" (finding 8), three trees.
+  - [x] 1.19 Reword the `priority: high` table row and the priority sentence from "blocks nothing" to "blocks no ship", so a `high` issue may block another issue while keeping `high` (finding 5; D-102)
+  - [x] 1.20 Add a fourth github-ops audit check: a `priority: critical` issue that has a native `blocking` relation but no `**Blocks:** #N — <reason>` body line is reported (finding 6; D-102). Add it to the audit list and the `## Conventions` report table; extend PT-63
 
 - [ ] 2.0 Implement Story S-016: product-engineer converts a narrative roadmap to the canonical table before migration (#319)
 

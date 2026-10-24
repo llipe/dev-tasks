@@ -175,7 +175,7 @@ const BLOCKS_ANY_PRIORITY =
 
 const RETIRED_LIST = "- Retired labels, in full:";
 const PRIORITY_SENTENCE =
-  "`priority: high` lands in the current wave or cycle and blocks nothing; `priority: medium` lands in the next; `priority: low` is backlog";
+  "`priority: high` lands in the current wave or cycle and blocks no ship; `priority: medium` lands in the next; `priority: low` is backlog";
 const DEPENDENCY_READ_ROW = "| List what an issue blocks";
 
 /** The dependency commands (S-019 AC-3, A-89, CT-40). */
@@ -189,6 +189,7 @@ const AGENT_MAY_WRITE = "ssue dependencies are issue data an agent may write, un
 const AUDIT_CRITICAL = "**`critical` without a blocking relation:**";
 const AUDIT_TYPES = "**Zero or several `type:` labels:**";
 const AUDIT_RETIRED = "**Retired label on an open issue:**";
+const AUDIT_NO_LINE = "**Blocking relation without its body line:**";
 const AUDIT_EXEMPT = "Issues labeled `level: prd` or `level: wave`, and tracking issues";
 const AUDIT_CLOSED_BLOCKED = "A relation to an issue that has since closed still exists";
 
@@ -242,6 +243,9 @@ describe("github-ops", () => {
         expect(row!, `${copy.path}: priority: ${priority} meaning`).toContain(`| ${meaning}`);
       }
       expect(copy.body, copy.path).not.toContain("Must be addressed immediately");
+      // D-102 (finding 5): `high` blocks no ship, but may block another issue.
+      expect(copy.body, copy.path).not.toContain("blocks nothing");
+      expect(tableRow(labels, "priority: high")!, copy.path).toContain("blocks no ship");
       expect(lineWith(labels, CRITICAL_RULE, copy.path), copy.path).toContain(
         "`priority: critical`",
       );
@@ -280,9 +284,19 @@ describe("github-ops", () => {
   it("audit checks", () => {
     for (const copy of trees) {
       const audit = sectionOf(copy, "Audit Mode");
-      for (const marker of [AUDIT_CRITICAL, AUDIT_TYPES, AUDIT_RETIRED]) {
+      for (const marker of [AUDIT_CRITICAL, AUDIT_TYPES, AUDIT_RETIRED, AUDIT_NO_LINE]) {
         expect(audit, `${copy.path}: audit check ${marker}`).toContain(marker);
       }
+      // D-102 (finding 6): a relation without the body line is reported too.
+      const noLine = lineWith(audit, AUDIT_NO_LINE, copy.path);
+      expect(noLine, copy.path).toContain("`priority: critical`");
+      expect(noLine, copy.path).toContain("`**Blocks:** #N — <reason>`");
+      expect(noLine, copy.path).toContain("D-102");
+      expect(audit, copy.path).toContain("four convention findings");
+      expect(
+        squashSpaces(audit),
+        `${copy.path}: no Conventions row for the missing body line`,
+      ).toMatch(/^\| \d+ \| \.\.\. \| `critical` relation without a `\*\*Blocks:\*\*` line \|/m);
       // A-72: the check reads what the issue blocks; EC-160 resolved by A-72.
       const critical = lineWith(audit, AUDIT_CRITICAL, copy.path);
       expect(critical, copy.path).toContain("dependencies/blocking");
@@ -292,7 +306,7 @@ describe("github-ops", () => {
       // The report template carries a table for the findings.
       expect(audit, copy.path).toContain("## Conventions");
     }
-    for (const marker of [AUDIT_CRITICAL, AUDIT_TYPES, AUDIT_RETIRED]) {
+    for (const marker of [AUDIT_CRITICAL, AUDIT_TYPES, AUDIT_RETIRED, AUDIT_NO_LINE]) {
       expectIdenticalLine(trees, "Audit Mode", marker);
     }
   });

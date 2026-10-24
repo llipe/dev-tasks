@@ -374,7 +374,7 @@ The following tags are the canonical, most-used tags for issues and **MUST** be 
 |              | `type: chore`              | `#FEF2C0` | Maintenance, dependencies, tooling, or CI              |
 |              | `type: tech-debt`          | `#5319E7` | Deferred engineering work that fits no other type      |
 | **Priority** | `priority: critical`       | `#B60205` | Blocks a wave, PRD, or release from shipping           |
-|              | `priority: high`           | `#D93F0B` | Lands in the current wave or cycle; blocks nothing     |
+|              | `priority: high`           | `#D93F0B` | Lands in the current wave or cycle; blocks no ship     |
 |              | `priority: medium`         | `#FBCA04` | Lands in the next wave or cycle                        |
 |              | `priority: low`            | `#C5DEF5` | Backlog                                                |
 | **Level**    | `level: prd`               | `#3F51B5` | PRD tracking issue; a container for waves, not work    |
@@ -397,7 +397,7 @@ Rules:
 - `type: other` is retired, and so are the experiment's `type: prd`, `type: wave` and `type: story`, which `level:` replaces (D-85, D-91). A retired label is never applied to an issue; its definition stays in the repository, marked retired in its description, so closed issues keep their history.
 - Retired labels, in full: `type: other`, `type: prd`, `type: wave`, `type: story`, `status: ready`, `status: in-progress`, the retired `needs: decision`, `needs: approval` and `needs: merge` (D-15), and every `wave:` label (D-91). GitHub's default unprefixed labels (`bug`, `documentation`, `enhancement`) are neither retired nor a type (D-100).
 - `priority: critical` blocks a wave, PRD or release from shipping, and **MUST** name what it blocks: it carries a native `blocked by` relation from the issue it blocks plus a `**Blocks:** #N — <reason>` body line (D-84). Write the relation with the dependency commands in the Command Map.
-- `priority: high` lands in the current wave or cycle and blocks nothing; `priority: medium` lands in the next; `priority: low` is backlog. Priority says when, not what it blocks.
+- `priority: high` lands in the current wave or cycle and blocks no ship; `priority: medium` lands in the next; `priority: low` is backlog. Priority says when, not what it blocks: a `high` issue may block another issue and keeps `high` (D-102).
 - Any issue that blocks another carries the `**Blocks:**` line whatever its priority: a `high` issue that blocks another keeps `high` and still carries the line, and the relation is written the same way.
 - A blocking relation is never invented: add one only when the user or the issue text names the blocked issue. A `critical` issue that names none is reported, not linked (D-84).
 - Hierarchy lives only in `level:`; `type:` keeps its meaning as the kind of work. A story issue carries `level: story` beside its `type:` and `priority:` labels.
@@ -458,10 +458,11 @@ A milestone tracks the scope of a minor version (`vX.Y`); the tag `vX.Y.0` marks
 When invoked with `audit` as input, `github-ops` **MUST**:
 
 1. Fetch all open issues and PRs from the target repository.
-2. Check each against the conventions above, and report these three convention findings for every open issue (AC-16):
+2. Check each against the conventions above, and report these four convention findings for every open issue (AC-16, D-102):
    - **`critical` without a blocking relation:** a `priority: critical` issue for which `gh api repos/{o}/{r}/issues/{n}/dependencies/blocking --paginate` returns no relation, whether or not its body carries a `**Blocks:**` line (D-84, A-72). A relation to an issue that has since closed still exists, so it is not reported; lower the priority once the block is gone.
    - **Zero or several `type:` labels:** an issue with no label from the eight-type set in [Labels](#labels), or with more than one; the retired `type: other`, `type: prd`, `type: wave` and `type: story`, and the unprefixed default labels, count as none (D-85, D-100). Issues labeled `level: prd` or `level: wave`, and tracking issues found by their title prefix (§ Title Format), are exempt, since containers carry no `type:` (A-68). Suggest the tie-break winner for a multi-type issue and the Conventional Commits title prefix's type for an untyped one; never re-type silently.
    - **Retired label on an open issue:** any label in the retired list in [Labels](#labels) on an open issue. Report it for removal from the issue; never delete the label definition (D-91).
+   - **Blocking relation without its body line:** a `priority: critical` issue whose `.../dependencies/blocking` returns a relation but whose body has no `**Blocks:** #N — <reason>` line naming the blocked issue (D-102). Suggest the line from the relation; the relation is never removed to clear the finding.
 3. Produce an audit report:
 
 ```markdown
@@ -477,11 +478,12 @@ Date: YYYY-MM-DD
 
 ## Conventions
 
-| #   | Title | Finding                                | Suggested fix                      |
-| --- | ----- | -------------------------------------- | ---------------------------------- |
-| 61  | ...   | `critical` without a blocking relation | add the relation or lower priority |
-| 64  | ...   | two `type:` labels (`bug`, `security`) | keep `type: security` (tie-break)  |
-| 70  | ...   | retired label `status: ready`          | take the label off the issue       |
+| #   | Title | Finding                                          | Suggested fix                         |
+| --- | ----- | ------------------------------------------------ | ------------------------------------- |
+| 61  | ...   | `critical` without a blocking relation           | add the relation or lower priority    |
+| 62  | ...   | `critical` relation without a `**Blocks:**` line | add the line naming the blocked issue |
+| 64  | ...   | two `type:` labels (`bug`, `security`)           | keep `type: security` (tie-break)     |
+| 70  | ...   | retired label `status: ready`                    | take the label off the issue          |
 
 ## Pull Requests
 
