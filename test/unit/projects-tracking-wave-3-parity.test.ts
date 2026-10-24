@@ -445,6 +445,14 @@ const NO_STATE_FILE_EDIT = "Migration edits no `workstream/planner-state-*.md` f
 const PLANNER_RESUME = "the planner's resume adds the missing `Wave issue:` line";
 const NEVER_DONE = "A Status without merged evidence is never upgraded to `Done` by the conversion";
 const DONE_CITATION = "a `Done` row cites the merged PR or closed issue behind it.";
+// D-104 (verifier F3): a cited PR or issue is confirmed on GitHub first.
+const DONE_CONFIRM =
+  "Before writing `Done`, confirm on GitHub that the cited PR merged or the issue closed (`gh pr view <n> --json state` / `gh issue view <n> --json state`)";
+const DONE_FALLBACK = "otherwise keep the translated Status and flag it (D-104).";
+const NEVER_DONE_BULLET = "Never mark a row `Done` yourself";
+const FIRST_EXCEPTION = "The first exception is a row the planner's close-out left `In progress`";
+const SECOND_EXCEPTION =
+  "The second exception is the roadmap conversion below, which writes `Done` only on merged evidence it confirmed on GitHub (D-104).";
 // F1 (D-98, A-56): the exact match is scoped to the story's PRD.
 const PRD_SCOPE =
   ", among the rows of the PRD named in the story's `[PRD-<name>]` title prefix (D-98)";
@@ -452,6 +460,10 @@ const PRD_SCOPE =
 const MEANING: ReadonlyArray<readonly [string, string]> = [
   ["narrative kept (M3)", "never instead of it"],
   ["fixed set (M7)", "`Status` from the fixed set"],
+  [
+    "original word kept for the user (M9)",
+    ", with the original word, for the user to confirm or correct",
+  ],
   ["user approval (M4)", "the user approves the draft"],
   ["own PR (M5)", "never inside the migration's own PR"],
   ["unmapped, never fuzzy (M6)", "is listed as unmapped for the user, never fuzzy-matched"],
@@ -523,10 +535,11 @@ describe("product-engineer roadmap conversion (S-016)", () => {
   // case-insensitive (F2, probes M1 and M2): every sentence or clause naming
   // done, with or without backticks, must be one of the two allowed ones.
   it("never upgrades a status to Done without merged evidence", () => {
-    const allowed = [NEVER_DONE, DONE_CITATION];
+    const allowed = [NEVER_DONE, DONE_CITATION, DONE_CONFIRM];
     for (const copy of trees) {
       const text = conversion(copy);
       expect(text, copy.path).toContain(`${NEVER_DONE}; ${DONE_CITATION}`);
+      expect(text, copy.path).toContain(`${DONE_CITATION} ${DONE_CONFIRM}; ${DONE_FALLBACK}`);
       const clauses = text
         .split(/\n|;\s+|(?<=[.!?])\s+/)
         .map((c) => c.trim())
@@ -538,6 +551,18 @@ describe("product-engineer roadmap conversion (S-016)", () => {
         ).toContain(clause);
       }
     }
+  });
+
+  // D-104: Roadmap Maintenance's never-Done bullet names the conversion as
+  // its second exception, only on confirmed merged evidence.
+  it("names the conversion as the second exception to never marking Done", () => {
+    for (const copy of trees) {
+      const line = lineWith(sectionOf(copy, "Roadmap Maintenance"), NEVER_DONE_BULLET, copy.path);
+      expect(line, copy.path).toContain(FIRST_EXCEPTION);
+      expect(line, copy.path).toContain(SECOND_EXCEPTION);
+      expect(line, copy.path).not.toContain("The one exception");
+    }
+    expectIdenticalLine(trees, "Roadmap Maintenance", NEVER_DONE_BULLET);
   });
 
   // PT-71 — S-016 AC-4: the whole subsection is byte-identical across trees.
