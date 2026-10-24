@@ -17,7 +17,10 @@ function rows(...cells: Array<[string, string]>): RoadmapRow[] {
   const text =
     HEADER +
     cells
-      .map(([prd, phase]) => `| [${prd}](requirements/prd-${prd}.md) | ${phase} | s | Not started | — | — |\n`)
+      .map(
+        ([prd, phase]) =>
+          `| [${prd}](requirements/prd-${prd}.md) | ${phase} | s | Not started | — | — |\n`,
+      )
       .join("");
   const r = parseRoadmapTable(text);
   if (!r.ok) throw new Error(r.reason);
@@ -184,8 +187,7 @@ describe("RT-9: maps only on exactly one matching row", () => {
         s.storyRef === null
           ? 0
           : roadmap.filter(
-              (row) =>
-                row.prd === s.storyRef!.slug && row.phase === (s.storyRef!.phase ?? "All"),
+              (row) => row.prd === s.storyRef!.slug && row.phase === (s.storyRef!.phase ?? "All"),
             );
       const scope = titlePrd(s.title);
       const phaseValues = s.labels.map((l) => l.slice("phase: ".length));

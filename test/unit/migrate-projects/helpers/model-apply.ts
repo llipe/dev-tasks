@@ -47,7 +47,9 @@ export function applyPlanToModel(model: RepoModel, plan: MigrationPlan): RepoMod
           break;
         }
         case "create-issue": {
-          const m = w.detail.match(/^template: (prd|wave); label: (level: (?:prd|wave)); title: (.*)$/s);
+          const m = w.detail.match(
+            /^template: (prd|wave); label: (level: (?:prd|wave)); title: (.*)$/s,
+          );
           if (!m) throw new Error(`model-apply: bad create-issue detail ${w.detail}`);
           const number = nextNumber++;
           created.set(w.id, number);

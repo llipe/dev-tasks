@@ -52,8 +52,14 @@ describe("answer grammar (CT-26, EC-135)", () => {
   })();
 
   it("unmapped: a roadmap wave id exactly, or standalone in any case", () => {
-    expect(parseUnmappedAnswer("alpha 2", rows)).toMatchObject({ kind: "wave", row: { prd: "alpha", phase: "2" } });
-    expect(parseUnmappedAnswer("beta All", rows)).toMatchObject({ kind: "wave", row: { prd: "beta" } });
+    expect(parseUnmappedAnswer("alpha 2", rows)).toMatchObject({
+      kind: "wave",
+      row: { prd: "alpha", phase: "2" },
+    });
+    expect(parseUnmappedAnswer("beta All", rows)).toMatchObject({
+      kind: "wave",
+      row: { prd: "beta" },
+    });
     for (const s of ["standalone", "Standalone", "STANDALONE"]) {
       expect(parseUnmappedAnswer(s, rows)).toEqual({ kind: "standalone" });
     }
@@ -81,22 +87,31 @@ describe("answer grammar (CT-26, EC-135)", () => {
   });
 
   it("readAnswers keys review answers by issue and information answers by ref and note", () => {
-    const p = parseMigrationPlan(renderMigrationPlan({
-      repo: "o/r",
-      generated: "2026-10-24T00:00:00Z",
-      snapshot: "a".repeat(64),
-      approved: false,
-      extraHeaders: [],
-      review: {
-        unmapped: [{ issue: 3, title: "t", why: "w", answer: "alpha 2" }],
-        needsType: [{ issue: 4, title: "t", currentTypeLabels: [], suggested: null, answer: "bug" }],
-        needsBlockingLink: [{ issue: 5, title: "t", priority: "priority: critical", answer: "#3" }],
-        stateFiles: [],
-        roadmap: [],
-        information: [{ ref: "[PRD-beta]", note: "n", answer: "yes" }, { ref: "#9", note: "m", answer: "" }],
-      },
-      batches: emptyMigrationPlanBatches(),
-    })).plan;
+    const p = parseMigrationPlan(
+      renderMigrationPlan({
+        repo: "o/r",
+        generated: "2026-10-24T00:00:00Z",
+        snapshot: "a".repeat(64),
+        approved: false,
+        extraHeaders: [],
+        review: {
+          unmapped: [{ issue: 3, title: "t", why: "w", answer: "alpha 2" }],
+          needsType: [
+            { issue: 4, title: "t", currentTypeLabels: [], suggested: null, answer: "bug" },
+          ],
+          needsBlockingLink: [
+            { issue: 5, title: "t", priority: "priority: critical", answer: "#3" },
+          ],
+          stateFiles: [],
+          roadmap: [],
+          information: [
+            { ref: "[PRD-beta]", note: "n", answer: "yes" },
+            { ref: "#9", note: "m", answer: "" },
+          ],
+        },
+        batches: emptyMigrationPlanBatches(),
+      }),
+    ).plan;
     const a = readAnswers(p);
     expect(a.unmapped.get(3)).toBe("alpha 2");
     expect(a.needsType.get(4)).toBe("bug");
@@ -124,8 +139,16 @@ describe("answers carried into the next --plan (AC-6)", () => {
     expect(second.text).toContain("Approved: no");
     expect(second.plan.approved).toBe(false);
     const wave = second.batch("2").writes.find((w) => w.detail.includes("Wave 2"))!;
-    expect(second.batch("3").writes.map(triple)).toContainEqual(["link-sub-issue", wave.id, "sub-issue #15"]);
-    expect(second.batch("4").writes.map(triple)).toContainEqual(["add-label", "#15", "level: story"]);
+    expect(second.batch("3").writes.map(triple)).toContainEqual([
+      "link-sub-issue",
+      wave.id,
+      "sub-issue #15",
+    ]);
+    expect(second.batch("4").writes.map(triple)).toContainEqual([
+      "add-label",
+      "#15",
+      "level: story",
+    ]);
     // The answered row stays, with its answer, so a third --plan reads it again (EC-134).
     expect(second.plan.review.unmapped.find((u) => u.issue === 15)?.answer).toBe("alpha 2");
     const third = await planModel(model, { previous: second.text });
@@ -138,7 +161,10 @@ describe("answers carried into the next --plan (AC-6)", () => {
     const second = await planModel(model, {
       previous: answer(first.text, (p) => setAnswer(p.review.unmapped, 15, "Standalone")),
     });
-    const targets = second.writes().filter((w) => w.action !== "remove-label").map((w) => w.target + " " + w.detail);
+    const targets = second
+      .writes()
+      .filter((w) => w.action !== "remove-label")
+      .map((w) => w.target + " " + w.detail);
     expect(targets.join("\n")).not.toMatch(/#15/);
     expect(second.plan.review.unmapped.find((u) => u.issue === 15)?.answer).toBe("Standalone");
   });
@@ -173,9 +199,16 @@ describe("answers carried into the next --plan (AC-6)", () => {
     expect(u.why).toMatch(/^invalid answer "alpha 9"/);
     expect(u.answer).toBe("");
     expect(second.plan.review.information).toContainEqual(
-      expect.objectContaining({ ref: "#21", note: expect.stringMatching(/^invalid answer "other"/) }),
+      expect.objectContaining({
+        ref: "#21",
+        note: expect.stringMatching(/^invalid answer "other"/),
+      }),
     );
-    expect(second.writes().some((w) => w.target === "#15" || (w.target === "#21" && w.action === "add-label"))).toBe(false);
+    expect(
+      second
+        .writes()
+        .some((w) => w.target === "#15" || (w.target === "#21" && w.action === "add-label")),
+    ).toBe(false);
   });
 
   // MU-57, EC-136
@@ -197,8 +230,28 @@ describe("answers carried into the next --plan (AC-6)", () => {
   it("blocking-link answers: `#N` adds the relation, the phrase relabels to high", async () => {
     const model = cloneModel(loadModel("ac11"));
     model.issues.push(
-      { id: 70030, number: 30, state: "open", title: "[bug] a", body: "x", labels: ["type: bug", "priority: critical"], milestone: null, parent: null, blocking: [] },
-      { id: 70031, number: 31, state: "open", title: "[bug] b", body: "x", labels: ["type: bug", "priority: critical"], milestone: null, parent: null, blocking: [] },
+      {
+        id: 70030,
+        number: 30,
+        state: "open",
+        title: "[bug] a",
+        body: "x",
+        labels: ["type: bug", "priority: critical"],
+        milestone: null,
+        parent: null,
+        blocking: [],
+      },
+      {
+        id: 70031,
+        number: 31,
+        state: "open",
+        title: "[bug] b",
+        body: "x",
+        labels: ["type: bug", "priority: critical"],
+        milestone: null,
+        parent: null,
+        blocking: [],
+      },
     );
     const first = await planModel(model);
     expect(first.plan.review.needsBlockingLink.map((n) => n.issue)).toEqual([30, 31]);
@@ -218,7 +271,17 @@ describe("answers carried into the next --plan (AC-6)", () => {
 
   it("a blocking answer naming an issue that is not open is invalid", async () => {
     const model = cloneModel(loadModel("ac11"));
-    model.issues.push({ id: 70030, number: 30, state: "open", title: "[bug] a", body: "x", labels: ["type: bug", "priority: critical"], milestone: null, parent: null, blocking: [] });
+    model.issues.push({
+      id: 70030,
+      number: 30,
+      state: "open",
+      title: "[bug] a",
+      body: "x",
+      labels: ["type: bug", "priority: critical"],
+      milestone: null,
+      parent: null,
+      blocking: [],
+    });
     const first = await planModel(model);
     const second = await planModel(model, {
       previous: answer(first.text, (p) => setAnswer(p.review.needsBlockingLink, 30, "#999")),
@@ -226,14 +289,18 @@ describe("answers carried into the next --plan (AC-6)", () => {
     expect(second.batch("4b").writes).toEqual([]);
     expect(second.plan.review.needsBlockingLink[0].answer).toBe("");
     expect(second.plan.review.information).toContainEqual(
-      expect.objectContaining({ ref: "#30", note: expect.stringMatching(/^invalid answer "#999"/) }),
+      expect.objectContaining({
+        ref: "#30",
+        note: expect.stringMatching(/^invalid answer "#999"/),
+      }),
     );
   });
 
   it("a `yes` on the Information question creates the PRD issue (A-83)", async () => {
     const model = cloneModel(loadModel("ac11"));
     model.files["docs/requirements/prd-beta.md"] = "# PRD: beta — Beta gizmos\n";
-    model.files["docs/roadmap.md"] += "| [beta](requirements/prd-beta.md) | 1 | Beta | Not started | — | — |\n";
+    model.files["docs/roadmap.md"] +=
+      "| [beta](requirements/prd-beta.md) | 1 | Beta | Not started | — | — |\n";
     const first = await planModel(model);
     const q = first.plan.review.information.find((i) => i.ref === "[PRD-beta]");
     expect(q).toBeDefined();

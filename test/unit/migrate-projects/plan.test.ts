@@ -20,6 +20,7 @@ import { projectCleanupSteps, retiredDescription } from "#core/migrate-projects/
 import { cloneModel, loadModel, type ModelIssue, type RepoModel } from "./helpers/fake-github.js";
 import { applyPlanToModel } from "./helpers/model-apply.js";
 import { planModel, triple } from "./helpers/plan-run.js";
+import { prng, seedFromEnv } from "./helpers/prng.js";
 
 const ROOT = resolve(import.meta.dirname, "../../..");
 
@@ -108,7 +109,9 @@ describe("batch order (MU-44)", () => {
 describe("batch 1: labels (MU-45, A-71, A-82, D-103)", () => {
   it("creates every missing `level:` and type label, with the github-ops colour and description", async () => {
     const m = base();
-    m.labels = m.labels.filter((l) => !["level: wave", "type: test", "type: refactor"].includes(l.name));
+    m.labels = m.labels.filter(
+      (l) => !["level: wave", "type: test", "type: refactor"].includes(l.name),
+    );
     const run = await planModel(m);
     expect(run.batch("1").writes.map(triple)).toEqual([
       [
@@ -116,8 +119,16 @@ describe("batch 1: labels (MU-45, A-71, A-82, D-103)", () => {
         "label:level: wave",
         `color: ${LEVEL_DEFINITIONS["level: wave"].color}; description: ${LEVEL_DEFINITIONS["level: wave"].description}`,
       ],
-      ["create-label", "label:type: refactor", `color: ${TYPE_COLORS.refactor}; description: ${TYPE_DEFINITIONS.refactor}`],
-      ["create-label", "label:type: test", `color: ${TYPE_COLORS.test}; description: ${TYPE_DEFINITIONS.test}`],
+      [
+        "create-label",
+        "label:type: refactor",
+        `color: ${TYPE_COLORS.refactor}; description: ${TYPE_DEFINITIONS.refactor}`,
+      ],
+      [
+        "create-label",
+        "label:type: test",
+        `color: ${TYPE_COLORS.test}; description: ${TYPE_DEFINITIONS.test}`,
+      ],
     ]);
   });
 
@@ -142,14 +153,15 @@ describe("batch 1: labels (MU-45, A-71, A-82, D-103)", () => {
         `description: ${PRIORITY_DEFINITIONS[`priority: ${p}` as keyof typeof PRIORITY_DEFINITIONS].description}`,
       ]),
     );
-    expect(PRIORITY_DEFINITIONS["priority: critical"].description).toMatch(/Blocks a wave, PRD, or release from shipping/);
-    expect(PRIORITY_DEFINITIONS["priority: high"].description).toMatch(/current wave or cycle; blocks no ship/);
+    expect(PRIORITY_DEFINITIONS["priority: critical"].description).toMatch(
+      /Blocks a wave, PRD, or release from shipping/,
+    );
+    expect(PRIORITY_DEFINITIONS["priority: high"].description).toMatch(
+      /current wave or cycle; blocks no ship/,
+    );
     expect(PRIORITY_DEFINITIONS["priority: medium"].description).toMatch(/next/);
     expect(PRIORITY_DEFINITIONS["priority: low"].description).toMatch(/Backlog/);
-    for (const d of [
-      ...Object.values(PRIORITY_DEFINITIONS),
-      ...Object.values(LEVEL_DEFINITIONS),
-    ]) {
+    for (const d of [...Object.values(PRIORITY_DEFINITIONS), ...Object.values(LEVEL_DEFINITIONS)]) {
       expect(d.description.length).toBeLessThanOrEqual(100);
     }
   });
@@ -161,7 +173,11 @@ describe("batch 1: labels (MU-45, A-71, A-82, D-103)", () => {
       { name: "type: other", description: "Anything else", color: "CCCCCC" },
       { name: "wave: 3", description: "Wave 3", color: "C5DEF5" },
       { name: "status: blocked", description: "Waiting", color: "E4E669" },
-      { name: "needs: merge", description: `${RETIRED_DESCRIPTION_PREFIX}Waiting to merge`, color: "C5DEF5" },
+      {
+        name: "needs: merge",
+        description: `${RETIRED_DESCRIPTION_PREFIX}Waiting to merge`,
+        color: "C5DEF5",
+      },
     );
     const run = await planModel(m);
     expect(run.batch("1").writes.map(triple)).toEqual([
@@ -194,8 +210,16 @@ describe("batch 2: tracking issues (MU-46, FR-19, A-83, A-84)", () => {
   it("creates the PRD issue and the wave issue for a mapped open story, showing title and template", async () => {
     const run = await planModel(base([STORY(10, "2", { labels: ["type: enhancement"] })]));
     expect(run.batch("2").writes.map(triple)).toEqual([
-      ["create-issue", "new issue", "template: prd; label: level: prd; title: [PRD-alpha] Alpha kit"],
-      ["create-issue", "new issue", "template: wave; label: level: wave; title: [PRD-alpha] Wave 2: Alpha search"],
+      [
+        "create-issue",
+        "new issue",
+        "template: prd; label: level: prd; title: [PRD-alpha] Alpha kit",
+      ],
+      [
+        "create-issue",
+        "new issue",
+        "template: wave; label: level: wave; title: [PRD-alpha] Wave 2: Alpha search",
+      ],
     ]);
   });
 
@@ -243,7 +267,9 @@ describe("batch 2: tracking issues (MU-46, FR-19, A-83, A-84)", () => {
       parent: 1,
       state: "closed",
     });
-    const run = await planModel(base([PRD_A(), closedWave, STORY(10, "2", { labels: ["type: enhancement"] })]));
+    const run = await planModel(
+      base([PRD_A(), closedWave, STORY(10, "2", { labels: ["type: enhancement"] })]),
+    );
     expect(run.batch("2").writes.map((w) => w.detail)).toEqual([
       "template: wave; label: level: wave; title: [PRD-alpha] Wave 2: Alpha search",
     ]);
@@ -264,7 +290,9 @@ describe("batch 2: tracking issues (MU-46, FR-19, A-83, A-84)", () => {
 
 describe("batch 3: hierarchy (MU-47, EC-127, EC-128)", () => {
   it("links the wave under the PRD and the story under the wave, skipping links present", async () => {
-    const run = await planModel(base([PRD_A(), WAVE_A2(null), STORY(10, "2"), STORY(11, "2", { parent: 2 })]));
+    const run = await planModel(
+      base([PRD_A(), WAVE_A2(null), STORY(10, "2"), STORY(11, "2", { parent: 2 })]),
+    );
     expect(run.batch("3").writes.map(triple)).toEqual([
       ["link-sub-issue", "#1", "sub-issue #2"],
       ["link-sub-issue", "#2", "sub-issue #10"],
@@ -272,7 +300,10 @@ describe("batch 3: hierarchy (MU-47, EC-127, EC-128)", () => {
   });
 
   it("a story under the wrong wave is listed, never relinked", async () => {
-    const wave3 = issue(3, "[PRD-alpha] Wave 3: Alpha export", { labels: ["level: wave"], parent: 1 });
+    const wave3 = issue(3, "[PRD-alpha] Wave 3: Alpha export", {
+      labels: ["level: wave"],
+      parent: 1,
+    });
     const run = await planModel(base([PRD_A(), WAVE_A2(), wave3, STORY(10, "2", { parent: 3 })]));
     expect(run.batch("3").writes).toEqual([]);
     expect(run.plan.review.information).toContainEqual(
@@ -288,7 +319,10 @@ describe("batch 3: hierarchy (MU-47, EC-127, EC-128)", () => {
     const run = await planModel(base([PRD_A(), other, WAVE_A2(9), STORY(10, "2", { parent: 2 })]));
     expect(run.batch("3").writes).toEqual([]);
     expect(run.plan.review.information).toContainEqual(
-      expect.objectContaining({ ref: "#2", note: expect.stringMatching(/parent is #9; it is never relinked/) }),
+      expect.objectContaining({
+        ref: "#2",
+        note: expect.stringMatching(/parent is #9; it is never relinked/),
+      }),
     );
   });
 
@@ -322,7 +356,10 @@ describe("batch 4: story and type labels (MU-48, MU-52, D-87, EC-130)", () => {
   it("a reused pre-level PRD issue gets `level: prd` and loses `type: prd` once, never retitled", async () => {
     const m = base([
       issue(1, "[PRD-alpha] Alpha kit", { labels: ["type: prd"] }),
-      issue(2, "[PRD-alpha] Wave 2: Alpha search", { labels: ["type: wave", "level: wave"], parent: 1 }),
+      issue(2, "[PRD-alpha] Wave 2: Alpha search", {
+        labels: ["type: wave", "level: wave"],
+        parent: 1,
+      }),
       STORY(10, "2", { parent: 2 }),
     ]);
     m.labels.push(
@@ -340,13 +377,19 @@ describe("batch 4: story and type labels (MU-48, MU-52, D-87, EC-130)", () => {
   });
 
   it("no type rows without a confirmed answer", async () => {
-    const run = await planModel(base([PRD_A(), WAVE_A2(), STORY(10, "2", { parent: 2, labels: ["level: story"] })]));
+    const run = await planModel(
+      base([PRD_A(), WAVE_A2(), STORY(10, "2", { parent: 2, labels: ["level: story"] })]),
+    );
     expect(run.plan.review.needsType.map((n) => n.issue)).toEqual([10]);
     expect(run.batch("4").writes).toEqual([]);
   });
 
   it("`add-label` depends on the create of its label (A-81)", async () => {
-    const m = base([PRD_A(), WAVE_A2(), STORY(10, "2", { parent: 2, labels: ["type: enhancement"] })]);
+    const m = base([
+      PRD_A(),
+      WAVE_A2(),
+      STORY(10, "2", { parent: 2, labels: ["type: enhancement"] }),
+    ]);
     m.labels = m.labels.filter((l) => l.name !== "level: story");
     const run = await planModel(m);
     const create = run.batch("1").writes[0];
@@ -359,10 +402,19 @@ describe("batch 5: retired labels (MU-49, D-91, EC-132)", () => {
   it("removes every retired label from open issues only, keeps the flags, deletes nothing", async () => {
     const m = base([
       issue(20, "[bug] a", {
-        labels: ["type: bug", "status: ready", "status: blocked", "needs: approval", "wave: 2", "wave:3"],
+        labels: [
+          "type: bug",
+          "status: ready",
+          "status: blocked",
+          "needs: approval",
+          "wave: 2",
+          "wave:3",
+        ],
       }),
       issue(21, "[bug] b", { labels: ["type: bug", "status: in-progress"], state: "closed" }),
-      issue(22, "[bug] c", { labels: ["type: bug", "status: needs-refinement", "status: deferred"] }),
+      issue(22, "[bug] c", {
+        labels: ["type: bug", "status: needs-refinement", "status: deferred"],
+      }),
     ]);
     const run = await planModel(m);
     expect(run.batch("5").writes.map(triple)).toEqual([
@@ -384,7 +436,11 @@ describe("batch 6: PRD status comments (MU-50, D-73, D-92, A-67)", () => {
   });
 
   it("a closed wave issue keeps its number in the row (A-67)", async () => {
-    const closed = issue(3, "[PRD-alpha] Wave 1: Alpha basics", { labels: ["level: wave"], parent: 1, state: "closed" });
+    const closed = issue(3, "[PRD-alpha] Wave 1: Alpha basics", {
+      labels: ["level: wave"],
+      parent: 1,
+      state: "closed",
+    });
     const run = await planModel(base([PRD_A(), WAVE_A2(), closed, STORY(10, "2", { parent: 2 })]));
     expect(run.batch("6").writes[0].detail).toBe(
       "create: 1 = shipped, #3; 2 = in progress, #2; 3 = not started, —",
@@ -402,7 +458,9 @@ describe("batch 6: PRD status comments (MU-50, D-73, D-92, A-67)", () => {
 
   it("proposes nothing when every roadmap row has a row (A-66)", async () => {
     const m = base([PRD_A(), WAVE_A2(), STORY(10, "2", { parent: 2 })]);
-    m.comments = { "1": [comment(["| 1 | shipped | — |", "| 2 | published | #2 |", "| 3 | x | — |"])] };
+    m.comments = {
+      "1": [comment(["| 1 | shipped | — |", "| 2 | published | #2 |", "| 3 | x | — |"])],
+    };
     const run = await planModel(m);
     expect(run.batch("6").writes).toEqual([]);
   });
@@ -411,14 +469,18 @@ describe("batch 6: PRD status comments (MU-50, D-73, D-92, A-67)", () => {
     const run = await planModel(base([PRD_A(), STORY(10, "2", { labels: ["type: enhancement"] })]));
     const create = run.batch("2").writes[0];
     const row = run.batch("6").writes[0];
-    expect(row.detail).toBe(`create: 1 = shipped, —; 2 = in progress, ${create.id}; 3 = not started, —`);
+    expect(row.detail).toBe(
+      `create: 1 = shipped, —; 2 = in progress, ${create.id}; 3 = not started, —`,
+    );
     expect(row.dependsOn).toEqual([create.id]);
   });
 
   it("a `Not started` wave with an issue reads `published`", async () => {
     const w3 = issue(3, "[PRD-alpha] Wave 3: Alpha export", { labels: ["level: wave"], parent: 1 });
     const run = await planModel(base([PRD_A(), w3, STORY(10, "3", { parent: 3 })]));
-    expect(run.batch("6").writes[0].detail).toBe("create: 1 = shipped, —; 2 = in progress, —; 3 = published, #3");
+    expect(run.batch("6").writes[0].detail).toBe(
+      "create: 1 = shipped, —; 2 = in progress, —; 3 = published, #3",
+    );
   });
 });
 
@@ -468,37 +530,46 @@ describe("two tracking-issue matches (MU-53, D-87)", () => {
       STORY(10, "2"),
     ]);
     const run = await planModel(m);
-    expect(run.writes().filter((w) => w.action !== "edit-label" && w.action !== "create-label")).toEqual([]);
+    expect(
+      run.writes().filter((w) => w.action !== "edit-label" && w.action !== "create-label"),
+    ).toEqual([]);
     expect(run.plan.review.information).toContainEqual(
-      expect.objectContaining({ ref: "[PRD-alpha]", note: expect.stringMatching(/two wave tracking issues match alpha 2 \(#2, #3\)/) }),
+      expect.objectContaining({
+        ref: "[PRD-alpha]",
+        note: expect.stringMatching(/two wave tracking issues match alpha 2 \(#2, #3\)/),
+      }),
     );
   });
 });
 
 describe("scope guards (MU-54, AC-5, D-19, D-27, D-82)", () => {
-  it.each(["survey", "ac11", "empty"])("%s: no title write, no hierarchy on a standalone, no Status", async (name) => {
-    const model = loadModel(name);
-    const run = await planModel(model);
-    const standalone = new Set(
-      model.issues
-        .filter((i) => !/\bStory S-\d+\b/.test(i.title) && !/^\[PRD-[^\]]+\]/.test(i.title))
-        .map((i) => `#${i.number}`),
-    );
-    for (const w of run.writes()) {
-      expect(w.action).not.toMatch(/title|status|project/i);
-      if (w.action === "create-issue") expect(w.target).toBe("new issue");
-      else expect(w.detail, w.id).not.toMatch(/^title:/);
-      if (w.action === "link-sub-issue") {
-        expect(standalone.has(w.target), w.id).toBe(false);
-        expect(standalone.has(w.detail.replace("sub-issue ", "")), w.id).toBe(false);
+  it.each(["survey", "ac11", "empty"])(
+    "%s: no title write, no hierarchy on a standalone, no Status",
+    async (name) => {
+      const model = loadModel(name);
+      const run = await planModel(model);
+      const standalone = new Set(
+        model.issues
+          .filter((i) => !/\bStory S-\d+\b/.test(i.title) && !/^\[PRD-[^\]]+\]/.test(i.title))
+          .map((i) => `#${i.number}`),
+      );
+      for (const w of run.writes()) {
+        // `status-comment` is the PRD comment (D-92), not a Project Status.
+        expect(w.action).not.toMatch(/title|project|^status$|set-status/i);
+        if (w.action === "create-issue") expect(w.target).toBe("new issue");
+        else expect(w.detail, w.id).not.toMatch(/^title:/);
+        if (w.action === "link-sub-issue") {
+          expect(standalone.has(w.target), w.id).toBe(false);
+          expect(standalone.has(w.detail.replace("sub-issue ", "")), w.id).toBe(false);
+        }
+        if (w.action === "add-label" && w.detail.startsWith("level: ")) {
+          expect(standalone.has(w.target), w.id).toBe(false);
+        }
+        expect(w.detail, w.id).not.toMatch(/\bStatus\b/);
       }
-      if (w.action === "add-label" && w.detail.startsWith("level: ")) {
-        expect(standalone.has(w.target), w.id).toBe(false);
-      }
-      expect(w.detail, w.id).not.toMatch(/\bStatus\b/);
-    }
-    expect(MIGRATION_PLAN_ACTIONS).not.toContain("edit-title" as never);
-  });
+      expect(MIGRATION_PLAN_ACTIONS).not.toContain("edit-title" as never);
+    },
+  );
 });
 
 describe("rows (A-81, CT-27, CT-29)", () => {
@@ -537,6 +608,118 @@ describe("batch 7 strings live in plan.ts only (A-60)", () => {
     for (const f of readdirSync(dir).filter((x) => x.endsWith(".ts"))) {
       const has = /gh project/.test(readFileSync(resolve(dir, f), "utf-8"));
       expect(has, f).toBe(f === "plan.ts");
+    }
+  });
+});
+
+// RT-12 and RT-13 over random repositories: every row respects the scope
+// guards, every dependency is an earlier row, and once the rows are applied
+// a second --plan proposes no batch 1 to 6 row (A-66).
+describe("random repositories (RT-12, RT-13)", () => {
+  it("guards hold and re-planning after the writes proposes none", async () => {
+    const seed = seedFromEnv(1761265014);
+    const r = prng(seed);
+    const pool = [
+      "type: bug",
+      "type: enhancement",
+      "type: docs",
+      "type: other",
+      "type: prd",
+      "status: ready",
+      "status: blocked",
+      "wave: 2",
+      "phase: 1",
+      "phase: 2",
+      "phase: 3",
+      "needs: merge",
+      "priority: high",
+      "priority: critical",
+      "level: story",
+      "bug",
+    ];
+    for (let iter = 0; iter < 60; iter++) {
+      const m = base();
+      m.labels = m.labels.filter(() => r.bool(0.7));
+      for (const name of ["type: other", "type: prd", "status: ready", "wave: 2", "needs: merge"]) {
+        if (r.bool())
+          m.labels.push({
+            name,
+            description: r.bool() ? "Old" : "Retired (D-91): Old",
+            color: "CCCCCC",
+          });
+      }
+      const issues: ModelIssue[] = [];
+      let n = 1;
+      if (r.bool(0.6))
+        issues.push(issue(n++, "[PRD-alpha] Alpha kit", { labels: r.bool() ? ["type: prd"] : [] }));
+      if (r.bool(0.4))
+        issues.push(
+          issue(n++, "[PRD-alpha] Wave 2: Alpha search", {
+            labels: ["level: wave"],
+            parent: r.bool() && n > 2 ? 1 : null,
+            state: r.bool(0.8) ? "open" : "closed",
+          }),
+        );
+      const count = r.int(0, 8);
+      for (let k = 0; k < count; k++) {
+        const num = 10 + k;
+        const kind = r.int(0, 3);
+        const labels = [...new Set(Array.from({ length: r.int(0, 3) }, () => r.pick(pool)))];
+        if (kind === 0)
+          issues.push(
+            issue(num, `[PRD-alpha] Story S-0${num}: s`, {
+              labels,
+              body: `**Story:** workstream/user-stories-alpha-phase-${r.pick(["1", "2", "3", "9"])}.md`,
+            }),
+          );
+        else if (kind === 1)
+          issues.push(
+            issue(num, `${r.bool() ? "[PRD-alpha] " : ""}Story S-0${num}: s`, { labels }),
+          );
+        else
+          issues.push(
+            issue(num, r.pick(["fix: a", "[chore] b", "docs: c", "plain d"]), {
+              labels,
+              state: r.bool(0.9) ? "open" : "closed",
+            }),
+          );
+      }
+      m.issues = issues;
+      const files: Record<string, string> = r.bool(0.3)
+        ? { "workstream/planner-state-alpha-phase-3.md": "x" }
+        : {};
+      Object.assign(m.files, files);
+      const ctx = `seed ${seed} iter ${iter}`;
+      const first = await planModel(m);
+      const standalone = new Set(
+        first.plan.review.needsType.length >= 0
+          ? issues
+              .filter(
+                (i) =>
+                  !/\bStory S-\d+\b/.test(i.title) &&
+                  !/^\[PRD-alpha\] (Alpha kit|Wave )/.test(i.title),
+              )
+              .map((i) => `#${i.number}`)
+          : [],
+      );
+      const seen = new Set<string>();
+      for (const w of first.writes()) {
+        for (const d of w.dependsOn) expect(seen.has(d), `${ctx} ${w.id}`).toBe(true);
+        seen.add(w.id);
+        if (w.action === "link-sub-issue") {
+          expect(standalone.has(w.target), `${ctx} ${w.id}`).toBe(false);
+          expect(standalone.has(w.detail.slice("sub-issue ".length)), `${ctx} ${w.id}`).toBe(false);
+        }
+        if (w.action === "add-label" && w.detail.startsWith("level: "))
+          expect(standalone.has(w.target), `${ctx} ${w.id}`).toBe(false);
+        if (w.action === "edit-label")
+          expect(w.detail.length - "description: ".length, ctx).toBeLessThanOrEqual(100);
+      }
+      applyPlanToModel(m, first.plan);
+      const second = await planModel(m);
+      for (const b of second.plan.batches.filter((x) => x.runner === "cli")) {
+        expect(b.writes.map(triple), `${ctx} batch ${b.key}`).toEqual([]);
+      }
     }
   });
 });

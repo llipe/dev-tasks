@@ -57,7 +57,10 @@ export interface LabelDefinition {
 
 /** The `level:` labels batch 1 creates when missing (A-71), as github-ops' table states them. */
 export const LEVEL_DEFINITIONS = {
-  "level: prd": { color: "3F51B5", description: "PRD tracking issue; a container for waves, not work" },
+  "level: prd": {
+    color: "3F51B5",
+    description: "PRD tracking issue; a container for waves, not work",
+  },
   "level: wave": {
     color: "5C6BC0",
     description: "Wave tracking issue; a container for stories, not work",

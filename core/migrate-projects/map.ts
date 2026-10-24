@@ -56,8 +56,12 @@ export function mapStory(story: StoryToMap, rows: readonly RoadmapRow[]): MapRes
     const named = waveId({ prd: story.storyRef.slug, phase: story.storyRef.phase ?? "All" });
     const hits = roadmapRows(rows, story.storyRef.slug, story.storyRef.phase);
     if (hits.length === 1) line = hits[0];
-    else if (hits.length === 0) tried.push(`the \`**Story:**\` line names ${named}, which no roadmap row has`);
-    else tried.push(`the \`**Story:**\` line names ${named}, which ${hits.length} roadmap rows have (ambiguous)`);
+    else if (hits.length === 0)
+      tried.push(`the \`**Story:**\` line names ${named}, which no roadmap row has`);
+    else
+      tried.push(
+        `the \`**Story:**\` line names ${named}, which ${hits.length} roadmap rows have (ambiguous)`,
+      );
   }
 
   // Rule 2, evaluated even when rule 1 hits, so a disagreement is cited.
@@ -93,7 +97,11 @@ export function mapStory(story: StoryToMap, rows: readonly RoadmapRow[]): MapRes
     return { mapped: true, row: line, rule: "story-line", notes };
   }
   if (label !== null) {
-    notes.push(...tried.filter((t) => t !== "no `**Story:**` line").map((t) => `${t}; mapped by its \`phase:\` label instead`));
+    notes.push(
+      ...tried
+        .filter((t) => t !== "no `**Story:**` line")
+        .map((t) => `${t}; mapped by its \`phase:\` label instead`),
+    );
     return { mapped: true, row: label, rule: "phase-label", notes };
   }
   tried.push(labelWhy);

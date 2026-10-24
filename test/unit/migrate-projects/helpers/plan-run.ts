@@ -46,7 +46,9 @@ export async function planModel(
   options: { previous?: string; fake?: FakeOptions } = {},
 ): Promise<PlanRun> {
   const rec = recordingRunner(model, options.fake);
-  const store = memoryStore(options.previous === undefined ? {} : { [PLAN_PATH]: options.previous });
+  const store = memoryStore(
+    options.previous === undefined ? {} : { [PLAN_PATH]: options.previous },
+  );
   const result = await runMigrationPlan({
     runner: rec.runner,
     reader: modelReader(model),

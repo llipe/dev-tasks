@@ -559,7 +559,7 @@ export function renderMigrationPlan(plan: MigrationPlan): string {
     "",
     "## Needs your answer",
     "",
-    "Answer in the Answer column, then run `dev-tasks migrate projects --plan` again: it reads the answers and rebuilds the batches. Nothing is written to GitHub until the plan reads `Approved: yes` and `--apply` runs.",
+    "Answer in the Answer column, then run `dev-tasks migrate projects --plan` again: it reads your answers, rebuilds the batches from them and resets `Approved: no`, so you approve the rebuilt plan. Nothing is written to GitHub until the plan reads `Approved: yes` and `--apply` runs.",
     "",
   ];
   for (const s of REVIEW_SECTIONS) {

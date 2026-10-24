@@ -114,6 +114,8 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
         ]),
         // Stories: parent (A-76).
         ...[10, 11, 12, 13].map((n) => `api ${r}/issues/${n}/parent`),
+        // Open PRD tracking issues: their comments, for the status marker (S-014 batch 6, A-67).
+        `api --paginate ${r}/issues/1/comments?per_page=100`,
         // Critical issues: what they block (A-72).
         ...[20, 21, 22].map(
           (n) => `api --paginate ${r}/issues/${n}/dependencies/blocking?per_page=100`,
@@ -162,7 +164,9 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
     const model = cloneModel(loadModel("survey"));
     delete model.files["docs/roadmap.md"];
     const rec = recordingRunner(model);
-    await expect(readSnapshot({ runner: rec.runner, reader: modelReader(model) })).rejects.toMatchObject({
+    await expect(
+      readSnapshot({ runner: rec.runner, reader: modelReader(model) }),
+    ).rejects.toMatchObject({
       kind: "roadmap",
     });
     expect(rec.calls.map((c) => c[0])).toEqual(["auth", "repo"]);

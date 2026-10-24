@@ -74,11 +74,14 @@ describe("--plan is read-only (AC-6, MU-31)", () => {
   });
 
   // EC-104
-  it("zero open issues: exit 0, empty review lists", async () => {
+  it("zero open issues: exit 0, empty review lists but the A-83 PRD question", async () => {
     const { result, store } = await plan(loadModel("empty"));
     expect(result.exitCode).toBe(0);
     const parsed = parseMigrationPlan(store.files["workstream/migration-projects.md"]).plan;
-    expect(Object.values(parsed.review).every((list) => list.length === 0)).toBe(true);
+    const { information, ...lists } = parsed.review;
+    expect(Object.values(lists).every((list) => list.length === 0)).toBe(true);
+    // S-014: a PRD file with no mapped story is asked about, never created unasked.
+    expect(information.map((i) => i.ref)).toEqual(["[PRD-alpha]"]);
   });
 
   it("writes the plan file only, with `Approved: no` and the injected clock", async () => {

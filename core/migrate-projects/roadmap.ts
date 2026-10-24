@@ -20,7 +20,8 @@ export type RoadmapLoad = { ok: true; rows: RoadmapRow[] } | { ok: false; messag
 
 /** The canonical rows, or the refusal message `--plan` exits 2 with. */
 export function loadRoadmap(text: string | null): RoadmapLoad {
-  if (text === null) return { ok: false, message: `${ROADMAP_FILE} is missing; ${ROADMAP_CONVERSION_POINTER}` };
+  if (text === null)
+    return { ok: false, message: `${ROADMAP_FILE} is missing; ${ROADMAP_CONVERSION_POINTER}` };
   const parsed = parseRoadmapTable(text);
   if (!parsed.ok) {
     return {

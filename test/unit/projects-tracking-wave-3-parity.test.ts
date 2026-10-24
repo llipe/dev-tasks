@@ -652,17 +652,15 @@ describe("conventions.ts matches github-ops (PT-81)", () => {
       expect(tableRow(labels, `type: ${type}`)!).toContain(`| \`#${CODE_TYPE_COLORS[type]}\` |`);
     }
     const defs = { ...CODE_LEVEL_DEFINITIONS, ...CODE_PRIORITY_DEFINITIONS };
-    expect(Object.keys(defs).sort()).toEqual(
-      [
-        "level: prd",
-        "level: story",
-        "level: wave",
-        "priority: critical",
-        "priority: high",
-        "priority: low",
-        "priority: medium",
-      ],
-    );
+    expect(Object.keys(defs).sort()).toEqual([
+      "level: prd",
+      "level: story",
+      "level: wave",
+      "priority: critical",
+      "priority: high",
+      "priority: low",
+      "priority: medium",
+    ]);
     for (const [name, d] of Object.entries(defs)) {
       const row = tableRow(labels, name);
       expect(row, `no row for ${name}`).toBeDefined();
