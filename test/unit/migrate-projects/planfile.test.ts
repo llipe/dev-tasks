@@ -22,12 +22,47 @@ function samplePlan(): MigrationPlan {
   const batches = emptyMigrationPlanBatches();
   const b = (key: string): MigrationPlanBatch => batches.find((x) => x.key === key)!;
   b("1").writes.push(
-    { id: "W-001", action: "create-label", target: "label:level: story", detail: "color 0E8A16", dependsOn: [], state: "pending" },
-    { id: "W-002", action: "edit-label", target: "label:type: other", detail: "description Retired (D-91): Anything else", dependsOn: [], state: "done" },
+    {
+      id: "W-001",
+      action: "create-label",
+      target: "label:level: story",
+      detail: "color 0E8A16",
+      dependsOn: [],
+      state: "pending",
+    },
+    {
+      id: "W-002",
+      action: "edit-label",
+      target: "label:type: other",
+      detail: "description Retired (D-91): Anything else",
+      dependsOn: [],
+      state: "done",
+    },
   );
-  b("2").writes.push({ id: "W-003", action: "create-issue", target: "W-003", detail: "[PRD-alpha] Wave 3: Things | template wave", dependsOn: ["W-001"], state: "done(#77)" });
-  b("3").writes.push({ id: "W-004", action: "link-sub-issue", target: "#12", detail: "parent W-003", dependsOn: ["W-003"], state: "skipped(depends on W-003)" });
-  b("4").writes.push({ id: "W-005", action: "add-label", target: "#12", detail: "level: story", dependsOn: [], state: "failed(HTTP 422: Validation Failed)" });
+  b("2").writes.push({
+    id: "W-003",
+    action: "create-issue",
+    target: "W-003",
+    detail: "[PRD-alpha] Wave 3: Things | template wave",
+    dependsOn: ["W-001"],
+    state: "done(#77)",
+  });
+  b("3").writes.push({
+    id: "W-004",
+    action: "link-sub-issue",
+    target: "#12",
+    detail: "parent W-003",
+    dependsOn: ["W-003"],
+    state: "skipped(depends on W-003)",
+  });
+  b("4").writes.push({
+    id: "W-005",
+    action: "add-label",
+    target: "#12",
+    detail: "level: story",
+    dependsOn: [],
+    state: "failed(HTTP 422: Validation Failed)",
+  });
   b("7").steps.push(
     { id: "W-006", step: "List pull-request items with the query below", state: "pending" },
     { id: "W-007", step: "Set the auto-add filter to `is:issue`", state: "done" },
@@ -39,13 +74,36 @@ function samplePlan(): MigrationPlan {
     approved: false,
     extraHeaders: [],
     review: {
-      unmapped: [{ issue: 16, title: "Story S-009: Orphan", why: "no `**Story:**` line, no `phase:` label", answer: "" }],
-      needsType: [
-        { issue: 12, title: "Story S-003: Gadget search", currentTypeLabels: ["type: bug", "type: enhancement"], suggested: "bug", answer: "" },
-        { issue: 25, title: "perf: faster list", currentTypeLabels: [], suggested: null, answer: "" },
+      unmapped: [
+        {
+          issue: 16,
+          title: "Story S-009: Orphan",
+          why: "no `**Story:**` line, no `phase:` label",
+          answer: "",
+        },
       ],
-      needsBlockingLink: [{ issue: 20, title: "fix: crash", priority: "priority: critical", answer: "" }],
-      stateFiles: [{ file: "workstream/planner-state-alpha-phase-2.md", note: "no `Wave issue:` line" }],
+      needsType: [
+        {
+          issue: 12,
+          title: "Story S-003: Gadget search",
+          currentTypeLabels: ["type: bug", "type: enhancement"],
+          suggested: "bug",
+          answer: "",
+        },
+        {
+          issue: 25,
+          title: "perf: faster list",
+          currentTypeLabels: [],
+          suggested: null,
+          answer: "",
+        },
+      ],
+      needsBlockingLink: [
+        { issue: 20, title: "fix: crash", priority: "priority: critical", answer: "" },
+      ],
+      stateFiles: [
+        { file: "workstream/planner-state-alpha-phase-2.md", note: "no `Wave issue:` line" },
+      ],
       roadmap: [{ row: "alpha 3", note: "Done row with an open story" }],
       information: [{ ref: "#13", note: "parent #24 is not a tracking issue", answer: "" }],
     },
@@ -95,18 +153,37 @@ describe("render (CT-24, CT-27; MU-24)", () => {
   it("uses the CT-26 and CT-27 table headers", () => {
     expect(text).toContain('| Issue | Title | Why | Answer (wave id, or "standalone") |');
     expect(text).toContain("| Issue | Title | Current type labels | Suggested | Answer |");
-    expect(text).toContain('| Issue | Title | Priority | Answer (#issue it blocks, or "lower priority to high") |');
+    expect(text).toContain(
+      '| Issue | Title | Priority | Answer (#issue it blocks, or "lower priority to high") |',
+    );
     expect(text).toContain("| ID | Action | Target | Detail | Depends on | State |");
     expect(text).toContain("| ID | Step | State |");
   });
 
   it("escapes `|` in cells so the table keeps its columns (CT-30)", () => {
-    expect(text).toContain("| W-003 | create-issue | W-003 | [PRD-alpha] Wave 3: Things \\| template wave | W-001 | done(#77) |");
+    expect(text).toContain(
+      "| W-003 | create-issue | W-003 | [PRD-alpha] Wave 3: Things \\| template wave | W-001 | done(#77) |",
+    );
   });
 
   it("renders empty tables as header and separator only", () => {
-    const empty = renderMigrationPlan({ ...samplePlan(), review: { unmapped: [], needsType: [], needsBlockingLink: [], stateFiles: [], roadmap: [], information: [] }, batches: emptyMigrationPlanBatches() });
-    expect(parseMigrationPlan(empty).plan.batches.every((b) => b.writes.length === 0 && b.steps.length === 0)).toBe(true);
+    const empty = renderMigrationPlan({
+      ...samplePlan(),
+      review: {
+        unmapped: [],
+        needsType: [],
+        needsBlockingLink: [],
+        stateFiles: [],
+        roadmap: [],
+        information: [],
+      },
+      batches: emptyMigrationPlanBatches(),
+    });
+    expect(
+      parseMigrationPlan(empty).plan.batches.every(
+        (b) => b.writes.length === 0 && b.steps.length === 0,
+      ),
+    ).toBe(true);
   });
 });
 
@@ -124,9 +201,18 @@ describe("parse (MU-25 to MU-30)", () => {
   // MU-26
   it("answers typed into the review tables survive; whitespace-only is empty", () => {
     const text = renderMigrationPlan(samplePlan())
-      .replace("| #16 | Story S-009: Orphan | no `**Story:**` line, no `phase:` label |  |", "|#16|Story S-009: Orphan|no `**Story:**` line, no `phase:` label|  alpha 2  |")
-      .replace("| #12 | Story S-003: Gadget search | `type: bug`, `type: enhancement` | bug |  |", "| #12 | Story S-003: Gadget search | `type: bug`, `type: enhancement` | bug | type: bug |")
-      .replace("| #20 | fix: crash | priority: critical |  |", "| #20 | fix: crash | priority: critical | #2 |")
+      .replace(
+        "| #16 | Story S-009: Orphan | no `**Story:**` line, no `phase:` label |  |",
+        "|#16|Story S-009: Orphan|no `**Story:**` line, no `phase:` label|  alpha 2  |",
+      )
+      .replace(
+        "| #12 | Story S-003: Gadget search | `type: bug`, `type: enhancement` | bug |  |",
+        "| #12 | Story S-003: Gadget search | `type: bug`, `type: enhancement` | bug | type: bug |",
+      )
+      .replace(
+        "| #20 | fix: crash | priority: critical |  |",
+        "| #20 | fix: crash | priority: critical | #2 |",
+      )
       .replace("| #25 | perf: faster list |  | — |  |", "| #25 | perf: faster list |  | — |    |");
     const { review } = parseMigrationPlan(text).plan;
     expect(review.unmapped[0].answer).toBe("alpha 2");
@@ -166,14 +252,19 @@ describe("parse (MU-25 to MU-30)", () => {
   it("rejects an unknown major format and a malformed snapshot hash (CT-24, EC-156)", () => {
     const text = renderMigrationPlan(samplePlan());
     expect(() => parseMigrationPlan(text.replace("Format: 1", "Format: 2"))).toThrow(/Format/);
-    expect(() => parseMigrationPlan(text.replace(/Snapshot: [0-9a-f]+/, "Snapshot: abc"))).toThrow(/Snapshot/);
+    expect(() => parseMigrationPlan(text.replace(/Snapshot: [0-9a-f]+/, "Snapshot: abc"))).toThrow(
+      /Snapshot/,
+    );
   });
 
   // MU-29
   it("tolerates and preserves an extra header line and an extra column", () => {
     const text = renderMigrationPlan(samplePlan())
       .replace("Approved: no\n", "Approved: no\nReviewer: @owner\n")
-      .replace("| Issue | Title | Priority | Answer (#issue it blocks, or \"lower priority to high\") |", "| Issue | Title | Priority | Answer (#issue it blocks, or \"lower priority to high\") | Notes |")
+      .replace(
+        '| Issue | Title | Priority | Answer (#issue it blocks, or "lower priority to high") |',
+        '| Issue | Title | Priority | Answer (#issue it blocks, or "lower priority to high") | Notes |',
+      )
       .replace(/(\| -+ \| -+ \| -+ \| -+ \|)\n(\| #20 .*\|)\n/, "$1 --- |\n$2 owner asked |\n");
     const { plan } = parseMigrationPlan(text);
     expect(plan.extraHeaders).toEqual(["Reviewer: @owner"]);
@@ -185,38 +276,62 @@ describe("parse (MU-25 to MU-30)", () => {
   });
 
   // MU-30, CT-28
-  it.each(["pending", "done", "done(#12)", "failed(HTTP 422)", "skipped(already applied)", "skipped(depends on W-001)"])(
-    "state %s parses",
+  it.each([
+    "pending",
+    "done",
+    "done(#12)",
+    "failed(HTTP 422)",
+    "skipped(already applied)",
+    "skipped(depends on W-001)",
+  ])("state %s parses", (state) => {
+    const p = samplePlan();
+    p.batches[0].writes[0].state = state;
+    expect(parseMigrationPlan(renderMigrationPlan(p)).plan.batches[0].writes[0].state).toBe(state);
+  });
+
+  it.each(["done?", "failed", "failed()", "skip", "Pending", ""])(
+    "state %j is a parse error",
     (state) => {
-      const p = samplePlan();
-      p.batches[0].writes[0].state = state;
-      expect(parseMigrationPlan(renderMigrationPlan(p)).plan.batches[0].writes[0].state).toBe(state);
+      const text = renderMigrationPlan(samplePlan()).replace(
+        "| color 0E8A16 |  | pending |",
+        `| color 0E8A16 |  | ${state} |`,
+      );
+      expect(() => parseMigrationPlan(text)).toThrow(MigrationPlanParseError);
     },
   );
 
-  it.each(["done?", "failed", "failed()", "skip", "Pending", ""])("state %j is a parse error", (state) => {
-    const text = renderMigrationPlan(samplePlan()).replace("| color 0E8A16 |  | pending |", `| color 0E8A16 |  | ${state} |`);
-    expect(() => parseMigrationPlan(text)).toThrow(MigrationPlanParseError);
-  });
-
   it("a batch 7 step is pending or done only (A-79)", () => {
-    const text = renderMigrationPlan(samplePlan()).replace("| W-006 | List pull-request items with the query below | pending |", "| W-006 | List pull-request items with the query below | failed(x) |");
+    const text = renderMigrationPlan(samplePlan()).replace(
+      "| W-006 | List pull-request items with the query below | pending |",
+      "| W-006 | List pull-request items with the query below | failed(x) |",
+    );
     expect(() => parseMigrationPlan(text)).toThrow(/W-006/);
   });
 
   // CT-27, A-51: the action set is closed.
   it("refuses an unknown action, a duplicate ID and a dangling dependency", () => {
     const text = renderMigrationPlan(samplePlan());
-    expect(() => parseMigrationPlan(text.replace("| W-005 | add-label |", "| W-005 | project-item-delete |"))).toThrow(/action/);
-    expect(() => parseMigrationPlan(text.replace("| W-005 | add-label |", "| W-001 | add-label |"))).toThrow(/duplicate/);
-    expect(() => parseMigrationPlan(text.replace("| parent W-003 | W-003 |", "| parent W-003 | W-099 |"))).toThrow(/W-099/);
-    expect(() => parseMigrationPlan(text.replace("| W-005 | add-label |", "| W5 | add-label |"))).toThrow(/ID/);
+    expect(() =>
+      parseMigrationPlan(text.replace("| W-005 | add-label |", "| W-005 | project-item-delete |")),
+    ).toThrow(/action/);
+    expect(() =>
+      parseMigrationPlan(text.replace("| W-005 | add-label |", "| W-001 | add-label |")),
+    ).toThrow(/duplicate/);
+    expect(() =>
+      parseMigrationPlan(text.replace("| parent W-003 | W-003 |", "| parent W-003 | W-099 |")),
+    ).toThrow(/W-099/);
+    expect(() =>
+      parseMigrationPlan(text.replace("| W-005 | add-label |", "| W5 | add-label |")),
+    ).toThrow(/ID/);
     expect(MIGRATION_PLAN_ACTIONS).toContain("link-sub-issue");
     expect(MIGRATION_PLAN_ACTIONS.some((a) => a.includes("project"))).toBe(false);
   });
 
   it("refuses an unknown section heading", () => {
-    const text = renderMigrationPlan(samplePlan()).replace("### 3. Hierarchy (cli)", "### 3. Hierarchy (user)");
+    const text = renderMigrationPlan(samplePlan()).replace(
+      "### 3. Hierarchy (cli)",
+      "### 3. Hierarchy (user)",
+    );
     expect(() => parseMigrationPlan(text)).toThrow(MigrationPlanParseError);
   });
 });
@@ -224,14 +339,21 @@ describe("parse (MU-25 to MU-30)", () => {
 describe("approval grammar (CT-25, A-79)", () => {
   const base = renderMigrationPlan(samplePlan());
   it("exactly `Approved: yes` approves", () => {
-    expect(parseMigrationPlan(base.replace("Approved: no", "Approved: yes")).plan.approved).toBe(true);
+    expect(parseMigrationPlan(base.replace("Approved: no", "Approved: yes")).plan.approved).toBe(
+      true,
+    );
     expect(parseMigrationPlan(base).plan.approved).toBe(false);
   });
-  it.each(["Approved: Yes", "Approved: yes ", "Approved: yes\nApproved: yes", "Approved: YES"])("%j does not", (line) => {
-    expect(parseMigrationPlan(base.replace("Approved: no", line)).plan.approved).toBe(false);
-  });
+  it.each(["Approved: Yes", "Approved: yes ", "Approved: yes\nApproved: yes", "Approved: YES"])(
+    "%j does not",
+    (line) => {
+      expect(parseMigrationPlan(base.replace("Approved: no", line)).plan.approved).toBe(false);
+    },
+  );
   it("`approved: yes` (lower case) is not the approval line, so it is missing", () => {
-    expect(() => parseMigrationPlan(base.replace("Approved: no", "approved: yes"))).toThrow(/Approved/);
+    expect(() => parseMigrationPlan(base.replace("Approved: no", "approved: yes"))).toThrow(
+      /Approved/,
+    );
   });
 });
 
@@ -280,7 +402,27 @@ describe("RT-7 planfile round-trip property", () => {
   const seed = seedFromEnv(7007);
   it(`random plans (seed ${seed})`, () => {
     const r = prng(seed);
-    const pool = ["a", "Z", "|", "`", "\\", "*", "#", "<!--", "🚀", "漢", " ", ",", "\n", "\r", "\t", "—", "-", ":", "n"];
+    const pool = [
+      "a",
+      "Z",
+      "|",
+      "`",
+      "\\",
+      "*",
+      "#",
+      "<!--",
+      "🚀",
+      "漢",
+      " ",
+      ",",
+      "\n",
+      "\r",
+      "\t",
+      "—",
+      "-",
+      ":",
+      "n",
+    ];
     const str = (max: number) => Array.from({ length: r.int(0, max) }, () => r.pick(pool)).join("");
     const states = ["pending", "done", "done(#3)", "failed(boom)", "skipped(already applied)"];
     for (let iter = 0; iter < 300; iter++) {
@@ -291,8 +433,17 @@ describe("RT-7 planfile round-trip property", () => {
         n++;
         const id = formatWriteId(n, total);
         const batch = r.pick(batches);
-        if (batch.runner === "user") batch.steps.push({ id, step: str(12) || "x", state: r.pick(["pending", "done"]) });
-        else batch.writes.push({ id, action: r.pick(MIGRATION_PLAN_ACTIONS), target: str(8), detail: str(20), dependsOn: [], state: r.pick(states) });
+        if (batch.runner === "user")
+          batch.steps.push({ id, step: str(12) || "x", state: r.pick(["pending", "done"]) });
+        else
+          batch.writes.push({
+            id,
+            action: r.pick(MIGRATION_PLAN_ACTIONS),
+            target: str(8),
+            detail: str(20),
+            dependsOn: [],
+            state: r.pick(states),
+          });
       }
       const issues = Array.from({ length: r.int(0, 60) }, (_, k) => k + 1);
       const p: MigrationPlan = {
@@ -302,19 +453,43 @@ describe("RT-7 planfile round-trip property", () => {
         approved: r.bool(),
         extraHeaders: [],
         review: {
-          unmapped: issues.filter(() => r.bool(0.2)).map((i) => ({ issue: i, title: str(15), why: str(10), answer: r.bool() ? "" : str(5).trim() })),
-          needsType: issues.filter(() => r.bool(0.2)).map((i) => ({ issue: i, title: str(15), currentTypeLabels: Array.from({ length: r.int(0, 3) }, () => str(6)), suggested: r.bool() ? null : "bug", answer: "" })),
-          needsBlockingLink: issues.filter(() => r.bool(0.1)).map((i) => ({ issue: i, title: str(15), priority: "priority: critical", answer: "" })),
+          unmapped: issues
+            .filter(() => r.bool(0.2))
+            .map((i) => ({
+              issue: i,
+              title: str(15),
+              why: str(10),
+              answer: r.bool() ? "" : str(5).trim(),
+            })),
+          needsType: issues
+            .filter(() => r.bool(0.2))
+            .map((i) => ({
+              issue: i,
+              title: str(15),
+              currentTypeLabels: Array.from({ length: r.int(0, 3) }, () => str(6)),
+              suggested: r.bool() ? null : "bug",
+              answer: "",
+            })),
+          needsBlockingLink: issues
+            .filter(() => r.bool(0.1))
+            .map((i) => ({ issue: i, title: str(15), priority: "priority: critical", answer: "" })),
           stateFiles: [],
           roadmap: [],
-          information: issues.filter(() => r.bool(0.1)).map((i) => ({ ref: `#${i}`, note: str(10) || "n", answer: "" })),
+          information: issues
+            .filter(() => r.bool(0.1))
+            .map((i) => ({ ref: `#${i}`, note: str(10) || "n", answer: "" })),
         },
         batches,
       };
       const text = renderMigrationPlan(p);
       const ctx = `seed ${seed} iter ${iter}`;
       // Answers are trimmed by design (whitespace-only means empty), so compare against the trimmed form.
-      for (const list of [p.review.unmapped, p.review.needsType, p.review.needsBlockingLink, p.review.information]) {
+      for (const list of [
+        p.review.unmapped,
+        p.review.needsType,
+        p.review.needsBlockingLink,
+        p.review.information,
+      ]) {
         for (const row of list) row.answer = row.answer.replace(/^[\s]+|[\s]+$/g, "");
       }
       expect(parseMigrationPlan(text).plan, ctx).toEqual(p);

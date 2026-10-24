@@ -69,9 +69,7 @@ describe("story (D-82, A-54)", () => {
   // EC-106
   it("a story title with an empty or null body is a story", () => {
     expect(issueKind(issue("Story S-001: x", [], ""), PRDS).kind).toBe("story");
-    expect(issueKind({ title: "Story S-001: x", labels: [], body: null }, PRDS).kind).toBe(
-      "story",
-    );
+    expect(issueKind({ title: "Story S-001: x", labels: [], body: null }, PRDS).kind).toBe("story");
   });
 });
 
@@ -87,9 +85,7 @@ describe("tracking issue (D-87, A-53)", () => {
       });
     }
     // The H1 itself (`PRD: alpha — Alpha widgets`) also matches.
-    expect(issueKind(issue("[PRD-alpha] PRD: alpha — Alpha widgets"), PRDS).kind).toBe(
-      "tracking",
-    );
+    expect(issueKind(issue("[PRD-alpha] PRD: alpha — Alpha widgets"), PRDS).kind).toBe("tracking");
   });
 
   // MU-4, EC-109
@@ -201,9 +197,7 @@ describe("classifySnapshot on the survey fixture", () => {
   // MU-7 to MU-9, A-68: zero, two, retired-only; tracking issues exempt.
   it("lists zero- and multi-type issues under needs a type with suggestions", async () => {
     const c = classifySnapshot(await snapshotOf(loadModel("survey")));
-    expect(
-      c.needsType.map((n) => [n.issue, n.currentTypeLabels, n.suggested]),
-    ).toEqual([
+    expect(c.needsType.map((n) => [n.issue, n.currentTypeLabels, n.suggested])).toEqual([
       [12, ["type: bug", "type: enhancement"], "bug"],
       [13, [], "enhancement"],
       [20, [], "bug"],
@@ -229,7 +223,12 @@ describe("classifySnapshot on the survey fixture", () => {
     // #20 has a **Blocks:** line but no relation: still listed (A-72).
     // #21 blocks #11: not listed. #22 has no relation: listed.
     expect(c.needsBlockingLink).toEqual([
-      { issue: 20, title: "fix: widget crash on empty list", priority: "priority: critical", answer: "" },
+      {
+        issue: 20,
+        title: "fix: widget crash on empty list",
+        priority: "priority: critical",
+        answer: "",
+      },
       { issue: 22, title: "[chore] bump dependencies", priority: "priority: critical", answer: "" },
     ]);
   });
@@ -288,7 +287,12 @@ describe("RT-13 every issue classified exactly once", () => {
       "[chore] f",
     ];
     const labelPool = ["level: prd", "level: wave", "type: prd", "type: bug", "phase: 1", "bug"];
-    const bodies = ["", "**Story:** workstream/user-stories-alpha-phase-1.md", "x\r\ny", "> **Story:** q"];
+    const bodies = [
+      "",
+      "**Story:** workstream/user-stories-alpha-phase-1.md",
+      "x\r\ny",
+      "> **Story:** q",
+    ];
     for (let iter = 0; iter < 300; iter++) {
       const model = cloneModel(loadModel("empty"));
       const n = r.int(0, 25);
@@ -309,7 +313,9 @@ describe("RT-13 every issue classified exactly once", () => {
       const numbers = c.issues.map((i) => i.number);
       expect(numbers, `seed ${seed} iter ${iter}`).toEqual(model.issues.map((i) => i.number));
       for (const i of c.issues) {
-        expect(["story", "tracking", "standalone"], `seed ${seed} iter ${iter}`).toContain(i.kind.kind);
+        expect(["story", "tracking", "standalone"], `seed ${seed} iter ${iter}`).toContain(
+          i.kind.kind,
+        );
       }
     }
   });

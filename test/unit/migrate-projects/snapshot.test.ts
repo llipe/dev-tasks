@@ -15,14 +15,22 @@ import { cloneModel, loadModel, type RepoModel } from "./helpers/fake-github.js"
 import { modelReader, recordingRunner } from "./helpers/recording-runner.js";
 import { prng, seedFromEnv } from "./helpers/prng.js";
 
-async function read(model: RepoModel, opts: Parameters<typeof recordingRunner>[1] = {}, repo?: string) {
+async function read(
+  model: RepoModel,
+  opts: Parameters<typeof recordingRunner>[1] = {},
+  repo?: string,
+) {
   const rec = recordingRunner(model, opts);
   const reader = modelReader(model);
   const snapshot = await readSnapshot({ runner: rec.runner, reader, repo });
   return { snapshot, calls: rec.calls, reads: reader.reads };
 }
 
-async function readError(model: RepoModel, opts: Parameters<typeof recordingRunner>[1] = {}, repo?: string) {
+async function readError(
+  model: RepoModel,
+  opts: Parameters<typeof recordingRunner>[1] = {},
+  repo?: string,
+) {
   const rec = recordingRunner(model, opts);
   const reader = modelReader(model);
   try {
@@ -107,7 +115,9 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
         // Stories: parent (A-76).
         ...[10, 11, 12, 13].map((n) => `api ${r}/issues/${n}/parent`),
         // Critical issues: what they block (A-72).
-        ...[20, 21, 22].map((n) => `api --paginate ${r}/issues/${n}/dependencies/blocking?per_page=100`),
+        ...[20, 21, 22].map(
+          (n) => `api --paginate ${r}/issues/${n}/dependencies/blocking?per_page=100`,
+        ),
       ]),
     );
     expect(keys.length, "no read is repeated").toBe(new Set(keys).size);
@@ -127,7 +137,11 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
     expect(byNo.get(23)!.body).toBe("");
     expect(byNo.has(40), "pull requests are not issues").toBe(false);
     expect(snapshot.closedTrackingIssues.map((i) => i.number)).toEqual([30]);
-    expect(snapshot.closedTrackingIssues[0]).toMatchObject({ state: "closed", subIssues: [31], parent: 1 });
+    expect(snapshot.closedTrackingIssues[0]).toMatchObject({
+      state: "closed",
+      subIssues: [31],
+      parent: 1,
+    });
     expect(snapshot.closedSearchComplete).toBe(true);
   });
 
@@ -154,7 +168,17 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
   it("reads 1,200 open issues across pages, never truncating", async () => {
     const model = cloneModel(loadModel("empty"));
     for (let n = 1; n <= 1200; n++) {
-      model.issues.push({ id: n, number: n, state: "open", title: `t${n}`, body: "", labels: [], milestone: null, parent: null, blocking: [] });
+      model.issues.push({
+        id: n,
+        number: n,
+        state: "open",
+        title: `t${n}`,
+        body: "",
+        labels: [],
+        milestone: null,
+        parent: null,
+        blocking: [],
+      });
     }
     const { snapshot } = await read(model, { pageSize: 100 });
     expect(snapshot.openIssues).toHaveLength(1200);
@@ -183,7 +207,7 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
 
 describe("parseJsonStream (gh --paginate output)", () => {
   it("merges concatenated arrays and splits concatenated objects", () => {
-    expect(parseJsonStream('[1,2][3]\n[4]')).toEqual([[1, 2], [3], [4]]);
+    expect(parseJsonStream("[1,2][3]\n[4]")).toEqual([[1, 2], [3], [4]]);
     expect(parseJsonStream('{"a":"}{"}{"b":[1]}')).toEqual([{ a: "}{" }, { b: [1] }]);
     expect(parseJsonStream("")).toEqual([]);
     expect(() => parseJsonStream("[1,")).toThrow();
@@ -237,7 +261,10 @@ describe("snapshot hash (spec §12)", () => {
     ["a milestone", (m: RepoModel) => (m.issues[2].milestone = "Beta")],
     ["a parent", (m: RepoModel) => (m.issues.find((i) => i.number === 10)!.parent = 2)],
     ["the roadmap file", (m: RepoModel) => (m.files["docs/roadmap.md"] += "\n")],
-    ["a state file", (m: RepoModel) => (m.files["workstream/planner-state-alpha-phase-2.md"] += "x")],
+    [
+      "a state file",
+      (m: RepoModel) => (m.files["workstream/planner-state-alpha-phase-2.md"] += "x"),
+    ],
     ["a label description", (m: RepoModel) => (m.labels[0].description += ".")],
   ])("changes with %s", async (_name, mutate) => {
     const base = snapshotHash((await read(loadModel("survey"))).snapshot);
@@ -264,7 +291,9 @@ describe("RT-8 hash property", () => {
     const { snapshot } = await read(loadModel("survey"));
     const h = snapshotHash(snapshot);
     for (let iter = 0; iter < 300; iter++) {
-      expect(snapshotHash(permute(snapshot, r.int(0, 2 ** 31))), `seed ${seed} iter ${iter}`).toBe(h);
+      expect(snapshotHash(permute(snapshot, r.int(0, 2 ** 31))), `seed ${seed} iter ${iter}`).toBe(
+        h,
+      );
       const m: MigrationSnapshot = JSON.parse(JSON.stringify(snapshot));
       const target = r.pick(m.openIssues);
       switch (r.int(0, 3)) {

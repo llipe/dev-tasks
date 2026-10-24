@@ -6,7 +6,15 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { readSnapshot } from "#core/migrate-projects/snapshot.js";
@@ -40,7 +48,10 @@ afterEach(() => {
 });
 
 /** Build the replay table from the model by running the same reads in process. */
-async function setup(model: RepoModel, options: FakeOptions & { noGh?: boolean } = {}): Promise<void> {
+async function setup(
+  model: RepoModel,
+  options: FakeOptions & { noGh?: boolean } = {},
+): Promise<void> {
   for (const [path, content] of Object.entries(model.files)) {
     mkdirSync(dirname(join(cwd, path)), { recursive: true });
     writeFileSync(join(cwd, path), content);
@@ -95,7 +106,13 @@ describe("migrate projects --plan (AC-1)", () => {
     expect(text.split("\n")[0]).toBe("# Migration plan: acme/widgets");
     expect(text).toContain("Approved: no");
     expect(text).toContain(`Generated: ${NOW}`);
-    for (const line of ["1. Labels", "7. Project cleanup", "Needs a type: 6", "Needs a blocking link: 2", "State files: 1"]) {
+    for (const line of [
+      "1. Labels",
+      "7. Project cleanup",
+      "Needs a type: 6",
+      "Needs a blocking link: 2",
+      "State files: 1",
+    ]) {
       expect(r.stdout).toContain(line);
     }
     expect(r.stdout).toContain(DEFAULT_PLAN);
@@ -118,13 +135,16 @@ describe("migrate projects --plan (AC-1)", () => {
   });
 
   // MC-4
-  it.each([["--out", "x/y.md"], ["--out=x/y.md"]])("%s writes there and leaves the default path alone", async (...flag) => {
-    await setup(loadModel("survey"));
-    const r = run(["migrate", "projects", "--plan", ...flag.filter((f) => f !== undefined)]);
-    expect(r.exitCode).toBe(0);
-    expect(existsSync(planAt("x/y.md"))).toBe(true);
-    expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
-  });
+  it.each([["--out", "x/y.md"], ["--out=x/y.md"]])(
+    "%s writes there and leaves the default path alone",
+    async (...flag) => {
+      await setup(loadModel("survey"));
+      const r = run(["migrate", "projects", "--plan", ...flag.filter((f) => f !== undefined)]);
+      expect(r.exitCode).toBe(0);
+      expect(existsSync(planAt("x/y.md"))).toBe(true);
+      expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
+    },
+  );
 
   // MC-5, CT-35, A-64
   it("--json prints only the A-64 JSON on stdout", async () => {
@@ -137,10 +157,23 @@ describe("migrate projects --plan (AC-1)", () => {
       mode: "plan",
       repo: "acme/widgets",
       planFile: DEFAULT_PLAN,
-      review: { unmapped: 0, needsType: 6, needsBlockingLink: 2, stateFiles: 1, roadmap: 0, information: 2 },
+      review: {
+        unmapped: 0,
+        needsType: 6,
+        needsBlockingLink: 2,
+        stateFiles: 1,
+        roadmap: 0,
+        information: 2,
+      },
       exitCode: 0,
     });
-    const batches = json.batches as { name: string; pending: number; done: number; failed: number; skipped: number }[];
+    const batches = json.batches as {
+      name: string;
+      pending: number;
+      done: number;
+      failed: number;
+      skipped: number;
+    }[];
     expect(batches.map((b) => b.name)).toEqual([
       "Labels",
       "Tracking issues",
@@ -158,14 +191,28 @@ describe("migrate projects --plan (AC-1)", () => {
   it("refuses with 14 to overwrite a plan with a non-pending row, file untouched", async () => {
     await setup(loadModel("survey"));
     const batches = emptyMigrationPlanBatches();
-    batches[0].writes.push({ id: "W-001", action: "create-label", target: "label:level: story", detail: "", dependsOn: [], state: "done" });
+    batches[0].writes.push({
+      id: "W-001",
+      action: "create-label",
+      target: "label:level: story",
+      detail: "",
+      dependsOn: [],
+      state: "done",
+    });
     const applied = renderMigrationPlan({
       repo: "acme/widgets",
       generated: "2026-10-23T00:00:00Z",
       snapshot: "a".repeat(64),
       approved: true,
       extraHeaders: [],
-      review: { unmapped: [], needsType: [], needsBlockingLink: [], stateFiles: [], roadmap: [], information: [] },
+      review: {
+        unmapped: [],
+        needsType: [],
+        needsBlockingLink: [],
+        stateFiles: [],
+        roadmap: [],
+        information: [],
+      },
       batches,
     });
     mkdirSync(join(cwd, "workstream"), { recursive: true });
@@ -236,7 +283,14 @@ describe("flags (A-63)", () => {
     const r = spawnSync(process.execPath, [TSX_CLI, BIN, "migrate", "projects", "--plan"], {
       cwd,
       encoding: "utf-8",
-      env: { PATH: pathDir, HOME: process.env.HOME ?? tmp, TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"), DEV_TASKS_NOW: "yesterday", FAKE_GH_SCENARIO: join(tmp, "scenario.json"), FAKE_GH_LOG: join(tmp, "gh.log") },
+      env: {
+        PATH: pathDir,
+        HOME: process.env.HOME ?? tmp,
+        TSX_TSCONFIG_PATH: resolve(ROOT, "tsconfig.json"),
+        DEV_TASKS_NOW: "yesterday",
+        FAKE_GH_SCENARIO: join(tmp, "scenario.json"),
+        FAKE_GH_LOG: join(tmp, "gh.log"),
+      },
     });
     expect(r.status).toBe(2);
   });
@@ -244,14 +298,22 @@ describe("flags (A-63)", () => {
 
 describe("help (AC-1, MC-10)", () => {
   it("lists `migrate projects` right after the `migrate docs` entry", () => {
-    const r = spawnSync(process.execPath, [TSX_CLI, BIN, "--help"], { cwd: ROOT, encoding: "utf-8" });
+    const r = spawnSync(process.execPath, [TSX_CLI, BIN, "--help"], {
+      cwd: ROOT,
+      encoding: "utf-8",
+    });
     const lines = (r.stdout + r.stderr).split("\n");
     const docs = lines.findIndex((l) => /^\s+migrate docs\b/.test(l));
     const projects = lines.findIndex((l) => /^\s+migrate projects --plan\b/.test(l));
     expect(docs).toBeGreaterThan(-1);
     expect(projects).toBeGreaterThan(docs);
     const between = lines.slice(docs + 1, projects);
-    expect(between.every((l) => /^\s{10,}\S/.test(l)), "only the docs entry's continuation lines sit between").toBe(true);
-    expect(lines.slice(projects, projects + 4).join("\n")).toMatch(/--repo <owner\/repo>.*--out <path>.*--json/s);
+    expect(
+      between.every((l) => /^\s{10,}\S/.test(l)),
+      "only the docs entry's continuation lines sit between",
+    ).toBe(true);
+    expect(lines.slice(projects, projects + 4).join("\n")).toMatch(
+      /--repo <owner\/repo>.*--out <path>.*--json/s,
+    );
   });
 });

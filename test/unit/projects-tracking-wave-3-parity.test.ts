@@ -631,7 +631,14 @@ describe("no Project calls in core/migrate-projects (PT-80)", () => {
   const PRINTED_ONLY = new Map([["plan.ts", /^(item-list|item-delete)$/]]);
 
   it("the walk finds the module", () => {
-    for (const f of ["gh.ts", "snapshot.ts", "classify.ts", "planfile.ts", "conventions.ts", "index.ts"]) {
+    for (const f of [
+      "gh.ts",
+      "snapshot.ts",
+      "classify.ts",
+      "planfile.ts",
+      "conventions.ts",
+      "index.ts",
+    ]) {
       expect(files).toContain(f);
     }
   });
@@ -644,7 +651,10 @@ describe("no Project calls in core/migrate-projects (PT-80)", () => {
         expect(line, `${where} builds a project argv`).not.toMatch(/["'`]project["'`]/);
         for (const m of line.matchAll(/\bgh\s+project\s+([a-z-]+)/g)) {
           const allowed = PRINTED_ONLY.get(file);
-          expect(allowed !== undefined && allowed.test(m[1]), `${where} names gh project ${m[1]}`).toBe(true);
+          expect(
+            allowed !== undefined && allowed.test(m[1]),
+            `${where} names gh project ${m[1]}`,
+          ).toBe(true);
         }
       }
     }

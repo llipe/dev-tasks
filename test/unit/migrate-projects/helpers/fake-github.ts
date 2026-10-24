@@ -163,7 +163,13 @@ export function respond(
 
   if (tail === "labels") {
     return emitArray(
-      model.labels.map((l, n) => ({ id: n + 1, name: l.name, description: l.description, color: l.color, default: false })),
+      model.labels.map((l, n) => ({
+        id: n + 1,
+        name: l.name,
+        description: l.description,
+        color: l.color,
+        default: false,
+      })),
     );
   }
   if (tail === "issues") {
@@ -190,7 +196,10 @@ export function respond(
       );
     }
     return emitArray(
-      issue.blocking.map((n) => byNumber.get(n)).filter((i) => i !== undefined).map((i) => restIssue(model, i)),
+      issue.blocking
+        .map((n) => byNumber.get(n))
+        .filter((i) => i !== undefined)
+        .map((i) => restIssue(model, i)),
     );
   }
   return fail(`fake gh: unhandled argv: ${key}`);

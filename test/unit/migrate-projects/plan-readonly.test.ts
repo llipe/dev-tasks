@@ -22,7 +22,9 @@ import { prng, seedFromEnv } from "./helpers/prng.js";
 
 const NOW = () => new Date("2026-10-24T12:00:00Z");
 
-function memoryStore(initial: Record<string, string> = {}): PlanFileStore & { files: Record<string, string> } {
+function memoryStore(
+  initial: Record<string, string> = {},
+): PlanFileStore & { files: Record<string, string> } {
   const files = { ...initial };
   return {
     files,
@@ -47,12 +49,15 @@ async function plan(model: RepoModel) {
 }
 
 describe("--plan is read-only (AC-6, MU-31)", () => {
-  it.each(["survey", "empty"])("%s: every gh call is a read by the independent oracle", async (name) => {
-    const { result, calls } = await plan(loadModel(name));
-    expect(result.exitCode).toBe(0);
-    expect(calls.length).toBeGreaterThan(0);
-    for (const c of calls) expect(isWrite(c), c.join(" ")).toBe(false);
-  });
+  it.each(["survey", "empty"])(
+    "%s: every gh call is a read by the independent oracle",
+    async (name) => {
+      const { result, calls } = await plan(loadModel(name));
+      expect(result.exitCode).toBe(0);
+      expect(calls.length).toBeGreaterThan(0);
+      for (const c of calls) expect(isWrite(c), c.join(" ")).toBe(false);
+    },
+  );
 
   it("the oracle itself flags the writes S-015 will make", () => {
     for (const w of [
@@ -94,7 +99,7 @@ describe("no issue bodies anywhere (AC-7, MU-32, EC-118)", () => {
     const outputs = [
       store.files["workstream/migration-projects.md"],
       formatMigrationPlanSummary(result),
-      JSON.stringify(migrationPlanJson(result, { json: true })),
+      JSON.stringify(migrationPlanJson(result)),
     ];
     for (const out of outputs) {
       expect(out).not.toMatch(/BODY-SENTINEL-\d+/);
@@ -112,19 +117,39 @@ describe("refuses to overwrite an applied record (A-65, EC-116)", () => {
   it("exit 14 and the file untouched when a row is not pending", async () => {
     const model = loadModel("survey");
     const batches = emptyMigrationPlanBatches();
-    batches[0].writes.push({ id: "W-001", action: "create-label", target: "label:level: story", detail: "", dependsOn: [], state: "done" });
+    batches[0].writes.push({
+      id: "W-001",
+      action: "create-label",
+      target: "label:level: story",
+      detail: "",
+      dependsOn: [],
+      state: "done",
+    });
     const applied = renderMigrationPlan({
       repo: "acme/widgets",
       generated: "2026-10-23T00:00:00Z",
       snapshot: "a".repeat(64),
       approved: true,
       extraHeaders: [],
-      review: { unmapped: [], needsType: [], needsBlockingLink: [], stateFiles: [], roadmap: [], information: [] },
+      review: {
+        unmapped: [],
+        needsType: [],
+        needsBlockingLink: [],
+        stateFiles: [],
+        roadmap: [],
+        information: [],
+      },
       batches,
     });
     const store = memoryStore({ "workstream/migration-projects.md": applied });
     const rec = recordingRunner(model);
-    const result = await runMigrationPlan({ runner: rec.runner, reader: modelReader(model), out: "workstream/migration-projects.md", now: NOW, store });
+    const result = await runMigrationPlan({
+      runner: rec.runner,
+      reader: modelReader(model),
+      out: "workstream/migration-projects.md",
+      now: NOW,
+      store,
+    });
     expect(result.exitCode).toBe(14);
     expect(result.error).toMatch(/--out/);
     expect(store.files["workstream/migration-projects.md"]).toBe(applied);
@@ -133,7 +158,13 @@ describe("refuses to overwrite an applied record (A-65, EC-116)", () => {
   it("exit 14 for an existing file that is not a migration plan", async () => {
     const model = loadModel("survey");
     const store = memoryStore({ "workstream/migration-projects.md": "# My notes\n" });
-    const result = await runMigrationPlan({ runner: recordingRunner(model).runner, reader: modelReader(model), out: "workstream/migration-projects.md", now: NOW, store });
+    const result = await runMigrationPlan({
+      runner: recordingRunner(model).runner,
+      reader: modelReader(model),
+      out: "workstream/migration-projects.md",
+      now: NOW,
+      store,
+    });
     expect(result.exitCode).toBe(14);
     expect(store.files["workstream/migration-projects.md"]).toBe("# My notes\n");
   });
@@ -142,9 +173,17 @@ describe("refuses to overwrite an applied record (A-65, EC-116)", () => {
     const model = loadModel("survey");
     const first = await plan(model);
     const store = memoryStore({ ...first.store.files });
-    const result = await runMigrationPlan({ runner: recordingRunner(model).runner, reader: modelReader(model), out: "workstream/migration-projects.md", now: () => new Date("2026-10-25T00:00:00Z"), store });
+    const result = await runMigrationPlan({
+      runner: recordingRunner(model).runner,
+      reader: modelReader(model),
+      out: "workstream/migration-projects.md",
+      now: () => new Date("2026-10-25T00:00:00Z"),
+      store,
+    });
     expect(result.exitCode).toBe(0);
-    expect(store.files["workstream/migration-projects.md"]).toContain("Generated: 2026-10-25T00:00:00Z");
+    expect(store.files["workstream/migration-projects.md"]).toContain(
+      "Generated: 2026-10-25T00:00:00Z",
+    );
   });
 
   // EC-134: unchanged repository, same plan except Generated.
@@ -152,8 +191,16 @@ describe("refuses to overwrite an applied record (A-65, EC-116)", () => {
     const model = loadModel("survey");
     const a = (await plan(model)).store.files["workstream/migration-projects.md"];
     const store = memoryStore();
-    await runMigrationPlan({ runner: recordingRunner(model).runner, reader: modelReader(model), out: "p.md", now: () => new Date("2026-10-25T00:00:00Z"), store });
-    expect(store.files["p.md"].replace(/^Generated: .*$/m, "")).toBe(a.replace(/^Generated: .*$/m, ""));
+    await runMigrationPlan({
+      runner: recordingRunner(model).runner,
+      reader: modelReader(model),
+      out: "p.md",
+      now: () => new Date("2026-10-25T00:00:00Z"),
+      store,
+    });
+    expect(store.files["p.md"].replace(/^Generated: .*$/m, "")).toBe(
+      a.replace(/^Generated: .*$/m, ""),
+    );
   });
 });
 
@@ -162,7 +209,13 @@ describe("precondition exits", () => {
     const model = loadModel("survey");
     const rec = recordingRunner(model, { authFails: true });
     const store = memoryStore();
-    const result = await runMigrationPlan({ runner: rec.runner, reader: modelReader(model), out: "x.md", now: NOW, store });
+    const result = await runMigrationPlan({
+      runner: rec.runner,
+      reader: modelReader(model),
+      out: "x.md",
+      now: NOW,
+      store,
+    });
     expect(result.exitCode).toBe(11);
     expect(result.error).toContain("gh auth login");
     expect(rec.calls).toHaveLength(1);
@@ -172,7 +225,14 @@ describe("precondition exits", () => {
   it("--repo naming another repository: exit 2, no file", async () => {
     const model = loadModel("survey");
     const store = memoryStore();
-    const result = await runMigrationPlan({ runner: recordingRunner(model).runner, reader: modelReader(model), repo: "other/repo", out: "x.md", now: NOW, store });
+    const result = await runMigrationPlan({
+      runner: recordingRunner(model).runner,
+      reader: modelReader(model),
+      repo: "other/repo",
+      out: "x.md",
+      now: NOW,
+      store,
+    });
     expect(result.exitCode).toBe(2);
     expect(store.files).toEqual({});
   });
@@ -182,8 +242,16 @@ describe("precondition exits", () => {
     const rec = recordingRunner(model);
     const store = memoryStore();
     const runner: typeof rec.runner = async (args) =>
-      args.join(" ").includes("/labels") ? { stdout: "", stderr: "gh: boom (HTTP 502)", exitCode: 1 } : rec.runner(args);
-    const result = await runMigrationPlan({ runner, reader: modelReader(model), out: "x.md", now: NOW, store });
+      args.join(" ").includes("/labels")
+        ? { stdout: "", stderr: "gh: boom (HTTP 502)", exitCode: 1 }
+        : rec.runner(args);
+    const result = await runMigrationPlan({
+      runner,
+      reader: modelReader(model),
+      out: "x.md",
+      now: NOW,
+      store,
+    });
     expect(result.exitCode).toBe(1);
     expect(store.files).toEqual({});
   });
@@ -194,8 +262,26 @@ describe("RT-10 --plan never issues a write", () => {
   const seed = seedFromEnv(10010);
   it(`random repositories (seed ${seed})`, async () => {
     const r = prng(seed);
-    const titles = ["Story S-1: a", "[PRD-alpha] Wave 2: b", "[PRD-alpha] Alpha widgets", "fix: c", "feat(x): d", "[chore] e", "plain"];
-    const labels = ["level: prd", "level: wave", "type: prd", "type: bug", "type: other", "priority: critical", "phase: 1", "status: ready", "bug"];
+    const titles = [
+      "Story S-1: a",
+      "[PRD-alpha] Wave 2: b",
+      "[PRD-alpha] Alpha widgets",
+      "fix: c",
+      "feat(x): d",
+      "[chore] e",
+      "plain",
+    ];
+    const labels = [
+      "level: prd",
+      "level: wave",
+      "type: prd",
+      "type: bug",
+      "type: other",
+      "priority: critical",
+      "phase: 1",
+      "status: ready",
+      "bug",
+    ];
     for (let iter = 0; iter < 300; iter++) {
       const model = cloneModel(loadModel("survey"));
       model.issues = [];
@@ -206,7 +292,9 @@ describe("RT-10 --plan never issues a write", () => {
           number: k,
           state: r.bool(0.8) ? "open" : "closed",
           title: r.pick(titles),
-          body: r.bool() ? "**Story:** workstream/user-stories-alpha-phase-2.md" : "BODY-SENTINEL-x",
+          body: r.bool()
+            ? "**Story:** workstream/user-stories-alpha-phase-2.md"
+            : "BODY-SENTINEL-x",
           labels: labels.filter(() => r.bool(0.2)),
           milestone: r.bool() ? "Alpha" : null,
           parent: k > 1 && r.bool(0.3) ? r.int(1, k - 1) : null,
