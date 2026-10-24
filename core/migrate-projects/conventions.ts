@@ -37,6 +37,57 @@ export const TYPE_DEFINITIONS: Readonly<Record<IssueType, string>> = {
   "tech-debt": "Deferred engineering work that fits no other type",
 };
 
+/** Each type's colour, as github-ops' Labels table states it (S-019); PT-81 pins it. */
+export const TYPE_COLORS: Readonly<Record<IssueType, string>> = {
+  security: "B60205",
+  bug: "D93F0B",
+  enhancement: "0E8A16",
+  refactor: "D4C5F9",
+  test: "BFDADC",
+  docs: "0075CA",
+  chore: "FEF2C0",
+  "tech-debt": "5319E7",
+};
+
+export interface LabelDefinition {
+  /** Six hex digits, no `#`. */
+  color: string;
+  description: string;
+}
+
+/** The `level:` labels batch 1 creates when missing (A-71), as github-ops' table states them. */
+export const LEVEL_DEFINITIONS = {
+  "level: prd": { color: "3F51B5", description: "PRD tracking issue; a container for waves, not work" },
+  "level: wave": {
+    color: "5C6BC0",
+    description: "Wave tracking issue; a container for stories, not work",
+  },
+  "level: story": { color: "7986CB", description: "Story issue; the unit of work" },
+} as const satisfies Record<string, LabelDefinition>;
+
+/**
+ * The four priorities, with the D-84 and D-102 meanings batch 1 writes into
+ * their descriptions (D-103): `critical` blocks a ship, `high` blocks none.
+ */
+export const PRIORITY_DEFINITIONS = {
+  "priority: critical": {
+    color: "B60205",
+    description: "Blocks a wave, PRD, or release from shipping",
+  },
+  "priority: high": {
+    color: "D93F0B",
+    description: "Lands in the current wave or cycle; blocks no ship",
+  },
+  "priority: medium": { color: "FBCA04", description: "Lands in the next wave or cycle" },
+  "priority: low": { color: "C5DEF5", description: "Backlog" },
+} as const satisfies Record<string, LabelDefinition>;
+
+/** GitHub refuses a label description longer than this. */
+export const LABEL_DESCRIPTION_MAX = 100;
+
+/** Prefixed to a retired label's description, once (D-91, A-82). */
+export const RETIRED_DESCRIPTION_PREFIX = "Retired (D-91): ";
+
 export const TYPE_LABEL_PREFIX = "type: ";
 
 /** Retired `type:` labels: they count as no type (D-85, A-70). */
@@ -67,6 +118,15 @@ export const LEVEL_LABELS = {
 
 export const PRIORITY_LABEL_PREFIX = "priority: ";
 export const PRIORITY_CRITICAL = "priority: critical";
+export const PRIORITY_HIGH = "priority: high";
+
+/** True for a retired label (D-91): an exact name, or a `wave:` label. */
+export function isRetiredLabel(name: string): boolean {
+  return (
+    (RETIRED_LABELS as readonly string[]).includes(name) ||
+    RETIRED_LABEL_PREFIXES.some((p) => name.startsWith(p))
+  );
+}
 
 /** Conventional Commits title prefix to type (D-85). `perf`, `style`, `revert` give none. */
 export const CONVENTIONAL_COMMIT_SUGGESTIONS: Readonly<Record<string, IssueType>> = {
