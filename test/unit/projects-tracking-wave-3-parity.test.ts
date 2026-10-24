@@ -159,6 +159,7 @@ const TIE_BREAK = "`security > bug > enhancement > refactor > test > docs > chor
 const TYPE_TAGS_LINE = `- Type tags: ${TYPE_SET.map(([type]) => `\`type: ${type}\``).join(", ")}`;
 const EXACTLY_ONE = "exactly one `type:` per issue";
 const OTHER_RETIRED = "`type: other` is retired";
+const EC_158 = "both a bug and a security problem is `type: security`";
 
 /** The D-84 priority scale (S-019 AC-2). */
 const PRIORITY_SCALE: ReadonlyArray<readonly [string, string]> = [
@@ -212,9 +213,7 @@ describe("github-ops", () => {
       }
       expect(lineWith(labels, EXACTLY_ONE, copy.path), copy.path).toContain(TIE_BREAK);
       // EC-158: `bug` plus `security` resolves to `security`.
-      expect(lineWith(labels, TIE_BREAK, copy.path), copy.path).toContain(
-        "both a bug and a security problem is `type: security`",
-      );
+      lineWith(labels, EC_158, copy.path);
       expect(lineWith(labels, OTHER_RETIRED, copy.path), copy.path).toContain("D-85");
       // tech-debt narrowed (PT-59 negative).
       expect(copy.body, copy.path).not.toContain(
@@ -223,7 +222,7 @@ describe("github-ops", () => {
       // PT-58 negative: no `type: other` row in the table.
       expect(tableRow(labels, "type: other"), `${copy.path}: type: other row`).toBeUndefined();
     }
-    for (const marker of [TYPE_TAGS_LINE, EXACTLY_ONE, OTHER_RETIRED]) {
+    for (const marker of [TYPE_TAGS_LINE, EXACTLY_ONE, EC_158, OTHER_RETIRED]) {
       expectIdenticalLine(trees, "Labels", marker);
     }
   });

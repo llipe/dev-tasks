@@ -355,39 +355,47 @@ The following label set **MUST** exist in every project. `github-ops` **MUST** c
 
 The following tags are the canonical, most-used tags for issues and **MUST** be preferred over ad-hoc alternatives:
 
-- Type tags: `type: enhancement`, `type: bug`, `type: security`, `type: tech-debt`, `type: other`
+- Type tags: `type: security`, `type: bug`, `type: enhancement`, `type: refactor`, `type: test`, `type: docs`, `type: chore`, `type: tech-debt`
 - Scope tags: `scope: frontend`, `scope: backend`, `scope: mobile`
 - Level tags: `level: prd`, `level: wave`, `level: story`
 
-| Category     | Label                      | Color     | Description                                                |
-| ------------ | -------------------------- | --------- | ---------------------------------------------------------- |
-| **Type**     | `type: enhancement`        | `#0E8A16` | New feature or enhancement                                 |
-|              | `type: bug`                | `#D93F0B` | Something is broken                                        |
-|              | `type: security`           | `#B60205` | Security vulnerability, hardening, or compliance work      |
-|              | `type: tech-debt`          | `#5319E7` | Refactoring, cleanup, or deferred engineering improvements |
-|              | `type: other`              | `#EDEDED` | Work that does not fit other type categories               |
-|              | `type: chore`              | `#FEF2C0` | Maintenance or dependency work                             |
-|              | `type: docs`               | `#0075CA` | Documentation changes                                      |
-|              | `type: refactor`           | `#D4C5F9` | Code restructure, no behavior change                       |
-| **Priority** | `priority: critical`       | `#B60205` | Must be addressed immediately                              |
-|              | `priority: high`           | `#D93F0B` | Should be in the current cycle                             |
-|              | `priority: medium`         | `#FBCA04` | Planned but not urgent                                     |
-|              | `priority: low`            | `#C5DEF5` | Nice to have                                               |
-| **Level**    | `level: prd`               | `#3F51B5` | PRD tracking issue; a container for waves, not work        |
-|              | `level: wave`              | `#5C6BC0` | Wave tracking issue; a container for stories, not work     |
-|              | `level: story`             | `#7986CB` | Story issue; the unit of work                              |
-| **Status**   | `status: blocked`          | `#E4E669` | Waiting on external dependency                             |
-|              | `status: needs-refinement` | `#F9D0C4` | Scope or AC unclear                                        |
-|              | `status: deferred`         | `#BFBFBF` | Parked by decision; not closed                             |
-| **Scope**    | `scope: frontend`          | `#BFD4F2` | Frontend changes                                           |
-|              | `scope: backend`           | `#D4C5F9` | Backend changes                                            |
-|              | `scope: mobile`            | `#FAD8C7` | Mobile app or mobile-specific changes                      |
-|              | `scope: infra`             | `#E6E6E6` | Infrastructure or CI/CD                                    |
-|              | `scope: api`               | `#C2E0C6` | API surface changes                                        |
+| Category     | Label                      | Color     | Description                                            |
+| ------------ | -------------------------- | --------- | ------------------------------------------------------ |
+| **Type**     | `type: security`           | `#B60205` | Security vulnerability, hardening, or compliance work  |
+|              | `type: bug`                | `#D93F0B` | Behavior that differs from the spec or intent          |
+|              | `type: enhancement`        | `#0E8A16` | New or changed behavior                                |
+|              | `type: refactor`           | `#D4C5F9` | Code restructure, no behavior change                   |
+|              | `type: test`               | `#BFDADC` | Test-only work                                         |
+|              | `type: docs`               | `#0075CA` | Documentation changes                                  |
+|              | `type: chore`              | `#FEF2C0` | Maintenance, dependencies, tooling, or CI              |
+|              | `type: tech-debt`          | `#5319E7` | Deferred engineering work that fits no other type      |
+| **Priority** | `priority: critical`       | `#B60205` | Blocks a wave, PRD, or release from shipping           |
+|              | `priority: high`           | `#D93F0B` | Lands in the current wave or cycle; blocks nothing     |
+|              | `priority: medium`         | `#FBCA04` | Lands in the next wave or cycle                        |
+|              | `priority: low`            | `#C5DEF5` | Backlog                                                |
+| **Level**    | `level: prd`               | `#3F51B5` | PRD tracking issue; a container for waves, not work    |
+|              | `level: wave`              | `#5C6BC0` | Wave tracking issue; a container for stories, not work |
+|              | `level: story`             | `#7986CB` | Story issue; the unit of work                          |
+| **Status**   | `status: blocked`          | `#E4E669` | Waiting on external dependency                         |
+|              | `status: needs-refinement` | `#F9D0C4` | Scope or AC unclear                                    |
+|              | `status: deferred`         | `#BFBFBF` | Parked by decision; not closed                         |
+| **Scope**    | `scope: frontend`          | `#BFD4F2` | Frontend changes                                       |
+|              | `scope: backend`           | `#D4C5F9` | Backend changes                                        |
+|              | `scope: mobile`            | `#FAD8C7` | Mobile app or mobile-specific changes                  |
+|              | `scope: infra`             | `#E6E6E6` | Infrastructure or CI/CD                                |
+|              | `scope: api`               | `#C2E0C6` | API surface changes                                    |
 
 Rules:
 
 - Every issue **MUST** have at least one `type:` label and one `priority:` label, except issues labeled `level: prd` or `level: wave`, which are containers and carry only their `level:` label.
+- Every issue that is not a container carries exactly one `type:` per issue, from the eight `type:` rows above: the label names the kind of work, so a filter on it is trustworthy. When work fits several types, the first in the tie-break order wins: `security > bug > enhancement > refactor > test > docs > chore > tech-debt` (D-85).
+- The tie-break decides a mixed case the same way every time: an issue that is both a bug and a security problem is `type: security`, and a test-only change that also touches docs is `type: test`. Suggest a type from the Conventional Commits prefix of the issue's title (`fix` → `type: bug`, `feat` → `type: enhancement`), and let the user confirm it; never re-type an issue silently.
+- `type: other` is retired, and so are the experiment's `type: prd`, `type: wave` and `type: story`, which `level:` replaces (D-85, D-91). A retired label is never applied to an issue; its definition stays in the repository, marked retired in its description, so closed issues keep their history.
+- Retired labels, in full: `type: other`, `type: prd`, `type: wave`, `type: story`, `status: ready`, `status: in-progress`, the retired `needs: decision`, `needs: approval` and `needs: merge` (D-15), and every `wave:` label (D-91). GitHub's default unprefixed labels (`bug`, `documentation`, `enhancement`) are neither retired nor a type (D-100).
+- `priority: critical` blocks a wave, PRD or release from shipping, and **MUST** name what it blocks: it carries a native `blocked by` relation from the issue it blocks plus a `**Blocks:** #N — <reason>` body line (D-84). Write the relation with the dependency commands in the Command Map.
+- `priority: high` lands in the current wave or cycle and blocks nothing; `priority: medium` lands in the next; `priority: low` is backlog. Priority says when, not what it blocks.
+- Any issue that blocks another carries the `**Blocks:**` line whatever its priority: a `high` issue that blocks another keeps `high` and still carries the line, and the relation is written the same way.
+- A blocking relation is never invented: add one only when the user or the issue text names the blocked issue. A `critical` issue that names none is reported, not linked (D-84).
 - Hierarchy lives only in `level:`; `type:` keeps its meaning as the kind of work. A story issue carries `level: story` beside its `type:` and `priority:` labels.
 - `status:` labels are flags: add one when the condition starts and drop it when it ends. `status: ready` and `status: in-progress` are retired from this taxonomy everywhere, Project or not, because the linked pull request shows that state natively on the issue (FR-7); issues created before this rule keep their labels until a migration pass.
 - `scope:` labels are **RECOMMENDED** for multi-area projects.
