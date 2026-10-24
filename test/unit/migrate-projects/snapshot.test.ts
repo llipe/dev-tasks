@@ -157,11 +157,15 @@ describe("reads (CT-32; A-74 to A-76, A-91)", () => {
     expect(reads).not.toContain("workstream/archive/planner-state-alpha-phase-0.md");
   });
 
-  it("a missing roadmap reads as null, not an error", async () => {
+  // S-014 AC-2: a missing roadmap stops the read before any issue is read.
+  it("a missing roadmap is a refusal, and no issue is read after the check", async () => {
     const model = cloneModel(loadModel("survey"));
     delete model.files["docs/roadmap.md"];
-    const { snapshot } = await read(model);
-    expect(snapshot.roadmap).toBeNull();
+    const rec = recordingRunner(model);
+    await expect(readSnapshot({ runner: rec.runner, reader: modelReader(model) })).rejects.toMatchObject({
+      kind: "roadmap",
+    });
+    expect(rec.calls.map((c) => c[0])).toEqual(["auth", "repo"]);
   });
 
   // EC-105, MU-23: more than 1,000 open issues, all read.

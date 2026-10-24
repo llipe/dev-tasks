@@ -6,7 +6,6 @@
  * human answer. It never proposes a write, and never invents a type or a
  * blocking link: those wait for the owner.
  */
-import { parseRoadmapTable, ROADMAP_FILE } from "../checks/roadmap.js";
 import {
   LEVEL_LABELS,
   PRIORITY_CRITICAL,
@@ -259,22 +258,9 @@ export function classifySnapshot(snapshot: MigrationSnapshot): MigrationPlanClas
       note: "no `Wave issue:` line; the next planner resume adds it (D-89)",
     }));
 
-  // D-86: the canonical table comes first.
+  // D-86: the canonical table is checked when the snapshot is read
+  // (`--plan` exits 2 without it); roadmap notes come from the plan.
   const roadmap: RoadmapNote[] = [];
-  if (snapshot.roadmap === null) {
-    roadmap.push({
-      row: ROADMAP_FILE,
-      note: "missing; product-engineer's roadmap conversion comes first (D-86)",
-    });
-  } else {
-    const parsed = parseRoadmapTable(snapshot.roadmap);
-    if (!parsed.ok) {
-      roadmap.push({
-        row: ROADMAP_FILE,
-        note: `no canonical table (${parsed.reason}); product-engineer's roadmap conversion comes first (D-86)`,
-      });
-    }
-  }
 
   return { issues, needsType, needsBlockingLink, stateFiles, roadmap, information };
 }

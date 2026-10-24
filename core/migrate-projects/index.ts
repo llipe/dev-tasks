@@ -156,6 +156,7 @@ const SNAPSHOT_EXIT: Record<SnapshotError["kind"], number> = {
   auth: ExitCode.DependencyError,
   "repo-view": ExitCode.DependencyError,
   "repo-mismatch": ExitCode.InvalidUsage,
+  roadmap: ExitCode.InvalidUsage,
   read: ExitCode.GeneralError,
 };
 

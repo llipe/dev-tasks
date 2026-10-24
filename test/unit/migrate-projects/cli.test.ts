@@ -251,6 +251,41 @@ describe("auth first (AC-2, D-96)", () => {
   });
 });
 
+// S-014 AC-2 (task 4.2, S-013 audit F-3): a missing canonical table is a
+// refusal, exit 2, with the pointer, not a roadmap note in a written plan.
+describe("canonical roadmap first (S-014 AC-2, D-86)", () => {
+  it.each([
+    ["narrative", (m: RepoModel) => (m.files["docs/roadmap.md"] = "# Roadmap\n\nWave 1 shipped.\n")],
+    ["missing", (m: RepoModel) => delete m.files["docs/roadmap.md"]],
+  ])(
+    "%s roadmap: exit 2, the pointer on stderr, no file, no GitHub read after the check (MC-8, E2E-19)",
+    async (_name, edit) => {
+      const model = loadModel("survey");
+      edit(model);
+      await setup(model);
+      const r = run(["migrate", "projects", "--plan"]);
+      expect(r.exitCode).toBe(2);
+      expect(r.stderr).toMatch(/docs\/roadmap\.md (has no canonical table|is missing)/);
+      expect(r.stderr).toContain("product-engineer's roadmap conversion");
+      expect(r.stdout).toBe("");
+      expect(existsSync(planAt(DEFAULT_PLAN))).toBe(false);
+      expect(ghLog()).toEqual([
+        ["auth", "status", "--hostname", "github.com"],
+        ["repo", "view", "--json", "nameWithOwner"],
+      ]);
+    },
+  );
+
+  it("--json still prints the summary shape with exit code 2", async () => {
+    const model = loadModel("survey");
+    model.files["docs/roadmap.md"] = "# Roadmap\n";
+    await setup(model);
+    const r = run(["migrate", "projects", "--plan", "--json"]);
+    expect(r.exitCode).toBe(2);
+    expect(JSON.parse(r.stdout)).toMatchObject({ exitCode: 2, error: expect.stringMatching(/product-engineer/) });
+  });
+});
+
 describe("read failures (3.18, EC-157)", () => {
   it("a failed read exits 1, names the call on stderr, and writes no file", async () => {
     await setup(loadModel("survey"));
