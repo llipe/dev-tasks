@@ -6,7 +6,7 @@
  * `execFile("gh", args)`: an argument vector, never a shell string, so no
  * title or label value can be read as shell syntax (D-79).
  */
-import { execFile } from "node:child_process";
+import { execFile, type ChildProcess } from "node:child_process";
 
 export interface GhResult {
   stdout: string;
@@ -38,15 +38,31 @@ export interface GhRunnerOptions {
   cwd?: string;
 }
 
+/** `gh` processes the real runner started that have not exited yet. */
+const running = new Set<ChildProcess>();
+
+/**
+ * Kill every `gh` call still in flight (D-111). `--apply`'s signal handler
+ * calls it before releasing the lock, so no write can land after the lock
+ * is gone and its state is never recorded.
+ */
+export function killRunningGh(): number {
+  const n = running.size;
+  for (const child of running) child.kill("SIGKILL");
+  running.clear();
+  return n;
+}
+
 /** The real runner: `execFile("gh", args)`, no shell. */
 export function createGhRunner(options: GhRunnerOptions = {}): GhRunner {
   return (args) =>
     new Promise((resolvePromise, reject) => {
-      execFile(
+      const child = execFile(
         "gh",
         [...args],
         { cwd: options.cwd, encoding: "utf-8", maxBuffer: MAX_BUFFER, windowsHide: true },
         (error, stdout, stderr) => {
+          running.delete(child);
           if (error === null) {
             resolvePromise({ stdout, stderr, exitCode: 0 });
             return;
@@ -63,6 +79,7 @@ export function createGhRunner(options: GhRunnerOptions = {}): GhRunner {
           reject(error);
         },
       );
+      running.add(child);
     });
 }
 

@@ -21,10 +21,16 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 - `core/migrate-projects/map.ts` - FR-18 precedence (S-014)
 - `core/migrate-projects/plan.ts` - batches 1 to 7 and 4b, the row grammar, the batch 7 builder (S-014)
 - `core/migrate-projects/answers.ts` - previous plan answers and their grammar (S-014, task 4.7)
-- `core/migrate-projects/apply.ts` - gated, recorded, resumable writes (S-015)
+- `core/migrate-projects/apply.ts` - gated, recorded, resumable writes; the lock file; the apply summary and `--json` (S-015)
+- `core/migrate-projects/summary.ts` - per-batch and per-list counts shared by `--plan` and `--apply`, split out of `index.ts` (S-015)
+- `core/migrate-projects/snapshot.ts` - `SNAPSHOT_ERROR_EXIT`, the exit code per snapshot failure, shared by both modes (S-015)
+- `test/unit/migrate-projects/apply-gates.test.ts`, `apply-states.test.ts`, `apply-scope.test.ts`, `apply-bodies.test.ts` - `--apply` AC-1 to AC-7, RT-11, RT-12, RT-14 (S-015)
+- `test/unit/migrate-projects/apply-hardening.test.ts`, `apply-writeback.test.ts`, `apply-paths.test.ts` - the qa-pass safety properties, EC-140 under a simulated crash, the remaining paths (S-015 tasks 5.18 to 5.24)
+- `test/unit/migrate-projects/helpers/fake-github-writes.ts`, `apply-run.ts`, `random-repo.ts` - the model's write half, the in-process apply run, the RT-11 generator (S-015)
+- `.gitignore` - ignores `workstream/.migration-projects.lock` (S-015, A-80)
 - `core/migrate-projects/index.ts` - module entry (S-013 to S-015)
-- `bin/dev-tasks.ts` - `migrate projects --plan | --apply` dispatch and help (S-013, S-015)
-- `bin/parse-args.ts` - flag validation (S-013, A-63)
+- `bin/dev-tasks.ts` - `migrate projects --plan | --apply` dispatch and help; `--apply` releases the lock on SIGINT/SIGTERM (S-013, S-015)
+- `bin/parse-args.ts` - flag validation (S-013, A-63); `--apply` usage line (S-015)
 - `core/migrate-projects/local-reader.ts` - injectable `LocalReader` for the roadmap, PRD and state files (S-013, A-52)
 - `core/migrate-projects/conventions.ts` - the type set, tie-break and suggestions, defined once (S-013, A-87)
 - `core/checks/roadmap.ts`, `core/checks/index.ts` - exported canonical-table parser (S-013, A-59), used by S-014
@@ -34,10 +40,10 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 - `test/unit/migrate-projects/helpers/*.ts` - fake GitHub model, recording runner, test-side write oracle, seeded PRNG (S-013); issue comments, `model-apply.ts` (test-side plan replay for RT-12) and `plan-run.ts` (S-014)
 - `test/fixtures/migrate-projects/ac11/` - the AC-11 fixture and its `SOURCE.md` (S-014, RV-3)
 - `test/unit/projects-tracking-wave-3-parity.test.ts` - PT-80 narrowed to plan.ts's batch 7 builder, PT-81 pins label colours and level/priority descriptions (S-014)
-- `test/fixtures/migrate-projects/fake-gh/gh` - fake `gh` for the Layer 2 CLI tests (S-013, A-85)
+- `test/fixtures/migrate-projects/fake-gh/gh` - fake `gh` for the Layer 2 CLI tests (S-013, A-85); `<file>` body keys, `FAKE_GH_BODIES`, `FAKE_GH_DELAY_MS` (S-015)
 - `test/unit/roadmap-parity.test.ts` - imports the shared roadmap parser (S-013, A-59)
-- `test/unit/parse-args.test.ts`, `test/unit/cli-flags.test.ts`, `CHANGELOG.md` - flag handling for every command (S-013 task 3.16)
-- `README.md`, `docs/dev-tasks-user-manual.md`, `TESTING.md` - `migrate projects --plan` reference and the test harness note (S-013)
+- `test/unit/parse-args.test.ts`, `test/unit/cli-flags.test.ts`, `CHANGELOG.md` - flag handling for every command (S-013 task 3.16); `--apply` entry (S-015)
+- `README.md`, `docs/dev-tasks-user-manual.md`, `TESTING.md` - `migrate projects --plan` reference and the test harness note (S-013); `--apply` reference, exit codes and the apply harness note (S-015)
 - `test/fixtures/migrate-projects/**/*.json` - synthetic `gh` output, including the AC-11 fixture (S-013, S-014)
 - `docs/runbooks/runbook-migrate-to-projects-tracking.md`, `docs/runbooks/README.md` - the runbook and its index entry (S-017)
 - `workstream/migration-projects.md` - this repository's migration record, force-added (S-017)
@@ -141,26 +147,40 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
   - [x] 4.22 (verifier F-4, D-108) When an open story's parent is a closed wave issue of its own roadmap row, create no new wave issue and no link for that wave if no other mapped story needs one; list the story in Information ("parent #N is a closed wave issue; never relinked"). A new wave issue is created only if at least one mapped story would actually be linked under it. Test first.
   - [x] 4.23 (verifier F-6, D-109) A PRD tracking issue whose title would exceed github-ops' 80-character limit is not created: list the PRD in Information asking the owner to shorten the PRD file's H1; the rows of its waves that depend on it are omitted, with the reason. Test first.
 
-- [ ] 5.0 Implement Story S-015: `dev-tasks migrate projects --apply` runs only an approved plan and records every write (#322)
+- [x] 5.0 Implement Story S-015: `dev-tasks migrate projects --apply` runs only an approved plan and records every write (#322)
 
-  - [ ] 5.1 Write failing tests `apply-gates.test.ts`, `apply-states.test.ts`, `apply-scope.test.ts`, `apply-bodies.test.ts` against a recording `GhRunner` (D-90)
-  - [ ] 5.2 `apply.ts`: refuse with `ReconciliationConflict` (14), writing nothing, while the header reads `Approved: no` (FR-17, D-80)
-  - [ ] 5.3 Re-read the snapshot; refuse with 14 and "regenerate the plan" when the hash differs
-  - [ ] 5.3a Resume check per D-101: compare the hash only while every row is `pending`; afterwards check each write's target just before it runs, `skipped(already applied)` or `failed(target changed)` (A-49); verify the `Plan digest:` and build argv from Action, Target and Detail only, as `--flag=value` (A-51, A-93); atomic write-back and a lock file against concurrent runs (A-80); answers never become writes here (A-50)
-  - [ ] 5.4 Run batches 1 to 6 in order; write each state (`done`, `failed(<first stderr line>)`, `skipped(already applied)`, `skipped(depends on W-NN)`) back to the plan file after each call; record created issue numbers so dependent writes resolve on a re-run (D-88)
-  - [ ] 5.5 A re-run executes only `pending` and `failed` writes (D-88)
-  - [ ] 5.6 Never execute batch 7 and never call `gh project`; print its steps in the summary (D-81, D-22)
-  - [ ] 5.7 Retired labels: remove from open issues, prefix each definition's description `Retired (projects-tracking#D-91):`, never call `gh label delete` (D-91)
-  - [ ] 5.8 Every body through `--body-file` in the OS temp directory, removed after the call; the PRD status comment by the wave 1 marker procedure (D-92)
-  - [ ] 5.9 Exit `GeneralError` (1) when any write is `failed`, else 0; `--json` per-batch counts; wire `--apply [--plan-file]` in `bin/dev-tasks.ts`
-  - [ ] 5.10 Verify Acceptance Criterion: AC-1 unapproved refused; AC-2 stale snapshot refused
-  - [ ] 5.11 Verify Acceptance Criterion: AC-3 batch order and recorded states; AC-4 resume repeats no `done` write
-  - [ ] 5.12 Verify Acceptance Criterion: AC-5 no Project call; AC-6 retired labels kept as definitions (PRD AC-12)
-  - [ ] 5.13 Verify Acceptance Criterion: AC-7 bodies through files; AC-8 exit codes and `--json`
-  - [ ] 5.14 Edge cases: a label already present; a failed wave-issue create skipping its links; `Approved: yes` with an unanswered review row (those writes stay `pending`, reported); a write that succeeds but whose write-back fails (next run records `skipped(already applied)`)
-  - [ ] 5.15 Integration: a runner that throws on write 5, resumed from the plan file, repeats writes 1 to 4 zero times (PRD AC-12)
-  - [ ] 5.16 AC-to-test mapping: AC-1, AC-2 → `apply-gates.test.ts`; AC-3, AC-4 → `apply-states.test.ts`; AC-5, AC-6 → `apply-scope.test.ts`; AC-7 → `apply-bodies.test.ts`; AC-8 → `cli.test.ts`
-  - [ ] 5.17 Run Tests: `pnpm run test:unit`, `pnpm run validate` green
+  - [x] 5.1 Write failing tests `apply-gates.test.ts`, `apply-states.test.ts`, `apply-scope.test.ts`, `apply-bodies.test.ts` against a recording `GhRunner` (D-90)
+  - [x] 5.2 `apply.ts`: refuse with `ReconciliationConflict` (14), writing nothing, while the header reads `Approved: no` (FR-17, D-80)
+  - [x] 5.3 Re-read the snapshot; refuse with 14 and "regenerate the plan" when the hash differs
+  - [x] 5.3a Resume check per D-101: compare the hash only while every row is `pending`; afterwards check each write's target just before it runs, `skipped(already applied)` or `failed(target changed)` (A-49); verify the `Plan digest:` and build argv from Action, Target and Detail only, as `--flag=value` (A-51, A-93); atomic write-back and a lock file against concurrent runs (A-80); answers never become writes here (A-50)
+  - [x] 5.4 Run batches 1 to 6 in order; write each state (`done`, `failed(<first stderr line>)`, `skipped(already applied)`, `skipped(depends on W-NN)`) back to the plan file after each call; record created issue numbers so dependent writes resolve on a re-run (D-88)
+  - [x] 5.5 A re-run executes only `pending` and `failed` writes (D-88)
+  - [x] 5.6 Never execute batch 7 and never call `gh project`; print its steps in the summary (D-81, D-22)
+  - [x] 5.7 Retired labels: remove from open issues, prefix each definition's description `Retired (projects-tracking#D-91):`, never call `gh label delete` (D-91)
+  - [x] 5.8 Every body through `--body-file` in the OS temp directory, removed after the call; the PRD status comment by the wave 1 marker procedure (D-92)
+  - [x] 5.9 Exit `GeneralError` (1) when any write is `failed`, else 0; `--json` per-batch counts; wire `--apply [--plan-file]` in `bin/dev-tasks.ts`
+  - [x] 5.10 Verify Acceptance Criterion: AC-1 unapproved refused; AC-2 stale snapshot refused
+  - [x] 5.11 Verify Acceptance Criterion: AC-3 batch order and recorded states; AC-4 resume repeats no `done` write
+  - [x] 5.12 Verify Acceptance Criterion: AC-5 no Project call; AC-6 retired labels kept as definitions (PRD AC-12)
+  - [x] 5.13 Verify Acceptance Criterion: AC-7 bodies through files; AC-8 exit codes and `--json`
+  - [x] 5.14 Edge cases: a label already present; a failed wave-issue create skipping its links; `Approved: yes` with an unanswered review row (those writes stay `pending`, reported); a write that succeeds but whose write-back fails (next run records `skipped(already applied)`)
+  - [x] 5.15 Integration: a runner that throws on write 5, resumed from the plan file, repeats writes 1 to 4 zero times (PRD AC-12)
+  - [x] 5.16 AC-to-test mapping: AC-1, AC-2 → `apply-gates.test.ts`; AC-3, AC-4 → `apply-states.test.ts`; AC-5, AC-6 → `apply-scope.test.ts`; AC-7 → `apply-bodies.test.ts`; AC-8 → `cli.test.ts`
+  - [x] 5.17 Run Tests: `pnpm run test:unit`, `pnpm run validate` green
+  - [x] 5.18 (qa D15, D15b) resolveRef title check: a create row hand-edited to `done(#N)` where #N's title differs → dependent rows `failed(target changed)`, never written against #N. Test first.
+  - [x] 5.19 (qa G2b) Gate order: an unapproved plan with failing auth exits 11, not 14; pin the full order unparsable → 2, auth → 11, approval → 14, digest → 14, lock → 14, stale-while-pending → 14 in one table-driven test. Test first.
+  - [x] 5.20 (qa R2c, D3b, D9b, D13, D13b, D11, D5) Targets that change between runs: `skipped(already applied)` rows are never re-run even if the target later changes; edit-label on a label deleted since → `failed(target changed)`; add-blocked-by on a blocked issue that no longer exists → `failed(target changed)`; planned `add:` with the marker comment gone → `failed(target changed)`, never a new marker comment; planned `create:` when a marker appeared since → `failed(target changed)`, no PATCH; the comment gaining a row between `--plan` and `--apply` → only still-missing rows added; create-issue dedupe requires the matching `level:` label (a same-titled issue without it is not adopted). Extend RT-11 to change targets between runs. Test first.
+  - [x] 5.21 (qa D3, D6, D9) Lost write-back for edit-label, add/remove-label and add-blocked-by: a re-run detects the applied state as `skipped(already applied)`; add-blocked-by checks the blocking list before POSTing, so a duplicate never produces a 422 `failed` and exit 1. Test first.
+  - [x] 5.22 (qa S5, S5b, BD1, BD3, SG4, S2, G7) Atomic write-back and body cleanup: EC-140 (a crash between write and rename leaves the old file intact; never a truncated file); each body file gone right after its call (MU-77), the run's temp dir removed, `bin` removing it in `finally`; the in-memory state reset after a failed write-back; the plan file changing after the lock is taken → 14. Test first.
+  - [x] 5.23 (qa SG2, CT-34) Signals and exits: SIGINT and SIGTERM both release the lock and exit 1 (`GeneralError`), matching the user manual and CT-34; test both signals. Test first.
+  - [x] 5.24 (qa) Tighten: MU-61 near-miss asserts exactly 14; CT-25 a fenced `Approved: yes` does not approve; RT-14 asserts writes exactly match the unmutated plan's and gets an explicit timeout like RT-11's; the comma guard (C1) tested; the post-failed-write-back message states that the next run may need a regenerated plan.
+  - [x] 5.25 (qa) Signal tests (cli.test.ts): wait for a readiness signal (the first writes in the gh log) before signalling, and if the deadline passes assert `writesInLog().length >= 3` with a clear message instead of signalling anyway; install the signal handlers as early as possible in `bin/dev-tasks.ts` (before the first write) so a signal before any write still releases the lock and exits 1.
+  - [x] 5.26 (qa) `run()` in cli.test.ts uses `spawnSync`, which blocks the event loop so vitest's timeout cannot fire: pass spawnSync's own `timeout` option (killing the child), so a hung child fails the test instead of hanging the suite; this also covers S-013's `--plan` CLI tests.
+  - [x] 5.27 (qa) Small gaps: RT-14 asserts `writes.length === ids.length`; the apply-level lower-case `approved: yes` test also asserts the plan file is byte-identical and zero writes; a test for the lock-acquire rethrow of a non-EEXIST error (e.g. EACCES), `apply.ts` 114-115.
+  - [x] 5.28 (verifier F-6) When a write-back fails, restore the row's previous in-memory state instead of resetting it to `pending`, so the summary and `--json` counts match the plan file on disk; test with a failing write-back on a row that ends `failed(...)`. Test first.
+  - [x] 5.29 (verifier F-8, D-111) Handle SIGHUP exactly like SIGINT/SIGTERM (release the lock, remove the temp dir, exit 1), and on any of the three signals kill the in-flight `gh` child process before exiting, so no write can land after the lock is released; test SIGHUP, and test that a signal during a slow `gh` call leaves no write recorded after exit (fake `gh` that sleeps then writes). Test first.
+  - [x] 5.30 (verifier F-3, F-5, D-110) User manual and README wording: the per-write target check uses the start-of-run snapshot plus the run's own writes, with status comments, parents and blocking lists read live just before their write; a header that is not exactly one `Approved: yes` line exits 14, and a plan with no `Approved:` header at all (e.g. lower-case `approved: yes`) exits 2 as an unparsable plan.
+  - [x] 5.31 (verifier F-7, F-10) Document recovery from a lost first write-back (the next `--apply` exits 14; run `--plan` again, re-approve, then `--apply`; no write is repeated) in README and the user manual; complete the `--apply` exit-code rows: 2 for an unparsable plan file, a repository mismatch or a missing canonical roadmap table; 14 when the plan file changes while `--apply` is starting.
 
 - [ ] 6.0 Implement Story S-017: A runbook and github-ops' migration mode take a repository through the migration; this repository goes first (#323)
 
