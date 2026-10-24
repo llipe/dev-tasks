@@ -96,6 +96,19 @@ Last updated: YYYY-MM-DD
 
 `Status` is exactly one of `Not started`, `In progress`, `Done`.
 
+### Roadmap Conversion (before migration)
+
+`dev-tasks migrate projects --plan` maps issues to waves through the canonical table in `docs/roadmap.md`: the six-column header of the shape above, its separator, then the rows, as `roadmap-parity.test.ts` checks it. Check for the table at the session-start read and whenever the user prepares a migration. A partial table, the canonical header with at least one row, already counts as canonical: skip the conversion and let migration read it. When `docs/roadmap.md` has no canonical table (a narrative roadmap), convert it before migration runs, in this order (FR-21, D-86):
+
+1. **Draft the canonical table** in the shape above: one row per PRD phase or wave, a one-line scope, `Status` from the fixed set, and `Issues/PRs` taken from the narrative. Two narrative sections that describe one wave give one row citing both.
+2. **Keep the existing narrative verbatim below the table**, never instead of it; the table is added above the narrative, which keeps its wording, diagrams and history.
+3. **Flag every translated Status for the user:** list each row whose `Status` was translated from narrative wording, with the original word, for the user to confirm or correct; for example, a narrative "paused" translates to `Not started` and is flagged. A Status without merged evidence is never upgraded to `Done` by the conversion; a `Done` row cites the merged PR or closed issue behind it.
+4. **Ship it as its own docs PR before migration runs:** the user approves the draft, and the conversion merges as its own docs PR before `dev-tasks migrate projects --plan` is run, never inside the migration's own PR.
+
+Migration depends on this step: `dev-tasks migrate projects --plan` refuses to run without the canonical table, and it maps `phase: X` only to a row whose `Phase/Wave` cell equals `X` exactly. A label that matches no row is listed as unmapped for the user, never fuzzy-matched (D-86).
+
+Migration edits no `workstream/planner-state-*.md` file: `--plan` lists each active state file that lacks a `Wave issue:` line as information, and the planner's resume adds the missing `Wave issue:` line (D-89; PRD AC-13 as amended by D-99).
+
 ---
 
 ## Drift Reconciliation
