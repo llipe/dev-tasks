@@ -1115,3 +1115,206 @@ describe("docs > runbook indexed and sole item-delete file (S-017 AC-4, AC-5, PT
     expect(naming).toEqual([RUNBOOK_PATH]);
   });
 });
+
+// --- S-017 hardening (6.13): qa-engineer meaning probes on PR #331 ----------
+// Each pin below was proven red against a probe edit applied to all three
+// trees (or the runbook) before it was kept.
+
+const STEP_5_LINE =
+  "5. Ask the user for explicit approval of the rebuilt plan file, after showing its batch counts and the rows of batches 1 to 6. Approval is a reply that approves this plan; silence, a question, a change request or approval of an earlier plan is not approval.";
+const NOT_APPROVAL =
+  "silence, a question, a change request or approval of an earlier plan is not approval.";
+const DECLINED_LINE =
+  "- `github-ops` **MUST NOT** run `--apply` without the user's explicit approval of the current plan file (D-80). A declined approval writes nothing and keeps the plan file.";
+const ROADMAP_HANDOFF =
+  "When it does not, stop and hand the conversion to `product-engineer` (Roadmap Conversion (before migration)); resume after its docs PR merges.";
+
+/** Inferred approval in any form, checked with the pinned refusal sentence removed. */
+const INFERRED_APPROVAL =
+  /silence|silent|says nothing|no (reply|answer|response)|earlier plan|previous plan|approval (carries over|still (holds|counts|applies))|approved before|already approved/i;
+
+/** A Project call by name: the CLI verb, an item command, GraphQL ProjectV2, REST `/projects`. */
+const PROJECT_CALL =
+  /gh\s+project|item-(delete|list|edit|add|archive)|gh\s+api\s+graphql|ProjectV2|deleteProjectV2Item|\/projects\b/;
+
+/** The mode merging the chore PR itself. */
+const MODE_MERGES =
+  /gh\s+pr\s+merge|\bmerge (it|the (chore )?PR)\b|github-ops (\*\*MAY\*\* )?merges?\b/i;
+
+/** Per-exit reactions in steps 1 and 7 (CT-39). */
+const STEP_1_EXITS = [
+  "Exit `11`: `gh` is missing or unauthenticated; ask the user to run `gh auth login`, then run it again.",
+  "Exit `2`: the roadmap has no canonical table; go back to the roadmap check above.",
+  "Exit `14`: the file at `--out` already holds an applied plan; keep it as the record and pass another `--out`.",
+] as const;
+const STEP_7_EXITS = [
+  "Exit `0`: every write applied.",
+  "Exit `1`: a write is `failed` or the run was interrupted; report the failed rows and their reasons, and run `--apply` again once the cause is fixed: it resumes and never repeats a `done` write (D-88).",
+  "Exit `14`: the plan is not approved, was edited, is locked by another run or no longer matches the repository; run `--plan` again and go back to step 5.",
+  "Exit `2`: the plan file is unparsable or belongs to another repository.",
+  "Exit `11`: as in step 1.",
+] as const;
+
+describe("github-ops > migration mode, hardened (S-017 6.13)", () => {
+  const trees = loadTrees(GITHUB_OPS_TREES);
+  const modes = trees.map((copy) => ({ path: copy.path, mode: migrationMode(copy) }));
+  const steps = (mode: string, n: number) =>
+    mode.split("\n").find((l) => l.startsWith(`${n}. `)) ?? "";
+
+  it("pins step 5's whole approval sentence and step 6's condition (D-80)", () => {
+    for (const { path, mode } of modes) {
+      expect(steps(mode, 5), path).toBe(STEP_5_LINE);
+      expect(steps(mode, 6), path).toContain("once the user has approved");
+    }
+  });
+
+  it("infers approval nowhere outside the refusal sentence (D-80)", () => {
+    for (const { path, mode } of modes) {
+      expect(mode, path).toContain(NOT_APPROVAL);
+      expect(mode.replace(NOT_APPROVAL, ""), path).not.toMatch(INFERRED_APPROVAL);
+      expect(mode, path).not.toMatch(IMPLIED_APPROVAL);
+    }
+    for (const probe of [
+      "If the user stays silent, continue.",
+      "When the user says nothing, set the header.",
+      "An earlier plan's approval still holds.",
+    ]) {
+      expect(probe, probe).toMatch(INFERRED_APPROVAL);
+    }
+  });
+
+  it("sets Approved: yes only after asking (D-80)", () => {
+    for (const { path, mode } of modes) {
+      const ask = mode.indexOf(STEP_5_LINE);
+      expect(ask, path).toBeGreaterThan(-1);
+      const lines = mode.split("\n");
+      for (const line of lines.filter((l) => l.includes("`Approved: yes`"))) {
+        expect(
+          mode.indexOf(line),
+          `${path}: "${line}" precedes the approval question`,
+        ).toBeGreaterThan(ask);
+      }
+    }
+  });
+
+  it("the user runs the Project batch, and the mode names no Project call (D-22, D-81)", () => {
+    for (const { path, mode } of modes) {
+      expect(steps(mode, 8), path).toContain(
+        "The user runs each step with their own session and sets its State to `done`.",
+      );
+      expect(mode, path).not.toMatch(PROJECT_CALL);
+    }
+    for (const probe of [
+      'gh api graphql -f query="mutation { deleteProjectV2Item(input: $i) { deletedItemId } }"',
+      "gh api users/llipe/projects",
+    ]) {
+      expect(probe, probe).toMatch(PROJECT_CALL);
+    }
+  });
+
+  it("pins the exact declined-approval rule (EC-164)", () => {
+    for (const { path, mode } of modes) {
+      expect(lineWith(mode, "A declined approval", path)).toBe(DECLINED_LINE);
+    }
+  });
+
+  it("only the user merges the chore PR", () => {
+    for (const { path, mode } of modes) {
+      expect(steps(mode, 9), path).toContain("Only the user merges it.");
+      expect(mode, path).not.toMatch(MODE_MERGES);
+    }
+  });
+
+  it("one question per message, never answering for the user", () => {
+    for (const { path, mode } of modes) {
+      expect(steps(mode, 2), path).toContain("one question per message");
+      expect(steps(mode, 2), path).toContain("Never answer a review item on the user's behalf.");
+    }
+  });
+
+  it("reacts to each exit code, and never forces (CT-39)", () => {
+    for (const { path, mode } of modes) {
+      for (const r of STEP_1_EXITS) expect(steps(mode, 1), `${path}: ${r}`).toContain(r);
+      for (const r of STEP_7_EXITS) expect(steps(mode, 7), `${path}: ${r}`).toContain(r);
+      expect(mode, path).not.toContain("--force");
+    }
+  });
+
+  it("re-runs --plan as a required step (A-50)", () => {
+    for (const { path, mode } of modes) {
+      expect(steps(mode, 4), path).not.toMatch(/optional|may skip|can skip|if needed/i);
+    }
+  });
+
+  it("hands a non-canonical roadmap to Roadmap Conversion before step 1", () => {
+    for (const { path, mode } of modes) {
+      const at = mode.indexOf(ROADMAP_HANDOFF);
+      expect(at, path).toBeGreaterThan(-1);
+      expect(at, path).toBeLessThan(mode.indexOf(MODE_STEPS[0]));
+    }
+  });
+});
+
+/** The text of `### <prefix>…` up to the next `##`/`###` heading, whitespace collapsed. */
+function runbookSubsection(content: string, prefix: string): string {
+  const start = content.indexOf(`\n### ${prefix}`);
+  expect(start, `runbook has no "### ${prefix}"`).toBeGreaterThan(-1);
+  const rest = content.slice(start + 1);
+  const next = rest.slice(4).search(/\n##/);
+  return oneLine(next === -1 ? rest : rest.slice(0, next + 4));
+}
+
+/** Sentences that claim the CLI runs or cleans up the Project. */
+const CLI_RUNS_PROJECT =
+  /(`--apply`|the CLI|`?dev-tasks migrate projects`?) (also |then )?(runs|executes|cleans up|deletes|removes|writes|updates)\b[^.]*\b(Project|batch 7)\b/i;
+
+describe("docs > runbook sections, hardened (S-017 6.13)", () => {
+  const content = existsSync(resolve(ROOT, RUNBOOK_PATH))
+    ? readFileSync(resolve(ROOT, RUNBOOK_PATH), "utf-8")
+    : "";
+  const flat = oneLine(content);
+
+  it("nothing touches the Project but the user (D-22, D-81)", () => {
+    expect(flat).toContain("Nothing touches the GitHub Project.");
+    expect(runbookSubsection(content, "7. ")).toContain("`--apply` never runs it");
+    expect(flat).not.toMatch(CLI_RUNS_PROJECT);
+    for (const probe of [
+      "`--apply` also runs batch 7 for you.",
+      "The CLI cleans up the Project after the last batch.",
+    ]) {
+      expect(probe, probe).toMatch(CLI_RUNS_PROJECT);
+    }
+  });
+
+  it("rolls back without deleting anything", () => {
+    const rollback = runbookSection(content, "Rollback");
+    expect(rollback).toContain("Nothing is ever deleted");
+    expect(rollback).not.toMatch(/gh\s+label\s+delete|gh\s+issue\s+delete|delete `?workstream\//i);
+  });
+
+  it("states A-50, and the re-run is not optional", () => {
+    expect(runbookSubsection(content, "4. ")).toContain(
+      "`--apply` never turns an answer into a write",
+    );
+    expect(runbookSubsection(content, "4. ")).not.toMatch(/optional|may skip|can skip|if needed/i);
+  });
+
+  it("pins the declined-approval sentence exactly (EC-164)", () => {
+    expect(flat).toContain(
+      "Declining approval writes nothing: the plan stays at `Approved: no` and you can keep it, change your answers and go back to step 4.",
+    );
+  });
+
+  it("only the owner merges the chore PR", () => {
+    expect(runbookSubsection(content, "8. ")).toContain("only you merge it.");
+  });
+
+  it("carries the D-97 pull-request filter and both Workflows-page steps (PT-75)", () => {
+    const project = runbookSubsection(content, "7. ");
+    expect(project).toContain(`--jq '.items[] | select(.content.type == "PullRequest") | .id'`);
+    expect(project).toContain("set the auto-add workflow's filter to `is:issue`");
+    expect(project).toContain(
+      "turn the default workflows back on (Item closed, Pull request merged)",
+    );
+  });
+});
