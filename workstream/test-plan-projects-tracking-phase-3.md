@@ -382,6 +382,8 @@ Each row is a read after a named event of the live migration under #323. Record 
 
 Expected dogfood plan, stated in advance so DF-27 has something to compare with (A-90). Live shapes on 2026-10-24: no `phase:` labels, no milestones on stories, and no D-91 retired label defined. Stories #318–#323 are already linked under #317, and #317 has `level: wave`. #289 has `level: prd` and one marker comment. Legacy unprefixed labels (`bug`, `story`, `chore`, `documentation`) sit on #244, #108 and others. So the expected batches are: batch 1 creates `type: test` (and `type: refactor`, A-71); batch 2 creates nothing; batches 3 and 5 are empty or `skipped`; batch 4 holds only confirmed type answers. Most review items are "needs a type" (e.g. #244, #108, #263, #262, #64, #118 with two type-like labels).
 
+
+**Updated expectation (2026-10-25, S-017 audit F-8; supersedes the paragraph above where they differ).** The live read-only `--plan` before the dogfood run proposes: batch 1, 10 rows (create `type: refactor` and `type: test`; set the `type: bug`, `type: enhancement`, `type: chore`, `type: tech-debt` and four `priority:` descriptions); batches 2 to 6, 0 rows; batch 7, 4 steps. Needs a type: #108, #244, #262, #263 (#244 suggested `bug`, the others `chore`). Information: 5 PRDs without a tracking issue (shared-understanding-refinement, infra-engineer, kiro-dev-support, evidence-driven-development-loop, factory-board). Every other review list: 0. DF-27 compares against this.
 ## Edge-Case Catalog (`activity-edge-case-refinement`)
 
 Every category was evaluated. Categories marked N/A carry the reason. Each row names its AC and the test that covers it, or `A-NN` when the expected result needs a decision first.
