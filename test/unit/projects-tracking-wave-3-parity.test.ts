@@ -1007,7 +1007,12 @@ function runbookSection(content: string, heading: string): string {
   expect(start, `runbook has no "## ${heading}"`).toBeGreaterThan(-1);
   const rest = content.slice(start + heading.length + 5);
   const next = rest.search(/\n## /);
-  return next === -1 ? rest : rest.slice(0, next);
+  return oneLine(next === -1 ? rest : rest.slice(0, next));
+}
+
+/** Prose wraps at any space: compare with every whitespace run as one space. */
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, " ");
 }
 
 /** PT-75: AC-1's steps, in order, under `## Steps` (A-62). */
@@ -1055,7 +1060,7 @@ describe("docs > runbook sections (S-017 AC-1, PT-75)", () => {
   it("states --apply's exits 0, 1, 2, 11 and 14 and the lost-write-back recovery", () => {
     const steps = runbookSection(content, "Steps");
     for (const exit of ["`0`", "`1`", "`2`", "`11`", "`14`"]) {
-      expect(steps, `exit ${exit}`).toMatch(new RegExp(`\\| ${exit} +\\|`));
+      expect(steps, `exit ${exit}`).toMatch(new RegExp(`\\| ${exit} \\|`));
     }
     expect(steps).toContain("lost first write-back");
   });
@@ -1085,7 +1090,7 @@ describe("docs > runbook sections (S-017 AC-1, PT-75)", () => {
       "Declining approval writes nothing",
       "An interrupted `--apply`",
     ]) {
-      expect(content, marker).toContain(marker);
+      expect(oneLine(content), marker).toContain(marker);
     }
   });
 });
