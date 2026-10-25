@@ -75,21 +75,24 @@ pnpm exec dev-tasks migrate projects --plan
 
 Read-only: nothing on GitHub changes. It writes
 `workstream/migration-projects.md` with the header `Approved: no`, the review
-tables and seven batches. Exit `11` means `gh` is missing or unauthenticated:
-run `gh auth login` and try again. Exit `14` means the file at `--out` is an
-applied plan or not a plan at all: keep it, and pass `--out <other path>`.
+tables and seven batches. Its exits:
+
+- Exit `1`: a `gh` read failed; run it again.
+- Exit `2`: no canonical roadmap table, or `--repo` names another repository than the working tree's.
+- Exit `11`: `gh` is missing or unauthenticated, or `gh repo view` failed: run `gh auth login` and try again.
+- Exit `14`: the file at `--out` is an applied plan or not a migration plan: keep it, and pass `--out <other path>`.
 
 ### 3. Answer the review lists
 
 Each review table has an Answer column. Fill it in the plan file; github-ops'
 migration mode asks you one question per row, with a recommendation.
 
-| Table                 | Answer                                                                            |
-| --------------------- | --------------------------------------------------------------------------------- |
-| Unmapped issues       | a wave id exactly as the roadmap's `Phase/Wave` cell (`alpha 2`), or `standalone` |
-| Needs a type          | one type from the set (the Suggested column is the tie-break winner)              |
-| Needs a blocking link | `#<issue it blocks>`, or `lower priority to high`                                 |
-| Information           | `yes` to act on the note, or leave it blank                                       |
+| Table                 | Answer                                                                                                                                 |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Unmapped issues       | `<PRD key> <Phase/Wave>`: the roadmap row's PRD link text, a space, and its `Phase/Wave` cell (`projects-tracking 3`), or `standalone` |
+| Needs a type          | one type from the set (the Suggested column is the tie-break winner)                                                                   |
+| Needs a blocking link | `#<issue it blocks>`, or `lower priority to high`                                                                                      |
+| Information           | `yes` to act on the note, or leave it blank                                                                                            |
 
 An issue answered `standalone` stays out of the hierarchy: no write is
 proposed for it. State files and roadmap notes are for you to fix by hand;
@@ -130,15 +133,23 @@ file after every call: `done` (`done(#N)` for a created issue),
 `failed(<reason>)`, `skipped(already applied)` or `skipped(depends on W-NNN)`.
 Pass `--plan-file <path>` to apply a plan stored elsewhere.
 
-| Exit | Meaning                                                                                                                                                                                                                                        | What to do                                                                |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `0`  | Every write applied.                                                                                                                                                                                                                           | Go to step 7.                                                             |
-| `1`  | A write is `failed`, or the run was interrupted (`SIGINT`, `SIGTERM`, `SIGHUP`).                                                                                                                                                               | Read the failed rows, fix the cause, and run `--apply` again.             |
-| `2`  | The plan file is missing or unparsable (a plan with no `Approved:` header at all, such as a lower-case `approved: yes`, is unparsable), the working tree is another repository than the plan's, or `docs/roadmap.md` lost its canonical table. | Fix the file or run from the right clone.                                 |
-| `11` | `gh` is missing or unauthenticated.                                                                                                                                                                                                            | `gh auth login`, then `--apply` again.                                    |
-| `14` | The header is not exactly one `Approved: yes` line, a row was edited after the plan was generated, another run holds the lock, the plan file changed while `--apply` was starting, or, while every row is `pending`, the repository changed.   | Approve it, wait for the other run, or regenerate with `--plan` (step 4). |
+| Exit | Meaning                                                                                                                                                                                                                                        | What to do                                                                    |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `0`  | Every write applied.                                                                                                                                                                                                                           | Go to step 7.                                                                 |
+| `1`  | A write is `failed`, a repository read failed before any write, a state could not be written back, or the run was interrupted (`SIGINT`, `SIGTERM`, `SIGHUP`).                                                                                 | Read the failed rows and the message, fix the cause, and run `--apply` again. |
+| `2`  | The plan file is missing or unparsable (a plan with no `Approved:` header at all, such as a lower-case `approved: yes`, is unparsable), the working tree is another repository than the plan's, or `docs/roadmap.md` lost its canonical table. | Fix the file or run from the right clone.                                     |
+| `11` | `gh` is missing or unauthenticated, or `gh repo view` failed.                                                                                                                                                                                  | `gh auth login`, then `--apply` again.                                        |
+| `14` | The header is not exactly one `Approved: yes` line, a row was edited after the plan was generated, another run holds the lock, the plan file changed while `--apply` was starting, or, while every row is `pending`, the repository changed.   | By cause, in the list below.                                                  |
 
 The gates run before any write, so an exit `2`, `11` or `14` writes nothing.
+Exit `14`, by cause (the message names it):
+
+- Not approved: approve it (step 5).
+- A row was edited after the plan was generated: undo the edit, or, while every row is still `pending`, re-plan (step 4) and approve again.
+- Another run holds the lock: wait for it to finish, then run `--apply` again. Do not re-plan. A lock left by a killed process is covered under Escalation.
+- The plan file changed while `--apply` was starting: run `--apply` again.
+- The repository changed while every row is `pending`: re-plan (step 4) and approve again.
+- Never re-plan over a partly applied plan: `--plan` refuses with exit `14` (A-65), and a partly applied plan only resumes with `--apply`.
 
 An interrupted `--apply` resumes: run it again. It runs the `pending`,
 `failed` and `skipped(depends on …)` rows and never repeats a `done` or
@@ -156,7 +167,7 @@ longer proposed, so no write is repeated.
 
 Batch 7, "Project cleanup (you run these)", is yours. `--apply` never runs
 it and prints its steps at the end. Run each with your own session, which
-needs the `project` scope (`gh auth refresh -s project` if it lacks it), then set that row's State to `done` in the plan file.
+needs the `project` scope (`gh auth refresh -s project` if it lacks it), then set that row's State to `done` in the plan file. Copy each command from this runbook or the `--apply` summary, never from the plan file: its table cells escape `|` as `\|`.
 
 1. List the Project's pull-request items (`<n>` is the Project number):
 
@@ -187,7 +198,7 @@ four `done`.
 
 The plan file, with every write's State, is the record of what the migration
 changed (D-93). `workstream/` may be git-ignored, so force-add it on the
-`chore/<issue-number>-projects-migration` branch:
+`chore/<issue-number>-projects-migration` branch. Commit it only once every batch 7 row reads `done`.
 
 ```bash
 git switch chore/<issue-number>-projects-migration
@@ -224,6 +235,9 @@ issue or comment.
 
 - Retired label removed from an issue (batch 5): re-add it,
   `gh issue edit <n> --add-label "<label>"`.
+- Label removed from an issue (batch 4 `remove-label`, a retired or second `type:` label): re-add it,
+  `gh issue edit <n> --add-label "<label>"`.
+- Priority lowered (batch 4b, `priority: critical` to `priority: high`): set it back, `gh issue edit <n> --add-label "priority: critical" --remove-label "priority: high"`.
 - `level:` or `type:` label added (batch 4): remove it,
   `gh issue edit <n> --remove-label "<label>"`.
 - Story linked as a sub-issue (batch 3): remove the link, leaving both issues,
@@ -245,6 +259,7 @@ chore branch.
 
 ## Escalation
 
+- An `--apply` that exits `14` because another run holds `workstream/.migration-projects.lock`, when no run is alive: a killed process or a crash left the lock behind. First check that no `--apply` is still running (`ps -ef | grep "migrate projects"`, on every machine sharing the working tree). Only when none is, remove the file by hand (`rm workstream/.migration-projects.lock`) and run `--apply` again; it resumes.
 - An exit `1` whose failed rows keep failing with the same `gh` error: check
   the token's `repo` scope and the repository's permissions, then attach the
   plan file's failed rows and `--apply --json` output to an issue at
