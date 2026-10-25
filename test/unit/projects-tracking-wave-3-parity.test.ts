@@ -10,7 +10,8 @@
  * no cross-test import.
  */
 
-import { readFileSync, readdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
@@ -25,6 +26,7 @@ import {
   RETIRED_LABEL_PREFIXES as CODE_RETIRED_LABEL_PREFIXES,
   DEFAULT_LABEL_SUGGESTIONS as CODE_DEFAULT_LABEL_SUGGESTIONS,
 } from "#core/migrate-projects/conventions.js";
+import { checkDocsStructure } from "#core/checks/docs-structure.js";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -828,5 +830,283 @@ describe("no Project calls in core/migrate-projects (PT-80)", () => {
         }
       }
     }
+  });
+});
+
+// --- github-ops migration mode and the runbook (S-017, #323) -----------------
+
+const MIGRATION_MODE = "Migration Mode";
+const RUNBOOK_SLUG = "runbook-migrate-to-projects-tracking";
+const RUNBOOK_PATH = `docs/runbooks/${RUNBOOK_SLUG}.md`;
+
+/** The migration mode with its heading line, so a renamed heading fails too. */
+function migrationMode(copy: TreeCopy): string {
+  return `## ${MIGRATION_MODE}\n${sectionOf(copy, MIGRATION_MODE)}`;
+}
+
+/** Assert each marker occurs in `text`, each after the one before it. */
+function expectInOrder(text: string, markers: readonly string[], label: string): void {
+  let cursor = -1;
+  for (const marker of markers) {
+    const at = text.indexOf(marker, cursor + 1);
+    expect(at, `${label}: "${marker}" missing or out of order`).toBeGreaterThan(cursor);
+    cursor = at;
+  }
+}
+
+/** PT-73: the eight steps of the conversation, in order (D-79, A-50, D-93). */
+const MODE_STEPS = [
+  "1. Run `dev-tasks migrate projects --plan`.",
+  "2. Present each review item as one question with a recommendation",
+  "3. Write each answer into the plan file",
+  "4. Run `dev-tasks migrate projects --plan` again.",
+  "5. Ask the user for explicit approval",
+  "6. Set the header line to exactly `Approved: yes`",
+  "7. Run `dev-tasks migrate projects --apply`.",
+  "8. Hand the Project batch to the user",
+  "9. Commit the plan file and open the chore PR:",
+] as const;
+
+/** PT-74: the two prohibitions (D-80, D-81, D-22). */
+const NEVER_APPLY =
+  "`github-ops` **MUST NOT** run `--apply` without the user's explicit approval of the current plan file (D-80).";
+const NEVER_PROJECT =
+  "`github-ops` **MUST NOT** write the Project, in this mode or any other: the user runs batch 7 (D-22, D-81).";
+const DECLINED = "A declined approval writes nothing and keeps the plan file.";
+const STANDALONE = "An unmapped issue answered `standalone` gets no hierarchy write.";
+const RERUN_RESETS = "resets `Approved: no`";
+
+/** Phrasings that let an agent infer approval (PT-74 negative). */
+const IMPLIED_APPROVAL =
+  /does not object|doesn't object|no objection|unless the user|assume[sd]? (the user )?approv|implied approval|implicit approval is enough|silence (means|counts as) approval/i;
+
+/** CT-39: the CLI names the mode uses, exactly as the CLI defines them. */
+const CLI_NAMES = [
+  "--plan",
+  "--apply",
+  "--plan-file",
+  "--out",
+  "workstream/migration-projects.md",
+  "`Approved: yes`",
+  "`gh auth login`",
+] as const;
+
+describe("github-ops > migration mode (S-017 AC-2, PT-73, PT-74, PT-78, CT-39)", () => {
+  const trees = loadTrees(GITHUB_OPS_TREES);
+
+  it("the steps, in order, in every tree (PT-73)", () => {
+    for (const copy of trees) expectInOrder(migrationMode(copy), MODE_STEPS, copy.path);
+  });
+
+  it("re-runs --plan after the answers, before approval (A-50)", () => {
+    for (const copy of trees) {
+      const mode = migrationMode(copy);
+      expect(mode, copy.path).toContain(RERUN_RESETS);
+      expect(mode, copy.path).toContain("`--apply` never turns an answer into a write (A-50).");
+    }
+  });
+
+  it("never applies without explicit approval, never writes the Project (PT-74)", () => {
+    for (const copy of trees) {
+      const mode = migrationMode(copy);
+      for (const rule of [NEVER_APPLY, NEVER_PROJECT, DECLINED, STANDALONE]) {
+        expect(mode, `${copy.path}: ${rule}`).toContain(rule);
+      }
+    }
+  });
+
+  it("no sentence lets the agent infer approval (PT-74 negative)", () => {
+    for (const copy of trees) {
+      expect(migrationMode(copy), copy.path).not.toMatch(IMPLIED_APPROVAL);
+    }
+    for (const probe of [
+      "Proceed if the user does not object.",
+      "With no objection, run --apply.",
+      "Assume approval after a minute.",
+    ]) {
+      expect(probe, probe).toMatch(IMPLIED_APPROVAL);
+    }
+  });
+
+  it("names the CLI flags, the file and the exits it reacts to (CT-39)", () => {
+    for (const copy of trees) {
+      const mode = migrationMode(copy);
+      for (const name of CLI_NAMES) expect(mode, `${copy.path}: ${name}`).toContain(name);
+      for (const exit of ["`0`", "`1`", "`2`", "`11`", "`14`"]) {
+        expect(mode, `${copy.path}: exit ${exit}`).toContain(`Exit ${exit}`);
+      }
+    }
+  });
+
+  it("points to the runbook and the plan's batch 7 without quoting a Project command (A-61)", () => {
+    for (const copy of trees) {
+      const mode = migrationMode(copy);
+      expect(mode, copy.path).toContain(`\`${RUNBOOK_PATH}\``);
+      expect(mode, copy.path).toContain("batch 7");
+      expect(mode, copy.path).not.toMatch(/gh\s+project|item-(delete|list|edit|add|archive)/);
+    }
+  });
+
+  it("commits the plan file with git add -f on the chore branch (D-93)", () => {
+    for (const copy of trees) {
+      const mode = migrationMode(copy);
+      expect(mode, copy.path).toContain("`git add -f workstream/migration-projects.md`");
+      expect(mode, copy.path).toContain("`chore/<issue-number>-projects-migration`");
+    }
+  });
+
+  it("is listed under When to Invoke", () => {
+    for (const copy of trees) {
+      expect(sectionOf(copy, "When to Invoke"), copy.path).toContain(
+        "Migrate an existing repository to the projects-tracking conventions ([Migration Mode](#migration-mode))",
+      );
+    }
+  });
+
+  // PT-78 — the whole section is byte-identical across the three trees.
+  it("is byte-identical across the three trees (PT-78)", () => {
+    const texts = trees.map(migrationMode);
+    for (const [i, text] of texts.entries()) {
+      expect(text, `${trees[i].path}: ${MIGRATION_MODE} differs`).toBe(texts[0]);
+    }
+  });
+});
+
+// PT-79 — A-61: no prompt-tree file names the Project item commands, so
+// PT-28b holds while the mode hands batch 7 to the user.
+describe("no Project item command in a prompt tree (PT-79)", () => {
+  const ITEM_COMMAND = /gh\s+project\s+item-(delete|list)\b/;
+
+  it("the pattern catches both commands", () => {
+    expect("gh project item-delete 5 --owner o --id X").toMatch(ITEM_COMMAND);
+    expect("gh  project item-list 5").toMatch(ITEM_COMMAND);
+    expect("the Project batch").not.toMatch(ITEM_COMMAND);
+  });
+
+  it("holds for every tracked file under .claude, .github and .kiro", () => {
+    const files = trackedUnder([".claude/", ".github/", ".kiro/"]);
+    expect(files.length).toBeGreaterThan(0);
+    for (const file of files) {
+      const content = readFileSync(resolve(ROOT, file), "utf-8");
+      expect(content, `${file} names a Project item command`).not.toMatch(ITEM_COMMAND);
+    }
+  });
+});
+
+/** Tracked text files under the given prefixes (`git ls-files`). */
+function trackedUnder(prefixes: readonly string[]): string[] {
+  return execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf-8" })
+    .split("\0")
+    .filter((f) => f.length > 0 && prefixes.some((p) => f.startsWith(p)))
+    .filter((f) => /\.(md|sh|ya?ml|json|ts)$/.test(f));
+}
+
+/** The text between `## <heading>` and the next `## ` heading. */
+function runbookSection(content: string, heading: string): string {
+  const start = content.indexOf(`\n## ${heading}\n`);
+  expect(start, `runbook has no "## ${heading}"`).toBeGreaterThan(-1);
+  const rest = content.slice(start + heading.length + 5);
+  const next = rest.search(/\n## /);
+  return next === -1 ? rest : rest.slice(0, next);
+}
+
+/** PT-75: AC-1's steps, in order, under `## Steps` (A-62). */
+const RUNBOOK_STEPS = [
+  "### 1. Check the roadmap",
+  "Roadmap Conversion (before migration)",
+  "### 2. Generate the plan",
+  "dev-tasks migrate projects --plan",
+  "### 3. Answer the review lists",
+  "standalone",
+  "### 4. Re-run the plan",
+  "resets `Approved: no`",
+  "### 5. Approve",
+  "Approved: yes",
+  "### 6. Apply",
+  "dev-tasks migrate projects --apply",
+  "### 7. Run the Project cleanup batch",
+  "gh project item-list <n> --owner <owner> --limit 500 --format json",
+  "gh project item-delete <n> --owner <owner> --id <item-id>",
+  "Workflows page",
+  "### 8. Commit the plan file and open a PR",
+  "chore/<issue-number>-projects-migration",
+  "git add -f workstream/migration-projects.md",
+  "gh pr create",
+] as const;
+
+describe("docs > runbook sections (S-017 AC-1, PT-75)", () => {
+  const exists = existsSync(resolve(ROOT, RUNBOOK_PATH));
+  const content = exists ? readFileSync(resolve(ROOT, RUNBOOK_PATH), "utf-8") : "";
+
+  it("exists, with the five frontmatter keys", () => {
+    expect(exists, `${RUNBOOK_PATH} is missing`).toBe(true);
+    const block = content.match(/^---\n([\s\S]*?)\n---\n/);
+    expect(block, "no frontmatter").not.toBeNull();
+    for (const key of ["name", "trigger", "owner", "last_verified", "related"]) {
+      expect(block![1], `frontmatter key ${key}`).toMatch(new RegExp(`^${key}:`, "m"));
+    }
+    expect(block![1]).toContain(`name: ${RUNBOOK_SLUG}`);
+  });
+
+  it("carries AC-1's steps, in order, inside ## Steps", () => {
+    expectInOrder(runbookSection(content, "Steps"), RUNBOOK_STEPS, RUNBOOK_PATH);
+  });
+
+  it("states --apply's exits 0, 1, 2, 11 and 14 and the lost-write-back recovery", () => {
+    const steps = runbookSection(content, "Steps");
+    for (const exit of ["`0`", "`1`", "`2`", "`11`", "`14`"]) {
+      expect(steps, `exit ${exit}`).toMatch(new RegExp(`\\| ${exit} +\\|`));
+    }
+    expect(steps).toContain("lost first write-back");
+  });
+
+  it("verifies by re-planning to a scratch path (A-65, DF-27)", () => {
+    const verification = runbookSection(content, "Verification");
+    expect(verification).toContain("--plan --out");
+    expect(verification).toContain("skipped(already applied)");
+  });
+
+  it("rolls back by hand from the plan file, deleting nothing", () => {
+    const rollback = runbookSection(content, "Rollback");
+    for (const marker of [
+      "by hand",
+      "workstream/migration-projects.md",
+      "sub-issue",
+      "gh issue close",
+      "Nothing is ever deleted",
+    ]) {
+      expect(rollback, marker).toContain(marker);
+    }
+  });
+
+  it("states the S-017 edge cases (EC-164, EC-165, EC-166)", () => {
+    for (const marker of [
+      "answered `standalone`",
+      "Declining approval writes nothing",
+      "An interrupted `--apply`",
+    ]) {
+      expect(content, marker).toContain(marker);
+    }
+  });
+});
+
+describe("docs > runbook indexed and sole item-delete file (S-017 AC-4, AC-5, PT-76, PT-77)", () => {
+  it("docs/runbooks/README.md links the runbook (PT-76)", () => {
+    const index = readFileSync(resolve(ROOT, "docs/runbooks/README.md"), "utf-8");
+    expect(index).toContain(`](${RUNBOOK_SLUG}.md)`);
+  });
+
+  it("docs-structure reports nothing for it (PT-76)", () => {
+    const failures = checkDocsStructure(ROOT).failures.filter((f) =>
+      f.message.includes(RUNBOOK_SLUG),
+    );
+    expect(failures).toEqual([]);
+  });
+
+  it("only the runbook names gh project item-delete under docs/ (PT-77)", () => {
+    const naming = trackedUnder(["docs/"]).filter((file) =>
+      /gh\s+project\s+item-delete\b/.test(readFileSync(resolve(ROOT, file), "utf-8")),
+    );
+    expect(naming).toEqual([RUNBOOK_PATH]);
   });
 });
