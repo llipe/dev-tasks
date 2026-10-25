@@ -76,6 +76,7 @@ Other agents (especially `developer`) **SHOULD** delegate to `github-ops` whenev
 - Assign or create milestones
 - Write structured issue or PR comments
 - Audit existing GitHub artifacts for consistency
+- Migrate an existing repository to the projects-tracking conventions ([Migration Mode](#migration-mode))
 
 ---
 
@@ -497,6 +498,31 @@ Date: YYYY-MM-DD
 ```
 
 4. Offer to auto-fix violations that can be corrected automatically (labels, title format, missing body sections).
+
+---
+
+## Migration Mode
+
+When invoked with `migrate` as input, `github-ops` takes an existing repository through the projects-tracking migration. The `dev-tasks migrate projects` CLI reads the repository and makes every write; this mode is the conversation around it (D-79). The full procedure, including the Project batch and rollback by hand, is `docs/runbooks/runbook-migrate-to-projects-tracking.md`.
+
+Before step 1, create the `chore/<issue-number>-projects-migration` branch (§ Branch Naming), where `<issue-number>` is the issue tracking the migration: step 3 edits the plan file, and step 9 commits it there. Then confirm `docs/roadmap.md` holds the canonical roadmap table. When it does not, stop and hand the conversion to `product-engineer` (Roadmap Conversion (before migration)); resume after its docs PR merges.
+
+1. Run `dev-tasks migrate projects --plan`. It is read-only and writes `workstream/migration-projects.md` (or the path given with `--out`) with `Approved: no`. Exit `11`: `gh` is missing or unauthenticated; ask the user to run `gh auth login`, then run it again. Exit `2`: the roadmap has no canonical table; go back to the roadmap check above. Exit `14`: the file at `--out` already holds an applied plan; keep it as the record and pass another `--out`.
+2. Present each review item as one question with a recommendation, one question per message: an unmapped issue (a wave id exactly as the roadmap's `Phase/Wave` cell, or `standalone`), an issue that needs a type (recommend the Suggested column), a `priority: critical` issue that needs a blocking link (`#<issue it blocks>` or `lower priority to high`), and each Information note (`yes`, or blank). Report state files and roadmap notes for the user to fix by hand. Never answer a review item on the user's behalf.
+3. Write each answer into the plan file's Answer column, exactly as the user gave it, and change nothing else in the file.
+4. Run `dev-tasks migrate projects --plan` again. It reads the answers, rebuilds the batches from them and resets `Approved: no`; `--apply` never turns an answer into a write (A-50). When an answer is listed back as unusable, ask that question again and repeat this step.
+5. Ask the user for explicit approval of the rebuilt plan file, after showing its batch counts and the rows of batches 1 to 6. Approval is a reply that approves this plan; silence, a question, a change request or approval of an earlier plan is not approval.
+6. Set the header line to exactly `Approved: yes` once the user has approved, and edit no other line. Any later `--plan` run resets it, and approval is asked again.
+7. Run `dev-tasks migrate projects --apply`. Pass `--plan-file <path>` when the plan is not at `workstream/migration-projects.md`. Exit `0`: every write applied. Exit `1`: a write is `failed` or the run was interrupted; report the failed rows and their reasons, and run `--apply` again once the cause is fixed: it resumes and never repeats a `done` write (D-88). Exit `14`: the plan is not approved, was edited, is locked by another run or no longer matches the repository; run `--plan` again and go back to step 5. Exit `2`: the plan file is unparsable or belongs to another repository. Exit `11`: as in step 1.
+8. Hand the Project batch to the user: batch 7 of the plan file, which `--apply` prints at the end and never runs. Point the user to it and to the runbook's Project cleanup step, which carry the exact commands and the Workflows-page steps; do not restate them. The user runs each step with their own session and sets its State to `done`.
+9. Commit the plan file and open the chore PR: `git add -f workstream/migration-projects.md` on the `chore/<issue-number>-projects-migration` branch, commit, push, and open a PR against the default branch (§ Pull Request Conventions), so the per-write states are the record of what the migration changed (D-93). Only the user merges it.
+
+Rules:
+
+- `github-ops` **MUST NOT** run `--apply` without the user's explicit approval of the current plan file (D-80). A declined approval writes nothing and keeps the plan file.
+- `github-ops` **MUST NOT** write the Project, in this mode or any other: the user runs batch 7 (D-22, D-81).
+- An unmapped issue answered `standalone` gets no hierarchy write.
+- `github-ops` **MUST NOT** edit a row's State, ID, Action, Target or Detail by hand; only the CLI writes batch 1 to 6 States, and only the user ticks batch 7.
 
 ---
 
