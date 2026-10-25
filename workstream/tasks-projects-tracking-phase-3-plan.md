@@ -46,6 +46,7 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 - `README.md`, `docs/dev-tasks-user-manual.md`, `TESTING.md` - `migrate projects --plan` reference and the test harness note (S-013); `--apply` reference, exit codes and the apply harness note (S-015)
 - `test/fixtures/migrate-projects/**/*.json` - synthetic `gh` output, including the AC-11 fixture (S-013, S-014)
 - `docs/runbooks/runbook-migrate-to-projects-tracking.md`, `docs/runbooks/README.md` - the runbook and its index entry (S-017)
+- `README.md`, `docs/dev-tasks-user-manual.md` - point to the migration runbook and github-ops' Migration Mode (S-017)
 - `workstream/migration-projects.md` - this repository's migration record, force-added (S-017)
 
 ## Tasks
@@ -184,19 +185,19 @@ Order: 1.0 (S-019) → 2.0 (S-016) → 3.0 (S-013) → 4.0 (S-014) → 5.0 (S-01
 
 - [ ] 6.0 Implement Story S-017: A runbook and github-ops' migration mode take a repository through the migration; this repository goes first (#323)
 
-  - [ ] 6.1 Add pins for github-ops' migration mode (three copies, byte-identical) and a docs check that the runbook exists, is indexed, and is the only file in `docs/` naming `gh project item-delete`; confirm red
-  - [ ] 6.2 Write `docs/runbooks/runbook-migrate-to-projects-tracking.md`: roadmap check and conversion, `--plan`, answering the review lists, approval, `--apply`, the Project batch (query, delete template, Workflows-page steps), committing the plan file with `git add -f` on `chore/<issue-number>-projects-migration` and opening a PR, and rollback by hand (FR-22, D-81, D-93, D-97)
-  - [ ] 6.3 Index the runbook in `docs/runbooks/README.md`; `docs-structure` check green
-  - [ ] 6.3a Use the five FR-48 headings and add the runbook to `runbook-set.test.ts` (A-62); PT-80 extends the Project-write guard to `core/migrate-projects/` (A-60); the migration mode describes the Project batch without quoting `gh project` commands (A-61); github-ops re-runs `--plan` after answers before asking approval (A-50); state the expected dogfood result in advance (A-90)
-  - [ ] 6.4 Add the migration mode to github-ops ×3: run `--plan`; one question per review item with a recommendation; write answers into the plan; ask for explicit approval; set `Approved: yes`; run `--apply`; hand the Project batch to the user; commit the plan file and open the chore PR; never `--apply` without approval, never write the Project (D-79, D-80, D-81)
+  - [x] 6.1 Add pins for github-ops' migration mode (three copies, byte-identical) and a docs check that the runbook exists, is indexed, and is the only file in `docs/` naming `gh project item-delete`; confirm red
+  - [x] 6.2 Write `docs/runbooks/runbook-migrate-to-projects-tracking.md`: roadmap check and conversion, `--plan`, answering the review lists, approval, `--apply`, the Project batch (query, delete template, Workflows-page steps), committing the plan file with `git add -f` on `chore/<issue-number>-projects-migration` and opening a PR, and rollback by hand (FR-22, D-81, D-93, D-97)
+  - [x] 6.3 Index the runbook in `docs/runbooks/README.md`; `docs-structure` check green
+  - [x] 6.3a Use the five FR-48 headings and add the runbook to `runbook-set.test.ts` (A-62); PT-80 extends the Project-write guard to `core/migrate-projects/` (A-60); the migration mode describes the Project batch without quoting `gh project` commands (A-61); github-ops re-runs `--plan` after answers before asking approval (A-50); state the expected dogfood result in advance (A-90)
+  - [x] 6.4 Add the migration mode to github-ops ×3: run `--plan`; one question per review item with a recommendation; write answers into the plan; ask for explicit approval; set `Approved: yes`; run `--apply`; hand the Project batch to the user; commit the plan file and open the chore PR; never `--apply` without approval, never write the Project (D-79, D-80, D-81)
   - [ ] 6.5 Migrate this repository under #323 (branch `chore/323-projects-migration`): run `--plan`, walk the owner through the review lists, **ask the owner for explicit approval before `--apply`**, run `--apply`, hand over the Project batch, and wait for the owner to tick it (D-80, D-81)
   - [ ] 6.6 Verify the applied state: re-run `--plan --out <scratch path>` and confirm it proposes no further writes as A-66 defines it; commit `workstream/migration-projects.md` with `git add -f` on the chore branch and open the PR, referenced from the consolidated PR (D-93)
-  - [ ] 6.7 Verify Acceptance Criterion: AC-1 runbook sections; AC-2 migration mode in three copies
+  - [x] 6.7 Verify Acceptance Criterion: AC-1 runbook sections; AC-2 migration mode in three copies
   - [ ] 6.8 Verify Acceptance Criterion: AC-3 this repository migrated, plan file committed with every write `done` or `skipped`
-  - [ ] 6.9 Verify Acceptance Criterion: AC-4 runbook indexed; AC-5 PT-28b still green
-  - [ ] 6.10 Edge cases exercised or stated in the runbook: an unmapped issue answered "standalone"; approval declined (nothing written, plan kept); an interrupted apply resumed
-  - [ ] 6.11 AC-to-test mapping: AC-1 → `docs > runbook sections`; AC-2 → `github-ops > migration mode`; AC-3 → the committed plan file; AC-4 → `docs-structure`; AC-5 → the parity file and PT-28b
-  - [ ] 6.12 Run Tests: `pnpm run test`, `pnpm run lint`, `pnpm run format:check`, `pnpm run typecheck`, `pnpm run audit`, `pnpm run validate` green
+  - [x] 6.9 Verify Acceptance Criterion: AC-4 runbook indexed; AC-5 PT-28b still green
+  - [x] 6.10 Edge cases exercised or stated in the runbook: an unmapped issue answered "standalone"; approval declined (nothing written, plan kept); an interrupted apply resumed
+  - [x] 6.11 AC-to-test mapping: AC-1 → `docs > runbook sections`; AC-2 → `github-ops > migration mode`; AC-3 → the committed plan file; AC-4 → `docs-structure`; AC-5 → the parity file and PT-28b
+  - [x] 6.12 Run Tests: `pnpm run test`, `pnpm run lint`, `pnpm run format:check`, `pnpm run typecheck`, `pnpm run audit`, `pnpm run validate` green
 
 ## Decisions Consumed
 

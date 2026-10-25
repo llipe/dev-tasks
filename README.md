@@ -261,6 +261,13 @@ Project call, never deletes a label or anything else, and never writes a
 title or a Status: it prints batch 7's steps for you to run. Answers in the
 review tables become writes only through a fresh `--plan`.
 
+The whole procedure, from the roadmap check to the committed plan file and
+rollback by hand, is
+[`docs/runbooks/runbook-migrate-to-projects-tracking.md`](docs/runbooks/runbook-migrate-to-projects-tracking.md).
+github-ops' migration mode walks you through it: it asks one question per
+review item, writes your answers into the plan, runs `--apply` only after you
+approve, and leaves the Project batch to you.
+
 **Note the asymmetry with the bare `migrate` command.** `dev-tasks migrate`
 (no sub-verb) migrates a legacy shell-script install and applies its change
 immediately. `dev-tasks migrate docs` proposes by default. The difference is
