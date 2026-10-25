@@ -1143,16 +1143,28 @@ const MODE_MERGES =
 
 /** Per-exit reactions in steps 1 and 7 (CT-39). */
 const STEP_1_EXITS = [
-  "Exit `11`: `gh` is missing or unauthenticated; ask the user to run `gh auth login`, then run it again.",
-  "Exit `2`: the roadmap has no canonical table; go back to the roadmap check above.",
-  "Exit `14`: the file at `--out` already holds an applied plan; keep it as the record and pass another `--out`.",
+  "Exit `1`: a `gh` read failed; run it again.",
+  "Exit `2`: the roadmap has no canonical table, or `--repo` names another repository than the working tree's; go back to the roadmap check above, or run it from the right clone.",
+  "Exit `11`: `gh` is missing or unauthenticated, or `gh repo view` failed; ask the user to run `gh auth login`, then run it again.",
+  "Exit `14`: the file at `--out` already holds an applied plan or is not a migration plan; keep it as the record and pass another `--out`.",
 ] as const;
 const STEP_7_EXITS = [
   "Exit `0`: every write applied.",
-  "Exit `1`: a write is `failed` or the run was interrupted; report the failed rows and their reasons, and run `--apply` again once the cause is fixed: it resumes and never repeats a `done` write (D-88).",
-  "Exit `14`: the plan is not approved, was edited, is locked by another run or no longer matches the repository; run `--plan` again and go back to step 5.",
+  "Exit `1`: a write is `failed`, a repository read failed, a state could not be written back, or the run was interrupted; report the failed rows and the message, and run `--apply` again once the cause is fixed: it resumes and never repeats a `done` write (D-88).",
   "Exit `2`: the plan file is unparsable or belongs to another repository.",
   "Exit `11`: as in step 1.",
+] as const;
+
+/** Mode step 7's exit-14 reactions, one per cause (6.15, verifier F-2). */
+const STEP_7_EXIT_14 = [
+  "Exit `14`: read the cause in its message.",
+  "Another run holds the lock: wait for it to finish, then run `--apply` again; do not run `--plan`.",
+  "The lock is stale (`workstream/.migration-projects.lock` left by a killed process, with no run alive): follow the runbook's Escalation.",
+  "The plan is not approved: go back to step 5.",
+  "A row was edited after the plan was generated (the digest no longer matches): undo the edit, or, while every row is still `pending`, run `--plan` again and go back to step 5.",
+  "The plan file changed while `--apply` was starting: run `--apply` again.",
+  "The repository changed while every row is still `pending`: run `--plan` again and go back to step 5.",
+  "Never run `--plan` over a partly applied plan: it refuses with exit `14` (A-65), and a partly applied plan only resumes with `--apply`.",
 ] as const;
 
 describe("github-ops > migration mode, hardened (S-017 6.13)", () => {
@@ -1315,6 +1327,174 @@ describe("docs > runbook sections, hardened (S-017 6.13)", () => {
     expect(project).toContain("set the auto-add workflow's filter to `is:issue`");
     expect(project).toContain(
       "turn the default workflows back on (Item closed, Pull request merged)",
+    );
+  });
+});
+
+// --- S-017 verifier findings (6.14 to 6.17) -----------------------------------
+
+/** The unmapped answer form `waveId()` and `parseUnmappedAnswer` accept (F-1). */
+const UNMAPPED_ANSWER = "`<PRD key> <Phase/Wave>`";
+const UNMAPPED_EXAMPLE = "`projects-tracking 3`";
+/** The bare Phase/Wave form the CLI rejects. */
+const BARE_PHASE =
+  /exactly as the roadmap's `Phase\/Wave` cell|wave id such as `alpha 2`|\(`alpha 2`\)/;
+
+describe("github-ops > migration mode, verifier findings (S-017 6.14, 6.15, 6.16)", () => {
+  const modes = loadTrees(GITHUB_OPS_TREES).map((copy) => ({
+    path: copy.path,
+    mode: migrationMode(copy),
+  }));
+  const step = (mode: string, n: number) =>
+    mode.split("\n").find((l) => l.startsWith(`${n}. `)) ?? "";
+
+  it("asks for the unmapped answer as <PRD key> <Phase/Wave> or standalone (F-1)", () => {
+    for (const { path, mode } of modes) {
+      expect(step(mode, 2), path).toContain(
+        "an unmapped issue (`<PRD key> <Phase/Wave>`: the roadmap row's PRD link text and its `Phase/Wave` cell, such as `projects-tracking 3`; or `standalone`)",
+      );
+      expect(mode, path).not.toMatch(BARE_PHASE);
+    }
+  });
+
+  it("splits exit 14 by cause and never re-plans over a partly applied plan (F-2)", () => {
+    for (const { path, mode } of modes) {
+      for (const r of STEP_7_EXIT_14) expect(step(mode, 7), `${path}: ${r}`).toContain(r);
+      expect(step(mode, 7), path).not.toMatch(/holds the lock[^.]*run `--plan` again/);
+    }
+  });
+
+  it("copies batch 7 from the runbook or the --apply summary, never the plan file (F-6)", () => {
+    for (const { path, mode } of modes) {
+      expect(step(mode, 8), path).toContain(
+        "have them copy each command from there, never from the plan file, whose table cells escape `|` as `\\|`",
+      );
+    }
+  });
+
+  it("commits the plan file only once every batch 7 row reads done (F-5)", () => {
+    for (const { path, mode } of modes) {
+      expect(step(mode, 9), path).toContain(
+        "9. Commit the plan file and open the chore PR: once every batch 7 row reads `done` (the user's ticks),",
+      );
+    }
+  });
+});
+
+/** A runbook table row starting with `| <code> |`, padding squashed and trimmed. */
+function exitRow(section: string, code: string): string {
+  const rows = section
+    .split("\n")
+    .map((l) => squashSpaces(l).trim())
+    .filter((l) => l.startsWith(`| \`${code}\` |`));
+  expect(rows.length, `exactly one exit row for ${code}`).toBe(1);
+  return rows[0];
+}
+
+/** Raw (unflattened) text of a `### <prefix>` subsection. */
+function rawSubsection(content: string, prefix: string): string {
+  const start = content.indexOf(`\n### ${prefix}`);
+  expect(start, `runbook has no "### ${prefix}"`).toBeGreaterThan(-1);
+  const rest = content.slice(start + 1);
+  const next = rest.slice(4).search(/\n##/);
+  return next === -1 ? rest : rest.slice(0, next + 4);
+}
+
+const APPLY_EXIT_ROWS: Record<string, string> = {
+  "0": "| `0` | Every write applied. | Go to step 7. |",
+  "1": "| `1` | A write is `failed`, a repository read failed before any write, a state could not be written back, or the run was interrupted (`SIGINT`, `SIGTERM`, `SIGHUP`). | Read the failed rows and the message, fix the cause, and run `--apply` again. |",
+  "2": "| `2` | The plan file is missing or unparsable (a plan with no `Approved:` header at all, such as a lower-case `approved: yes`, is unparsable), the working tree is another repository than the plan's, or `docs/roadmap.md` lost its canonical table. | Fix the file or run from the right clone. |",
+  "11": "| `11` | `gh` is missing or unauthenticated, or `gh repo view` failed. | `gh auth login`, then `--apply` again. |",
+  "14": "| `14` | The header is not exactly one `Approved: yes` line, a row was edited after the plan was generated, another run holds the lock, the plan file changed while `--apply` was starting, or, while every row is `pending`, the repository changed. | By cause, in the list below. |",
+};
+
+const APPLY_14_CAUSES = [
+  "Not approved: approve it (step 5).",
+  "A row was edited after the plan was generated: undo the edit, or, while every row is still `pending`, re-plan (step 4) and approve again.",
+  "Another run holds the lock: wait for it to finish, then run `--apply` again. Do not re-plan.",
+  "The plan file changed while `--apply` was starting: run `--apply` again.",
+  "The repository changed while every row is `pending`: re-plan (step 4) and approve again.",
+  "Never re-plan over a partly applied plan: `--plan` refuses with exit `14` (A-65), and a partly applied plan only resumes with `--apply`.",
+] as const;
+
+const PLAN_EXITS = [
+  "Exit `1`: a `gh` read failed; run it again.",
+  "Exit `2`: no canonical roadmap table, or `--repo` names another repository than the working tree's.",
+  "Exit `11`: `gh` is missing or unauthenticated, or `gh repo view` failed: run `gh auth login` and try again.",
+  "Exit `14`: the file at `--out` is an applied plan or not a migration plan: keep it, and pass `--out <other path>`.",
+] as const;
+
+const RESUME_SENTENCE =
+  "It runs the `pending`, `failed` and `skipped(depends on …)` rows and never repeats a `done` or `skipped(already applied)` one (D-88).";
+const LOST_WRITE_BACK = "so the next `--apply` exits `14` (the repository changed).";
+
+describe("docs > runbook, verifier findings (S-017 6.14 to 6.17)", () => {
+  const content = existsSync(resolve(ROOT, RUNBOOK_PATH))
+    ? readFileSync(resolve(ROOT, RUNBOOK_PATH), "utf-8")
+    : "";
+  const flat = oneLine(content);
+
+  it("asks for the unmapped answer as <PRD key> <Phase/Wave> or standalone (F-1)", () => {
+    const answers = runbookSubsection(content, "3. ");
+    expect(answers).toContain(UNMAPPED_ANSWER);
+    expect(answers).toContain(UNMAPPED_EXAMPLE);
+    expect(answers).toContain("or `standalone`");
+    expect(flat).not.toMatch(BARE_PHASE);
+  });
+
+  it("states every --plan exit and its reaction (F-7)", () => {
+    const plan = runbookSubsection(content, "2. ");
+    for (const e of PLAN_EXITS) expect(plan, e).toContain(e);
+  });
+
+  it("pins each --apply exit row's meaning and reaction (F-4, F-7)", () => {
+    const apply = rawSubsection(content, "6. ");
+    for (const [code, row] of Object.entries(APPLY_EXIT_ROWS)) {
+      expect(exitRow(apply, code), `exit ${code}`).toBe(row);
+    }
+  });
+
+  it("splits exit 14 by cause (F-2)", () => {
+    const apply = runbookSubsection(content, "6. ");
+    for (const c of APPLY_14_CAUSES) expect(apply, c).toContain(c);
+  });
+
+  it("runs batches 1 to 6, resumes per D-88, and a lost write-back exits 14 (F-4)", () => {
+    const apply = runbookSubsection(content, "6. ");
+    expect(apply).toContain("It runs batches 1 to 6 in order");
+    expect(flat).not.toMatch(/batches 1 to 7/);
+    expect(apply).toContain(RESUME_SENTENCE);
+    expect(apply).toContain(LOST_WRITE_BACK);
+    expect(flat).not.toContain("--force");
+  });
+
+  it("explains a stale lock in Escalation (F-2)", () => {
+    const escalation = runbookSection(content, "Escalation");
+    for (const m of [
+      "`workstream/.migration-projects.lock`",
+      "check that no `--apply` is still running",
+      "remove the file by hand",
+    ]) {
+      expect(escalation, m).toContain(m);
+    }
+  });
+
+  it("copies batch 7 commands from the runbook or the summary, and commits after the ticks (F-5, F-6)", () => {
+    expect(runbookSubsection(content, "7. ")).toContain(
+      "Copy each command from this runbook or the `--apply` summary, never from the plan file: its table cells escape `|` as `\\|`.",
+    );
+    expect(runbookSubsection(content, "8. ")).toContain(
+      "Commit it only once every batch 7 row reads `done`.",
+    );
+  });
+
+  it("rolls back batch 4 removals and the 4b priority change (F-3)", () => {
+    const rollback = runbookSection(content, "Rollback");
+    expect(rollback).toContain(
+      "Label removed from an issue (batch 4 `remove-label`, a retired or second `type:` label): re-add it,",
+    );
+    expect(rollback).toContain(
+      'Priority lowered (batch 4b, `priority: critical` to `priority: high`): set it back, `gh issue edit <n> --add-label "priority: critical" --remove-label "priority: high"`.',
     );
   });
 });
