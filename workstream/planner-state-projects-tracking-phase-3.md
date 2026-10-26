@@ -7,7 +7,7 @@
 - Repository: llipe/dev-tasks
 - Wave issue: #317
 - Started: 2026-10-24T14:45Z
-- Last updated: 2026-10-25T00:46Z
+- Last updated: 2026-10-26T18:15Z
 - PRD issue: #289
 
 ## Story Status
@@ -19,13 +19,13 @@
 | 3 | S-013 | #320 | ✅ Merged | #328 | story/S-013-migrate-plan |
 | 4 | S-014 | #321 | ✅ Merged | #329 | story/S-014-map-and-batches |
 | 5 | S-015 | #322 | ✅ Merged | #330 | story/S-015-migrate-apply |
-| 6 | S-017 | #323 | 🔄 In Progress (part 1 merged; part 2: live migration) | #331 | story/S-017-runbook-and-mode |
+| 6 | S-017 | #323 | ✅ Merged | #331, #332 | story/S-017-runbook-and-mode, chore/323-projects-migration |
 
 ## Current Position
 
-- Next story: S-017 part 2 (6.5, 6.6, 6.8: migrate this repository with the owner)
-- Last merged PR: #331
-- Integration branch HEAD: 7d52a06
+- Next story: none (all six merged; Phase 5)
+- Last merged PR: #332
+- Integration branch HEAD: 2e9f4dd
 
 ## Decisions Log
 
@@ -51,3 +51,6 @@
 - wave_status: written at S-015 start, closeout (PR open, before merge gates), gate 10 confirmed `PR open #330`.
 - S-017 part 1: memo_intent written(0f9210c2), memo_outcome written(bdc5f25b); coverage_gate SKIPPED(no executable source; 21/40 meaning probes passed the pins, then hardened in 6.13 so 31 fail); verifier High, Minor, 8 findings (PR #331 comment 6391474458), F-1 to F-7 fixed in 6.14 to 6.17, F-8 test-plan expectation updated in this checkpoint.
 - wave_status: written at S-017 start, part 1 closeout (PR open, before merge gates), gate 10 confirmed `PR open #331`.
+- S-017 part 2 (live migration of llipe/dev-tasks): the owner answered nine review items one per message, re-plan reset approval, the owner approved explicitly ("approved"), `--apply` exited 0 (14 done, 0 skipped, 0 failed, all confirmed on GitHub), the owner ran batch 7 on Project 5 and ticked all four steps (screenshot), a fresh re-plan proposes 0 writes in batches 1 to 6; record committed in PR #332 (D-93). coverage_gate SKIPPED(no code); verifier High, Minor, 2 findings (PR #332 comment 6423843793): F-1 chore PR base (integration branch vs the runbook's default branch, Undetermined, to the owner), F-2 task 6.6 completes when the consolidated PR references #332.
+- Verifier note: `pnpm exec dev-tasks` inside this repository runs a globally installed dev-tasks (it created and the verifier removed an untracked `.dev-tasks/manifest.json`); the runbook's form is right for consumer repositories.
+- wave_status: written at S-017 part 2 closeout (record PR #332 open), gate 10 confirmed `PR open #332`.
