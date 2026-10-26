@@ -205,10 +205,10 @@ git switch chore/<issue-number>-projects-migration
 git add -f workstream/migration-projects.md
 git commit -m "chore: record the projects-tracking migration (#<issue-number>)"
 git push -u origin chore/<issue-number>-projects-migration
-gh pr create --base <default-branch> --title "chore: record the projects-tracking migration" --body-file <body file>
+gh pr create --base <base> --title "chore: record the projects-tracking migration" --body-file <body file>
 ```
 
-The PR targets the default branch, and only you merge it.
+`<base>` is the default branch for a standalone migration, and only you merge it. A migration run inside a planner wave targets that wave's integration branch instead, so the record ships in the wave's consolidated PR, which only you merge (D-112).
 
 ## Verification
 

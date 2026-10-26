@@ -1233,6 +1233,10 @@ describe("github-ops > migration mode, hardened (S-017 6.13)", () => {
   it("only the user merges the chore PR", () => {
     for (const { path, mode } of modes) {
       expect(steps(mode, 9), path).toContain("Only the user merges it.");
+      // D-112: inside a planner wave the record PR targets the integration branch.
+      expect(steps(mode, 9), path).toContain(
+        "A migration run inside a planner wave opens this PR against the wave's integration branch instead",
+      );
       expect(mode, path).not.toMatch(MODE_MERGES);
     }
   });
@@ -1319,6 +1323,10 @@ describe("docs > runbook sections, hardened (S-017 6.13)", () => {
 
   it("only the owner merges the chore PR", () => {
     expect(runbookSubsection(content, "8. ")).toContain("only you merge it.");
+    // D-112: a migration inside a planner wave targets the integration branch.
+    expect(runbookSubsection(content, "8. ").replace(/\s+/g, " ")).toContain(
+      "A migration run inside a planner wave targets that wave's integration branch instead",
+    );
   });
 
   it("carries the D-97 pull-request filter and both Workflows-page steps (PT-75)", () => {
