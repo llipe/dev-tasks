@@ -1,5 +1,5 @@
 ---
-version: 1.9
+version: 1.11
 name: Testing Standard
 description: Canonical testing contract for dev-tasks — declares test layers, runners, commands, fixtures, and coverage policy.
 status: filled
