@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
+  # Rebuild and attach the bundle for an existing tag, e.g. when the release
+  # was published from the GitHub web UI or an earlier run failed. It never
+  # creates a tag: the tag must already exist (tags are human-only).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to build and attach the bundle for (vX.Y.Z)"
+        required: true
+        type: string
 
 permissions:
   contents: write # required to create releases and upload assets
@@ -17,12 +26,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.tag || github.ref }}
           fetch-depth: 0 # needed for git describe
 
       - name: Resolve version from tag
         id: version
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${INPUT_TAG:-${GITHUB_REF_NAME}}"
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "ERROR: '$TAG' is not an exact vX.Y.Z tag" >&2
+            exit 1
+          fi
+          if ! git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "ERROR: tag ${TAG} does not exist" >&2
+            exit 1
+          fi
           VERSION="${TAG#v}"
           echo "tag=${TAG}"    >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
@@ -73,7 +93,10 @@ jobs:
           echo "Bundle structure OK."
           rm -rf "$TMPDIR"
 
-      - name: Create GitHub Release and upload assets
+      # A release published from the GitHub web UI already exists when the tag
+      # push starts this job: attach the assets to it and keep its notes.
+      # Only when no release exists is one made here, with default notes.
+      - name: Create GitHub Release or upload assets to the existing one
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -81,6 +104,12 @@ jobs:
           TAG="${{ steps.version.outputs.tag }}"
           BUNDLE="dist/dev-tasks-bundle-v${VERSION}.tar.gz"
           CHECKSUM="${BUNDLE}.sha256"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release ${TAG} exists; uploading assets and keeping its notes."
+            gh release upload "$TAG" "$BUNDLE" "$CHECKSUM" --clobber
+            exit 0
+          fi
 
           # Build release notes
           NOTES=$(cat <<EOF
