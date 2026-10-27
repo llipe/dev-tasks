@@ -49,11 +49,12 @@ Layering is one-directional: `bin/` → `core/`.
 
 ### `core/` modules
 
-| Module               | Responsibility                                                                                                                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `core/distribution`  | Install, update with conflict detection, status, pin/unpin, doctor, legacy migration, backup, SHA-256 hashing, install manifest, profile→path mapping, pinned-version fetch from the npm registry |
-| `core/reconcile.ts`  | Generic three-way hash reconciliation (local / origin / package) that decides install, skip, overwrite, or conflict for a single managed file. Used by `core/distribution/update.ts`.             |
-| `core/exit-codes.ts` | Process exit-code contract for the `dev-tasks` binary                                                                                                                                             |
+| Module                   | Responsibility                                                                                                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/distribution`      | Install, update with conflict detection, status, pin/unpin, doctor, legacy migration, backup, SHA-256 hashing, install manifest, profile→path mapping, pinned-version fetch from the npm registry |
+| `core/migrate-projects`  | Projects-tracking migration: read repository state, generate reviewable plan, run approved plan batches, record write states, and resume from interruption                                         |
+| `core/reconcile.ts`      | Generic three-way hash reconciliation (local / origin / package) that decides install, skip, overwrite, or conflict for a single managed file. Used by `core/distribution/update.ts`.             |
+| `core/exit-codes.ts`     | Process exit-code contract for the `dev-tasks` binary                                                                                                                                             |
 
 ### Harness content
 

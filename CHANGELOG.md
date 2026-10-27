@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- feat(cli): `dev-tasks migrate projects --plan` writes a reviewable, read-only projects-tracking migration plan (#320)
+- feat(cli): `dev-tasks migrate projects --apply` runs an approved migration plan's batches 1 to 6, records each write's state in the plan file and resumes from it; it never runs the Project batch, deletes nothing and refuses an unapproved, edited, locked or stale plan with exit `14` (#322)
+
+### Changed
+
+- fix(cli): `migrate projects --plan` exits `2` with a pointer to product-engineer's roadmap conversion when `docs/roadmap.md` has no canonical table, instead of writing a plan with a roadmap note (#321)
+- fix(cli): every command now exits `2` on an unknown flag, naming it, and on a value flag given without a value (`--profile`, `--pin`, `--repo`, `--out`, `--plan-file`, including an empty `--flag=`), instead of silently ignoring it; `dev-tasks migrate --plan`/`--apply` without the `projects` sub-verb exits `2` with a hint and never runs the legacy migration. A value that starts with `-` is given as `--flag=value` (#320)
+
 ## [0.16.4] - 2026-10-06
 
 ### Changed

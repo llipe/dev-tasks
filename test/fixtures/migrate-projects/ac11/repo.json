@@ -1,0 +1,90 @@
+{
+  "repo": "acme/gizmos",
+  "labels": [
+    { "name": "type: enhancement", "description": "New or changed behavior", "color": "0E8A16" },
+    { "name": "type: bug", "description": "Something is broken", "color": "D93F0B" },
+    { "name": "type: chore", "description": "Maintenance", "color": "FEF2C0" },
+    { "name": "type: docs", "description": "Documentation", "color": "0075CA" },
+    { "name": "type: prd", "description": "PRD tracking issue", "color": "5319E7" },
+    { "name": "type: other", "description": "Anything else", "color": "CCCCCC" },
+    { "name": "status: ready", "description": "Ready to start", "color": "0E8A16" },
+    { "name": "status: blocked", "description": "Waiting on external dependency", "color": "E4E669" },
+    { "name": "needs: decision", "description": "Waiting on a decision", "color": "FBCA04" },
+    { "name": "wave: 2", "description": "Wave 2", "color": "C5DEF5" },
+    { "name": "phase: 2", "description": "Phase 2", "color": "C5DEF5" },
+    { "name": "priority: high", "description": "High", "color": "D93F0B" }
+  ],
+  "issues": [
+    {
+      "id": 70001, "number": 1, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "[PRD-alpha] Alpha gizmos",
+      "labels": ["type: prd"],
+      "body": "Pre-level PRD tracking issue. BODY-SENTINEL-1 zebra-quartz"
+    },
+    {
+      "id": 70010, "number": 10, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "[PRD-alpha] Story S-004: Gizmo list",
+      "labels": ["type: enhancement"],
+      "body": "## Summary\n\n**Story:** workstream/user-stories-alpha-phase-2.md\n\nBODY-SENTINEL-10 zebra-quartz"
+    },
+    {
+      "id": 70011, "number": 11, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "[PRD-alpha] Story S-005: Gizmo detail",
+      "labels": ["type: enhancement"],
+      "body": "## Summary\r\n\r\n**Story:** `workstream/user-stories-alpha-phase-2.md` → S-005\r\n\r\nBODY-SENTINEL-11 zebra-quartz"
+    },
+    {
+      "id": 70012, "number": 12, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "[PRD-alpha] Story S-006: Gizmo search",
+      "labels": ["phase: 2", "type: enhancement", "wave: 2"],
+      "body": "No story line. BODY-SENTINEL-12 zebra-quartz"
+    },
+    {
+      "id": 70013, "number": 13, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "[PRD-alpha] Story S-007: Gizmo export",
+      "labels": ["phase: 2", "status: ready", "type: enhancement"],
+      "body": "No story line. BODY-SENTINEL-13 zebra-quartz"
+    },
+    {
+      "id": 70014, "number": 14, "state": "open", "milestone": "Alpha 2", "parent": null, "blocking": [],
+      "title": "Story S-008: Gizmo import",
+      "labels": ["type: enhancement"],
+      "body": "Linked only by its milestone. BODY-SENTINEL-14 zebra-quartz"
+    },
+    {
+      "id": 70015, "number": 15, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "Story S-009: Gizmo sync",
+      "labels": ["type: enhancement"],
+      "body": "Nothing links it. BODY-SENTINEL-15 zebra-quartz"
+    },
+    {
+      "id": 70020, "number": 20, "state": "open", "milestone": "Alpha 2", "parent": null, "blocking": [],
+      "title": "[bug] Gizmo list crashes when empty",
+      "labels": ["phase: 2", "type: bug"],
+      "body": "Standalone bug. BODY-SENTINEL-20 zebra-quartz"
+    },
+    {
+      "id": 70021, "number": 21, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "fix: handle an empty config file",
+      "labels": ["needs: decision"],
+      "body": "No type label. BODY-SENTINEL-21 zebra-quartz"
+    },
+    {
+      "id": 70022, "number": 22, "state": "open", "milestone": null, "parent": null, "blocking": [],
+      "title": "[chore] Tidy the release scripts",
+      "labels": ["type: chore", "type: docs"],
+      "body": "Two type labels. BODY-SENTINEL-22 zebra-quartz"
+    },
+    {
+      "id": 70005, "number": 5, "state": "closed", "milestone": null, "parent": null, "blocking": [],
+      "title": "[PRD-alpha] Story S-001: Gizmo model",
+      "labels": ["type: enhancement"],
+      "body": "Closed wave 1 story. BODY-SENTINEL-5 zebra-quartz"
+    }
+  ],
+  "comments": {},
+  "files": {
+    "docs/roadmap.md": "# Roadmap\n\n| PRD | Phase/Wave | Scope (one line) | Status | Issues/PRs | What's missing |\n| --- | --- | --- | --- | --- | --- |\n| [alpha](requirements/prd-alpha.md) | 1 | Gizmo model and storage | Done | #5 | — |\n| [alpha](requirements/prd-alpha.md) | 2 | Gizmo search and export | In progress | #10–#15 | Export |\n",
+    "docs/requirements/prd-alpha.md": "# PRD: alpha — Alpha gizmos\n\nSynthetic PRD for the AC-11 fixture.\n"
+  }
+}

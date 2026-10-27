@@ -32,6 +32,8 @@ const TEMPLATE_DIR = join(ROOT, "templates/runbooks");
  * `runbook-diagnose-pr-validate` arrived with the PR `validate` workflow (#248).
  * `runbook-configure-github-project` arrived with activity-init's GitHub
  * Project step (S-005, #274).
+ * `runbook-migrate-to-projects-tracking` arrived with github-ops' migration
+ * mode (S-017, #323; A-62).
  */
 const EXPECTED_RUNBOOKS = [
   "runbook-configure-branch-protection",
@@ -40,6 +42,7 @@ const EXPECTED_RUNBOOKS = [
   "runbook-diagnose-pr-validate",
   "runbook-install-dev-tasks",
   "runbook-migrate-foundation-docs",
+  "runbook-migrate-to-projects-tracking",
   "runbook-release-npm",
   "runbook-retire-dt",
   "runbook-rollback-deploy",

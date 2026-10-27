@@ -4,9 +4,12 @@
 
 | Version | Date       | Summary                                   | Author   |
 | ------- | ---------- | ----------------------------------------- | -------- |
+| 1.1     | 2026-10-26 | Wave 3 rollup F-5: execution note added; AC-13 reads as amended by D-99. Per-row Observed and Status columns stay as designed; observed results live in the per-story fidelity reports and the rollup. | planner  |
 | 1.0     | 2026-10-24 | Initial traceability matrix, Design Mode. | verifier |
 
 Format: `PRD FR/AC -> story AC -> Test-Case-ID(s) -> Observed result -> Status`. This is a pre-implementation Design Mode artifact, so every `Observed result` is `—` and every `Status` is `planned`. `verifier` Audit Mode replaces them with the observed value and `Pass | Fail | Drift` per story. For every `DF-*` row it records the observed read once the event has happened, or `pending` until then.
+
+**Execution note (2026-10-26).** All six stories merged (PRs #326 to #332). Observed results are recorded in `workstream/fidelity-report-S-013.md`, `-S-014.md`, `-S-015.md`, `-S-016.md`, `-S-019.md`, `-S-017-part-1.md`, `-S-017-part-2.md` and the rollup `workstream/fidelity-report-projects-tracking-phase-3-rollup.md`; this matrix keeps its Design Mode `planned` statuses. PRD AC-13 is amended by D-99: the plan lists state files without a `Wave issue:` line, and the planner's resume adds it; it is covered by `classify.test.ts`, not uncovered.
 
 Test-case IDs are defined in `workstream/test-plan-projects-tracking-phase-3.md`:
 

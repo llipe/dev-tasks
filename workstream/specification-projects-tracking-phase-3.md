@@ -4,6 +4,9 @@
 
 | Version | Date       | Summary                                                                                                                                         | Author                    |
 | ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.6 | 2026-10-24 | §16a gains the S-015 audit records (D-110, D-111). | product-engineer |
+| 1.5 | 2026-10-24 | §16a gains the S-014 audit records (F-2, F-5, F-7, F-8) and D-106 to D-109. | product-engineer |
+| 1.4 | 2026-10-24 | §16a A-53: the three accepted PRD-title forms, recorded after the S-013 audit (F-6). | product-engineer |
 | 1.3 | 2026-10-24 | Design Mode resolutions A-49 to A-93 confirmed by @llipe: §16a added; D-98 to D-101 (milestone rule dropped, AC-13 amended, default labels, resume check). | product-engineer |
 | 1.2 | 2026-10-23 | §8.3 batch 7 prints the Project item query and delete template instead of per-item commands (D-97). | product-engineer |
 | 1.1 | 2026-10-23 | §6 exit codes mapped onto the existing `core/exit-codes.ts` values; no new exit code. | product-engineer |
@@ -316,7 +319,7 @@ The Design Mode findings A-49 to A-93 (`workstream/test-plan-projects-tracking-p
 **Reads and classification**
 
 - **A-52.** Local files (`docs/roadmap.md`, `workstream/planner-state-*.md`) are read through an injectable `LocalReader`, not the `GhRunner`. `--plan` exits 2 when `--repo` differs from the working tree's `gh repo view` result. Both files enter the snapshot hash.
-- **A-53.** Classification runs stories first. Story titles carry the `[PRD-…]` prefix too, for example #318. A tracking issue is a non-story whose title is `[PRD-<name>] Wave <id>:` or exactly `[PRD-<name>] <H1 of the PRD file>`, or a non-story with that prefix carrying `level: prd`, `level: wave` or the experiment's `type: prd`/`type: wave`. Any other prefixed issue, such as #201, is standalone.
+- **A-53.** Classification runs stories first. Story titles carry the `[PRD-…]` prefix too, for example #318. A tracking issue is a non-story whose title is `[PRD-<name>] Wave <id>:` or exactly `[PRD-<name>] <H1 of the PRD file>`, or a non-story with that prefix carrying `level: prd`, `level: wave` or the experiment's `type: prd`/`type: wave`. Any other prefixed issue, such as #201, is standalone. The PRD-title match accepts three forms of the PRD file's H1: the H1 itself, the H1 without a leading `PRD:`, and that form without a leading `<name> —` (or `-`, `–`), so #289's title matches (S-013 audit F-6).
 - **A-54.** The `**Story:**` pattern tolerates the live form: optional backticks around the path and an optional `→ S-NNN` suffix, e.g. ``**Story:** `workstream/user-stories-<slug>-phase-<N>.md` → S-019``.
 - **A-55.** A story file's slug maps to a PRD by the roadmap PRD link text, exactly. A single-wave PRD's `All` row matches a story file without `-phase-N`. No match means unmapped.
 - **A-56, A-57, D-98.** Rule 2 matches `phase: X` only within the PRD named by the story's title prefix. Rule 3 (the milestone) is dropped. Precedence is the `**Story:**` line, then the scoped `phase:` label, then unmapped.
@@ -376,6 +379,10 @@ The Design Mode findings A-49 to A-93 (`workstream/test-plan-projects-tracking-p
 - **A-58, D-99.** PRD AC-13 is amended in v1.11.
 - **A-86.** S-019 AC-5's aggregation queries go in product-engineer § Drift Reconciliation; S-016 owns § Roadmap Maintenance.
 - **A-92.** Code exports use `MigrationPlan*` names. FR-17's "dry-run plan" reads "migration plan" in v1.11.
+
+- **S-014 audit records (v1.5).** The snapshot reads each open PRD tracking issue's comments, one paginated read per issue, so batch 6 can tell create from add-rows (F-2, A-67, extends A-74). A wave title longer than 80 characters is cut at a word and ends with `…` (F-5). A `Phase/Wave` cell containing a space or colon cannot form a `Wave <id>:` title, so it is listed, not created (F-7). A closed PRD tracking issue is never reused: an in-scope PRD gets a new one and the closed one is listed, as A-91 does for waves (F-8). Labels match case-insensitively (D-106); `not started` joins the PRD State vocabulary (D-107); no empty wave issue (D-108); an over-long PRD title is listed, not created (D-109).
+
+- **S-015 audit records (v1.6, D-110, D-111).** Created issue numbers are recorded in the State column as `done(#N)` or `skipped(already applied, #N)`, never in Detail, which the `Plan digest:` covers. `skipped(depends on W-NNN)` rows run again on the next run; the §8.4 diagram's `skipped` is final only for `skipped(already applied)`. D-101's per-write target check reads the start-of-run snapshot plus the run's own writes; status comments, parents and blocking lists are read live just before their write. A plan whose `Approved:` header is missing (for example lower-case `approved: yes`) is unparsable and exits 2; a header that is present but not exactly `Approved: yes` exits 14. SIGINT, SIGTERM and SIGHUP all release the lock, kill the in-flight `gh` call and exit 1 (D-111).
 
 ## 17. Open Questions
 

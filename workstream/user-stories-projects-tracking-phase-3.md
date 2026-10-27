@@ -4,6 +4,7 @@
 
 | Version | Date       | Summary                                                                                                              | Author                    |
 | ------- | ---------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1.2     | 2026-10-24 | S-015 amended after its audit (D-110): created numbers in State, `skipped(depends on)` rows re-run. | product-engineer |
 | 1.1     | 2026-10-24 | Design Mode resolutions (spec v1.3 §16a, D-98 to D-101) annotated on all six stories; no AC text rewritten. | product-engineer |
 | 1.0     | 2026-10-23 | Initial story set from `workstream/specification-projects-tracking-phase-3.md` v1.2. Six stories, PRD ids kept. | @llipe / product-engineer |
 
@@ -354,7 +355,7 @@ So that an interruption or a failed call never leaves me unsure what changed.
 - [ ] AC-1: `--apply [--plan-file <path>]` exits `ReconciliationConflict` (14), writing nothing, while the plan header reads `Approved: no` (FR-17, D-80).
 - [ ] AC-2: `--apply` re-reads the snapshot and exits `ReconciliationConflict` (14) with "regenerate the plan", writing nothing, when its hash differs from the plan's `Snapshot` (spec §8.4).
 - [ ] AC-3: Batches 1 to 6 run in order; each write's state (`done`, `failed(<first stderr line>)`, `skipped(already applied)`, `skipped(depends on W-NN)`) is written back to the plan file after its call (D-88).
-- [ ] AC-4: A re-run executes only `pending` and `failed` writes; a `done` write is never repeated (D-88).
+- [ ] AC-4: A re-run executes only `pending` and `failed` writes; a `done` write is never repeated (D-88). Amended (D-110): `skipped(depends on W-NNN)` rows, never attempted, also run again.
 - [ ] AC-5: Batch 7 is never executed; the summary prints its steps for the user, and the command makes no `gh project` call of any kind (D-81, D-22).
 - [ ] AC-6: Retired labels are removed from open issues and their definitions' descriptions prefixed `Retired (projects-tracking#D-91):`; no `gh label delete` call is ever made (D-91, PRD AC-12).
 - [ ] AC-7: Every issue body and comment body goes through `--body-file`; the status comment uses the wave 1 marker procedure (spec §6).
@@ -367,7 +368,7 @@ So that an interruption or a failed call never leaves me unsure what changed.
 
 #### Technical Notes
 
-- `apply.ts` and `gh.ts` are the only writers. Created issue numbers are recorded in the write's detail so dependent writes (links, comments) can resolve them on a re-run.
+- `apply.ts` and `gh.ts` are the only writers. Created issue numbers are recorded in the write's State as `done(#N)` (Detail is under the `Plan digest:`), so dependent writes (links, comments) can resolve them on a re-run (D-110).
 - Temporary body files go under the OS temp directory and are removed after the call.
 
 #### Testing Requirements

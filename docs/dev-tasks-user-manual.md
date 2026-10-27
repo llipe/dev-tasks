@@ -331,16 +331,55 @@ dev-tasks migrate --json  # Machine-readable output
 
 Detects legacy `.dev-tasks/skills/` layout, maps files to native platform paths, and writes a fresh manifest.
 
+#### `dev-tasks migrate projects --plan`
+
+Reads the repository through `gh` and writes a reviewable projects-tracking migration plan. Read-only: nothing on GitHub changes.
+
+```bash
+dev-tasks migrate projects --plan [--repo <owner/repo>] [--out <path>] [--json]
+```
+
+- `--out` defaults to `workstream/migration-projects.md`. `--repo` defaults to the working tree's repository (`gh repo view`); a different value exits `2`, because the roadmap and planner state files are read from the working tree.
+- `gh auth status --hostname github.com` runs first; when it fails, or `gh` is not installed, the command exits `11` with the `gh auth login` hint and reads nothing else.
+- The plan file starts with `Format: 1`, `Generated:`, `Snapshot:` (SHA-256 of what was read), `Plan digest:` and `Approved: no`, then the review tables (unmapped issues, needs a type, needs a blocking link, state files, roadmap notes, information) and one table per batch. It holds issue numbers, titles and label names only, never issue bodies.
+- `docs/roadmap.md` must hold the canonical table (`PRD | Phase/Wave | Scope (one line) | Status | Issues/PRs | What's missing`); without it the command exits `2` before reading any issue and points to product-engineer's roadmap conversion.
+- Mapping (FR-18): a story maps to a wave by its `**Story:**` body line (the PRD by the roadmap's PRD link text, the wave by `-phase-<N>`, or the `All` row for a file without it), then by a `phase:` label matched exactly within the PRD named in its `[PRD-<name>]` title prefix. A rule maps only when it yields exactly one row. The milestone is not a rule. Anything else is listed under unmapped issues with the reason.
+- Batches, in order, each row with an ID, Action, Target, Detail, `Depends on` and State: `1` labels (missing `level:` and `type:` labels created, type and `priority:` descriptions set, retired descriptions prefixed `Retired (D-91): `), `2` tracking issues (reused, or created with the exact title shown; none for a `Done` wave), `3` hierarchy links (never a relink), `4` `level:` and answered `type:` labels, `4b` blocking-link and priority answers, `5` retired labels removed from open issues, `6` the PRD status comment (created, or missing rows added), and `7` the Project cleanup steps you run yourself. A row already in effect is not proposed, so re-planning after an apply proposes no writes.
+- Answers: fill the Answer columns (`<PRD key> <Phase/Wave>`, the roadmap row's PRD link text and its `Phase/Wave` cell such as `projects-tracking 3`, or `standalone`; a type; `#<issue it blocks>` or `lower priority to high`; `yes` on an Information question) and run `--plan` again. It reads the previous file's answers, rebuilds the batches and resets `Approved: no`; an invalid answer stays listed with the reason.
+- It refuses with exit `14` to overwrite the file at `--out` when that file is a plan with any row that is not `pending`, or is not a migration plan at all; choose another `--out`.
+
+#### `dev-tasks migrate projects --apply`
+
+Runs an approved migration plan and records every write's result in the plan file, so a re-run resumes.
+
+```bash
+dev-tasks migrate projects --apply [--plan-file <path>] [--json]
+```
+
+- `--plan-file` defaults to `workstream/migration-projects.md`; the states are written back to that file only, after every call, through a temporary file and a rename.
+- Gates, in this order, each writing nothing: a missing or unparsable plan file, or a row whose Detail does not match its Action, exits `2` (a plan with no `Approved:` header at all, such as a lower-case `approved: yes`, is unparsable); `gh` missing or unauthenticated exits `11`; then exit `14` when the header is not exactly one `Approved: yes` line, when `Plan digest:` no longer matches the rows (a row edited after the plan was generated), when another run holds `workstream/.migration-projects.lock`, when the plan file changes while `--apply` is starting, or, while every row is still `pending`, when the repository changed since the plan was generated ("regenerate the plan"). Reading the repository exits `2` when the working tree is another repository than the plan's or `docs/roadmap.md` lost its canonical table.
+- Batches `1` to `6` run in order. Each row's State becomes `done` (`done(#N)` for a created issue), `failed(<first line of gh's error>)`, `skipped(already applied)` when its target is already in the desired state, or `skipped(depends on W-NNN)` when a row it depends on did not apply. A failed row does not stop rows that do not depend on it.
+- A re-run executes `pending`, `failed` and `skipped(depends on …)` rows, never a `done` or `skipped(already applied)` one. Once any row is recorded, the snapshot hash is no longer compared; each write instead checks its own target just before it runs and records `failed(target changed)` when the target is in neither the state the plan expected nor the desired one. The check reads the start-of-run snapshot plus the run's own writes; a status comment, a sub-issue parent and a blocking list are read live just before their write. A created tracking issue whose state was lost is found again by its exact title, never created twice.
+- Every write is built from the row's Action, Target and Detail only, each value as `--flag=value` and a label name after `--`. Issue and comment bodies go through `--body-file` (an edit through `--field=body=@<file>`) in a temporary directory, removed after each call. The PRD status comment is found by its marker: created when absent, otherwise edited in place by id with only the missing rows added.
+- It never runs batch 7, never makes a Project call, never deletes a label, issue or comment, and never writes a title or a Status. The summary prints batch 7's steps for you to run with your own session; tick each by setting its State to `done`.
+- Answers in the review tables never become writes here: run `--plan` again to turn them into rows, then approve the rebuilt plan. The summary counts the items still waiting for an answer.
+- The end-to-end procedure, including the Project batch, committing the plan file and rollback by hand, is [`docs/runbooks/runbook-migrate-to-projects-tracking.md`](runbooks/runbook-migrate-to-projects-tracking.md); github-ops' Migration Mode runs it as a conversation and never runs `--apply` without your explicit approval.
+- Recovery from a lost first write-back: if the first write lands but its state cannot be written back, every row still reads `pending`, so the next `--apply` exits `14` (the repository changed). Run `--plan` again, approve the new plan, then `--apply`: the write that landed is no longer proposed, so no write is repeated.
+- It exits `0` when every write applied, and `1` when any write is `failed` or the run was interrupted, including by `SIGINT`, `SIGTERM` or `SIGHUP`, which kill the `gh` call in flight, release the lock and remove the body files first (the states so far are kept). `--json` prints `{ command, mode: "apply", repo, planFile, batches: [{ name, pending, done, failed, skipped }], review, exitCode }`.
+
 ---
 
 ## Exit Codes
 
-| Code | Constant                 | Meaning                                               |
-| ---- | ------------------------ | ----------------------------------------------------- |
-| 0    | `Success`                | Command completed successfully                        |
-| 2    | `InvalidUsage`           | Invalid arguments or flags                            |
-| 3    | `ReconciliationConflict` | Update detected conflicts (use `--force` to override) |
-| 4    | `DependencyError`        | Doctor check failed                                   |
+Every code comes from [`core/exit-codes.ts`](../core/exit-codes.ts); no command adds its own.
+
+| Code | Constant                 | Meaning                                                                                                                                                                                                                                                                                                                                                                   |
+| ---- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | `Success`                | Command completed successfully                                                                                                                                                                                                                                                                                                                                            |
+| 1    | `GeneralError`           | Unexpected error, a failed rename in `migrate docs`, a failed `gh` read in `migrate projects`, or a `failed` write or an interrupted run in `migrate projects --apply`                                                                                                                                                                                                    |
+| 2    | `InvalidUsage`           | Invalid arguments or flags: an unknown flag, a value flag with no value, an unknown command, a `--repo` that is not the working tree's repository, no canonical `docs/roadmap.md` table (`migrate projects`), or, for `migrate projects --apply`, an unparsable plan file or a working tree that is not the plan's repository                                             |
+| 11   | `DependencyError`        | A `doctor` check failed, or `gh` is missing or unauthenticated (`migrate projects`)                                                                                                                                                                                                                                                                                       |
+| 14   | `ReconciliationConflict` | `update` found conflicting edits (use `--force`), `migrate docs` skipped a rename, `migrate projects --plan` refused to overwrite the file at `--out` (an applied plan, or not a plan), or `migrate projects --apply` refused a plan that is not approved, was edited after it was generated, is locked by another run, changed while `--apply` was starting, or is stale |
 
 ---
 

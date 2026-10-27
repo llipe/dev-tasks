@@ -1,12 +1,18 @@
 #!/usr/bin/env node
 /**
  * dev-tasks CLI — bootstrap binary.
- * Commands: install, update, status, pin, unpin, doctor
+ * Commands: install, update, status, pin, unpin, doctor, migrate
  */
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { parseArgs } from "./parse-args.js";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import {
+  parseArgs,
+  parseMigrateProjectsArgs,
+  validateGlobalArgs,
+  MIGRATE_PROJECTS_USAGE,
+} from "./parse-args.js";
 import { ExitCode } from "#core/exit-codes.js";
 import { installFiles } from "#core/distribution/install.js";
 import { isValidProfile, VALID_PROFILES, type Profile } from "#core/distribution/profiles.js";
@@ -16,6 +22,20 @@ import { getStatus } from "#core/distribution/status.js";
 import { runDoctor } from "#core/distribution/doctor.js";
 import { runMigration } from "#core/distribution/migrate.js";
 import { runDocsMigration, formatDocsMigration } from "#core/distribution/migrate-docs.js";
+import {
+  createGhRunner,
+  createLocalReader,
+  createLockFile,
+  killRunningGh,
+  createPlanFileStore,
+  formatMigrationApplySummary,
+  formatMigrationPlanSummary,
+  MIGRATION_APPLY_LOCK,
+  migrationApplyJson,
+  migrationPlanJson,
+  runMigrationApply,
+  runMigrationPlan,
+} from "#core/migrate-projects/index.js";
 
 const COMMANDS = ["install", "update", "status", "pin", "unpin", "doctor", "migrate"] as const;
 
@@ -86,6 +106,14 @@ Sub-commands:
                  (docs/product-context.md -> docs/product.md,
                  docs/technical-guidelines.md -> docs/tech.md).
                  Report-only; --force applies it, backing up first.
+  migrate projects --plan [--repo <owner/repo>] [--out <path>] [--json]
+                 Read the repository through gh and write a reviewable
+                 migration plan (default workstream/migration-projects.md).
+                 Read-only: nothing on GitHub changes.
+  migrate projects --apply [--plan-file <path>] [--json]
+                 Run an approved plan (\`Approved: yes\`): batches 1 to 6 in
+                 order, each write's state recorded in the plan file, so a
+                 re-run resumes. Never runs the Project batch.
 
 Options:
   --profile <p>  Platform profile: copilot, claude, kiro, both, all (default: all)
@@ -119,6 +147,15 @@ async function main(): Promise<void> {
 
   if (!COMMANDS.includes(args.command as (typeof COMMANDS)[number])) {
     process.stderr.write(`Unknown command: ${args.command}\n\n`);
+    printUsage();
+    process.exit(ExitCode.InvalidUsage);
+  }
+
+  // Every command refuses an unknown flag or a value flag with no value
+  // before doing anything, so a typo never changes what it does.
+  const usageError = validateGlobalArgs(args);
+  if (usageError !== null) {
+    process.stderr.write(`dev-tasks ${args.command}: ${usageError}\n\n`);
     printUsage();
     process.exit(ExitCode.InvalidUsage);
   }
@@ -347,6 +384,11 @@ async function main(): Promise<void> {
       // is deliberately left as it was: it is detect-and-apply, while
       // this sub-verb proposes by default (D-52). Changing the legacy
       // default would alter a shipped command's behavior.
+      if (args.positional[0] === "projects") {
+        await migrateProjects(args, targetDir);
+        break;
+      }
+
       if (args.positional[0] === "docs") {
         const docsResult = await runDocsMigration(targetDir, { apply: args.flags.force });
 
@@ -422,6 +464,114 @@ async function main(): Promise<void> {
       break;
     }
   }
+}
+
+/**
+ * `migrate projects --plan` (S-013, D-79). Read-only: the plan file is the
+ * only thing written. Exit codes come from `core/exit-codes.ts` (A-64):
+ * 0 success, 1 a failed read, 2 bad usage or a `--repo` that is not the
+ * working tree, 11 `gh` missing or unauthenticated, 14 refusing to
+ * overwrite an applied plan file.
+ *
+ * `migrate projects --apply` (S-015): 0 every write applied, 1 a write
+ * `failed` or the run was interrupted, 2 a missing or unparsable plan
+ * file, 11 `gh` missing or unauthenticated, 14 not approved, an edited
+ * plan, another run's lock, or a stale snapshot.
+ */
+async function migrateProjects(
+  args: ReturnType<typeof parseArgs>,
+  targetDir: string,
+): Promise<void> {
+  const parsed = parseMigrateProjectsArgs(args);
+  if (!parsed.ok) {
+    process.stderr.write(`migrate projects: ${parsed.error}\n${MIGRATE_PROJECTS_USAGE}\n`);
+    process.exit(ExitCode.InvalidUsage);
+  }
+  if (parsed.mode === "apply") {
+    await migrateProjectsApply(parsed.planFile, parsed.json, targetDir);
+    return;
+  }
+
+  // DEV_TASKS_NOW injects the clock for tests (A-85); an unreadable value is refused.
+  const nowEnv = process.env.DEV_TASKS_NOW;
+  const fixed = nowEnv === undefined || nowEnv === "" ? undefined : new Date(nowEnv);
+  if (fixed !== undefined && Number.isNaN(fixed.getTime())) {
+    process.stderr.write(`migrate projects: DEV_TASKS_NOW is not a date: ${nowEnv}\n`);
+    process.exit(ExitCode.InvalidUsage);
+  }
+
+  const result = await runMigrationPlan({
+    runner: createGhRunner({ cwd: targetDir }),
+    reader: createLocalReader(targetDir),
+    repo: parsed.repo,
+    out: parsed.out,
+    now: () => fixed ?? new Date(),
+    store: createPlanFileStore((p) => resolve(targetDir, p)),
+  });
+
+  if (parsed.json) {
+    process.stdout.write(JSON.stringify(migrationPlanJson(result), null, 2) + "\n");
+    if (result.error !== undefined) process.stderr.write(`migrate projects: ${result.error}\n`);
+  } else if (result.exitCode === ExitCode.Success) {
+    process.stdout.write(formatMigrationPlanSummary(result) + "\n");
+  } else {
+    process.stderr.write(`migrate projects: ${result.error ?? "failed"}\n`);
+  }
+  process.exit(result.exitCode);
+}
+
+/**
+ * `migrate projects --apply`. A signal releases the lock and removes the
+ * body files before exiting; the plan file already holds every state
+ * recorded so far, so the next run resumes (A-80).
+ */
+async function migrateProjectsApply(
+  planFile: string,
+  json: boolean,
+  targetDir: string,
+): Promise<void> {
+  const lock = createLockFile(resolve(targetDir, MIGRATION_APPLY_LOCK));
+  const tmpDir = mkdtempSync(join(tmpdir(), "dev-tasks-migrate-"));
+  const cleanup = () => {
+    lock.release();
+    rmSync(tmpDir, { recursive: true, force: true });
+  };
+  const onSignal = (signal: NodeJS.Signals) => {
+    // D-111: the gh call in flight dies first, so no write lands once the lock is gone.
+    killRunningGh();
+    cleanup();
+    process.stderr.write(
+      `migrate projects: interrupted by ${signal}; the states so far are in ${planFile}: run --apply again to resume\n`,
+    );
+    // CT-34 and the user manual: an interrupted run exits GeneralError (1), whatever the signal.
+    process.exit(ExitCode.GeneralError);
+  };
+  // Installed before the first await, so before any gh call: a signal is
+  // handled only between event-loop turns, and none passes before this line (5.25).
+  process.once("SIGINT", onSignal);
+  process.once("SIGTERM", onSignal);
+  process.once("SIGHUP", onSignal);
+  let result;
+  try {
+    result = await runMigrationApply({
+      runner: createGhRunner({ cwd: targetDir }),
+      reader: createLocalReader(targetDir),
+      planFile,
+      store: createPlanFileStore((p) => resolve(targetDir, p)),
+      lock,
+      tmpDir,
+    });
+  } finally {
+    cleanup();
+  }
+  const ran = result.exitCode === ExitCode.Success || result.exitCode === ExitCode.GeneralError;
+  if (json) {
+    process.stdout.write(JSON.stringify(migrationApplyJson(result), null, 2) + "\n");
+  } else if (ran && result.summary !== null) {
+    process.stdout.write(formatMigrationApplySummary(result) + "\n");
+  }
+  if (result.error !== undefined) process.stderr.write(`migrate projects: ${result.error}\n`);
+  process.exit(result.exitCode);
 }
 
 main().catch((err: unknown) => {

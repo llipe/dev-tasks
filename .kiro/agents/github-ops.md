@@ -50,12 +50,16 @@ Use this table to translate each convention in this file into a `gh` invocation.
 | Create/list labels                                         | `gh label create "<name>" --color "<hex>" --description "<desc>"` / `gh label list`                                                                   | `create_label` / `list_labels`                 |
 | Create/list milestones                                     | `gh api repos/<owner>/<repo>/milestones -f title="<title>" -f description="<desc>" -f due_on="<ISO date>"` / `gh api repos/<owner>/<repo>/milestones` | (no dedicated MCP tool; use REST)              |
 | Assign milestone to issue                                  | `gh issue edit <number> --milestone "<milestone>"`                                                                                                    | `update_issue`                                 |
+| Add a blocking relation (issue data)                       | `gh api -X POST repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by -F issue_id=<blocker numeric id>`                                              | (no dedicated MCP tool; use REST)              |
+| Remove a blocking relation                                 | `gh api -X DELETE repos/{o}/{r}/issues/{blocked}/dependencies/blocked_by/{blocker numeric id}`                                                        | (no dedicated MCP tool; use REST)              |
+| List what an issue blocks / is blocked by                  | `gh api repos/{o}/{r}/issues/{n}/dependencies/blocking --paginate` / `gh api repos/{o}/{r}/issues/{n}/dependencies/blocked_by --paginate`             | (no dedicated MCP tool; use REST)              |
 | Create branch                                              | `git checkout -b <branch>` (name per [Branch Naming](#branch-naming))                                                                                 | n/a (local git operation)                      |
 
 Notes:
 
 - Prefer `--json` output on `gh issue list` / `gh pr list` and `gh api` for machine-parseable results — do not scrape the default human-readable table output.
 - `gh api <endpoint>` is the fallback for anything without a dedicated subcommand (milestones, some label edge cases, reactions). See <https://cli.github.com/manual/gh_api>.
+- **Issue dependencies are issue data an agent may write, unlike the Project.** A blocking relation lives on the blocked issue (`{blocked}`) and names its blocker by the blocker's REST numeric id, read with `gh api repos/{o}/{r}/issues/<blocker number> --jq .id`, as the sub-issue endpoint does; an issue number or a GraphQL node id is rejected. No agent writes the Project (D-22); these commands change only the two issues they name (D-83). Write a relation only when the user or the issue text names the blocked issue, and add the `**Blocks:**` line to the blocker's body in the same change (see [Labels](#labels)).
 - `gh` respects the repository detected from the current working directory; pass `--repo <owner/repo>` explicitly when operating on a different repository than the one checked out locally.
 - Every `gh` invocation that mutates state (create/edit/close/merge) **MUST** be reflected in the Output Contract's `Changes applied` list, exactly as an MCP-driven change would be.
 
@@ -86,6 +90,7 @@ Other agents (especially `developer`) **SHOULD** delegate to `github-ops` whenev
 - Assign or create milestones
 - Write structured issue or PR comments
 - Audit existing GitHub artifacts for consistency
+- Migrate an existing repository to the projects-tracking conventions ([Migration Mode](#migration-mode))
 
 ---
 
@@ -183,14 +188,14 @@ PRD issue:
 <!-- dev-tasks:status -->
 🔄 Update: <one-line summary> — Refs #<issue>
 
-| Wave | State                                                        | Wave issue    |
-| ---- | ------------------------------------------------------------ | ------------- |
-| <id> | <published, in progress, consolidated PR #n open or shipped> | #<issue> or — |
+| Wave | State                                                                     | Wave issue    |
+| ---- | ------------------------------------------------------------------------- | ------------- |
+| <id> | <not started, published, in progress, consolidated PR #n open or shipped> | #<issue> or — |
 ```
 
 The PRD table has one row per wave, in wave order. `activity-publish-github` writes a wave's row at publish and the planner edits it at run start, consolidated PR open and close-out; an existing row is edited in place, never added a second time, and every other wave's row is kept as it is.
 
-A wave that predates the PRD and wave tracking-issue hierarchy (published before it, so it has no wave issue) still gets a row, with `—` in the `Wave issue` column and its state read from its `docs/roadmap.md` row, for example `shipped` (D-73, RD-12).
+A wave that predates the PRD and wave tracking-issue hierarchy (published before it, so it has no wave issue) still gets a row, with `—` in the `Wave issue` column and its state read from its `docs/roadmap.md` row, for example `shipped` (D-73, RD-12). A roadmap wave not yet published reads `not started`, with `—` in the `Wave issue` column (D-107).
 
 ### Issue Closure Attribution
 
@@ -355,39 +360,47 @@ The following label set **MUST** exist in every project. `github-ops` **MUST** c
 
 The following tags are the canonical, most-used tags for issues and **MUST** be preferred over ad-hoc alternatives:
 
-- Type tags: `type: enhancement`, `type: bug`, `type: security`, `type: tech-debt`, `type: other`
+- Type tags: `type: security`, `type: bug`, `type: enhancement`, `type: refactor`, `type: test`, `type: docs`, `type: chore`, `type: tech-debt`
 - Scope tags: `scope: frontend`, `scope: backend`, `scope: mobile`
 - Level tags: `level: prd`, `level: wave`, `level: story`
 
-| Category     | Label                      | Color     | Description                                                |
-| ------------ | -------------------------- | --------- | ---------------------------------------------------------- |
-| **Type**     | `type: enhancement`        | `#0E8A16` | New feature or enhancement                                 |
-|              | `type: bug`                | `#D93F0B` | Something is broken                                        |
-|              | `type: security`           | `#B60205` | Security vulnerability, hardening, or compliance work      |
-|              | `type: tech-debt`          | `#5319E7` | Refactoring, cleanup, or deferred engineering improvements |
-|              | `type: other`              | `#EDEDED` | Work that does not fit other type categories               |
-|              | `type: chore`              | `#FEF2C0` | Maintenance or dependency work                             |
-|              | `type: docs`               | `#0075CA` | Documentation changes                                      |
-|              | `type: refactor`           | `#D4C5F9` | Code restructure, no behavior change                       |
-| **Priority** | `priority: critical`       | `#B60205` | Must be addressed immediately                              |
-|              | `priority: high`           | `#D93F0B` | Should be in the current cycle                             |
-|              | `priority: medium`         | `#FBCA04` | Planned but not urgent                                     |
-|              | `priority: low`            | `#C5DEF5` | Nice to have                                               |
-| **Level**    | `level: prd`               | `#3F51B5` | PRD tracking issue; a container for waves, not work        |
-|              | `level: wave`              | `#5C6BC0` | Wave tracking issue; a container for stories, not work     |
-|              | `level: story`             | `#7986CB` | Story issue; the unit of work                              |
-| **Status**   | `status: blocked`          | `#E4E669` | Waiting on external dependency                             |
-|              | `status: needs-refinement` | `#F9D0C4` | Scope or AC unclear                                        |
-|              | `status: deferred`         | `#BFBFBF` | Parked by decision; not closed                             |
-| **Scope**    | `scope: frontend`          | `#BFD4F2` | Frontend changes                                           |
-|              | `scope: backend`           | `#D4C5F9` | Backend changes                                            |
-|              | `scope: mobile`            | `#FAD8C7` | Mobile app or mobile-specific changes                      |
-|              | `scope: infra`             | `#E6E6E6` | Infrastructure or CI/CD                                    |
-|              | `scope: api`               | `#C2E0C6` | API surface changes                                        |
+| Category     | Label                      | Color     | Description                                            |
+| ------------ | -------------------------- | --------- | ------------------------------------------------------ |
+| **Type**     | `type: security`           | `#B60205` | Security vulnerability, hardening, or compliance work  |
+|              | `type: bug`                | `#D93F0B` | Behavior that differs from the spec or intent          |
+|              | `type: enhancement`        | `#0E8A16` | New or changed behavior                                |
+|              | `type: refactor`           | `#D4C5F9` | Code restructure, no behavior change                   |
+|              | `type: test`               | `#BFDADC` | Test-only work                                         |
+|              | `type: docs`               | `#0075CA` | Documentation changes                                  |
+|              | `type: chore`              | `#FEF2C0` | Maintenance, dependencies, tooling, or CI              |
+|              | `type: tech-debt`          | `#5319E7` | Deferred engineering work that fits no other type      |
+| **Priority** | `priority: critical`       | `#B60205` | Blocks a wave, PRD, or release from shipping           |
+|              | `priority: high`           | `#D93F0B` | Lands in the current wave or cycle; blocks no ship     |
+|              | `priority: medium`         | `#FBCA04` | Lands in the next wave or cycle                        |
+|              | `priority: low`            | `#C5DEF5` | Backlog                                                |
+| **Level**    | `level: prd`               | `#3F51B5` | PRD tracking issue; a container for waves, not work    |
+|              | `level: wave`              | `#5C6BC0` | Wave tracking issue; a container for stories, not work |
+|              | `level: story`             | `#7986CB` | Story issue; the unit of work                          |
+| **Status**   | `status: blocked`          | `#E4E669` | Waiting on external dependency                         |
+|              | `status: needs-refinement` | `#F9D0C4` | Scope or AC unclear                                    |
+|              | `status: deferred`         | `#BFBFBF` | Parked by decision; not closed                         |
+| **Scope**    | `scope: frontend`          | `#BFD4F2` | Frontend changes                                       |
+|              | `scope: backend`           | `#D4C5F9` | Backend changes                                        |
+|              | `scope: mobile`            | `#FAD8C7` | Mobile app or mobile-specific changes                  |
+|              | `scope: infra`             | `#E6E6E6` | Infrastructure or CI/CD                                |
+|              | `scope: api`               | `#C2E0C6` | API surface changes                                    |
 
 Rules:
 
 - Every issue **MUST** have at least one `type:` label and one `priority:` label, except issues labeled `level: prd` or `level: wave`, which are containers and carry only their `level:` label.
+- Every issue that is not a container carries exactly one `type:` per issue, from the eight `type:` rows above: the label names the kind of work, so a filter on it is trustworthy. When work fits several types, the first in the tie-break order wins: `security > bug > enhancement > refactor > test > docs > chore > tech-debt` (D-85).
+- The tie-break decides a mixed case the same way every time: an issue that is both a bug and a security problem is `type: security`, and a test-only change that also touches docs is `type: test`. Suggest a type from the Conventional Commits prefix of the issue's title (`fix` → `type: bug`, `feat` → `type: enhancement`), and let the user confirm it; never re-type an issue silently.
+- `type: other` is retired, and so are the experiment's `type: prd`, `type: wave` and `type: story`, which `level:` replaces (D-85, D-91). A retired label is never applied to an issue; its definition stays in the repository, marked retired in its description, so closed issues keep their history.
+- Retired labels, in full: `type: other`, `type: prd`, `type: wave`, `type: story`, `status: ready`, `status: in-progress`, the retired `needs: decision`, `needs: approval` and `needs: merge` (D-15), and every `wave:` label (D-91). GitHub's default and other unprefixed labels (`bug`, `documentation`, `enhancement`, `chore`, `story`) are neither retired nor a type; an issue carrying only those is listed under "needs a type" with a suggestion taken from the label (`story` gives none) (D-100).
+- `priority: critical` blocks a wave, PRD or release from shipping, and **MUST** name what it blocks: it carries a native `blocked by` relation from the issue it blocks plus a `**Blocks:** #N — <reason>` body line (D-84). Write the relation with the dependency commands in the Command Map.
+- `priority: high` lands in the current wave or cycle and blocks no ship; `priority: medium` lands in the next; `priority: low` is backlog. Priority says when, not what it blocks: a `high` issue may block another issue and keeps `high` (D-102).
+- Any issue that blocks another carries the `**Blocks:**` line whatever its priority: a `high` issue that blocks another keeps `high` and still carries the line, and the relation is written the same way.
+- A blocking relation is never invented: add one only when the user or the issue text names the blocked issue. A `critical` issue that names none is reported, not linked (D-84).
 - Hierarchy lives only in `level:`; `type:` keeps its meaning as the kind of work. A story issue carries `level: story` beside its `type:` and `priority:` labels.
 - `status:` labels are flags: add one when the condition starts and drop it when it ends. `status: ready` and `status: in-progress` are retired from this taxonomy everywhere, Project or not, because the linked pull request shows that state natively on the issue (FR-7); issues created before this rule keep their labels until a migration pass.
 - `scope:` labels are **RECOMMENDED** for multi-area projects.
@@ -446,7 +459,11 @@ A milestone tracks the scope of a minor version (`vX.Y`); the tag `vX.Y.0` marks
 When invoked with `audit` as input, `github-ops` **MUST**:
 
 1. Fetch all open issues and PRs from the target repository.
-2. Check each against the conventions above.
+2. Check each against the conventions above, and report these four convention findings for every open issue (AC-16, D-102):
+   - **`critical` without a blocking relation:** a `priority: critical` issue for which `gh api repos/{o}/{r}/issues/{n}/dependencies/blocking --paginate` returns no relation, whether or not its body carries a `**Blocks:**` line (D-84, A-72). A relation to an issue that has since closed still exists, so it is not reported; lower the priority once the block is gone.
+   - **Zero or several `type:` labels:** an issue with no label from the eight-type set in [Labels](#labels), or with more than one; the retired `type: other`, `type: prd`, `type: wave` and `type: story`, and the unprefixed default labels, count as none (D-85, D-100). Issues labeled `level: prd` or `level: wave`, and tracking issues found by their title prefix (§ Title Format), are exempt, since containers carry no `type:` (A-68). Suggest the tie-break winner for a multi-type issue and the Conventional Commits title prefix's type for an untyped one; never re-type silently.
+   - **Retired label on an open issue:** any label in the retired list in [Labels](#labels) on an open issue. Report it for removal from the issue; never delete the label definition (D-91).
+   - **Blocking relation without its body line:** a `priority: critical` issue whose `.../dependencies/blocking` returns a relation but whose body has no `**Blocks:** #N — <reason>` line naming the blocked issue (D-102). Suggest the line from the relation; the relation is never removed to clear the finding.
 3. Produce an audit report:
 
 ```markdown
@@ -459,6 +476,15 @@ Date: YYYY-MM-DD
 | #   | Title | Missing Labels | Title Format | Body Structure | Milestone |
 | --- | ----- | -------------- | ------------ | -------------- | --------- |
 | 42  | ...   | type, priority | ✅           | ❌ missing AC  | ❌ none   |
+
+## Conventions
+
+| #   | Title | Finding                                          | Suggested fix                         |
+| --- | ----- | ------------------------------------------------ | ------------------------------------- |
+| 61  | ...   | `critical` without a blocking relation           | add the relation or lower priority    |
+| 62  | ...   | `critical` relation without a `**Blocks:**` line | add the line naming the blocked issue |
+| 64  | ...   | two `type:` labels (`bug`, `security`)           | keep `type: security` (tie-break)     |
+| 70  | ...   | retired label `status: ready`                    | take the label off the issue          |
 
 ## Pull Requests
 
@@ -486,6 +512,31 @@ Date: YYYY-MM-DD
 ```
 
 4. Offer to auto-fix violations that can be corrected automatically (labels, title format, missing body sections).
+
+---
+
+## Migration Mode
+
+When invoked with `migrate` as input, `github-ops` takes an existing repository through the projects-tracking migration. The `dev-tasks migrate projects` CLI reads the repository and makes every write; this mode is the conversation around it (D-79). The full procedure, including the Project batch and rollback by hand, is `docs/runbooks/runbook-migrate-to-projects-tracking.md`.
+
+Before step 1, create the `chore/<issue-number>-projects-migration` branch (§ Branch Naming), where `<issue-number>` is the issue tracking the migration: step 3 edits the plan file, and step 9 commits it there. Then confirm `docs/roadmap.md` holds the canonical roadmap table. When it does not, stop and hand the conversion to `product-engineer` (Roadmap Conversion (before migration)); resume after its docs PR merges.
+
+1. Run `dev-tasks migrate projects --plan`. It is read-only and writes `workstream/migration-projects.md` (or the path given with `--out`) with `Approved: no`. Exit `1`: a `gh` read failed; run it again. Exit `2`: the roadmap has no canonical table, or `--repo` names another repository than the working tree's; go back to the roadmap check above, or run it from the right clone. Exit `11`: `gh` is missing or unauthenticated, or `gh repo view` failed; ask the user to run `gh auth login`, then run it again. Exit `14`: the file at `--out` already holds an applied plan or is not a migration plan; keep it as the record and pass another `--out`.
+2. Present each review item as one question with a recommendation, one question per message: an unmapped issue (`<PRD key> <Phase/Wave>`: the roadmap row's PRD link text and its `Phase/Wave` cell, such as `projects-tracking 3`; or `standalone`), an issue that needs a type (recommend the Suggested column), a `priority: critical` issue that needs a blocking link (`#<issue it blocks>` or `lower priority to high`; for a `#<issue it blocks>` answer, tell the user that `--apply` writes only the native link, so they add the issue's `**Blocks:** #N — <reason>` line themselves, D-84), and each Information note (`yes`, or blank). Report state files and roadmap notes for the user to fix by hand. Never answer a review item on the user's behalf.
+3. Write each answer into the plan file's Answer column, exactly as the user gave it, and change nothing else in the file.
+4. Run `dev-tasks migrate projects --plan` again. It reads the answers, rebuilds the batches from them and resets `Approved: no`; `--apply` never turns an answer into a write (A-50). When an answer is listed back as unusable, ask that question again and repeat this step.
+5. Ask the user for explicit approval of the rebuilt plan file, after showing its batch counts and the rows of batches 1 to 6. Approval is a reply that approves this plan; silence, a question, a change request or approval of an earlier plan is not approval.
+6. Set the header line to exactly `Approved: yes` once the user has approved, and edit no other line. Any later `--plan` run resets it, and approval is asked again.
+7. Run `dev-tasks migrate projects --apply`. Pass `--plan-file <path>` when the plan is not at `workstream/migration-projects.md`. Exit `0`: every write applied. Exit `1`: a write is `failed`, a repository read failed, a state could not be written back, or the run was interrupted; report the failed rows and the message, and run `--apply` again once the cause is fixed: it resumes and never repeats a `done` write (D-88). Exit `14`: read the cause in its message. Another run holds the lock: wait for it to finish, then run `--apply` again; do not run `--plan`. The lock is stale (`workstream/.migration-projects.lock` left by a killed process, with no run alive): follow the runbook's Escalation. The plan is not approved: go back to step 5. A row was edited after the plan was generated (the digest no longer matches): undo the edit, or, while every row is still `pending`, run `--plan` again and go back to step 5. The plan file changed while `--apply` was starting: run `--apply` again. The repository changed while every row is still `pending`: run `--plan` again and go back to step 5. Never run `--plan` over a partly applied plan: it refuses with exit `14` (A-65), and a partly applied plan only resumes with `--apply`. Exit `2`: the plan file is unparsable or belongs to another repository. Exit `11`: as in step 1.
+8. Hand the Project batch to the user: batch 7 of the plan file, which `--apply` prints at the end and never runs. Point the user to the runbook's Project cleanup step and to the batch 7 steps the `--apply` summary prints, which carry the exact commands and the Workflows-page steps, and have them copy each command from there, never from the plan file, whose table cells escape `|` as `\|`; do not restate them. The user runs each step with their own session and sets its State to `done`.
+9. Commit the plan file and open the chore PR: once every batch 7 row reads `done` (the user's ticks), run `git add -f workstream/migration-projects.md` on the `chore/<issue-number>-projects-migration` branch, commit, push, and open a PR against the default branch (§ Pull Request Conventions), so the per-write states are the record of what the migration changed (D-93). Only the user merges it. A migration run inside a planner wave opens this PR against the wave's integration branch instead, where the planner merges it after its story gates, so the record ships in the consolidated PR the user merges (D-112).
+
+Rules:
+
+- `github-ops` **MUST NOT** run `--apply` without the user's explicit approval of the current plan file (D-80). A declined approval writes nothing and keeps the plan file.
+- `github-ops` **MUST NOT** write the Project, in this mode or any other: the user runs batch 7 (D-22, D-81).
+- An unmapped issue answered `standalone` gets no hierarchy write.
+- `github-ops` **MUST NOT** edit a row's State, ID, Action, Target or Detail by hand; only the CLI writes batch 1 to 6 States, and only the user ticks batch 7.
 
 ---
 

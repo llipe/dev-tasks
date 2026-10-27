@@ -483,7 +483,7 @@ describe("github-ops", () => {
     const rules: string[] = [];
     for (const copy of trees) {
       expect(prdStateCell(copy), copy.path).toBe(
-        "<published, in progress, consolidated PR #n open or shipped>",
+        "<not started, published, in progress, consolidated PR #n open or shipped>",
       );
       const section = sectionOf(copy, "Status comment");
       const rule = lineWith(section, "one row per wave", copy.path);
@@ -2437,7 +2437,7 @@ describe("TESTING.md", () => {
       }
     }
     expect(table).toMatch(/^\|[^\n]*FR-24[^\n]*pending/m);
-    expect(table).toMatch(/^\|[^\n]*D-36[^\n]*pending/m);
+    expect(table).toMatch(/^\|[^\n]*D-36[^\n]*(pending|observed)/m);
     expect(table).toMatch(/^\|[^\n]*DF-4[^\n]*Project 5[^\n]*D-48/m);
     const changelog = sections.find((s) => s.heading === "Changelog");
     expect(changelog, "TESTING.md: no Changelog section").toBeDefined();

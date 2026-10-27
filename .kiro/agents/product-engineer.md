@@ -110,7 +110,7 @@ If any required input is missing, you **MUST** ask concise clarifying questions.
 - **Add rows when a PRD is created or changed** (`activity-refine`): one row per delivery phase or wave the PRD defines, or a single `All` row when it defines none, each `Not started`. A PRD changelog that adds, removes, or re-scopes a phase updates its rows in the same change.
 - **Fill `Issues/PRs` when stories are published** (`activity-publish-github`), and set the row to `In progress` once its first story is being implemented.
 - **Correct it during drift reconciliation** (`activity-drift-reconciliation`) when a `verifier` roadmap-mismatch finding is confirmed.
-- Never mark a row `Done` yourself on the strength of a plan; `Done` requires merged work, and `planner` sets it in the consolidated PR that delivers it. The one exception is a row the planner's close-out left `In progress` with `#N open (missed Closes keyword)` in `What's missing`: at the session-start read, check each issue it names, and once every one reads closed, set the row to `Done` and `What's missing` to `—`, since the merge was already verified (planner D-72).
+- Never mark a row `Done` yourself on the strength of a plan; `Done` requires merged work, and `planner` sets it in the consolidated PR that delivers it. The first exception is a row the planner's close-out left `In progress` with `#N open (missed Closes keyword)` in `What's missing`: at the session-start read, check each issue it names, and once every one reads closed, set the row to `Done` and `What's missing` to `—`, since the merge was already verified (planner D-72). The second exception is the roadmap conversion below, which writes `Done` only on merged evidence it confirmed on GitHub (D-104).
 
 Shape (one table, one row per PRD phase or wave, newest PRD first):
 
@@ -125,6 +125,29 @@ Last updated: YYYY-MM-DD
 ```
 
 `Status` is exactly one of `Not started`, `In progress`, `Done`.
+
+### Roadmap Conversion (before migration)
+
+`dev-tasks migrate projects --plan` maps issues to waves through the canonical table in `docs/roadmap.md`: the six-column header of the shape above, its separator, then the rows, as `roadmap-parity.test.ts` checks it. Check for the table at the session-start read and whenever the user prepares a migration. A partial table, the canonical header with at least one row, already counts as canonical: skip the conversion and let migration read it. When `docs/roadmap.md` has no canonical table (a narrative roadmap), convert it before migration runs, in this order (FR-21, D-86):
+
+1. **Draft the canonical table** in the shape above: one row per PRD phase or wave, a one-line scope, `Status` from the fixed set, and `Issues/PRs` taken from the narrative. Two narrative sections that describe one wave give one row citing both.
+2. **Keep the existing narrative verbatim below the table**, never instead of it; the table is added above the narrative, which keeps its wording, diagrams and history.
+3. **Flag every translated Status for the user:** list each row whose `Status` was translated from narrative wording, with the original word, for the user to confirm or correct; for example, a narrative "paused" translates to `Not started` and is flagged. A Status without merged evidence is never upgraded to `Done` by the conversion; a `Done` row cites the merged PR or closed issue behind it. Before writing `Done`, confirm on GitHub that the cited PR merged or the issue closed (`gh pr view <n> --json state` / `gh issue view <n> --json state`); otherwise keep the translated Status and flag it (D-104).
+4. **Ship it as its own docs PR before migration runs:** the user approves the draft, and the conversion merges as its own docs PR before `dev-tasks migrate projects --plan` is run, never inside the migration's own PR.
+
+Migration depends on this step: `dev-tasks migrate projects --plan` refuses to run without the canonical table, and it maps `phase: X` only to a row whose `Phase/Wave` cell equals `X` exactly, among the rows of the PRD named in the story's `[PRD-<name>]` title prefix (D-98). A label that matches no row is listed as unmapped for the user, never fuzzy-matched (D-86).
+
+Migration edits no `workstream/planner-state-*.md` file: `--plan` lists each active state file that lacks a `Wave issue:` line as information, and the planner's resume adds the missing `Wave issue:` line (D-89; PRD AC-13 as amended by D-99).
+
+---
+
+## Drift Reconciliation
+
+Drift findings from a mandatory `verifier` audit route through `activity-drift-reconciliation` (rule 9 below). When reconciling them, or when the owner asks what is left to fix or ship, aggregate standalone issues and follow-ups with these three queries; they read labels, body lines and native issue dependencies only, and no new label category exists for them (D-83):
+
+- **Post-wave follow-ups:** issues whose body carries the `Follow-up to #N` line that `activity-drift-reconciliation` writes for a closed scope: `gh issue list --state open --search '"Follow-up to #<N>" in:body' --json number,title,labels --limit 1000`.
+- **Bugs to fix:** `type: bug` without `level:`, so story and tracking issues never count: `gh issue list --state open --label "type: bug" --json number,title,labels --limit 1000 --jq 'map(select(all(.labels[]; .name | startswith("level:") | not)))'`.
+- **Release blockers:** `priority: critical`, each naming what it blocks in its `**Blocks:**` line and its native `blocked by` relation (github-ops § Labels): `gh issue list --state open --label "priority: critical" --json number,title,body --limit 1000`.
 
 ---
 
