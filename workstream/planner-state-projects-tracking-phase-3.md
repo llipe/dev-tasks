@@ -7,7 +7,7 @@
 - Repository: llipe/dev-tasks
 - Wave issue: #317
 - Started: 2026-10-24T14:45Z
-- Last updated: 2026-10-26T18:15Z
+- Last updated: 2026-10-27T12:49Z
 - PRD issue: #289
 
 ## Story Status
@@ -25,7 +25,7 @@
 
 - Next story: none (all six merged; Phase 5)
 - Last merged PR: #332
-- Integration branch HEAD: 2e9f4dd
+- Integration branch HEAD: c54fe52
 
 ## Decisions Log
 
@@ -54,3 +54,9 @@
 - S-017 part 2 (live migration of llipe/dev-tasks): the owner answered nine review items one per message, re-plan reset approval, the owner approved explicitly ("approved"), `--apply` exited 0 (14 done, 0 skipped, 0 failed, all confirmed on GitHub), the owner ran batch 7 on Project 5 and ticked all four steps (screenshot), a fresh re-plan proposes 0 writes in batches 1 to 6; record committed in PR #332 (D-93). coverage_gate SKIPPED(no code); verifier High, Minor, 2 findings (PR #332 comment 6423843793): F-1 chore PR base (integration branch vs the runbook's default branch, Undetermined, to the owner), F-2 task 6.6 completes when the consolidated PR references #332.
 - Verifier note: `pnpm exec dev-tasks` inside this repository runs a globally installed dev-tasks (it created and the verifier removed an untracked `.dev-tasks/manifest.json`); the runbook's form is right for consumer repositories.
 - wave_status: written at S-017 part 2 closeout (record PR #332 open), gate 10 confirmed `PR open #332`.
+- D-112 (record PR base) committed on the integration branch (fc86be0), per @llipe.
+- Phase 5: full suite 2987 passing; qa-engineer PRD-scope coverage_gate PASS (core 95.76% stmts / 94.71% branches; migrate-projects 97.78%); verifier rollup High, Minor, 8 findings; technical-writer drift-fixed (c3d2c48, system-overview).
+- Rollup routing: F-4, F-5, F-6 fixed (26916d1, D-113, D-114); F-1, F-3 text fixed (c54fe52); F-2 and qa gaps deferred to follow-ups #333, #334 (planner split, release not blocked); F-7 roadmap row set to In progress in this checkpoint; F-8 DF-28 met by the consolidated PR referencing #332.
+- wave_status: rollup summary recorded in the wave status comment; wave body `Fidelity report:` line set.
+- Release: the owner asked the planner to cut a minor release; git-guard blocks tag creation and pushes to main (human-only), so the release is left to the owner after the consolidated PR merges.
+- memo_run_outcome: written(54aaf68c)
