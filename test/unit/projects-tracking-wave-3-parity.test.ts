@@ -1506,3 +1506,32 @@ describe("docs > runbook, verifier findings (S-017 6.14 to 6.17)", () => {
     );
   });
 });
+
+// Wave 3 rollup F-1 and F-3 (D-84, D-100): the Blocks line is the user's to add, and
+// the default-labels sentence names every unprefixed label the code handles.
+describe("wave 3 rollup F-1 and F-3", () => {
+  const GO = [
+    ".claude/agents/github-ops.md",
+    ".github/agents/github-ops.agent.md",
+    ".kiro/agents/github-ops.md",
+  ];
+  const read = (f: string): string => readFileSync(resolve(ROOT, f), "utf-8");
+  it("the mode and the runbook say the user adds the Blocks line", () => {
+    for (const f of GO) {
+      expect(read(f), f).toContain(
+        "tell the user that `--apply` writes only the native link, so they add the issue's `**Blocks:** #N — <reason>` line themselves, D-84",
+      );
+    }
+    const rb = read("docs/runbooks/runbook-migrate-to-projects-tracking.md").replace(/\s+/g, " ");
+    expect(rb).toContain(
+      "migration never edits an issue body, so add the critical issue's `**Blocks:** #N — <reason>` line yourself",
+    );
+  });
+  it("the default-labels sentence covers chore and story", () => {
+    for (const f of GO) {
+      expect(read(f), f).toContain(
+        "(`bug`, `documentation`, `enhancement`, `chore`, `story`) are neither retired nor a type",
+      );
+    }
+  });
+});

@@ -94,6 +94,10 @@ migration mode asks you one question per row, with a recommendation.
 | Needs a blocking link | `#<issue it blocks>`, or `lower priority to high`                                                                                      |
 | Information           | `yes` to act on the note, or leave it blank                                                                                            |
 
+For a `#<issue it blocks>` answer, `--apply` writes only the native
+`blocked by` link; migration never edits an issue body, so add the critical
+issue's `**Blocks:** #N — <reason>` line yourself, as D-84 requires both.
+
 An issue answered `standalone` stays out of the hierarchy: no write is
 proposed for it. State files and roadmap notes are for you to fix by hand;
 they carry no Answer column.

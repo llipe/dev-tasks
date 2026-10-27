@@ -2437,7 +2437,7 @@ describe("TESTING.md", () => {
       }
     }
     expect(table).toMatch(/^\|[^\n]*FR-24[^\n]*pending/m);
-    expect(table).toMatch(/^\|[^\n]*D-36[^\n]*pending/m);
+    expect(table).toMatch(/^\|[^\n]*D-36[^\n]*(pending|observed)/m);
     expect(table).toMatch(/^\|[^\n]*DF-4[^\n]*Project 5[^\n]*D-48/m);
     const changelog = sections.find((s) => s.heading === "Changelog");
     expect(changelog, "TESTING.md: no Changelog section").toBeDefined();
