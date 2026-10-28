@@ -2,7 +2,7 @@
 name: runbook-release-npm
 trigger: Changes are merged to the default branch and a versioned release should be published to npm and GitHub Releases.
 owner: infra-engineer
-last_verified: 2026-09-19
+last_verified: 2026-10-27
 related:
   [
     "templates/scripts/release.sh",
@@ -67,7 +67,21 @@ is the same shape with the same guards.
      from the tag and overwrites `package.json` if they disagree, so the tag
      is the source of truth, not the committed version.
    - `.github/workflows/release-bundle.yml` — builds the distributable bundle
-     and attaches it to the GitHub Release.
+     and attaches it to the GitHub Release. It creates the release when none
+     exists; when one already exists it uploads the bundle and its `.sha256`
+     to it (`--clobber`) and keeps the release's notes.
+
+### Releasing dev-tasks from the GitHub web UI
+
+When no shell is available, a maintainer can release dev-tasks itself from
+the web UI instead of step 3: **Releases → Draft a new release**, choose a new
+tag `vX.Y.Z` targeting the default branch, and publish. Publishing creates the
+release and the tag together, and the tag push starts both workflows as in
+step 4; `release-bundle.yml` attaches the bundle to the release you
+published. This path writes no changelog entry and no `package.json` version,
+so open a follow-up PR that renames `CHANGELOG.md`'s `[Unreleased]` heading to
+`[X.Y.Z] - <date>` and sets `package.json` to `X.Y.Z`. `publish-npm.yml` takes
+the version from the tag, so npm is unaffected either way.
 
 ## Verification
 
@@ -80,6 +94,15 @@ gh release view "v<version>"
 Both workflows are green, npm reports the new version, and the release
 carries its bundle asset. A green tag push with no npm version change means
 the publish job failed after the build — read its log rather than re-tagging.
+
+A release with no bundle asset (the bundle job failed, or ran before this
+workflow handled an existing release) is repaired without touching the tag:
+**Actions → Release Bundle → Run workflow**, with `tag` set to the existing
+`vX.Y.Z`, or `gh workflow run release-bundle.yml -f tag=vX.Y.Z`. The dispatch
+runs the workflow from the default branch, checks out the tag, builds the
+bundle and uploads it to the existing release; it refuses a tag that does not
+exist and never creates one. Re-running the failed tag-push run instead uses
+the workflow file as it was at the tagged commit.
 
 ## Rollback
 
