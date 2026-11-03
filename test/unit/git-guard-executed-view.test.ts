@@ -807,6 +807,224 @@ describe("issue #339 / edge cases", () => {
   });
 });
 
+// --- qa-engineer gap fill: one branch of executed_view() per case ------------
+// Each case isolates a single branch: deleting that branch alone flips the
+// expected exit. Must-block cases carry no other trigger; must-allow cases put
+// the push in a quoted heredoc body, so a misparse (strict) reads it and blocks.
+
+/** A quoted cat heredoc whose body names a push to main: relaxed only. */
+const BODY_PUSH = `cat > f.md <<'EOF'\n${QA_PUSH}\nEOF`;
+
+describe("issue #339 / qa gap fill", () => {
+  describe("substitutions that run git directly, no runner word", () => {
+    cases([
+      ["TC-QA-01: a backtick push in an echo", "echo `" + QA_PUSH + "`", ENV_0, 2],
+      ["TC-QA-02: a backtick merge in an echo", "echo `" + QA_MERGE + "`", ENV_B, 2],
+      ["TC-QA-03: a push in <(...) read by cat", `cat <(${QA_PUSH})`, ENV_0, 2],
+      ["TC-QA-04: a push in >(...) written by echo", `echo x > >(${QA_PUSH})`, ENV_0, 2],
+      ["TC-QA-05: a push in a double-quoted $(...)", `printf '%s' "$(${QA_PUSH})" > f`, ENV_0, 2],
+      ["TC-QA-06: a merge in a double-quoted $(...)", `echo "$(${QA_MERGE})"`, ENV_B, 2],
+      ["TC-QA-07: a tag in backticks", "echo `git tag v1.0.0`", ENV_0, 2],
+      [
+        "TC-QA-08: a push in <(...) as a gh body file",
+        `gh issue comment 5 --body-file <(${QA_PUSH})`,
+        ENV_0,
+        2,
+      ],
+    ]);
+  });
+
+  describe("each strictness trigger alone keeps quoted text strict", () => {
+    cases([
+      ["TC-QA-10: a backtick", `echo '${QA_PUSH}' '\`x\`' > f`, ENV_0, 2],
+      ["TC-QA-11: $[", `echo '${QA_PUSH}' '$[1]' > f`, ENV_0, 2],
+      ["TC-QA-12: ${", `echo '${QA_PUSH}' '\${x}' > f`, ENV_0, 2],
+      ["TC-QA-13: <(", `echo '${QA_PUSH}' '<(x)' > f`, ENV_0, 2],
+      ["TC-QA-14: >(", `echo '${QA_PUSH}' '>(x)' > f`, ENV_0, 2],
+      ["TC-QA-15: !", `echo '${QA_PUSH}' 'hi!' > f`, ENV_0, 2],
+      ["TC-QA-16: printf -v", `printf -v x '%s' '${QA_PUSH}'`, ENV_0, 2],
+      ["TC-QA-17: git -c alone", `echo '${QA_PUSH}' > f && git -c a.b=c status`, ENV_0, 2],
+      [
+        "TC-QA-18: git --config-env",
+        `echo '${QA_PUSH}' > f && git --config-env=a.b=C status`,
+        ENV_0,
+        2,
+      ],
+      ["TC-QA-19: git --exec-path", `echo '${QA_PUSH}' > f && git --exec-path=d status`, ENV_0, 2],
+      ["TC-QA-20: a bare hook path", `cat > scripts/hook.sh <<'EOF'\n${QA_PUSH}\nEOF`, ENV_0, 2],
+      ["TC-QA-21: .git/ case-folded", `cat > .GIT/config <<'EOF'\n${QA_PUSH}\nEOF`, ENV_0, 2],
+      ["TC-QA-22: .husky case-folded", `cat > .Husky/x <<'EOF'\n${QA_PUSH}\nEOF`, ENV_0, 2],
+      ["TC-QA-C1: control, the same echo with no trigger", `echo '${QA_PUSH}' > f`, ENV_0, 0],
+    ]);
+  });
+
+  describe("runner and interpreter words anywhere keep the command strict", () => {
+    const RUNNERS = [
+      ..."bash sh zsh ksh dash ash mksh fish csh tcsh busybox eval source . exec env command builtin xargs sudo doas su nohup time nice ionice timeout setsid stdbuf unbuffer watch parallel script chroot ssh trap node nodejs deno bun perl ruby php lua luajit osascript awk gawk mawk nawk sed tclsh wish expect".split(
+        " ",
+      ),
+      "python",
+      "python3",
+      "python3.11",
+      "pypy3",
+    ];
+    cases(
+      RUNNERS.map(
+        (word): Case => [`TC-QA-RW: ${word}`, `echo '${QA_PUSH} ${word} x' > f`, ENV_0, 2],
+      ),
+    );
+    cases([
+      [
+        "TC-QA-RW-C1: a runner word joined by a hyphen is not a runner",
+        `echo '${QA_PUSH} my-bash' > f`,
+        ENV_0,
+        0,
+      ],
+    ]);
+  });
+
+  describe("text fed by a pipe to git or gh", () => {
+    cases([
+      ["TC-QA-30: a pipe into git apply", `echo '${QA_PUSH}' | git apply`, ENV_0, 2],
+      ["TC-QA-31: a pipe into gh api", `echo '${QA_PUSH}' | gh api repos/o/r --input -`, ENV_0, 2],
+      ["TC-QA-32: |& into git am", `echo '${QA_PUSH}' |& git am`, ENV_0, 2],
+      [
+        "TC-QA-33: a pipe into git commit -F - is data",
+        `echo '${QA_PUSH}' | git commit -F -`,
+        ENV_0,
+        0,
+      ],
+      [
+        "TC-QA-34: || is not a pipe (git status after || is not fed)",
+        `${BODY_PUSH}\necho x || git status`,
+        ENV_0,
+        0,
+      ],
+      [
+        "TC-QA-35: a pipe after || still feeds the next command",
+        `${BODY_PUSH}\necho x || echo y | git status`,
+        ENV_0,
+        2,
+      ],
+    ]);
+  });
+
+  describe("lexer: redirections, escapes and quotes", () => {
+    cases([
+      [
+        "TC-QA-40: >& on the opener line is a redirection",
+        `cat <<'EOF' >&2\n${QA_PUSH}\nEOF`,
+        ENV_0,
+        0,
+      ],
+      [
+        "TC-QA-41: &> on the opener line is a redirection",
+        `cat <<'EOF' &> f\n${QA_PUSH}\nEOF`,
+        ENV_0,
+        0,
+      ],
+      [
+        "TC-QA-42: <& on the opener line is a redirection",
+        `cat <<'EOF' 3<&0 > f\n${QA_PUSH}\nEOF`,
+        ENV_0,
+        0,
+      ],
+      ["TC-QA-43: an escaped apostrophe outside quotes", `echo it\\'s > g\n${BODY_PUSH}`, ENV_0, 0],
+      ["TC-QA-44: an escaped double quote inside one", `echo "a\\"b" > g\n${BODY_PUSH}`, ENV_0, 0],
+      [
+        "TC-QA-45: a backslash ends a single-quoted string",
+        `echo 'a\\' > g\n${BODY_PUSH}`,
+        ENV_0,
+        0,
+      ],
+      ["TC-QA-46: an escaped ; is not a separator", `echo a \\; ${QA_PUSH}`, ENV_0, 0],
+      ["TC-QA-47: an escaped backslash, then a real ;", `echo a \\\\; ${QA_PUSH}`, ENV_0, 2],
+      ["TC-QA-48: an escaped && is not a separator", `echo a \\&\\& ${QA_PUSH}`, ENV_0, 0],
+      [
+        "TC-QA-49: a quoted string spanning a newline with a heredoc pending",
+        `cat <<'EOF' > "a\nb"\n${QA_PUSH}\nEOF`,
+        ENV_0,
+        2,
+      ],
+    ]);
+  });
+
+  describe("heredoc parse branches", () => {
+    cases([
+      [
+        "TC-QA-50: strict mode joins backslash-newline body lines",
+        `bash <<'EOF'\ngit push origin \\\nmain\nEOF`,
+        ENV_0,
+        2,
+      ],
+      [
+        "TC-QA-51: a delimiter followed by a word character",
+        `cat > f <<'EOF'x\n${QA_PUSH}\nEOF`,
+        ENV_0,
+        2,
+      ],
+      [
+        // `)` is an accepted after-delimiter character. bash rejects this line
+        // as a syntax error and runs nothing, so relaxed is safe here; a `)`
+        // that closes a real subshell needs `(` or `$(`, which are strict.
+        "TC-QA-52: a delimiter followed by ) is accepted (a syntax error, nothing runs)",
+        `cat > f <<'EOF')\n${QA_PUSH}\nEOF`,
+        ENV_0,
+        0,
+      ],
+      [
+        "TC-QA-53: <<- with a space before the delimiter",
+        `cat <<- 'EOF' > f\n\t${QA_PUSH}\n\tEOF`,
+        ENV_0,
+        0,
+      ],
+      [
+        "TC-QA-54: an unclosed opening delimiter quote",
+        `cat > f <<'EOF\n${QA_PUSH}\nEOF`,
+        ENV_0,
+        2,
+      ],
+      [
+        "TC-QA-55: two heredocs on separate lines stay relaxed",
+        `${BODY_PUSH}\n${BODY_PUSH}`,
+        ENV_0,
+        0,
+      ],
+      [
+        "TC-QA-56: <<- does not strip spaces from the closer",
+        `cat <<-'EOF' > f\n${QA_PUSH}\n  EOF\nEOF`,
+        ENV_0,
+        0,
+      ],
+      [
+        "TC-QA-57: the second of two heredocs on separate lines is read",
+        `${BODY_PUSH}\ncat > g <<'EOF'\nx\nEOF\n${QA_PUSH}`,
+        ENV_0,
+        2,
+      ],
+    ]);
+  });
+
+  describe("triggers inside a quoted heredoc body are ignored", () => {
+    cases([
+      [
+        "TC-QA-60: substitutions, runner words, hook paths and ! in a body",
+        "cat > f.md <<'EOF'\n$(x) `y` ${z} $[1] <(a) >(b) $'c' !\nbash eval python3 .git/hooks .husky\n" +
+          QA_PUSH +
+          "\nEOF",
+        ENV_0,
+        0,
+      ],
+      [
+        "TC-QA-61: a # and an unquoted << in a body",
+        `cat > f.md <<'EOF'\n# heading <<X\n${QA_PUSH}\nEOF`,
+        ENV_0,
+        0,
+      ],
+    ]);
+  });
+});
+
 // --- property cases (test plan section 7) ------------------------------------
 
 const PROPERTY_TIMEOUT = 120_000;
