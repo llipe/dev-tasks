@@ -22,10 +22,40 @@
 #
 # Rules 1 and 4 read each command's arguments from its own simple-command
 # segment (split at `&&`, `||`, `;`, `|`, `&`, and newlines outside quotes —
-# see command_segments()), never from the rest of the command string. A
+# see executed_view()), never from the rest of the command string. A
 # chained `gh pr create --base main` is not a push to `main`, a `--tags` in a
 # commit message is not a tag push, and every push or merge in a chain is
 # checked, not only the last one (issue #256).
+#
+# Executed view (issue #339). Rules 1 and 4 judge only text that bash runs:
+#   - Quoted heredocs (`<<'ID'`, `<<"ID"`, `<<-'ID'`, ID a plain identifier)
+#     are read as heredocs. Their body lines are never parsed for quotes or
+#     separators, so an apostrophe in a body cannot glue later commands
+#     together. An unquoted delimiter (`<<EOF`) and a `<<<` here-string are
+#     expanded by bash and are never relaxed.
+#   - A command is relaxed only when every segment's first word is on the
+#     allow-list `git`, `gh`, `echo`, `printf`, `cat`. Then heredoc bodies and
+#     `echo`/`printf`/`cat` arguments are ignored; `git` and `gh` arguments
+#     are always kept.
+#   - Anything that could run code keeps the whole command strict (the
+#     pre-#339 reading, where heredoc body lines are read as commands, so
+#     `bash <<'EOF'` stays blocked): `$(`, a backtick, `$[`, `${`, `<(`, `>(`,
+#     an assignment prefix (`X=1 cmd`), or a runner or interpreter word
+#     anywhere (`bash`, `sh`, `eval`, `source`, `.`, `env`, `command`, `exec`,
+#     `xargs`, `sudo`, `nohup`, `time`, `python*`, `node`, `fish`, ...).
+#     Triggers inside a quoted heredoc body are ignored, since bash never
+#     expands it; single-quoted text elsewhere still counts.
+#   - Also strict, failing toward the old reading on any doubt: `$'`, `!`,
+#     a comment (`#` at a word start), any other `<<`, an open quote, an
+#     unterminated heredoc, two heredocs on one line, `printf -v`, `git -c`,
+#     `--config-env` or `--exec-path`, the plain text `.git/`, `hook` or
+#     `.husky` (a text match, not a path check: it narrows writing a hook
+#     that runs later, which only branch protection closes), and text fed by
+#     a pipe or heredoc to anything but `git commit`,
+#     `gh issue` or `gh pr` (an alias or extension cannot shadow a built-in).
+# Rules 2 (Conventional Commits) and 3 (inline `--body`) deliberately read
+# argument text and do not use the executed view. `--body-file <path>`
+# remains the recommended way to pass an issue or PR body.
 #
 #   5. (Issue #178) The same "no write to the default branch" invariant as
 #      rule 1, enforced on the mutating GitHub MCP tool surface, not just
@@ -222,51 +252,194 @@ tokenize() {
   printf '%s' "$1" | xargs -n1 -- printf '%s\n' 2>/dev/null
 }
 
-# Split the raw command into simple-command segments, one per output line,
-# at `&&`, `||`, `;`, `|`, `&`, and newlines outside single or double quotes
-# (backslash escapes honored). Every rule that reads a command's arguments
-# reads them from its own segment, never from the rest of the string. Before
-# this, `git push -u origin feat && gh pr create --base main` read `main` as
-# a push destination, `--tags` anywhere in the string read as a tag push, and
-# a greedy `.*git push` match checked only the LAST push in a chained
-# command, so `git push origin main && git push origin feat` was allowed
-# (issue #256). Portable awk only: macOS ships BSD awk, not gawk.
-command_segments() {
+# Build the executed view of the raw command (issue #339). Prints the mode,
+# `relaxed` or `strict`, on line one, then one simple-command segment per
+# line. Segments split at `&&`, `||`, `;`, `|`, `&`, and newlines outside
+# single or double quotes (backslash escapes honored; `>&`, `<&` and `&>` are
+# redirections, not separators), so every rule that reads a command's
+# arguments reads them from its own segment, never from the rest of the
+# string (issue #256).
+#
+# Quoted heredocs (`<<'ID'`, `<<"ID"`, `<<-'ID'`, ID a plain identifier) are
+# read as heredocs: their body lines are never parsed for quotes or
+# separators, so an apostrophe in a body (`don't`) cannot open a phantom quote
+# that glues later commands together.
+#
+# relaxed: every segment's first word is `git`, `gh`, `echo`, `printf` or
+#   `cat`, and nothing in the command can run code (see the header for the
+#   triggers). Heredoc bodies are dropped and `echo`/`printf`/`cat` segments
+#   are cut to their first word, since bash never runs that text. `git` and
+#   `gh` segments are kept whole.
+# strict: anything else, or any doubt. Every segment is kept, and each heredoc
+#   body line is a segment of its own (backslash-newline joined), so
+#   `bash <<'EOF'` with a push in the body stays blocked. This is the
+#   pre-#339 view except for the heredoc body handling.
+#
+# Portable awk only: macOS ships BSD awk, not gawk.
+executed_view() {
   printf '%s\n' "$cmd" | awk '
+    function flush() {
+      k++; seg[k] = cur; body[k] = 0; fed[k] = cur_fed
+      cur = ""; cur_fed = 0; started = 0
+    }
+    function emit(ch) {
+      if (!started && ch != " " && ch != "\t") {
+        started = 1; cur_fed = pipe_pending; pipe_pending = 0
+      }
+      cur = cur ch
+    }
+    function add_body(line) { k++; seg[k] = line; body[k] = 1 }
+    # Read the pending heredoc bodies that start after the newline at i.
+    function read_bodies(   p, m, e, line, cmp, closed, acc) {
+      p = i + 1
+      for (m = 1; m <= npend; m++) {
+        closed = 0; acc = ""
+        while (p <= n) {
+          e = index(substr(s, p), "\n")
+          if (e == 0) { line = substr(s, p); p = n + 1 }
+          else { line = substr(s, p, e - 1); p = p + e }
+          cmp = line
+          if (pdash[m]) sub(/^\t+/, "", cmp)
+          if (cmp == pid[m]) { closed = 1; break }
+          if (line ~ /\\$/) { acc = acc substr(line, 1, length(line) - 1); continue }
+          add_body(acc line); acc = ""
+        }
+        if (acc != "") add_body(acc)
+        if (!closed) { strict = 1; break }
+      }
+      npend = 0
+      i = p - 1
+    }
     { s = s (NR > 1 ? "\n" : "") $0 }
     END {
-      out = ""; q = ""; n = length(s)
+      n = length(s); q = ""; prev = ""; k = 0; cur = ""; started = 0
+      cur_fed = 0; pipe_pending = 0; npend = 0; line_openers = 0; strict = 0
       for (i = 1; i <= n; i++) {
-        c = substr(s, i, 1)
+        c = substr(s, i, 1); c2 = substr(s, i, 2)
+        # Strictness triggers, anywhere outside a quoted heredoc body
+        # (bodies are consumed by read_bodies and never reach this loop).
+        if (c2 == "$(" || c2 == "$[" || c2 == "${" || c2 == "$\047" ||
+            c2 == "<(" || c2 == ">(" || c2 == "<<" || c == "`" || c == "!") {
+          if (!(q == "" && c2 == "<<")) strict = 1
+        }
         if (q != "") {
           # Inside quotes a newline is part of the argument, never a
           # separator: map it to a space so the segment stays whole.
-          if (c == "\n") { out = out " "; continue }
-          if (c == q) { q = ""; out = out c; continue }
+          if (c == "\n") { if (npend) strict = 1; emit(" "); continue }
+          if (c == q) { q = ""; emit(c); prev = c; continue }
           if (c == "\\" && q == "\"" && i < n) {
             d = substr(s, i + 1, 1); i++
-            if (d != "\n") out = out c d   # backslash-newline is a continuation
+            if (d != "\n") { emit(c); emit(d) }   # backslash-newline is a continuation
             continue
           }
-          out = out c
+          emit(c)
           continue
         }
         if (c == "\\" && i < n) {
           d = substr(s, i + 1, 1); i++
-          if (d != "\n") out = out c d     # backslash-newline is a continuation
+          # An escaped character is literal: prev must not read it as the `>`
+          # or `<` of a `>&`/`<&` redirection (`\>& cmd` backgrounds cmd).
+          if (d != "\n") { emit(c); emit(d); prev = c }   # backslash-newline is a continuation
           continue
         }
-        if (c == "\"" || c == "\047") { q = c; out = out c; continue }
-        if (c == ";" || c == "|" || c == "&" || c == "\n") { out = out "\n"; continue }
-        out = out c
+        # A word-start `#` opens a comment: keep the pre-#339 reading.
+        if (c == "#" && (prev == "" || prev ~ /[ \t\n;&|()]/)) strict = 1
+        if (c == "\"" || c == "\047") { q = c; emit(c); prev = c; continue }
+        if (c2 == "<<") {
+          if (substr(s, i + 2, 1) == "<") {   # a here-string
+            strict = 1; emit("<"); emit("<"); emit("<"); i += 2; prev = "<"; continue
+          }
+          j = i + 2; dash = 0; ok = 0
+          if (substr(s, j, 1) == "-") { dash = 1; j++ }
+          while (substr(s, j, 1) == " " || substr(s, j, 1) == "\t") j++
+          oq = substr(s, j, 1)
+          if (oq == "\047" || oq == "\"") {
+            e = index(substr(s, j + 1), oq)
+            if (e > 0) {
+              id = substr(s, j + 1, e - 1); after = substr(s, j + e + 1, 1)
+              if (id ~ /^[A-Za-z_][A-Za-z0-9_]*$/ && (after == "" || after ~ /[ \t\n;&|<>)]/)) ok = 1
+            }
+          }
+          if (!ok) { strict = 1; emit(c); prev = c; continue }   # unquoted, arithmetic, ...
+          if (++line_openers > 1) strict = 1   # two heredocs on one line
+          npend++; pid[npend] = id; pdash[npend] = dash
+          for (m = i; m <= j + e; m++) emit(substr(s, m, 1))
+          cur_fed = 1   # the heredoc feeds this segment
+          i = j + e; prev = oq
+          continue
+        }
+        if (c == "&" && (prev == ">" || prev == "<" || substr(s, i + 1, 1) == ">")) {
+          emit(c); prev = c; continue
+        }
+        if (c == "|" && substr(s, i + 1, 1) == "|") {   # `||` is not a pipe
+          flush(); i++; prev = c; continue
+        }
+        if (c == ";" || c == "|" || c == "&" || c == "\n") {
+          flush(); prev = c
+          if (c == "|") pipe_pending = 1
+          if (c == "\n") { line_openers = 0; if (npend) read_bodies() }
+          continue
+        }
+        emit(c); prev = c
       }
-      print out
+      if (q != "" || npend) strict = 1   # an open quote or an unread heredoc
+      flush()
+
+      split("git gh echo printf cat", a, " ")
+      for (m in a) allow[a[m]] = 1
+      split("bash sh zsh ksh dash ash mksh fish csh tcsh busybox eval source . exec env command builtin xargs sudo doas su nohup time nice ionice timeout setsid stdbuf unbuffer watch parallel script chroot ssh trap node nodejs deno bun perl ruby php lua luajit osascript awk gawk mawk nawk sed tclsh wish expect", a, " ")
+      for (m in a) runner[a[m]] = 1
+      text = ""
+      for (m = 1; m <= k; m++) {
+        if (body[m]) continue
+        t = seg[m]; sub(/^[ \t]+/, "", t)
+        if (t == "") continue
+        text = text " " t
+        nw = split(t, w, /[ \t]+/)
+        if (!(w[1] in allow)) strict = 1
+        # Text fed to git or gh is data only for these built-ins; an alias
+        # or extension cannot shadow a built-in.
+        if (fed[m] && w[1] == "git" && w[2] != "commit") strict = 1
+        if (fed[m] && w[1] == "gh" && w[2] != "issue" && w[2] != "pr") strict = 1
+        if (w[1] == "printf" && w[2] == "-v") strict = 1
+        if (w[1] == "git") {
+          for (x = 2; x <= nw; x++) if (w[x] == "-c" || w[x] ~ /^--(config-env|exec-path)/) strict = 1
+        }
+      }
+      low = tolower(text)
+      if (index(low, ".git/") || index(low, "hook") || index(low, ".husky")) strict = 1
+      nt = split(text, tok, /[^A-Za-z0-9_.+-]+/)
+      for (x = 1; x <= nt; x++) {
+        if ((tok[x] in runner) || tok[x] ~ /^(python|pypy)[0-9.]*$/) strict = 1
+      }
+
+      if (strict) {
+        print "strict"
+        for (m = 1; m <= k; m++) print seg[m]
+        exit
+      }
+      print "relaxed"
+      for (m = 1; m <= k; m++) {
+        if (body[m]) continue
+        t = seg[m]; sub(/^[ \t]+/, "", t)
+        split(t, w, /[ \t]+/)
+        if (w[1] == "echo" || w[1] == "printf" || w[1] == "cat") print w[1]
+        else print seg[m]
+      }
     }'
 }
 
-# Segments matching the extended regex $1, whitespace-normalized, one per line.
+# The executed view, computed once: its segments (the mode line dropped), and
+# the segments joined into one whitespace-normalized line for whole-command
+# checks.
+_exec_out="$(executed_view)"
+exec_segments="$(printf '%s\n' "$_exec_out" | tail -n +2)"
+exec_norm="$(printf '%s' "$exec_segments" | tr '\n' ' ' | tr -s ' ')"
+
+# Executed-view segments matching the extended regex $1, whitespace-normalized,
+# one per line.
 segments_matching() {
-  command_segments | tr -s ' \t' '  ' | grep -E -- "$1"
+  printf '%s\n' "$exec_segments" | tr -s ' \t' '  ' | grep -E -- "$1"
 }
 
 # Argument tokens following EACH `git push` in segment $1, one per line.
@@ -482,7 +655,7 @@ gh_pr_merge_target() {
 
 # `git push` targeting the default branch (resolved dynamically; not hardcoded
 # to `main` so a repo on `master`/`trunk` is protected identically).
-if printf '%s' "$norm" | grep -Eq "$_push_segment_re|[;&|]git +push"; then
+if printf '%s' "$exec_norm" | grep -Eq "$_push_segment_re|[;&|]git +push"; then
   default_branch="$(resolve_default_branch)"
   if push_targets_ref "$default_branch"; then
     block "pushing to '$default_branch' is not allowed. Open a PR; only the user may merge into $default_branch."
@@ -490,7 +663,7 @@ if printf '%s' "$norm" | grep -Eq "$_push_segment_re|[;&|]git +push"; then
 fi
 
 # `git merge`: two independent checks.
-if printf '%s' "$norm" | grep -Eq "${_cmd_prefix}git +merge([[:space:]]|$)|[;&|]git +merge([[:space:]]|$)"; then
+if printf '%s' "$exec_norm" | grep -Eq "${_cmd_prefix}git +merge([[:space:]]|$)|[;&|]git +merge([[:space:]]|$)"; then
   current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '')"
   default_branch="$(resolve_default_branch)"
 
@@ -637,7 +810,7 @@ if push_is_tag_push; then
 fi
 
 # Block `gh release create` (cutting a release implies creating a tag).
-if printf '%s' "$norm" | grep -Eq 'gh +release +create'; then
+if printf '%s' "$exec_norm" | grep -Eq 'gh +release +create'; then
   block "cutting a GitHub release is human-only (it creates a tag). See github-ops 'Tags'."
 fi
 

@@ -45,10 +45,15 @@ around it.
    `--body-file`, or hand the tag to a human.
 
    **The guard misfired.** It matches patterns over a command string, so
-   prose can trigger it: a commit message body containing the words `git tag`
-   matches the tag detector. Confirm by reading the matching rule in
-   `.claude/hooks/git-guard.sh` and checking whether your text hits it
-   incidentally.
+   prose can trigger it: a `git commit -m` message containing the words
+   `git tag` matches the tag detector. Since issue #339, a command made only of
+   `git`, `gh`, `echo`, `printf`, and `cat` segments is judged by what bash
+   runs: a quoted heredoc body (`<<'EOF'`) and `echo`, `printf`, or `cat`
+   arguments do not trigger rules 1 and 4. A command with `$(...)`, backticks,
+   an interpreter such as `bash` or `eval`, an unquoted heredoc, or a
+   here-string is still read in full. Confirm by reading the matching rule in
+   `.claude/hooks/git-guard.sh` (`executed_view()`) and checking whether your
+   text hits it incidentally.
 
 3. Reproduce the decision directly, which is faster than guessing. The hook
    reads the `PreToolUse` payload as JSON on stdin and exits `2` to block:

@@ -97,6 +97,8 @@ Kiro (`.kiro/hooks/`) and Claude Code (`.claude/hooks/`, wired via `.claude/sett
 
 Hook enforcement is best-effort and fails open on unexpected errors, with one exception: if `git-guard` cannot verify a `gh pr merge`'s (or its MCP equivalent's) base branch — the `gh pr view` lookup fails (`gh` missing, unauthenticated, or a network error), or an MCP merge/auto-merge call omits enough `tool_input` to identify the PR at all — it fails **closed** and blocks the call, since an unverified base could be the default branch.
 
+The Claude Code `git-guard` judges pushes, merges and tags only by commands that run: it ignores quoted-heredoc text and `printf`/`echo`/`cat` text when it can show that text is never executed, and `--body-file <path>` remains the recommended way to pass an issue or PR body.
+
 **Hooks are advisory, not the gate.** Every hook in this table is a best-effort, local, pattern-matching check over a command string or a structured tool-input shape — not a real parser, and not a completeness guarantee against every future command form or tool surface (a new MCP server, a future first-party tool) that could reopen the same class of gap. **GitHub branch protection on the default branch — require a PR, require ≥1 approving review, require passing status checks, disable force-push and branch deletion — is the actual, server-side, unbypassable-by-any-tool-surface control.** Hooks narrow the window and catch the common cases; they do not replace branch protection. Configure it per the README "Configure branch protection" step and `activity-init`'s Repository Setup section.
 
 ## General Agent Guidelines
