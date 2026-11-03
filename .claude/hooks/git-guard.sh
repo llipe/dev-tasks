@@ -48,8 +48,10 @@
 #   - Also strict, failing toward the old reading on any doubt: `$'`, `!`,
 #     a comment (`#` at a word start), any other `<<`, an open quote, an
 #     unterminated heredoc, two heredocs on one line, `printf -v`, `git -c`,
-#     `--config-env` or `--exec-path`, a path naming `.git/`, `hook` or
-#     `.husky`, and text fed by a pipe or heredoc to anything but `git commit`,
+#     `--config-env` or `--exec-path`, the plain text `.git/`, `hook` or
+#     `.husky` (a text match, not a path check: it narrows writing a hook
+#     that runs later, which only branch protection closes), and text fed by
+#     a pipe or heredoc to anything but `git commit`,
 #     `gh issue` or `gh pr` (an alias or extension cannot shadow a built-in).
 # Rules 2 (Conventional Commits) and 3 (inline `--body`) deliberately read
 # argument text and do not use the executed view. `--body-file <path>`
@@ -335,7 +337,9 @@ executed_view() {
         }
         if (c == "\\" && i < n) {
           d = substr(s, i + 1, 1); i++
-          if (d != "\n") { emit(c); emit(d); prev = d }   # backslash-newline is a continuation
+          # An escaped character is literal: prev must not read it as the `>`
+          # or `<` of a `>&`/`<&` redirection (`\>& cmd` backgrounds cmd).
+          if (d != "\n") { emit(c); emit(d); prev = c }   # backslash-newline is a continuation
           continue
         }
         # A word-start `#` opens a comment: keep the pre-#339 reading.

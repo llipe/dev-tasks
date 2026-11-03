@@ -745,6 +745,12 @@ describe("issue #339 / edge cases", () => {
         ENV_0,
         0,
       ],
+      // verifier audit D-A: an escaped `\>` or `\<` is a literal character,
+      // so the `&` after it backgrounds a command bash then runs.
+      ["TC-X-11: an escaped > before & is not a redirect", `echo \\>& ${QA_PUSH}`, ENV_0, 2],
+      ["TC-X-12: an escaped < before & is not a redirect", `echo \\<& ${QA_PUSH}`, ENV_0, 2],
+      ["TC-X-13: printf with an escaped > before &", `printf x \\>& ${QA_PUSH}`, ENV_0, 2],
+      ["TC-X-14: cat with an escaped > before & and a merge", `cat f \\>& ${QA_MERGE}`, ENV_B, 2],
     ]);
   });
 
