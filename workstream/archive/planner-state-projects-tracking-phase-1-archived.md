@@ -11,14 +11,14 @@
 
 ## Story Status
 
-| Sequence | Story ID | Issue # | Status         | PR  | Branch |
-| -------- | -------- | ------- | -------------- | --- | ------ |
-| 1 | S-001 | #270 | ✅ Merged | #276 | story/S-001-github-ops-conventions |
-| 2 | S-002 | #271 | ✅ Merged | #277 | story/S-002-publish-hierarchy |
-| 3 | S-003 | #272 | ✅ Merged | #278 | story/S-003-implement-status-comment |
-| 4 | S-004 | #273 | ✅ Merged | #279 | story/S-004-developer-status-fields |
-| 5 | S-005 | #274 | ✅ Merged | #280 | story/S-005-init-github-project |
-| 6 | S-006 | #275 | ✅ Merged | #281 | story/S-006-no-project-writes-guard |
+| Sequence | Story ID | Issue # | Status    | PR   | Branch                               |
+| -------- | -------- | ------- | --------- | ---- | ------------------------------------ |
+| 1        | S-001    | #270    | ✅ Merged | #276 | story/S-001-github-ops-conventions   |
+| 2        | S-002    | #271    | ✅ Merged | #277 | story/S-002-publish-hierarchy        |
+| 3        | S-003    | #272    | ✅ Merged | #278 | story/S-003-implement-status-comment |
+| 4        | S-004    | #273    | ✅ Merged | #279 | story/S-004-developer-status-fields  |
+| 5        | S-005    | #274    | ✅ Merged | #280 | story/S-005-init-github-project      |
+| 6        | S-006    | #275    | ✅ Merged | #281 | story/S-006-no-project-writes-guard  |
 
 ## Current Position
 
