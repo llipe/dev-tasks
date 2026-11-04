@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.17.1] - 2026-11-03
+
+### Fixed
+
+- fix(hooks): treat an escaped redirect character as literal in git-guard
+- fix(hooks): judge git-guard pushes by executed commands, not heredoc text
+- fix(release): attach the bundle to an existing release; record 0.17.0 (#337)
+
+### Changed
+
+- Merge pull request #344 from llipe/chore/pre-release-format
+- chore: apply prettier to docs and archived planner state
+- Merge pull request #341 from llipe/issue/339-git-guard-heredoc-push
+- test(hooks): isolate each executed-view trigger and document the runbook
+- test(hooks): pin git-guard executed-view cases for #339
+- Merge pull request #336 from llipe/chore/projects-tracking-phase-3-closeout
+- Merge pull request #338 from llipe/chore/337-release-bundle-existing-release
+- chore(roadmap): close out projects-tracking-phase-3
+
 ## [0.17.0] - 2026-10-27
 
 ### Added
