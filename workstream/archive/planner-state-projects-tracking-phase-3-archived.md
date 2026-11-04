@@ -12,14 +12,14 @@
 
 ## Story Status
 
-| Sequence | Story ID | Issue # | Status     | PR  | Branch |
-| -------- | -------- | ------- | ---------- | --- | ------ |
-| 1 | S-019 | #318 | ✅ Merged | #326 | story/S-019-type-priority-conventions |
-| 2 | S-016 | #319 | ✅ Merged | #327 | story/S-016-roadmap-conversion |
-| 3 | S-013 | #320 | ✅ Merged | #328 | story/S-013-migrate-plan |
-| 4 | S-014 | #321 | ✅ Merged | #329 | story/S-014-map-and-batches |
-| 5 | S-015 | #322 | ✅ Merged | #330 | story/S-015-migrate-apply |
-| 6 | S-017 | #323 | ✅ Merged | #331, #332 | story/S-017-runbook-and-mode, chore/323-projects-migration |
+| Sequence | Story ID | Issue # | Status    | PR         | Branch                                                     |
+| -------- | -------- | ------- | --------- | ---------- | ---------------------------------------------------------- |
+| 1        | S-019    | #318    | ✅ Merged | #326       | story/S-019-type-priority-conventions                      |
+| 2        | S-016    | #319    | ✅ Merged | #327       | story/S-016-roadmap-conversion                             |
+| 3        | S-013    | #320    | ✅ Merged | #328       | story/S-013-migrate-plan                                   |
+| 4        | S-014    | #321    | ✅ Merged | #329       | story/S-014-map-and-batches                                |
+| 5        | S-015    | #322    | ✅ Merged | #330       | story/S-015-migrate-apply                                  |
+| 6        | S-017    | #323    | ✅ Merged | #331, #332 | story/S-017-runbook-and-mode, chore/323-projects-migration |
 
 ## Current Position
 

@@ -14,14 +14,14 @@
 
 ## Story Status
 
-| Sequence | Story ID | Issue # | Status     | PR  | Branch |
-| -------- | -------- | ------- | ---------- | --- | ------ |
-| 1 | S-008 | #291 | ✅ Merged | #298 | story/S-008-wave-issue-checkpoint-commit |
-| 2 | S-009 | #292 | ✅ Merged | #299 | story/S-009-wave-status-comment |
-| 3 | S-010 | #293 | ✅ Merged | #300 | story/S-010-closes-at-ship |
-| 4 | S-011 | #294 | ✅ Merged | #301 | story/S-011-roadmap-closeout |
-| 5 | S-012 | #295 | ✅ Merged | #302 | story/S-012-verifier-wave-rollup |
-| 6 | S-018 | #296 | ✅ Merged | #303 | story/S-018-prd-status-comment |
+| Sequence | Story ID | Issue # | Status    | PR   | Branch                                   |
+| -------- | -------- | ------- | --------- | ---- | ---------------------------------------- |
+| 1        | S-008    | #291    | ✅ Merged | #298 | story/S-008-wave-issue-checkpoint-commit |
+| 2        | S-009    | #292    | ✅ Merged | #299 | story/S-009-wave-status-comment          |
+| 3        | S-010    | #293    | ✅ Merged | #300 | story/S-010-closes-at-ship               |
+| 4        | S-011    | #294    | ✅ Merged | #301 | story/S-011-roadmap-closeout             |
+| 5        | S-012    | #295    | ✅ Merged | #302 | story/S-012-verifier-wave-rollup         |
+| 6        | S-018    | #296    | ✅ Merged | #303 | story/S-018-prd-status-comment           |
 
 ## Current Position
 
