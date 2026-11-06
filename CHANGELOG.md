@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.17.2] - 2026-11-06
+
+### Fixed
+
+- fix: accept ISSUE decision log phase
+
+### Changed
+
+- Merge pull request #343 from jay23606/pr-go/342-bug-decision-log-lint-rejects-issue-mode
+
 ## [0.17.1] - 2026-11-03
 
 ### Fixed
