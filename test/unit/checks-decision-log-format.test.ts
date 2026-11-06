@@ -59,6 +59,13 @@ describe("checkDecisionLogContent", () => {
     expect(result.staleness).toEqual([]);
   });
 
+  it("passes an Issue Mode row with Phase ISSUE", () => {
+    const content = "## Issue Mode\n\n" + HEADER + row("D-01", "ISSUE");
+    const result = checkDecisionLogContent(content, "workstream/decisions-x.md");
+    expect(result.failures).toEqual([]);
+    expect(result.staleness).toEqual([]);
+  });
+
   it("fails on a duplicate ID within the file", () => {
     const content =
       "## WHAT phase\n\n" +

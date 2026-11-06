@@ -109,6 +109,8 @@ On reaching the cap, the skill presents the open list and asks the user to **con
 
 When `mode="issue"`:
 
+- **Decision-log Phase is `ISSUE`.** Use `ISSUE` for every row written in Issue Mode; reserve `WHAT` and `HOW` for the corresponding Feature Mode phases.
+
 - **Glossary is read-only.** No new term proposals. The glossary is consulted for resolve-before-ask and for the conflict checks in step 3a; a term the issue needs and the glossary lacks is a question for the user, never an edit made here.
 - **Scope is limited** to what the issue changes relative to current behavior — do not open branches outside that delta.
 - **Prior-decision reuse is mandatory, not optional.** Before asking, search prior decisions from _any_ feature's `decisions-*.md` for a reusable answer. The scan is keyword-gated: only logs whose `Branch` or `Question` text shares a term with the issue description are read, keeping the lookup bounded as the number of logs grows. A reused answer is cited in qualified form (`<other-feature>#D-NN`) and is not re-asked.

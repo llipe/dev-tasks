@@ -53,7 +53,7 @@ export interface DecisionLogResult {
   staleness: DecisionLogFinding[];
 }
 
-const VALID_PHASES = new Set(["WHAT", "HOW"]);
+const VALID_PHASES = new Set(["WHAT", "HOW", "ISSUE"]);
 
 /** Values meaning "no Supersedes", not a reference to resolve. */
 const NO_SUPERSEDES = new Set(["", "—", "-", "n/a"]);
@@ -220,7 +220,7 @@ export function checkDecisionLogContent(content: string, path: string): Decision
       failures.push({
         rule: "invalid-phase",
         path,
-        message: `${path}: row '${row.id}' has Phase '${row.phase}', expected WHAT or HOW.`,
+        message: `${path}: row '${row.id}' has Phase '${row.phase}', expected WHAT, HOW, or ISSUE.`,
       });
     }
 
