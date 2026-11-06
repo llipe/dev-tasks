@@ -37,7 +37,7 @@ Every entry has a **kind**:
 | `episodic` | Session-scoped narration (intent/outcome), expires automatically  | requires `--session <id>`; default kind in private banks |
 | `semantic` | Durable, searchable decisions — what `search`/`list` return today | default kind in `kb`                                     |
 
-Rule of thumb: episodic entries are per-session chatter that lives in your private bank and expires; semantic entries are durable knowledge that lives in `kb` (or is promoted there later) and never expires. See [`REFERENCE.md`](./REFERENCE.md) for bank/kind command reference, `memo recall`, `memo timeline`, `memo bank`, and `memo migrate`.
+Rule of thumb: episodic entries are per-session chatter that lives in your private bank and expires, and they never appear in `MINE`; semantic entries are durable knowledge. A decision about this repository goes in `kb`, which is limited by repo. A lesson you should carry to other repositories goes in your own bank, which is not. See [`REFERENCE.md`](./REFERENCE.md) for bank/kind command reference, `memo recall`, `memo timeline`, `memo bank`, and `memo migrate`.
 
 ---
 
@@ -46,10 +46,12 @@ Rule of thumb: episodic entries are per-session chatter that lives in your priva
 **memo-cli 1.3.0+:** one call restores the full context bundle (SELF, POLICIES, SHARED, MINE, LAST SESSION, CONFLICTS):
 
 ```bash
-memo recall "<current task description>" --bank <agent>-memory --json
+memo recall "<current task description>" --bank <agent>-memory --max-tokens 6000 --json
 ```
 
 If no bank is passed (and `MEMO_BANK` is unset), `recall` resolves to `kb` and omits the private-only sections (`SELF`, `MINE`, `LAST SESSION`).
+
+The default budget is 2000 tokens, and in a repository with an established `kb` the `SHARED` section alone can use all of it. Pass `--max-tokens 6000` so your own entries are not cut. `dropped` (memo-cli 1.3.1+) counts what each section lost; `truncated` also names sections that had nothing to cut.
 
 **Fallback (`memo --version` < 1.3.0, or `memo recall` unavailable):** run the four-command sequence instead:
 
@@ -126,6 +128,25 @@ A `semantic` entry with `--source agent` **MUST** carry `--provenance <csv>` unl
 
 ---
 
+### Lesson Entry (a general rule to carry to other repositories) — semantic, in your bank
+
+```bash
+memo write \
+  --kind semantic \
+  --bank <agent>-memory \
+  --rationale "<the general rule first>. On <repo>: <the specific case, if it helps>." \
+  --tags "<topic>,lesson" \
+  --entry-type decision \
+  --source agent \
+  --provenance "<id of the episodic entry this came from>" \
+  --on-duplicate create-new \
+  --json
+```
+
+`MINE` returns a private bank's semantic entries from any repository. `repo`, `org` and tags record where a lesson came from but do not keep it home, so a fact true only of this repository belongs in `kb`. Never use `--on-duplicate consolidate` for a lesson: it keeps only the longer of two rationales.
+
+---
+
 ## Entry Types
 
 | Type                | Use For                                       |
@@ -184,7 +205,7 @@ No memo action in Phase 2. `memo used` and `memo decay` arrive with memo-cli 1.4
 
 ```
 memo setup validate                                        # Verify config
-memo recall "<task>" --bank <agent>-memory --json               # Restore full context (1.3.0+)
+memo recall "<task>" --bank <agent>-memory --max-tokens 6000 --json               # Restore full context (1.3.0+)
 memo write --rationale "..." --tags "a,b,c" --json          # Record a semantic decision (kb)
 memo write --kind episodic --session ID --bank <agent>-memory   # Record an intent/outcome entry
 memo search "query" [--scope related] --json                # Semantic search

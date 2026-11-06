@@ -215,7 +215,7 @@ which memo && memo setup validate
 When memo is available and `memo --version` is `1.3.0` or later, restore context with a single call:
 
 ```bash
-memo recall "<story or issue description>" --bank developer-memory --json
+memo recall "<story or issue description>" --bank developer-memory --max-tokens 6000 --json
 ```
 
 `recall` returns one bundle — SELF, POLICIES, SHARED, MINE, LAST SESSION, CONFLICTS — in a single `<4s` call. If `memo recall` exits `2` (embeddings failure), surface the warning on stderr and continue the session without recalled context rather than blocking.
