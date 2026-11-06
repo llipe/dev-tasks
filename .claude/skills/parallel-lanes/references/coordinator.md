@@ -16,7 +16,7 @@ then workstream/lanes/*.md, then `git worktree list` and `gh pr list --state ope
 
 1. Read the state files, `git worktree list`, open PRs, and `docs/roadmap.md`.
 2. Reconcile. A worktree on a branch the registry does not know, a PR with no lane, a lock with a dead holder: fix the registry and tell the owner in one line each.
-3. Recall from memory: `memo recall "<repo> coordination" --bank danny-memory --max-tokens 6000 --json`, then `memo search "<repo> coordination" --bank kb --tags <memory.crew_tag> --json`.
+3. Recall from memory: `memo recall "<repo> coordination" --bank danny-memory --max-tokens 6000 --json`. If `dropped.mine` is set (or, on older memo-cli, `truncated` lists `mine`), repeat with `--max-tokens 12000`. Then `memo search "<repo> coordination" --bank kb --tags <memory.crew_tag> --json`.
 4. If `handover.md` exists, it is the previous danny's last word. Rebuild from it, then delete it.
 
 ## Opening, monitoring, closing

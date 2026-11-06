@@ -51,7 +51,7 @@ memo recall "<current task description>" --bank <agent>-memory --max-tokens 6000
 
 If no bank is passed (and `MEMO_BANK` is unset), `recall` resolves to `kb` and omits the private-only sections (`SELF`, `MINE`, `LAST SESSION`).
 
-The default budget is 2000 tokens, and in a repository with an established `kb` the `SHARED` section alone can use all of it. Pass `--max-tokens 6000` so your own entries are not cut. `dropped` (memo-cli 1.3.1+) counts what each section lost; `truncated` also names sections that had nothing to cut.
+The default budget is 2000 tokens, and in a repository with an established `kb` the `SHARED` section alone can use all of it. Pass `--max-tokens 6000` to leave room for your own entries, and more if they are still cut. `dropped` (memo-cli 1.3.1+) counts what each section lost; `truncated` also names sections that had nothing to cut.
 
 **Fallback (`memo --version` < 1.3.0, or `memo recall` unavailable):** run the four-command sequence instead:
 
@@ -143,7 +143,7 @@ memo write \
   --json
 ```
 
-`MINE` returns a private bank's semantic entries from any repository. `repo`, `org` and tags record where a lesson came from but do not keep it home, so a fact true only of this repository belongs in `kb`. Never use `--on-duplicate consolidate` for a lesson: it keeps only the longer of two rationales.
+`MINE` returns a private bank's semantic entries from any repository. `repo`, `org` and tags record where a lesson came from but do not keep it out of another repository's `recall`, so a fact true only of this repository belongs in `kb`. Never use `--on-duplicate consolidate` for a lesson: it keeps only the longer of two rationales.
 
 ---
 

@@ -380,7 +380,7 @@ On-demand capabilities loaded only when invoked.
 | `activity-test-implementation`   | Author Layer 1-2 tests with enforced boundaries                                                                          | `qa-engineer`                                       |
 | `activity-coverage-gap-analysis` | Coverage measurement and risk-ranked gaps                                                                                | `qa-engineer`                                       |
 | `memo-cli-usage`                 | Shared architectural memory across sessions                                                                              | `product-engineer`, `developer`, `technical-writer` |
-| `parallel-lanes`                 | Run the workflow across parallel Claude Code sessions with a permanent crew (Claude Code only)                           |
+| `parallel-lanes`                 | Run the workflow across parallel Claude Code sessions with a permanent crew (Claude Code only)                           | coordinator and workers                             |
 
 ---
 
