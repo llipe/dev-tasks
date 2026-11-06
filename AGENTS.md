@@ -74,6 +74,7 @@ Platform coverage: `.github/agents/` and `.kiro/agents/` carry all eleven. `.cla
 | ux-scaffold    | Mockup project creation (html-lite, react-full)                                                                                                                        | ux-engineer                 |
 | ux-theme-gen   | Generate theme artifacts from DESIGN.md                                                                                                                                | ux-engineer, developer      |
 | memo-cli-usage | Read/write decisions to shared knowledge base                                                                                                                          | technical-writer, developer |
+| parallel-lanes | Run the workflow across parallel Claude Code sessions with a permanent crew, shared state and locks (Claude Code only; configured by `.claude/parallel-lanes.json`)    |
 
 ## Instructions
 
