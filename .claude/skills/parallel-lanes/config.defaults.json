@@ -1,0 +1,70 @@
+{
+  "$comment": "Defaults for the parallel-lanes skill. The repository overrides any key in .claude/parallel-lanes.json; absent keys fall back to these.",
+  "repo": "<owner>/<repo>",
+  "owner_name": "the owner",
+  "crew": {
+    "coordinator": "danny",
+    "prep": "rusty",
+    "workers": ["linus", "basher", "yen"],
+    "session_mode": "auto"
+  },
+  "worktrees": {
+    "pattern": "../{repo}-{agent}",
+    "owner_checkout": "../{repo}",
+    "copy_files": [],
+    "post_install": ["pnpm install"]
+  },
+  "ports": {
+    "strategy": "shared",
+    "base": {},
+    "offsets": { "linus": 100, "basher": 200, "yen": 300 }
+  },
+  "state": {
+    "branch": "coordination",
+    "dir": "workstream/lanes"
+  },
+  "roadmap": {
+    "path": "docs/roadmap.md",
+    "writer": "danny",
+    "pr_batching": "per-merge-day"
+  },
+  "migrations": {
+    "policy": "next-free-renumber-at-merge",
+    "ledger": "workstream/lanes/migrations.md"
+  },
+  "locks": ["e2e", "servers", "production-infra"],
+  "shared_environment": {
+    "runbook": null,
+    "rules": [
+      "Never restart or purge the shared local stack.",
+      "Stop only processes you started, by PID; never a broad pkill.",
+      "A 200 is not proof the server is yours: check the listener's working directory before trusting a port.",
+      "Fixtures are additive and prefixed with the lane id; never change or delete a seeded row another lane may use.",
+      "Integration tests run isolated; only E2E and manual runs touch the shared stack, under the e2e lock.",
+      "Never edit a migration already applied to the shared stack; fix forward with a new file."
+    ]
+  },
+  "delegated_to_coordinator": [
+    "Assign lanes to workers and order the queue.",
+    "Grant and release the e2e and servers locks.",
+    "Answer reversible technical questions from the issue, spec, decisions files or code.",
+    "File follow-up issues reported by a lane.",
+    "Route CI failures."
+  ],
+  "ci": {
+    "flake_owner": null,
+    "minutes_limited": false
+  },
+  "coordinator": {
+    "handover_tokens": 350000
+  },
+  "objective": {
+    "path": "workstream/lanes/objective.md",
+    "review_every_days": 3
+  },
+  "memory": {
+    "tool": "memo",
+    "bank_pattern": "{agent}-memory",
+    "crew_tag": "crew"
+  }
+}

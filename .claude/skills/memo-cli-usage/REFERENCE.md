@@ -172,7 +172,7 @@ memo setup show       # print effective config
 
 `repo` is the **name of the codebase** this entry belongs to. It is set in `memo.config.json` and defaults into every `memo write` call automatically. Use the kebab-case name of the Git repository (e.g., `memo-cli`, `auth-service`, `api-gateway`).
 
-**Why it matters:** Every entry is scoped to a repo. `memo search` and `memo list` filter by your current repo by default, so entries from other repos don't pollute your results unless you explicitly request them with `--scope related`.
+**Why it matters:** Every `kb` entry is scoped to a repo. `memo search` and `memo list` on `kb` filter by your current repo by default, so entries from other repos don't pollute your results unless you explicitly request them with `--scope related`. A private bank is not scoped this way: its entries carry `repo` as a record of where they were written, and come back from any repository.
 
 **Rule:** Use the repo's canonical name — the one that appears in the GitHub URL. Don't abbreviate or alias it.
 
@@ -263,7 +263,7 @@ A bank is a namespace for entries, resolved in this priority order (B3): `--bank
 memo write --bank developer-memory ...   # bank id convention: <agent-name>-memory
 ```
 
-`kb` and private banks are isolated from each other: a `search`/`list`/`recall` scoped to a private bank never returns `kb` entries and vice versa, unless you explicitly pass `--bank kb`.
+`kb` and private banks are isolated from each other: a `search`/`list` scoped to a private bank never returns `kb` entries and vice versa, unless you explicitly pass `--bank kb`. `recall` is the exception: its `SHARED` and `POLICIES` sections always read `kb`, alongside the bank's own `SELF`, `MINE` and `LAST SESSION`.
 
 ### `kind` — Entry Nature
 
@@ -336,7 +336,7 @@ memo write \
 - `--json` — Machine-readable output (**always use in agent mode**)
 
 **Duplicate handling:**
-When memo detects a duplicate (same `repo + commit + story + entry_type + source`, or the equivalent v2 key including `bank`/`kind`/`session`/`seq`), interactive mode prompts for resolution. In `--json` mode you **MUST** supply `--on-duplicate` or the command will fail.
+When memo detects a duplicate (same `repo + commit + story + entry_type + source`, or the equivalent v2 key including `bank`/`kind`/`session`/`seq`, plus a hash of the rationale on a semantic entry with no commit or story, from 1.3.1), interactive mode prompts for resolution. In `--json` mode you **MUST** supply `--on-duplicate` or the command will fail.
 
 **Note:** `--confidence` is not a valid flag — confidence is inferred from `--source`.
 
@@ -480,7 +480,7 @@ Migrates legacy v1 stored payloads to schema v2, idempotently (a point that alre
 ### `memo recall` — One-Call Context Restore
 
 ```bash
-memo recall "<task description>" --bank <agent>-memory --json
+memo recall "<task description>" --bank <agent>-memory --max-tokens 6000 --json
 ```
 
 The 1.3.0 replacement for the four-command session-start sequence (`list` + `tags list` + `search` + `search --scope related`). Gathers, in one call (≤ 4 s target):
@@ -494,6 +494,8 @@ The 1.3.0 replacement for the four-command session-start sequence (`list` + `tag
 | `LAST SESSION` | The most recent episodic session's entries, in `seq` order            | `--bank` resolves to `kb`                           |
 | `CONFLICTS`    | Pending-contradiction entries (empty until a later phase)             | never                                               |
 
+The default budget of 2000 can be used up by `SHARED` alone, so pass `--max-tokens 6000`. From memo-cli 1.3.1, `dropped` counts what each section lost; `truncated` also names sections that had nothing to cut.
+
 **Flags:**
 
 - `--bank <id>` — Bank id (default: `$MEMO_BANK`, `config.bank.default`, or `kb`)
@@ -501,7 +503,7 @@ The 1.3.0 replacement for the four-command session-start sequence (`list` + `tag
 - `--max-tokens <n>` — Token budget (default: `config.recall.max_tokens`, `2000`)
 - `--json` — Machine-readable output
 
-When the budget is tight, sections are trimmed in this order: `conflicts` → `last_session` (oldest entries first) → `mine` → `shared` → `policies`. `SELF` is **never** trimmed, even if it alone exceeds the budget — in that case `truncated` lists every other section and the response honestly reports `budget.used_tokens > max_tokens` rather than silently cutting `SELF`. `recall` performs zero writes.
+When the budget is tight, sections are trimmed in this order: `conflicts` → `last_session` (oldest entries first) → `mine` (down to its top 2 that fit, from 1.3.1) → `shared` → `mine` (the rest) → `policies`. `SELF` is **never** trimmed, even if it alone exceeds the budget — in that case `truncated` lists every other section and the response honestly reports `budget.used_tokens > max_tokens` rather than silently cutting `SELF`. `recall` performs zero writes.
 
 **On failure:** `memo recall` exits `2` on an embeddings failure (`EMBEDDING_API_ERROR`) or a mid-gather Qdrant failure (`QDRANT_OPERATION_FAILED`) — there is no partial-bundle fallback. Treat this the same as any other exit-`2` failure: surface the warning, and continue the session without recalled context rather than blocking on it.
 
@@ -572,7 +574,7 @@ Exactly one of `--id`, `--all-by-repo`, or `--all-by-org` is required.
 memo setup validate
 
 # 2. Restore SELF, POLICIES, SHARED, MINE, LAST SESSION, CONFLICTS in one bundle
-memo recall "<current task or feature description>" --bank <agent>-memory --json
+memo recall "<current task or feature description>" --bank <agent>-memory --max-tokens 6000 --json
 ```
 
 **Fallback (`memo --version` below `1.3.0`):** run this sequence instead, before writing a single line of code:
@@ -969,7 +971,7 @@ memo setup init --repo <r> --org <o> --domain <d>              # Initialize conf
 memo setup validate                                              # Verify config
 memo setup show [--json]                                         # Display config
 
-memo recall "<task>" --bank <agent>-memory [--json]                  # Restore full context (1.3.0+)
+memo recall "<task>" --bank <agent>-memory --max-tokens 6000 [--json]                  # Restore full context (1.3.0+)
 memo write --rationale "..." --tags "a,b,c" [--json]             # Record a semantic decision (kb)
 memo write --kind episodic --session ID --bank <agent>-memory [--json]  # Record an intent/outcome entry
 memo search "query" [--scope related] [--bank ID] [--kind K] [--json]  # Semantic search
