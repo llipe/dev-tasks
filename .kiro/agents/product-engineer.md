@@ -257,6 +257,7 @@ This agent invokes the following **skills** for each activity. You **MUST** load
 | Publish stories to GitHub        | `activity-publish-github`                  |
 | Create task list                 | `plan` (steering document — always loaded) |
 | Route verifier drift findings    | `activity-drift-reconciliation`            |
+| Refactoring review (on request)  | `activity-refactor-review`                 |
 
 ---
 

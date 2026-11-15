@@ -365,6 +365,7 @@ On-demand capabilities loaded only when invoked.
 | `activity-generate-stories`      | Spec → user stories with coverage validation                                                                             | `product-engineer`                                  |
 | `activity-publish-github`        | Stories → GitHub Issues                                                                                                  | `product-engineer`                                  |
 | `activity-drift-reconciliation`  | Routes verifier drift findings into remediation                                                                          | `product-engineer`                                  |
+| `activity-refactor-review`       | Recurring refactoring review: find, score, prioritize, hand off                                                          | `product-engineer`                                  |
 | `git-ops`                        | Branch, rebase, merge, conflict resolution                                                                               | `developer`, `planner`                              |
 | `aws-ops`                        | AWS CLI command sets, tiers, cost, backup/revert, logs                                                                   | `infra-engineer`                                    |
 | `fly-ops`                        | flyctl command sets, tiers, cost, backup/revert, logs                                                                    | `infra-engineer`                                    |
@@ -423,6 +424,7 @@ Kiro (`.kiro/hooks/`) and Claude Code (`.claude/hooks/`, wired via `.claude/sett
 | `infra-engineer`           | infra-engineer   | Plan and apply infrastructure changes |
 | `verifier-design`          | verifier         | Generate compliance test plan         |
 | `verifier-audit`           | verifier         | Grey-box fidelity audit               |
+| `refactor-review`          | product-engineer | Recurring refactoring review          |
 
 ---
 
