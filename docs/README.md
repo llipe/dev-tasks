@@ -20,6 +20,7 @@ Entry point for `dev-tasks` documentation. Each document below is the single sou
 | [`system-overview.md`](system-overview.md)           | Purpose, architecture, components, integrations, runtime flows, NFR posture |
 | [`product.md`](product.md)                           | Product constitution: problem, users, goals, metrics, constraints           |
 | [`roadmap.md`](roadmap.md)                           | PRD phases and waves: status, issues/PRs, what is missing                   |
+| [`refactoring-register.md`](refactoring-register.md) | Refactoring opportunities found by `/refactor-review`: score and status     |
 | [`tech.md`](tech.md)                                 | Enforceable engineering rules and quality gates                             |
 | [`agents-md-guidelines.md`](agents-md-guidelines.md) | Sizing and content rules for `AGENTS.md`                                    |
 | [`adr/`](adr/README.md)                              | Architecture decision records                                               |
