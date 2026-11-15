@@ -30,7 +30,7 @@
  * literally in this file and an agent editing it is not blocked by its own
  * guard.
  */
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { delimiter, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -54,22 +54,35 @@ interface HookResult {
   stderr: string;
 }
 
-function runPayload(payload: string, env: Env = ENV_0): HookResult {
-  const result = spawnSync("bash", [HOOK], {
-    input: payload,
-    encoding: "utf-8",
-    cwd: ROOT,
-    env: {
-      ...process.env,
-      PATH: `${STUB_BIN}${delimiter}${process.env.PATH ?? ""}`,
-      GIT_GUARD_STUB_DEFAULT_BRANCH: "main",
-      ...env,
-    },
+/**
+ * Run the hook without blocking the worker's event loop (#350): this file
+ * makes several hundred hook calls, and `spawnSync` back to back starved
+ * vitest's worker RPC ("Timeout calling onTaskUpdate"), which turned a fully
+ * passing run red.
+ */
+function runPayload(payload: string, env: Env = ENV_0): Promise<HookResult> {
+  return new Promise((done, fail) => {
+    const child = spawn("bash", [HOOK], {
+      cwd: ROOT,
+      env: {
+        ...process.env,
+        PATH: `${STUB_BIN}${delimiter}${process.env.PATH ?? ""}`,
+        GIT_GUARD_STUB_DEFAULT_BRANCH: "main",
+        ...env,
+      },
+      stdio: ["pipe", "ignore", "pipe"],
+    });
+    let stderr = "";
+    child.stderr.setEncoding("utf-8").on("data", (chunk: string) => (stderr += chunk));
+    child.on("error", fail);
+    child.on("close", (code) => done({ status: code ?? -1, stderr }));
+    // The hook may exit before it reads all of stdin; that is not a failure.
+    child.stdin.on("error", () => undefined);
+    child.stdin.end(payload);
   });
-  return { status: result.status ?? -1, stderr: result.stderr };
 }
 
-function runHook(command: string, env: Env = ENV_0): HookResult {
+function runHook(command: string, env: Env = ENV_0): Promise<HookResult> {
   return runPayload(JSON.stringify({ tool_input: { command } }), env);
 }
 
@@ -84,9 +97,10 @@ const hc = (body: string, opener = "<<'EOF'") =>
 
 type Case = readonly [id: string, command: string, env: Env, expected: 0 | 2];
 
+/** Hook calls share no state, so the rows of one table run concurrently. */
 function cases(list: readonly Case[]): void {
-  it.each(list)("%s", (_id, command, env, expected) => {
-    expect(runHook(command, env).status, command).toBe(expected);
+  it.concurrent.each(list)("%s", async (_id, command, env, expected) => {
+    expect((await runHook(command, env)).status, command).toBe(expected);
   });
 }
 
@@ -554,15 +568,15 @@ describe("issue #339 / real pushes (AC-6)", () => {
 });
 
 describe("issue #339 / hook contract", () => {
-  it("TC-CT-01: a block exits 2 with a BLOCKED line on stderr", () => {
+  it("TC-CT-01: a block exits 2 with a BLOCKED line on stderr", async () => {
     for (const command of [QA_PUSH, `bash -c '${QA_PUSH}'`]) {
-      const r = runHook(command);
+      const r = await runHook(command);
       expect(r.status, command).toBe(2);
       expect(r.stderr, command).toMatch(/^BLOCKED by dev-tasks git-guard/);
     }
   });
 
-  it("TC-CT-02: an allowed call exits 0 with empty stderr", () => {
+  it("TC-CT-02: an allowed call exits 0 with empty stderr", async () => {
     const allowed: readonly (readonly [string, Env])[] = [
       [
         `${hc("we don't push here")}\ngit push -u origin ${F}\ngh pr create --base main --head ${F} --title t --body-file f`,
@@ -572,22 +586,22 @@ describe("issue #339 / hook contract", () => {
       [`gh issue comment 5 --body-file - <<'EOF'\nRun ${QA_MERGE} after review.\nEOF`, ENV_F],
     ];
     for (const [command, env] of allowed) {
-      const r = runHook(command, env);
+      const r = await runHook(command, env);
       expect(r, command).toEqual({ status: 0, stderr: "" });
     }
   });
 
-  it("TC-CT-03: rule 3's message still names --body-file", () => {
+  it("TC-CT-03: rule 3's message still names --body-file", async () => {
     // Under a failing lookup rule 1 fails closed on the merge text first, so
     // the base resolves to a non-default branch here to reach rule 3.
-    const r = runHook(`gh issue comment 5 --body "line1\nline2 ${QA_MERGE}"`, ENV_X);
+    const r = await runHook(`gh issue comment 5 --body "line1\nline2 ${QA_MERGE}"`, ENV_X);
     expect(r.status).toBe(2);
     expect(r.stderr).toContain("--body-file");
   });
 
-  it("TC-CT-05: fails open on a payload without a command or malformed JSON", () => {
+  it("TC-CT-05: fails open on a payload without a command or malformed JSON", async () => {
     for (const payload of ["{}", '{"tool_input":{}}', "not json", ""]) {
-      expect(runPayload(payload).status, payload).toBe(0);
+      expect((await runPayload(payload)).status, payload).toBe(0);
     }
   });
 });
@@ -1036,6 +1050,8 @@ describe("issue #339 / qa gap fill", () => {
 const PROPERTY_TIMEOUT = 120_000;
 const SEED = Number(process.env.GIT_GUARD_FUZZ_SEED ?? 0x339);
 const RUNS = Number(process.env.GIT_GUARD_FUZZ_RUNS ?? 150);
+/** Hook calls in flight at once in a property run. */
+const BATCH = 8;
 
 interface Item {
   text: string;
@@ -1086,37 +1102,49 @@ function noise(rand: () => number): Item[] {
   return Array.from({ length: 1 + Math.floor(rand() * 4) }, () => pick(rand, NOISE));
 }
 
+/** Run the hook over prepared commands a batch at a time, keeping their order. */
+async function statuses(commands: readonly string[], env: Env): Promise<number[]> {
+  const out: number[] = [];
+  for (let i = 0; i < commands.length; i += BATCH) {
+    const batch = commands.slice(i, i + BATCH);
+    out.push(...(await Promise.all(batch.map(async (c) => (await runHook(c, env)).status))));
+  }
+  return out;
+}
+
 describe("issue #339 / property cases", () => {
   it(
     "P-339-01: a must-block primitive in allow-listed noise is always blocked",
-    () => {
+    async () => {
       const rand = mulberry32(SEED);
+      const commands: string[] = [];
       for (let index = 0; index < RUNS; index++) {
         const items = noise(rand);
         const at = Math.floor(rand() * (items.length + 1));
         items.splice(at, 0, { text: pick(rand, PRIMITIVES), heredoc: false });
-        const command = join(items, rand);
-        expect(runHook(command, ENV_B).status, JSON.stringify({ seed: SEED, index, command })).toBe(
-          2,
-        );
+        commands.push(join(items, rand));
       }
+      (await statuses(commands, ENV_B)).forEach((status, index) => {
+        expect(status, JSON.stringify({ seed: SEED, index, command: commands[index] })).toBe(2);
+      });
     },
     PROPERTY_TIMEOUT,
   );
 
   it(
     "P-339-02: a primitive that only appears in text is allowed",
-    () => {
+    async () => {
       const rand = mulberry32(SEED + 2);
+      const commands: string[] = [];
       for (let index = 0; index < RUNS; index++) {
         const items = noise(rand);
         const at = Math.floor(rand() * (items.length + 1));
         items.splice(at, 0, pick(rand, TEXT_FORMS)(pick(rand, PRIMITIVES)));
-        const command = join(items, rand);
-        expect(runHook(command, ENV_F).status, JSON.stringify({ seed: SEED, index, command })).toBe(
-          0,
-        );
+        commands.push(join(items, rand));
       }
+      (await statuses(commands, ENV_F)).forEach((status, index) => {
+        expect(status, JSON.stringify({ seed: SEED, index, command: commands[index] })).toBe(0);
+      });
     },
     PROPERTY_TIMEOUT,
   );
