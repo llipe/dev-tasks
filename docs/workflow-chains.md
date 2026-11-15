@@ -56,6 +56,18 @@ researcher: intake → slice execution (S1-S8) → synthesis → budget enforcem
 
 Invoked by `product-engineer` (pre-refine, pre-spec), `developer` (troubleshooting), or `planner` (pre-orchestration). Conditional and non-mandatory.
 
+## Refactoring Review (Recurring)
+
+```text
+refactor-review: baseline → discover (R1-R8 + code smell measurement) → assess → prioritize
+                                                                                  ↓ (user: Selected / Deferred / Rejected)
+                                                               convert: refactoring brief per selected item
+                                                                                  ↓
+                          product-engineer: Issue Mode (one module, one PR) or Feature Mode (PRD → spec)
+```
+
+Started by a person on a cadence (`delta` weekly, `full` monthly or quarterly); never scheduled unattended, because Step 4 waits for the user. Follows `activity-refactor-review`. Writes `/workstream/refactor-review-<date>.md` and `docs/refactoring-register.md`; changes no code. A red `test` gate limits the run to analysis.
+
 ## Multi-Story Orchestration
 
 ```text

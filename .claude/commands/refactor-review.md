@@ -9,7 +9,7 @@ argument-hint: "[delta | full] [path] [dimensions, e.g. R1,R4]"
 
 **Request:** $ARGUMENTS
 
-Follow the `activity-refactor-review` skill exactly. It is the single source of truth for the process; this command only fixes the entry conditions.
+Follow the `activity-refactor-review` skill exactly. It is the single source of truth for the process; this command only fixes the entry conditions. Before a repository's first run, read the skill's Setup section: it lists what a run needs and what happens when something is missing.
 
 ## Arguments
 

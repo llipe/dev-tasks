@@ -35,6 +35,42 @@ This skill is **read-only** except for:
 
 No application code, test, PRD, spec, task list, dependency manifest, lockfile, or tool config may be created or modified. Measurement output is written outside the repository. The review proposes; it never refactors.
 
+## Setup
+
+The skill ships with dev-tasks: `dev-tasks install` or `dev-tasks update` delivers it with the rest of the harness. It adds no dependency, config file, or script to the repository.
+
+### Requirements
+
+Nothing here blocks a run except the first row. A missing item narrows the run, and the report **MUST** say which ones were missing.
+
+| Requirement                                       | Used for                                 | When it is missing                                                     |
+| ------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
+| A `test` script that exits green                  | Step 1 gate; proof behavior is preserved | Analysis only, at the user's explicit request; Step 5 stays blocked    |
+| `lint` and `typecheck` scripts                    | Step 1 baseline                          | Recorded as `Not configured`                                           |
+| Full git history (not a shallow clone)            | Co-change and churn (R1, R4)             | The window actually available is used and stated                       |
+| A linter with complexity and size rules           | Code Smell Measurement (R4)              | Those metrics are `Not measured`                                       |
+| Network access and `pnpm`                         | The per-run clone detector (R2)          | Duplication is `Not measured`; R2 runs by reading                      |
+| `gh`, authenticated                               | Issues for selected items (Step 5)       | The brief stays in the report; the missing issue is reported           |
+| The `type: refactor` label (`github-ops` default) | Issues for selected items (Step 5)       | Create it following `github-ops` conventions before the first issue    |
+| `SIMPLICITY.md`                                   | Dimension anchors and thresholds         | Anchors are omitted; the thresholds in this skill apply                |
+| `docs/roadmap.md` or open PRDs                    | "Upcoming change" when scoring friction  | Friction is scored from history and issues only; Friction 3 needs both |
+
+### Before the first run
+
+1. **Work on a feature branch.** The run writes the register and one line in `docs/README.md`; both go through a pull request like any other change.
+2. **Decide whether run reports are committed.** The register is always committed. A report under `/workstream/` is one run's record; when the repository ignores that directory, the register's link to the report resolves only on the machine that ran the review, and the register is the only shared record.
+3. **Create nothing by hand.** The first run is `full` and creates the register and its `docs/README.md` line.
+
+### Starting a run
+
+| Platform    | Entry point                                                                  |
+| ----------- | ---------------------------------------------------------------------------- |
+| Claude Code | `/refactor-review [delta \| full] [path] [dimensions]`                       |
+| Copilot     | The `refactor-review` prompt, which runs the `product-engineer` agent        |
+| Kiro        | Ask the `product-engineer` agent to run the `activity-refactor-review` skill |
+
+A person starts every run. The review stops in Step 4 for decisions only the user can make, so it **MUST NOT** be scheduled to run unattended. Put the cadence in a calendar, not in automation.
+
 ## Run Modes
 
 | Mode    | Scope                                                                   | Typical cadence      |
