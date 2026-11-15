@@ -33,7 +33,7 @@ This skill is **read-only** except for:
 - `docs/refactoring-register.md`: the persistent register, plus the one line that lists it in `docs/README.md` when the register is first created.
 - GitHub issues for items the user selected in Step 4, created following `github-ops` conventions.
 
-No application code, test, PRD, spec, or task list may be created or modified. The review proposes; it never refactors.
+No application code, test, PRD, spec, task list, dependency manifest, lockfile, or tool config may be created or modified. Measurement output is written outside the repository. The review proposes; it never refactors.
 
 ## Run Modes
 
@@ -60,6 +60,72 @@ Each dimension is swept separately and in this order. `Anchor` names the `SIMPLI
 | R8  | Safety net                  | Areas that cannot be refactored safely because tests are missing, brittle, or tied to internals    | B2          |
 
 R1 is first because it measures the goal directly. An R8 finding is a prerequisite, not a competitor: when another item depends on it, the dependency is recorded and the R8 item is ordered ahead of it.
+
+## Code Smell Measurement
+
+Smells are measured the same way on every run, so a number moves only when the code does. The measurement runs once in Step 2, before the R2 and R4 sweeps, and its output is handed to them. It is Small-tier work.
+
+### Measured smells
+
+| Smell               | Dimension | Metric and threshold                              | Tool                                 |
+| ------------------- | --------- | ------------------------------------------------- | ------------------------------------ |
+| High complexity     | R4        | Cyclomatic complexity over 10 per function        | Linter rule `complexity`             |
+| Deep nesting        | R4        | Nesting depth over 3                              | Linter rule `max-depth`              |
+| Long function       | R4        | Over 40 lines, blank lines and comments excluded  | Linter rule `max-lines-per-function` |
+| Long parameter list | R4        | Over 4 parameters                                 | Linter rule `max-params`             |
+| Large file          | R4        | Over 400 lines, blank lines and comments excluded | Linter rule `max-lines`              |
+| Duplicated code     | R2        | Clones of at least 10 lines and 70 tokens         | `jscpd`                              |
+
+The thresholds are the `SIMPLICITY.md` section D defaults. When the repository sets its own, those win, and the report states the values used.
+
+**Complexity and size.** Pass the rules to the repository's existing linter on the command line, over product code only. Nothing is installed and no config file is changed. For ESLint:
+
+```
+eslint <product dirs> --format json \
+  --rule 'complexity: ["warn", 10]' \
+  --rule 'max-depth: ["warn", 3]' \
+  --rule 'max-lines-per-function: ["warn", {"max": 40, "skipBlankLines": true, "skipComments": true}]' \
+  --rule 'max-params: ["warn", 4]' \
+  --rule 'max-lines: ["warn", {"max": 400, "skipBlankLines": true, "skipComments": true}]'
+```
+
+For another language, use the same five metrics from the repository's own linter. A metric the linter cannot produce is reported as `Not measured`; it **MUST NOT** be estimated by reading. Cognitive complexity is measured only when the repository already configures a rule for it.
+
+**Duplication.** Run the clone detector as a per-run download. This is the one exception to the no-install rule: the tool is fetched for the run and is never added to the repository's dependencies, lockfile, or config.
+
+```
+pnpm dlx jscpd@4 <product and test dirs> --min-lines 10 --min-tokens 70 \
+  --reporters json --output <directory outside the repository> --silent
+```
+
+- The major version is pinned (`jscpd@4`) so runs stay comparable. Changing it is a change to this skill, and the report records the exact version used.
+- All measurement output **MUST** be written outside the repository.
+- When the download fails (no network, registry blocked), report duplication as `Not measured` with the reason and continue. The R2 sweep still runs by reading.
+- The clone detector misses short repeated helpers under its line threshold. The R2 sweep **MUST** also search for same-named functions defined in three or more files.
+
+### Smells found by reading
+
+These have no reliable metric. The sweeps look for exactly this list, so every run looks for the same things.
+
+| Smell                  | Dimension | Sign                                                                      |
+| ---------------------- | --------- | ------------------------------------------------------------------------- |
+| Large module           | R3        | Exports grow faster than behavior; callers must know many names           |
+| Feature envy           | R3        | A function reads another module's data more than its own                  |
+| Shotgun surgery        | R1        | One idea needs edits in many files (also measured from history)           |
+| Divergent change       | R1        | One file changes for several unrelated reasons                            |
+| Data clump             | R7        | The same group of values travels together through several signatures      |
+| Primitive obsession    | R7        | A domain value passed as a raw string or number and re-parsed at each use |
+| Speculative generality | R5        | Parameters, hooks, or layers with one caller or one value                 |
+
+### Hand-over to repository tooling
+
+When the repository already runs these measurements under its own `validate` (for example through a simplicity-tooling skill with a recorded baseline), the review **MUST** read that output instead of measuring again, and say so in the report.
+
+### In the report
+
+The R2 and R4 findings open with the totals: violations per rule, the five worst functions by complexity, clone count, and duplicated-line percentage. From the second run on, each total is shown next to the previous run's.
+
+A threshold violation is evidence, not a finding. It becomes a candidate only through Step 3, where it must still name the change it makes harder.
 
 ## Model Tiers
 
@@ -106,8 +172,9 @@ For each dimension in scope:
 
 1. Search for evidence. Prefer measurements over impressions:
    - History: `git log --since=<window> --name-only --format='--- %h %s'` for co-change and churn (R1, R4). The window is the time since the previous run for `delta`, and six months for `full`.
-   - Tooling the repository already configures: complexity lint rules, unused-export detectors, dependency-direction checks (R3, R4, R5). **MUST NOT** install a tool to run the review.
-   - Reading the code for what tools cannot see (R2, R6, R7, R8).
+   - The fixed measurements in Code Smell Measurement (R2, R4). Run them first and give their output to the sweeps.
+   - Other tooling the repository already configures: unused-export detectors, dependency-direction checks (R3, R5). Apart from the per-run clone detector, the review **MUST NOT** install a tool.
+   - Reading the code for what tools cannot see, using the smells-found-by-reading list (R1, R3, R5, R6, R7, R8).
 2. Record each candidate with: dimension, primary location (module or symbol), `path:line` evidence, and one sentence stating what was observed. Observation only; no judgment yet.
 3. A dimension with no candidates **MUST** be marked `N/A` with a one-line reason.
 4. Record at most ten candidates per dimension, the strongest evidence first. Note how many were left out.
@@ -180,7 +247,7 @@ The report **MUST** contain these sections, in this order:
 1. **Changelog**: standard repository document convention.
 2. **Baseline**: the Step 1 record, including the previous run's SHA and date.
 3. **Summary**: the ranked list and the trend line, in at most fifteen lines.
-4. **Findings by dimension**: R1 to R8, each populated, `N/A` with a reason, or `Not swept`.
+4. **Findings by dimension**: R1 to R8, each populated, `N/A` with a reason, or `Not swept`. R2 and R4 open with the measurement totals.
 5. **Assessments**: one block per assessed item with the Step 3 fields and scores.
 6. **Dropped candidates**: what was dropped in Step 3 and why.
 7. **Decisions**: the user's Step 4 decision and reason per item.

@@ -20,7 +20,7 @@ Follow the `activity-refactor-review` skill exactly. It is the single source of 
 ## Steps
 
 1. **Baseline**: record SHA and gate results; stop when `test` is red; load the register and the roadmap.
-2. **Discover**: sweep each dimension for evidence; mark empty ones `N/A` with a reason.
+2. **Discover**: run the fixed code smell measurements (linter rules on the command line, `jscpd` as a per-run download), then sweep each dimension for evidence; mark empty ones `N/A` with a reason.
 3. **Assess**: reasoning, friction, proposal, do-nothing case, invariants, safety net, and a score per candidate.
 4. **Prioritize**: match against the register, rank, present, then **stop and wait** for `Selected`, `Deferred`, or `Rejected` per item.
 5. **Convert**: write a refactoring brief per selected item and route it to `/product-engineer` (Issue Mode or Feature Mode).
