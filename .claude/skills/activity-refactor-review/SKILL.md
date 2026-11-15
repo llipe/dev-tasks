@@ -61,13 +61,29 @@ Each dimension is swept separately and in this order. `Anchor` names the `SIMPLI
 
 R1 is first because it measures the goal directly. An R8 finding is a prerequisite, not a competitor: when another item depends on it, the dependency is recorded and the R8 item is ordered ahead of it.
 
+## Model Tiers
+
+Each step runs on one of the repository's two tiers: the **smaller tier** (the model mechanical subagents such as `researcher` declare) or the **session model** (the model the main thread runs on). The split follows the kind of work: collecting measurements is mechanical; deciding what they mean is judgment.
+
+| Step                              | Work                                             | Tier                                  |
+| --------------------------------- | ------------------------------------------------ | ------------------------------------- |
+| 1 Baseline                        | Run gates, record SHA, load the register         | Session model (too small to delegate) |
+| 2 Discover: R1, R4, R5            | History, churn, and tool output; counting        | Smaller tier, via `researcher`        |
+| 2 Discover: R2, R3, R6, R7, R8    | Reading code for what tools cannot see           | Session model                         |
+| 3 Assess, 4 Prioritize, 5 Convert | Reasoning, scoring, matching, and writing briefs | Session model                         |
+
+- Steps 3 to 5 **MUST NOT** be delegated to the smaller tier. A weak assessment costs more than it saves: every later run inherits its scores through the register.
+- Delegating R1, R4, and R5 is **OPTIONAL**. On a small repository the main thread **MAY** sweep them itself.
+- The session **SHOULD** run on the most capable model available, and a `full` run especially.
+- Step 1 **MUST** record the session model in the report. Scores from runs on different models are comparable only with that caveat, and a `Changed` label whose only cause is a model change **MUST** say so.
+
 ## Procedure
 
 The five steps run in order. No step may be skipped, and a later step **MUST NOT** start before the earlier one's output exists in the report.
 
 ### Step 1: Baseline
 
-1. Record repository, branch, commit SHA (`git rev-parse HEAD`), date, run mode, scope, and dimensions swept.
+1. Record repository, branch, commit SHA (`git rev-parse HEAD`), date, run mode, scope, dimensions swept, and the session model.
 2. Run the repository's `test`, `lint`, and `typecheck` scripts and record each result.
 3. If `test` fails, **stop**. Report the failures and end the run: without a green suite there is no way to show that a refactoring preserved behavior. The user **MAY** explicitly ask to continue with analysis only; record that decision in the report, and Step 5 stays blocked until the suite is green.
 4. Load `docs/refactoring-register.md` when it exists. Note the previous run's SHA and date. When it does not exist, this is the first run.

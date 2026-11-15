@@ -25,7 +25,14 @@ Follow the `activity-refactor-review` skill exactly. It is the single source of 
 4. **Prioritize**: match against the register, rank, present, then **stop and wait** for `Selected`, `Deferred`, or `Rejected` per item.
 5. **Convert**: write a refactoring brief per selected item and route it to `/product-engineer` (Issue Mode or Feature Mode).
 
-The discovery sweep in Step 2 **MAY** be delegated to the `researcher` subagent, one dimension per delegation, when the repository is large. Assessment, prioritization, and conversion stay in the main thread.
+## Models
+
+Follow the skill's Model Tiers table. In Claude Code terms:
+
+- **Session model** (your current `/model`): Baseline, discovery for R2, R3, R6, R7 and R8, and all of Assess, Prioritize, and Convert. Use the most capable model available, especially for a `full` run.
+- **Smaller tier**: discovery for R1, R4 and R5 **MAY** be delegated to the `researcher` subagent (`model: haiku`), one dimension per delegation. It returns observations only; it never scores.
+
+This command does not pin a model in its frontmatter, so it never overrides the model you chose for the session.
 
 ## This command will not
 
