@@ -29,10 +29,11 @@ Follow the `activity-refactor-review` skill exactly. It is the single source of 
 
 Follow the skill's Model Tiers table. In Claude Code terms:
 
-- **Session model** (your current `/model`): Baseline, discovery for R2, R3, R6, R7 and R8, and all of Assess, Prioritize, and Convert. Use the most capable model available, especially for a `full` run.
-- **Smaller tier**: discovery for R1, R4 and R5 **MAY** be delegated to the `researcher` subagent (`model: haiku`), one dimension per delegation. It returns observations only; it never scores.
+- **Opus (suggested session model)**: Assess and Prioritize run in the main thread and are the high-reasoning steps. If the session is not on Opus, say so once before Step 1, suggest `/model opus`, and continue on the current model if the user does not switch.
+- **Sonnet**: discovery for R2, R3, R6, R7 and R8, and drafting the refactoring briefs in Convert. Delegate through the Task tool with `model: sonnet` (the `researcher` subagent for discovery, a general-purpose subagent for briefs), one dimension or one brief per delegation.
+- **Haiku**: discovery for R1, R4 and R5 through the `researcher` subagent (`model: haiku`). Baseline and the report summary are Haiku-level work too, but stay in the main thread because they are too small to delegate.
 
-This command does not pin a model in its frontmatter, so it never overrides the model you chose for the session.
+Subagents return observations or draft text only; scoring, ranking, the report, and the register stay in the main thread. This command does not pin a model in its frontmatter, so it never overrides the model you chose for the session.
 
 ## This command will not
 

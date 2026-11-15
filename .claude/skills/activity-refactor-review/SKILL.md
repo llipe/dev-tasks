@@ -63,19 +63,30 @@ R1 is first because it measures the goal directly. An R8 finding is a prerequisi
 
 ## Model Tiers
 
-Each step runs on one of the repository's two tiers: the **smaller tier** (the model mechanical subagents such as `researcher` declare) or the **session model** (the model the main thread runs on). The split follows the kind of work: collecting measurements is mechanical; deciding what they mean is judgment.
+Each piece of work is matched to one of three tiers by the kind of work it is.
 
-| Step                              | Work                                             | Tier                                  |
-| --------------------------------- | ------------------------------------------------ | ------------------------------------- |
-| 1 Baseline                        | Run gates, record SHA, load the register         | Session model (too small to delegate) |
-| 2 Discover: R1, R4, R5            | History, churn, and tool output; counting        | Smaller tier, via `researcher`        |
-| 2 Discover: R2, R3, R6, R7, R8    | Reading code for what tools cannot see           | Session model                         |
-| 3 Assess, 4 Prioritize, 5 Convert | Reasoning, scoring, matching, and writing briefs | Session model                         |
+| Tier      | Claude model | Used for                               |
+| --------- | ------------ | -------------------------------------- |
+| Reasoning | Opus         | High-reasoning judgment                |
+| Standard  | Sonnet       | Reading and writing code and documents |
+| Small     | Haiku        | Summaries and simpler tasks            |
 
-- Steps 3 to 5 **MUST NOT** be delegated to the smaller tier. A weak assessment costs more than it saves: every later run inherits its scores through the register.
-- Delegating R1, R4, and R5 is **OPTIONAL**. On a small repository the main thread **MAY** sweep them itself.
-- The session **SHOULD** run on the most capable model available, and a `full` run especially.
-- Step 1 **MUST** record the session model in the report. Scores from runs on different models are comparable only with that caveat, and a `Changed` label whose only cause is a model change **MUST** say so.
+| Step                           | Work                                              | Tier      | Where it runs                              |
+| ------------------------------ | ------------------------------------------------- | --------- | ------------------------------------------ |
+| 1 Baseline                     | Run gates, record SHA, load the register          | Small     | Main thread (too small to delegate)        |
+| 2 Discover: R1, R4, R5         | History, churn, and tool output; counting         | Small     | `researcher` subagent                      |
+| 2 Discover: R2, R3, R6, R7, R8 | Reading code for what tools cannot see            | Standard  | `researcher` subagent on the Standard tier |
+| 3 Assess                       | Reasoning, do-nothing case, invariants, scoring   | Reasoning | Main thread                                |
+| 4 Prioritize                   | Register matching, ranking, the user's decisions  | Reasoning | Main thread                                |
+| 5 Convert                      | Drafting refactoring briefs and incremental plans | Standard  | Subagent on the Standard tier              |
+| Report                         | Summary section, trend line, register row updates | Small     | Main thread (too small to delegate)        |
+
+- The main thread runs on one model for the whole run, so a tier other than the session's is reached only by delegation. The session **SHOULD** run on the Reasoning tier; this is a suggestion, and the review never changes or pins the session model.
+- Steps 3 and 4 **MUST** stay in the main thread and **MUST NOT** be delegated to a lower tier. A weak assessment costs more than it saves: every later run inherits its scores through the register.
+- Delegation in Steps 2 and 5 is **OPTIONAL**. On a small repository, or when the session already runs on the Standard tier, the main thread **MAY** do that work itself.
+- A delegated subagent returns observations (Step 2) or draft text (Step 5) to the main thread. It never scores, ranks, or writes the report or the register.
+- The PRD and specification that follow Step 5 are writing work: the Standard tier is suggested for that `/product-engineer` session.
+- Step 1 **MUST** record the session model and any delegated tiers in the report. Scores from runs on different models are comparable only with that caveat, and a `Changed` label whose only cause is a model change **MUST** say so.
 
 ## Procedure
 
