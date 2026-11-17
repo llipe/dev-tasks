@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.18.0] - 2026-11-17
+
+### Added
+
+- feat(skills): ship refactoring review on all platforms with setup instructions (#347)
+- feat(skills): add fixed code smell measurement to refactoring review (#347)
+- feat(skills): map refactoring review steps to opus, sonnet and haiku (#347)
+- feat(skills): define model tiers per refactoring review step (#347)
+- feat(skills): add refactoring review skill and command draft (#347)
+- feat(skills): adopt the parallel-lanes skill from riel (#345)
+
+### Changed
+
+- Merge pull request #351 from llipe/issue/350-unblock-git-guard-test-worker
+- test(hooks): run git-guard executed-view cases without blocking the worker (#350)
+- Merge pull request #349 from llipe/chore/refactor-register-decisions
+- docs: record refactoring review decisions for RF-001 to RF-009
+- Merge pull request #348 from llipe/issue/347-refactor-review-skill
+- chore: merge main into issue/347-refactor-review-skill
+- docs: add the first refactoring register from the trial review (#347)
+- Merge pull request #346 from llipe/issue/345-lessons-recall-parallel-lanes
+- docs(skills): apply audit fixes to lesson and recall guidance (#345)
+- docs(memo): teach lesson writes and a workable recall budget (#345)
+
 ## [0.17.2] - 2026-11-06
 
 ### Fixed
