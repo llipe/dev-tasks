@@ -11,8 +11,8 @@ export default defineConfig({
     // are shape, not suites, and must never be collected.
     exclude: ["**/node_modules/**", "**/dist/**", "test/fixtures/**"],
     // Disable file-level parallelism to prevent races between integration tests
-    // that create/delete skills/ in the repo root. Suite is fast (~8s) so the
-    // cost is negligible.
+    // that create/delete skills/ in the repo root. The suite takes a few minutes
+    // this way; whether the race still exists is open (register item RF-001).
     fileParallelism: false,
     coverage: {
       provider: "v8",
